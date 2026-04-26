@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SRSL</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="admin-container dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel">
+            <!-- Top Header -->
+            <header class="dashboard-header-modern mb-4">
+                <div class="header-content">
+                    <div class="header-title-block">
+                        <h1 class="header-title">My Courses</h1>
+                        <p class="header-subtitle"><i class="fas fa-book me-2"></i>Manage your academic enrollments</p>
+                    </div>
+                    <div class="header-actions">
+                        <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2 border border-primary border-opacity-10">
+                            <i class="fas fa-user-graduate me-1"></i> Enrolled
+                        </span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Search & Filters -->
+            <div class="glass-panel mb-4 py-3">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-6">
+                        <div class="search-box-modern">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="form-control" placeholder="Search courses or codes..." id="courseSearch">
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <div class="btn-group rounded-pill overflow-hidden shadow-sm">
+                            <button class="btn btn-soft-primary active px-3">All</button>
+                            <button class="btn btn-soft-primary px-3">Core</button>
+                            <button class="btn btn-soft-primary px-3">Elective</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Content -->
+            <div class="row g-4" id="coursesGrid">
+                <% if (courses && courses.length > 0) { %>
+                    <% for(let course of courses) { %>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="glass-panel h-100 p-4 transition-up">
+                                <div class="d-flex justify-content-between align-items-start mb-4">
+                                    <div class="course-icon-box" style="width: 50px; height: 50px; background: rgba(99, 102, 241, 0.1); border-radius: 15px; display: flex; align-items: center; justify-content: center; color: #6366f1; font-size: 1.2rem;">
+                                        <i class="fas fa-book-open"></i>
+                                    </div>
+                                    <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-1 border border-primary border-opacity-10" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                        <%= course.course_code %>
+                                    </span>
+                                </div>
+                                
+                                <h3 class="h5 fw-bold text-light mb-2"><%= course.course_name %></h3>
+                                <p class="text-secondary small mb-4">
+                                    <i class="fas fa-chalkboard-teacher me-2 text-primary opacity-50"></i>
+                                    <%= (course.teacher_fname && course.teacher_lname) ? course.teacher_fname + ' ' + course.teacher_lname : 'Assigned Faculty' %>
+                                </p>
+
+                                <div class="glass-card p-3 mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-secondary small">Course Status</span>
+                                        <span class="text-success small fw-bold text-capitalize"><%= course.status %></span>
+                                    </div>
+                                    <div class="progress" style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: 100%; border-radius: 10px;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center pt-2 border-top border-white border-opacity-10">
+                                    <div class="text-secondary small">
+                                        <i class="fas fa-star me-1 text-warning"></i>
+                                        <span class="text-light fw-bold"><%= course.credits || 3 %></span> Credits
+                                    </div>
+                                    <button class="btn btn-soft-primary btn-sm rounded-pill px-4">
+                                        Details <i class="fas fa-arrow-right ms-2 small"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                <% } else { %>
+                    <div class="col-12">
+                        <div class="glass-panel p-5 text-center">
+                            <div class="text-secondary mb-3" style="font-size: 3rem; opacity: 0.2;">
+                                <i class="fas fa-folder-open"></i>
+                            </div>
+                            <h4 class="text-light">No Enrolled Courses</h4>
+                            <p class="text-secondary">You haven't registered for any courses in the current semester yet.</p>
+                            <a href="/student/registration" class="btn btn-primary rounded-pill px-5 mt-3">Register Now</a>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <script>
+        document.getElementById('courseSearch')?.addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('#coursesGrid .course-card-modern, #coursesGrid .course-card');
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.closest('.col-md-6, .col-lg-4, .col-12').style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

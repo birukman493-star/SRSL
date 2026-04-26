@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Attendance - SRSL Faculty</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+    
+    <style>
+        .status-radio-group { display: flex; gap: 8px; }
+        .status-radio { display: none; }
+        .status-label { 
+            padding: 6px 12px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.03);
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-label:hover { background: rgba(255,255,255,0.08); }
+        
+        .status-radio:checked + .label-present { background: rgba(34, 197, 94, 0.15); color: #22c55e; border-color: rgba(34, 197, 94, 0.2); }
+        .status-radio:checked + .label-absent { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.2); }
+        .status-radio:checked + .label-late { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2); }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Daily Attendance</h1>
+                        <p class="text-secondary m-0">Recording for: <span class="text-primary fw-bold"><%= new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) %></span></p>
+                    </div>
+                    <div class="d-flex gap-3 align-items-center">
+                        <input type="date" class="form-control glass-card border-white border-opacity-10 text-light py-2 px-3" id="attendanceDate" value="<%= date %>" style="width: auto; background: rgba(255,255,255,0.03);">
+                        <button class="btn btn-hero btn-primary px-4 py-2" id="saveAttendance">
+                            <i class="fas fa-save me-2"></i> Save Session
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel p-4">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                        <thead>
+                            <tr>
+                                <th class="border-0 text-secondary small py-3" style="width: 30%;">Student Name</th>
+                                <th class="border-0 text-secondary small py-3" style="width: 15%;">Student ID</th>
+                                <th class="border-0 text-secondary small py-3" style="width: 35%;">Attendance Status</th>
+                                <th class="border-0 text-secondary small py-3" style="width: 20%;">Session Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% attendance.forEach((student, index) => { %>
+                            <tr class="transition">
+                                <td class="border-0 py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="sidebar-user-avatar" style="width: 40px; height: 40px; font-size: 0.9rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                                            <%= (student.first_name ? student.first_name.charAt(0).toUpperCase() : '?') %>
+                                        </div>
+                                        <div class="fw-bold text-light"><%= student.first_name || 'Unknown' %> <%= student.last_name || '' %></div>
+                                    </div>
+                                </td>
+                                <td class="border-0 py-3">
+                                    <code class="text-info opacity-75 small">STU-<%= student.student_id %></code>
+                                </td>
+                                <td class="border-0 py-3">
+                                    <div class="status-radio-group">
+                                        <input type="radio" name="status_<%= student.student_pk %>" value="present" id="p_<%= student.student_pk %>" class="status-radio" data-student-id="<%= student.student_pk %>" <%= student.status === 'present' ? 'checked' : '' %>>
+                                        <label for="p_<%= student.student_pk %>" class="status-label label-present">Present</label>
+                                        
+                                        <input type="radio" name="status_<%= student.student_pk %>" value="absent" id="a_<%= student.student_pk %>" class="status-radio" data-student-id="<%= student.student_pk %>" <%= student.status === 'absent' ? 'checked' : '' %>>
+                                        <label for="a_<%= student.student_pk %>" class="status-label label-absent">Absent</label>
+                                        
+                                        <input type="radio" name="status_<%= student.student_pk %>" value="late" id="l_<%= student.student_pk %>" class="status-radio" data-student-id="<%= student.student_pk %>" <%= student.status === 'late' ? 'checked' : '' %>>
+                                        <label for="l_<%= student.student_pk %>" class="status-label label-late">Late</label>
+                                    </div>
+                                </td>
+                                <td class="border-0 py-3">
+                                    <input type="text" class="form-control glass-card border-white border-opacity-5 text-light py-1 px-3 small" 
+                                           name="note_<%= student.student_pk %>" 
+                                           data-note-id="<%= student.student_pk %>" 
+                                           value="<%= student.notes || '' %>" 
+                                           placeholder="Optional note..." 
+                                           style="font-size: 0.8rem; background: rgba(255,255,255,0.02);">
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <script>
+        document.getElementById('saveAttendance').addEventListener('click', async () => {
+            const date = document.getElementById('attendanceDate').value;
+            const classId = '<%= classId %>';
+            const attendanceData = {};
+            
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const radioChecked = row.querySelector('.status-radio:checked');
+                if (!radioChecked) return;
+                
+                const studentId = radioChecked.dataset.studentId;
+                const noteInput = row.querySelector('input[data-note-id]');
+                
+                attendanceData[studentId] = {
+                    status: radioChecked.value,
+                    notes: noteInput ? noteInput.value : ''
+                };
+            });
+
+            try {
+                const response = await fetch('/teacher/attendance/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ classId, date, attendanceType: 'daily', attendance: attendanceData })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    // Visual feedback
+                    const btn = document.getElementById('saveAttendance');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-check me-2"></i> Saved!';
+                    btn.classList.replace('btn-primary', 'btn-success');
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.classList.replace('btn-success', 'btn-primary');
+                    }, 2000);
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                alert('Connection error while saving attendance');
+            }
+        });
+
+        document.getElementById('attendanceDate').addEventListener('change', (e) => {
+            window.location.href = `/teacher/attendance/<%= classId %>/${e.target.value}`;
+        });
+    </script>
+</body>
+</html>

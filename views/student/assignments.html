@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SRSL</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="admin-container dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel">
+            <!-- Top Header -->
+            <header class="dashboard-header-modern mb-4">
+                <div class="header-content">
+                    <div class="header-title-block">
+                        <h1 class="header-title">My Assignments</h1>
+                        <p class="header-subtitle"><i class="fas fa-tasks me-2"></i>Track your homework and project deadlines</p>
+                    </div>
+                    <div class="header-actions">
+                        <span class="badge bg-soft-warning text-warning rounded-pill px-3 py-2 border border-warning border-opacity-10">
+                            <i class="fas fa-clock me-1"></i> <%= assignments.filter(a => !a.is_submitted).length %> Pending
+                        </span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Assignments Grid -->
+            <div class="row g-4">
+                <% if (assignments && assignments.length > 0) { %>
+                    <% assignments.forEach(assignment => { %>
+                    <div class="col-12">
+                        <div class="glass-panel hover-lift transition">
+                            <div class="row align-items-center">
+                                <div class="col-md-1 d-none d-md-block">
+                                    <div class="icon-box-modern bg-primary bg-opacity-10 text-primary">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <h5 class="text-light m-0 fw-bold"><%= assignment.title %></h5>
+                                    <div class="text-secondary small">
+                                        <i class="fas fa-book me-1"></i> <%= assignment.class_name %> • 
+                                        <i class="fas fa-user-tie me-1"></i> <%= assignment.teacher_fname %> <%= assignment.teacher_lname %>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-secondary small mb-1">Due Date</div>
+                                    <div class="text-<%= (new Date(assignment.due_date) < new Date()) ? 'danger' : 'light' %> fw-bold">
+                                        <i class="far fa-calendar-alt me-1"></i> 
+                                        <%= assignment.due_date ? new Date(assignment.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Due Date' %>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                                    <span class="badge rounded-pill bg-soft-<%= assignment.is_submitted ? 'success' : 'warning' %> text-<%= assignment.is_submitted ? 'success' : 'warning' %> px-3 py-2 me-2">
+                                        <%= assignment.is_submitted ? 'SUBMITTED' : 'PENDING' %>
+                                    </span>
+                                    <button class="btn btn-sm btn-soft-primary rounded-pill px-3">View</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="col-12">
+                        <div class="glass-panel text-center py-5">
+                            <div class="mb-4">
+                                <i class="fas fa-check-double fa-4x text-success opacity-25"></i>
+                            </div>
+                            <h4 class="text-light">All caught up!</h4>
+                            <p class="text-secondary">No pending assignments at the moment.</p>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

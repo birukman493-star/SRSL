@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        
+        <!-- Main Content -->
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Parent/Guardian Directory</h1>
+                        <p class="text-secondary m-0">Monitor parent accounts and student linkages</p>
+                    </div>
+                    <button class="btn-hero btn-primary px-4" onclick="toggleForm()">
+                        <i class="fas fa-plus me-2"></i> Add Parent
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <% if (typeof error !== "undefined" && error) { %>
+            <div class="alert alert-danger mb-4 rounded-4 border-0 bg-danger bg-opacity-10 text-danger p-3">
+                <i class="fas fa-exclamation-circle me-2"></i> <%= error %>
+            </div>
+            <% } %>
+            <% if (typeof success !== "undefined" && success) { %>
+            <div class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3">
+                <i class="fas fa-check-circle me-2"></i> <%= success %>
+            </div>
+            <% } %>
+
+            <!-- Parent Form -->
+            <div id="parent-form" class="glass-panel mb-4" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h5 fw-bold m-0"><i class="fas fa-user-plus me-2 text-primary"></i>Register Parent/Guardian</h3>
+                    <button class="btn btn-sm btn-link text-secondary text-decoration-none" onclick="toggleForm()">Close <i class="fas fa-times ms-1"></i></button>
+                </div>
+                <form action="/admin/parents/add" method="POST">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">First Name</label>
+                            <input type="text" name="firstName" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Last Name</label>
+                            <input type="text" name="lastName" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                        </div>
+                         <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Relationship to Student</label>
+                            <select name="relationship" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                                <option value="">Select Relationship</option>
+                                <option value="Father">Father</option>
+                                <option value="Mother">Mother</option>
+                                <option value="Guardian">Guardian</option>
+                                <option value="Sibling">Sibling</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-secondary small mb-1">Email Address</label>
+                            <input type="email" name="email" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-secondary small mb-1">Phone Number</label>
+                            <input type="tel" name="phone" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="text-secondary small mb-1">Occupation (Optional)</label>
+                            <input type="text" name="occupation" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3">
+                        </div>
+
+                        <div class="col-12"><hr class="border-secondary border-opacity-10 my-2"></div>
+
+                        <div class="col-md-6">
+                            <label class="text-secondary small mb-1">Login Username</label>
+                            <input type="text" name="username" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Username" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-secondary small mb-1">Temporary Password</label>
+                            <input type="password" name="password" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Initial password" required>
+                        </div>
+                        
+                        <div class="col-12 mt-4 text-end">
+                            <button type="button" class="btn-hero btn-secondary py-2 px-4 me-2 bg-opacity-10 border-0" onclick="toggleForm()">Cancel</button>
+                            <button type="submit" class="btn-hero btn-primary py-2 px-4">Create Parent Account</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Parents Table -->
+            <div class="glass-panel">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-10">
+                    <h3 class="h5 fw-bold m-0"><i class="fas fa-user-friends me-2 text-primary"></i>Parent Registry</h3>
+                    <div class="search-bar position-relative" style="min-width: 300px;">
+                        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                        <input type="text" id="parentSearch" class="form-control ps-5 py-2 rounded-pill bg-dark bg-opacity-10 border-secondary border-opacity-25 text-light" placeholder="Search parents or children..." onkeyup="searchParents()">
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" id="parentsTable" style="background: transparent;">
+                        <thead>
+                            <tr class="text-secondary small">
+                                <th class="border-0">Parent/Guardian</th>
+                                <th class="border-0">Linked Children</th>
+                                <th class="border-0">Relationship</th>
+                                <th class="border-0">Contact info</th>
+                                <th class="border-0 text-center">Status</th>
+                                <th class="border-0 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (typeof parents !== "undefined" && parents && parents.length > 0) { %>
+                                <% for (let parent of parents) { %>
+                                <tr>
+                                    <td class="border-0">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="sidebar-user-avatar" style="width: 45px; height: 45px; font-size: 1.2rem; background: var(--gradient-2); border:none;">
+                                                <%= (parent.first_name || 'P').charAt(0).toUpperCase() %>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-light">
+                                                    <%= parent.first_name || 'N/A' %> <%= parent.last_name || '' %>
+                                                </div>
+                                                <div class="text-secondary small"><%= parent.occupation || 'N/A' %></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="border-0">
+                                        <div class="text-primary small d-flex flex-column gap-1">
+                                            <% if (parent.children) { %>
+                                                <% let children = parent.children.split(','); %>
+                                                <% for(let child of children) { %>
+                                                    <span><i class="fas fa-child me-1 opacity-50"></i> <%= child.trim() %></span>
+                                                <% } %>
+                                            <% } else { %>
+                                                <span class="text-secondary opacity-50">No linked children</span>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                    <td class="border-0">
+                                        <code class="text-light bg-dark bg-opacity-25 px-2 py-1 rounded small border border-secondary border-opacity-25">
+                                            <%= parent.relationship || 'N/A' %>
+                                        </code>
+                                    </td>
+                                    <td class="border-0">
+                                        <div class="small text-light"><%= parent.email %></div>
+                                        <div class="text-secondary extra-small"><%= parent.phone || 'N/A' %></div>
+                                    </td>
+                                    <td class="border-0 text-center">
+                                        <span class="badge rounded-pill px-3 py-1 <%= parent.is_active ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary' %>">
+                                            <%= parent.is_active ? 'Active' : 'Inactive' %>
+                                        </span>
+                                    </td>
+                                    <td class="border-0 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <form action="/admin/toggle-user/<%= parent.id %>" method="POST" class="m-0">
+                                                <button type="submit" class="btn btn-sm btn-hero btn-secondary py-1 px-3 border-0" title="Toggle Status">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </button>
+                                            </form>
+                                            <form action="/admin/delete-user/<%= parent.id %>" method="POST" class="m-0" onsubmit="return confirm('Remove parent/guardian record?')">
+                                                <button type="submit" class="btn btn-sm btn-hero btn-primary py-1 px-3 bg-danger border-0" title="Remove">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% } %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="border-0 text-center py-5">
+                                        <i class="fas fa-user-friends fa-3x text-secondary mb-3"></i>
+                                        <div class="text-secondary">No parent records found</div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    
+    <script>
+        function toggleForm() {
+            const form = document.getElementById('parent-form');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('form') === 'open') {
+                toggleForm();
+            }
+        };
+        function searchParents() {
+            let input = document.getElementById('parentSearch');
+            let filter = input.value.toUpperCase();
+            let table = document.getElementById('parentsTable');
+            let tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                let found = false;
+                let tds = tr[i].getElementsByTagName('td');
+                for(let j = 0; j < tds.length - 1; j++) {
+                    if (tds[j].textContent.toUpperCase().indexOf(filter) > -1) {
+                        found = true;
+                        break;
+                    }
+                }
+                tr[i].style.display = found ? "" : "none";
+            }
+        }
+    </script>
+</body>
+</html>

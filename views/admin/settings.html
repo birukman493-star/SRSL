@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        
+        <!-- Main Content -->
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">System Configuration</h1>
+                        <p class="text-secondary m-0">Manage global academic rules, institution profile, and system behavior</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success mt-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3 alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i> <%= success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <% } %>
+
+            <div class="row">
+                <div class="col-xl-9">
+                    <form action="/admin/settings/update" method="POST">
+                        <!-- Institution Profile Section -->
+                        <div class="glass-panel mb-4 p-4 p-md-5">
+                            <h3 class="h5 fw-bold mb-4 text-light d-flex align-items-center">
+                                <span class="sidebar-user-avatar d-inline-flex me-3" style="width: 32px; height: 32px; font-size: 0.9rem; border:none; background: var(--gradient-1);">
+                                    <i class="fas fa-university"></i>
+                                </span>
+                                Institution Profile
+                            </h3>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="text-secondary small mb-2 opacity-75">Legal School Name</label>
+                                    <input type="text" name="schoolName" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" value="<%= settings.schoolName %>" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-secondary small mb-2 opacity-75">Academic Calendar Year</label>
+                                    <input type="text" name="academicYear" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" value="<%= settings.academicYear %>" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-secondary small mb-2 opacity-75">Official Correspondence Email</label>
+                                    <input type="email" name="contactEmail" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" value="<%= settings.contactEmail %>" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-secondary small mb-2 opacity-75">Phone International Prefix</label>
+                                    <input type="text" name="phonePrefix" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" value="<%= settings.phonePrefix %>" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Academic Rules & Control Section -->
+                        <div class="glass-panel mb-4 p-4 p-md-5">
+                            <h3 class="h5 fw-bold mb-4 text-light d-flex align-items-center">
+                                <span class="sidebar-user-avatar d-inline-flex me-3" style="width: 32px; height: 32px; font-size: 0.9rem; border:none; background: var(--gradient-2);">
+                                    <i class="fas fa-calendar-check"></i>
+                                </span>
+                                Academic Governance
+                            </h3>
+                            <div class="row g-4 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="text-secondary small mb-2 opacity-75">Active Semester</label>
+                                    <select name="semester" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3">
+                                        <option value="1" <%= settings.semester == '1' ? 'selected' : '' %>>Semester 1 (Primary)</option>
+                                        <option value="2" <%= settings.semester == '2' ? 'selected' : '' %>>Semester 2 (Secondary)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="text-secondary small mb-2 opacity-75">Attendance Threshold (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" name="attendanceThreshold" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-start-pill px-3" value="<%= settings.attendanceThreshold %>">
+                                        <span class="input-group-text bg-dark bg-opacity-25 border-secondary border-opacity-25 text-secondary border-start-0 rounded-end-pill px-3">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="text-secondary small mb-2 opacity-75">Passing Grade Criterion (%)</label>
+                                    <div class="input-group">
+                                        <input type="number" name="passingGrade" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-start-pill px-3" value="<%= settings.passingGrade %>">
+                                        <span class="input-group-text bg-dark bg-opacity-25 border-secondary border-opacity-25 text-secondary border-start-0 rounded-end-pill px-3">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Security & Availability Section -->
+                        <div class="glass-panel mb-5 p-4 p-md-5">
+                            <h3 class="h5 fw-bold mb-4 text-light d-flex align-items-center">
+                                <span class="sidebar-user-avatar d-inline-flex me-3" style="width: 32px; height: 32px; font-size: 0.9rem; border:none; background: var(--gradient-3);">
+                                    <i class="fas fa-shield-alt"></i>
+                                </span>
+                                System Availability & Ops
+                            </h3>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="p-4 rounded-4 border border-secondary border-opacity-10 bg-dark bg-opacity-10">
+                                        <div class="form-check form-switch p-0 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <label class="fw-bold text-light d-block mb-1" for="regOpen">Open Admissions</label>
+                                                <small class="text-secondary d-block opacity-75">Allow public registration for new students</small>
+                                            </div>
+                                            <input class="form-check-input ms-0" style="width: 3rem; height: 1.5rem;" type="checkbox" name="regOpen" id="regOpen" <%= settings.regOpen == 'on' ? 'checked' : '' %>>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-4 rounded-4 border border-secondary border-opacity-10 bg-dark bg-opacity-10">
+                                        <div class="form-check form-switch p-0 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <label class="fw-bold text-light d-block mb-1" for="maintMode">Maintenance Mode</label>
+                                                <small class="text-secondary d-block opacity-75">Lock the portal for non-admin personnel</small>
+                                            </div>
+                                            <input class="form-check-input ms-0" style="width: 3rem; height: 1.5rem;" type="checkbox" name="maintMode" id="maintMode" <%= settings.maintMode == 'on' ? 'checked' : '' %>>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submission Panel -->
+                        <div class="glass-panel py-3 px-4 d-flex justify-content-between align-items-center position-sticky bottom-0 z-3 bg-blur border-top-0 rounded-top-0 shadow-lg" style="margin-top: -3rem; border-color: rgba(255,255,255,0.05);">
+                            <div class="text-secondary small"><i class="fas fa-info-circle me-1"></i> Changes will propagate immediately to all components</div>
+                            <button type="submit" class="btn-hero btn-primary py-2 px-5 shadow-lg">
+                                <i class="fas fa-save me-2"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="col-xl-3">
+                    <div class="glass-panel text-center p-4 h-100">
+                        <i class="fas fa-history fa-2x text-primary mb-4 opacity-50"></i>
+                        <h4 class="h6 fw-bold text-light uppercase tracking-wider mb-4">Configuration Log</h4>
+                        <div class="text-start">
+                            <div class="mb-3 border-start border-primary border-2 ps-3">
+                                <div class="text-light small fw-bold">SysAdmin changed Semester</div>
+                                <div class="text-secondary" style="font-size: 0.65rem;">Today, 10:45 AM</div>
+                            </div>
+                            <div class="mb-3 border-start border-secondary border-1 ps-3 opacity-50">
+                                <div class="text-light small">Threshold updated to 75%</div>
+                                <div class="text-secondary" style="font-size: 0.65rem;">Yesterday, 02:30 PM</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const createToggleHandler = (id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('change', async function() {
+                    try {
+                        const res = await fetch('/admin/settings/quick-toggle', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ key: id, value: this.checked ? 'on' : 'off' })
+                        });
+                        const data = await res.json();
+                        if (!data.success) throw new Error(data.message);
+                    } catch (e) {
+                        alert("Failed to update setting directly: " + e.message);
+                        this.checked = !this.checked; // revert UI
+                    }
+                });
+            };
+
+            createToggleHandler('regOpen');
+            createToggleHandler('maintMode');
+        });
+    </script>
+</body>
+</html>

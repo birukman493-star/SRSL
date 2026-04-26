@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Assignments - SRSL Faculty</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Class Assignments</h1>
+                        <p class="text-secondary m-0">Create, track, and manage all student course tasks</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-hero btn-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#newAssignmentModal">
+                            <i class="fas fa-plus-circle me-2"></i> Create Assignment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <% if (assignments && assignments.length > 0) { %>
+                    <% assignments.forEach(a => { %>
+                    <div class="col-12">
+                        <div class="glass-panel p-4 hover-lift transition">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-4">
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-4 d-flex align-items-center justify-content-center" style="width: 55px; height: 55px; font-size: 1.4rem;">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="fw-bold text-light mb-1"><%= a.title %></h4>
+                                        <div class="d-flex gap-3 text-secondary small">
+                                            <span><i class="fas fa-school text-primary me-2"></i><%= a.class_name %> (<%= a.grade %>-<%= a.section %>)</span>
+                                            <span class="text-opacity-25 opacity-50">|</span>
+                                            <span><i class="far fa-calendar-alt text-warning me-2"></i> Due: <%= new Date(a.due_date).toLocaleDateString() %></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-4">
+                                    <div class="text-end">
+                                        <div class="h5 fw-bold text-success mb-0"><%= a.max_points %> <small class="text-secondary fw-normal">PTS</small></div>
+                                        <div class="badge bg-white bg-opacity-5 text-secondary border border-white border-opacity-10 px-2 py-1 mt-1" style="font-size: 0.65rem;">
+                                            ID: #<%= a.id %>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10" style="text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px;">
+                                        <%= a.assignment_type %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="col-12">
+                        <div class="glass-panel p-5 text-center">
+                            <div class="opacity-25 mb-3">
+                                <i class="fas fa-file-invoice fa-4x text-secondary"></i>
+                            </div>
+                            <h3 class="text-light fw-bold">No Assignments Yet</h3>
+                            <p class="text-secondary">Click the "Create Assignment" button above to start managing your student tasks.</p>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modal Styled with Glassmorphism -->
+    <div class="modal fade" id="newAssignmentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content glass-panel border-white border-opacity-10 shadow-lg">
+                <div class="modal-header border-0 p-4">
+                    <h5 class="modal-title fw-bold text-light"><i class="fas fa-plus-circle text-primary me-2"></i> New Assignment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 pt-0">
+                    <form id="assignmentForm">
+                        <div class="row g-4">
+                            <div class="col-md-8">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Title</label>
+                                <input type="text" class="form-control glass-card bg-white bg-opacity-5 border-white border-opacity-10 text-light py-3 px-4" name="title" placeholder="e.g. Unit 4 Research Project" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Max Points</label>
+                                <input type="number" class="form-control glass-card bg-white bg-opacity-5 border-white border-opacity-10 text-light py-3 px-4" name="maxPoints" value="100">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Target Class ID</label>
+                                <input type="number" class="form-control glass-card bg-white bg-opacity-5 border-white border-opacity-10 text-light py-3 px-4" name="classId" placeholder="e.g. 15" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Assignment Type</label>
+                                <select class="form-select glass-card bg-white bg-opacity-5 border-white border-opacity-10 text-light py-3 px-4" name="assignmentType" style="background-image: none;">
+                                    <option value="homework" class="bg-dark">Homework</option>
+                                    <option value="project" class="bg-dark">Project</option>
+                                    <option value="lab" class="bg-dark">Lab / Practical</option>
+                                    <option value="essay" class="bg-dark">Essay / Writing</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Due Date</label>
+                                <input type="date" class="form-control glass-card bg-white bg-opacity-5 border-white border-opacity-10 text-light py-3 px-4" name="dueDate" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">detailed Description</label>
+                                <textarea class="form-control glass-card bg-white bg-opacity-5 border-white border-opacity-10 text-light py-3 px-4" name="description" rows="4" placeholder="Describe the task and expectations..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-hero btn-secondary px-4 py-2" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-hero btn-primary px-4 py-2" id="submitAssignment">
+                        <i class="fas fa-check-circle me-2"></i> Create Assignment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <script>
+        document.getElementById('submitAssignment').addEventListener('click', async () => {
+            const formData = new FormData(document.getElementById('assignmentForm'));
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/teacher/assignments/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                alert('Connection error while creating assignment');
+            }
+        });
+    </script>
+</body>
+</html>

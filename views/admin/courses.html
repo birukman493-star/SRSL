@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        
+        <!-- Main Content -->
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Course Curriculum Management</h1>
+                        <p class="text-secondary m-0">Define academic units, credit systems, and lead instructors</p>
+                    </div>
+                    <button class="btn-hero btn-primary px-4" onclick="toggleForm()">
+                        <i class="fas fa-plus me-2"></i> Add New Course
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3 alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i> <%= success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <% } %>
+
+            <!-- Add/Edit Course Form -->
+            <div id="add-course-form" class="glass-panel mb-4" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h5 fw-bold m-0"><i class="fas fa-plus me-2 text-primary"></i>Create/Edit Course</h3>
+                    <button class="btn btn-sm btn-link text-secondary text-decoration-none" onclick="toggleForm()">Close <i class="fas fa-times ms-1"></i></button>
+                </div>
+                <form action="/admin/courses/add" method="POST">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Course Name</label>
+                            <input type="text" name="name" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="e.g. Advanced Mathematics" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-secondary small mb-1">Course Code</label>
+                            <input type="text" name="code" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="e.g. MATH-401" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="text-secondary small mb-1">Credits</label>
+                            <input type="number" name="credits" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" value="3" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-secondary small mb-1">Lead Instructor</label>
+                            <select name="teacher_id" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3">
+                                <option value="">TBD / No Assignment</option>
+                                <% if (typeof teachers !== "undefined" && teachers && teachers.length > 0) { %>
+                                    <% for (let t of teachers) { %>
+                                        <option value="<%= t.id %>"><%= t.first_name %> <%= t.last_name %></option>
+                                    <% } %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="text-secondary small mb-1">Course Description</label>
+                            <textarea name="description" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-4 px-3" rows="2" placeholder="Brief overview of the course curriculum..."></textarea>
+                        </div>
+                        <div class="col-12 mt-4 text-end">
+                            <button type="button" class="btn-hero btn-secondary py-2 px-4 me-2 bg-opacity-10 border-0" onclick="toggleForm()">Cancel</button>
+                            <button type="submit" class="btn-hero btn-primary py-2 px-4">Save Course</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Courses List -->
+            <div class="glass-panel">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                        <thead>
+                            <tr class="text-secondary small">
+                                <th class="border-0">Course Details</th>
+                                <th class="border-0">Code</th>
+                                <th class="border-0">Instructor</th>
+                                <th class="border-0 text-center">Value</th>
+                                <th class="border-0 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (typeof courses !== "undefined" && courses && courses.length > 0) { %>
+                                <% for (let course of courses) { %>
+                                <tr>
+                                    <td class="border-0">
+                                        <div class="fw-bold text-light"><%= course.course_name %></div>
+                                        <div class="text-secondary small text-truncate" style="max-width: 300px;"><%= course.description || 'No description provided' %></div>
+                                    </td>
+                                    <td class="border-0">
+                                        <code class="text-primary bg-primary bg-opacity-10 px-2 py-1 rounded small"><%= course.course_code %></code>
+                                    </td>
+                                    <td class="border-0">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="sidebar-user-avatar m-0" style="width: 32px; height: 32px; font-size: 0.8rem; background: var(--gradient-2); border:none;">
+                                                <%= course.teacher_first ? course.teacher_first.charAt(0) : '?' %>
+                                            </div>
+                                            <span class="text-light small"><%= course.teacher_first ? course.teacher_first + ' ' + course.teacher_last : 'Unassigned' %></span>
+                                        </div>
+                                    </td>
+                                    <td class="border-0 text-center">
+                                        <span class="badge rounded-pill px-3 py-1 bg-dark bg-opacity-25 text-secondary border border-secondary border-opacity-25">
+                                            <%= course.credits %> units
+                                        </span>
+                                    </td>
+                                    <td class="border-0 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <button class="btn btn-sm btn-hero btn-secondary py-1 px-3 border-0" title="Prerequisites" onclick="managePrerequisites('<%= course.id %>', '<%= course.course_name %>')">
+                                                <i class="fas fa-link"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-hero btn-secondary py-1 px-3 border-0" title="Edit" onclick="editCourse('<%= course.id %>', '<%= course.course_name %>', '<%= course.course_code %>', '<%= course.credits %>', '<%= course.description %>', '<%= course.teacher_id %>')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-hero btn-primary py-1 px-3 bg-danger border-0" title="Delete" onclick="deleteCourse('<%= course.id %>')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% } %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="border-0 text-center py-5">
+                                        <i class="fas fa-book-open fa-3x text-secondary mb-3 opacity-25"></i>
+                                        <div class="text-secondary">No courses found in the curriculum.</div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Prerequisites Modal -->
+    <div class="modal fade" id="prerequisitesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary border-opacity-25 rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-light fw-bold" id="prereqModalTitle">Manage Prerequisites</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="prereq-list" class="mb-4">
+                        <!-- Prerequisites will be loaded here -->
+                    </div>
+                    <form id="add-prereq-form" class="border-top border-secondary border-opacity-25 pt-3">
+                        <input type="hidden" name="course_id" id="target-course-id">
+                        <label class="text-secondary small mb-2 d-block">Add Prerequisite Course</label>
+                        <div class="input-group">
+                            <select name="prerequisite_id" class="form-select bg-dark bg-opacity-50 border-secondary border-opacity-25 text-light rounded-start-pill px-3" required>
+                                <option value="">Select a course...</option>
+                                <% if (typeof courses !== "undefined" && courses) { %>
+                                    <% for (let c of courses) { %>
+                                        <option value="<%= c.id %>"><%= c.course_name %> (<%= c.course_code %>)</option>
+                                    <% } %>
+                                <% } %>
+                            </select>
+                            <button class="btn btn-primary rounded-end-pill px-4" type="submit">Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <script>
+        function toggleForm() { 
+            const form = document.getElementById('add-course-form'); 
+            if (form.style.display === 'none') {
+                document.querySelector('#add-course-form form').action = '/admin/courses/add';
+                document.querySelector('#add-course-form h3').innerHTML = '<i class="fas fa-plus me-2 text-primary"></i>Create New Course';
+                document.querySelector('#add-course-form form').reset();
+                form.style.display = 'block';
+                form.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                form.style.display = 'none';
+            }
+        }
+
+        function editCourse(id, name, code, credits, desc, teacherId) {
+            const formDiv = document.getElementById('add-course-form');
+            const form = formDiv.querySelector('form');
+            
+            form.action = '/admin/courses/edit/' + id;
+            formDiv.querySelector('h3').innerHTML = '<i class="fas fa-edit me-2 text-primary"></i>Edit Course';
+            
+            form.querySelector('input[name="name"]').value = name;
+            form.querySelector('input[name="code"]').value = code;
+            form.querySelector('input[name="credits"]').value = credits;
+            form.querySelector('textarea[name="description"]').value = desc;
+            form.querySelector('select[name="teacher_id"]').value = teacherId === 'null' ? '' : teacherId;
+            
+            formDiv.style.display = 'block';
+            formDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function deleteCourse(id) {
+            if (!confirm('Are you sure you want to delete this course? This cannot be undone.')) return;
+            try {
+                const response = await fetch('/admin/courses/delete/' + id, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        const prereqModal = new bootstrap.Modal(document.getElementById('prerequisitesModal'));
+
+        function managePrerequisites(id, name) {
+            document.getElementById('target-course-id').value = id;
+            document.getElementById('prereqModalTitle').innerText = 'Prerequisites for ' + name;
+            loadPrerequisites(id);
+            prereqModal.show();
+        }
+
+        async function loadPrerequisites(courseId) {
+            const listDiv = document.getElementById('prereq-list');
+            listDiv.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin text-primary"></i></div>';
+            
+            try {
+                const response = await fetch('/admin/courses/prerequisites/' + courseId);
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.prerequisites.length === 0) {
+                        listDiv.innerHTML = '<p class="text-secondary small text-center m-0">No prerequisites defined.</p>';
+                    } else {
+                        let html = '<ul class="list-group list-group-flush bg-transparent">';
+                        data.prerequisites.forEach(p => {
+                            html += `
+                                <li class="list-group-item bg-transparent border-secondary border-opacity-10 d-flex justify-content-between align-items-center px-0 py-2">
+                                    <span class="text-light small">${p.course_name} (${p.course_code})</span>
+                                    <button class="btn btn-sm btn-link text-danger p-0" onclick="removePrerequisite(${p.id}, ${courseId})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </li>
+                            `;
+                        });
+                        html += '</ul>';
+                        listDiv.innerHTML = html;
+                    }
+                }
+            } catch (err) {
+                listDiv.innerHTML = '<p class="text-danger small">Failed to load prerequisites.</p>';
+            }
+        }
+
+        document.getElementById('add-prereq-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const courseId = document.getElementById('target-course-id').value;
+            const prereqId = e.target.prerequisite_id.value;
+
+            try {
+                const response = await fetch('/admin/courses/prerequisites/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ course_id: courseId, prerequisite_id: prereqId })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    loadPrerequisites(courseId);
+                } else {
+                    alert(result.message);
+                }
+            } catch (err) {
+                alert('Failed to add prerequisite');
+            }
+        });
+
+        async function removePrerequisite(id, courseId) {
+            if (!confirm('Remove this prerequisite?')) return;
+            try {
+                const response = await fetch('/admin/courses/prerequisites/delete/' + id, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    loadPrerequisites(courseId);
+                }
+            } catch (err) {
+                alert('Failed to remove prerequisite');
+            }
+        }
+    </script>
+</body>
+</html>

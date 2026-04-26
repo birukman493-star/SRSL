@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SRSL Faculty</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">School Announcements</h1>
+                        <p class="text-secondary m-0">Latest updates and notifications from school administration</p>
+                    </div>
+                </div>
+            </div>
+
+            <% if (typeof announcements !== "undefined" && announcements && announcements.length > 0) { %>
+                <div class="row g-4">
+                    <% for (let a of announcements) { %>
+                        <div class="col-12">
+                            <div class="glass-panel p-4 hover-lift transition" style="border-left: 5px solid var(--primary-color) !important;">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h3 class="h4 fw-bold text-light mb-2"><%= a.title %></h3>
+                                        <div class="d-flex gap-4 text-secondary small">
+                                            <span>
+                                                <i class="far fa-calendar-alt text-primary me-2"></i> 
+                                                <%= new Date(a.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) %>
+                                            </span>
+                                            <span>
+                                                <i class="far fa-user text-info me-2"></i> 
+                                                <%= a.first_name %> <%= a.last_name %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10 small" style="text-transform: capitalize;">
+                                        <%= a.audience %>
+                                    </span>
+                                </div>
+                                <div class="glass-card p-4 mt-3" style="background: rgba(255,255,255,0.03);">
+                                    <div class="text-secondary" style="line-height: 1.8; font-size: 1rem;">
+                                        <%- a.message %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+            <% } else { %>
+                <div class="glass-panel p-5 text-center">
+                    <div class="opacity-25 mb-4">
+                        <i class="fas fa-bullhorn fa-5x text-secondary"></i>
+                    </div>
+                    <h3 class="text-light fw-bold">No Announcements Found</h3>
+                    <p class="text-secondary">All system updates will appear here when posted by administration.</p>
+                </div>
+            <% } %>
+        </main>
+    </div>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

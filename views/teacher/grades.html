@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade Management - SRSL Faculty</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .grade-component::-webkit-inner-spin-button, 
+        .grade-component::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
+        }
+        .grade-component { -moz-appearance: textfield; }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 15px rgba(0, 200, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Academic Records</h1>
+                        <p class="text-secondary m-0">Record and manage student performance for the current assessment</p>
+                    </div>
+                    <div class="d-flex gap-3">
+                         <button class="btn btn-hero btn-primary px-4 py-2 shadow-lg" id="saveGrades">
+                            <i class="fas fa-paper-plane me-2"></i> Submit for Approval
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Section -->
+            <div class="glass-panel p-4 mb-4">
+                <div class="row g-4 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label text-secondary small fw-bold text-uppercase">Assessment Title</label>
+                        <div class="position-relative">
+                            <i class="fas fa-edit position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary opacity-50"></i>
+                            <input type="text" class="form-control glass-input text-light py-2 ps-5 pe-3" id="assessmentTitle" value="Semester Final Grades" placeholder="e.g. Semester 1 Final">
+                        </div>
+                        <input type="hidden" id="assessmentType" value="final-exam">
+                        <input type="hidden" id="maxPoints" value="100">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-secondary small fw-bold text-uppercase">Session Date</label>
+                        <div class="position-relative">
+                            <i class="fas fa-calendar-day position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary opacity-50"></i>
+                            <input type="date" class="form-control glass-input text-light py-2 ps-5 pe-3" id="gradeDate" value="<%= new Date().toISOString().split('T')[0] %>">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grades Table -->
+            <div class="glass-panel p-4">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                        <thead>
+                            <tr>
+                                <th class="border-0 text-secondary small py-3" style="width: 20%;">Student Name</th>
+                                <th class="border-0 text-secondary small py-3 text-center" style="width: 12%;">Mid (30)</th>
+                                <th class="border-0 text-secondary small py-3 text-center" style="width: 12%;">Test (10)</th>
+                                <th class="border-0 text-secondary small py-3 text-center" style="width: 12%;">Att (10)</th>
+                                <th class="border-0 text-secondary small py-3 text-center" style="width: 12%;">Final (50)</th>
+                                <th class="border-0 text-secondary small py-3 text-center" style="width: 12%;">Total</th>
+                                <th class="border-0 text-secondary small py-3" style="width: 20%;">Teacher Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% grades.forEach(student => { %>
+                            <tr class="transition grade-row" data-student-id="<%= student.student_pk %>">
+                                <td class="border-0 py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="sidebar-user-avatar" style="width: 45px; height: 45px; font-size: 1rem; background: var(--gradient-1); border:none; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                                            <%= (student.first_name ? student.first_name.charAt(0).toUpperCase() : '?') %>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-light"><%= student.first_name || 'Unknown' %> <%= student.last_name || '' %></div>
+                                            <div class="text-secondary small" style="font-size: 0.7rem;">ID: STU-<%= student.student_id %></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="border-0 py-3 text-center">
+                                    <input type="number" step="0.01" max="30" min="0" class="form-control glass-input text-light text-center py-2 px-2 mx-auto grade-component" 
+                                           name="mid_<%= student.student_pk %>" 
+                                           value="<%= student.mid_score || 0 %>" 
+                                           style="width: 80px; font-weight: 700; border-radius: 10px;">
+                                </td>
+                                <td class="border-0 py-3 text-center">
+                                    <input type="number" step="0.01" max="10" min="0" class="form-control glass-input text-light text-center py-2 px-2 mx-auto grade-component" 
+                                           name="test_<%= student.student_pk %>" 
+                                           value="<%= student.test_score || 0 %>" 
+                                           style="width: 80px; font-weight: 700; border-radius: 10px;">
+                                </td>
+                                <td class="border-0 py-3 text-center">
+                                    <input type="number" step="0.01" max="10" min="0" class="form-control glass-input text-light text-center py-2 px-2 mx-auto grade-component" 
+                                           name="att_<%= student.student_pk %>" 
+                                           value="<%= student.attendance_score || 0 %>" 
+                                           style="width: 80px; font-weight: 700; border-radius: 10px;">
+                                </td>
+                                <td class="border-0 py-3 text-center">
+                                    <input type="number" step="0.01" max="50" min="0" class="form-control glass-input text-light text-center py-2 px-2 mx-auto grade-component" 
+                                           name="final_<%= student.student_pk %>" 
+                                           value="<%= student.final_score || 0 %>" 
+                                           style="width: 80px; font-weight: 700; border-radius: 10px;">
+                                </td>
+                                <td class="border-0 py-3 text-center">
+                                    <div class="badge bg-dark bg-opacity-30 p-2 rounded-3 border border-white border-opacity-5">
+                                        <span class="text-secondary fw-bold total-display" style="font-size: 0.95rem;"><%= student.score || 0 %> / 100</span>
+                                    </div>
+                                </td>
+                                <td class="border-0 py-3">
+                                    <div class="position-relative">
+                                        <i class="fas fa-comment shadow-sm position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary opacity-25"></i>
+                                        <input type="text" class="form-control glass-input text-light py-2 ps-5 pe-3 small" 
+                                               name="notes_<%= student.student_pk %>" 
+                                               value="<%= student.notes || '' %>" 
+                                               placeholder="Student feedback..." 
+                                               style="font-size: 0.85rem; border-radius: 12px;">
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <script>
+        document.getElementById('saveGrades').addEventListener('click', async () => {
+            const classId = '<%= classId %>';
+            const assessmentType = document.getElementById('assessmentType').value;
+            const title = document.getElementById('assessmentTitle').value;
+            const maxPoints = document.getElementById('maxPoints').value;
+            const gradeDate = document.getElementById('gradeDate').value;
+            
+            if (!title) return alert('Please enter assessment title');
+
+            const studentGrades = {};
+            const rows = document.querySelectorAll('tbody .grade-row');
+            rows.forEach(row => {
+                const studentId = row.dataset.studentId;
+                const mid = parseFloat(row.querySelector(`input[name="mid_${studentId}"]`).value) || 0;
+                const test = parseFloat(row.querySelector(`input[name="test_${studentId}"]`).value) || 0;
+                const att = parseFloat(row.querySelector(`input[name="att_${studentId}"]`).value) || 0;
+                const final_score = parseFloat(row.querySelector(`input[name="final_${studentId}"]`).value) || 0;
+                const score = mid + test + att + final_score;
+                
+                const notesInput = row.querySelector(`input[name="notes_${studentId}"]`);
+                studentGrades[studentId] = {
+                    mid_score: mid,
+                    test_score: test,
+                    attendance_score: att,
+                    final_score: final_score,
+                    score: score,
+                    notes: notesInput.value
+                };
+            });
+
+            const submitBtn = document.getElementById('saveGrades');
+            const originalHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Saving...';
+
+            try {
+                const response = await fetch('/teacher/grades/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ classId, assessmentType, title, maxPoints, gradeWeight: 1.0, gradeDate, grades: studentGrades })
+                });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    submitBtn.classList.replace('btn-primary', 'btn-success');
+                    submitBtn.innerHTML = '<i class="fas fa-check me-2"></i> Grades Submitted';
+                    setTimeout(() => {
+                        submitBtn.classList.replace('btn-success', 'btn-primary');
+                        submitBtn.innerHTML = originalHtml;
+                        submitBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    alert('Error: ' + result.message);
+                    submitBtn.innerHTML = originalHtml;
+                    submitBtn.disabled = false;
+                }
+            } catch (err) {
+                alert('Connection error while saving grades');
+                submitBtn.innerHTML = originalHtml;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Auto-calculate Total sums horizontally for each row
+        document.querySelectorAll('.grade-component').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const row = e.target.closest('tr');
+                const studentId = row.dataset.studentId;
+                const mid = parseFloat(row.querySelector(`input[name="mid_${studentId}"]`).value) || 0;
+                const test = parseFloat(row.querySelector(`input[name="test_${studentId}"]`).value) || 0;
+                const att = parseFloat(row.querySelector(`input[name="att_${studentId}"]`).value) || 0;
+                const finalSc = parseFloat(row.querySelector(`input[name="final_${studentId}"]`).value) || 0;
+                
+                let sum = mid + test + att + finalSc;
+                // color scaling
+                const totalSpan = row.querySelector('.total-display');
+                totalSpan.innerText = sum.toFixed(2) + ' / 100';
+                if(sum >= 80) totalSpan.style.color = '#00b894';
+                else if(sum >= 60) totalSpan.style.color = '#fdcb6e';
+                else totalSpan.style.color = '#d63031';
+            });
+        });
+    </script>
+</body>
+</html>

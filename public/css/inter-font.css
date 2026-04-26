@@ -1,0 +1,12 @@
+/* Inter Font - Self-hosted offline version */
+/* Uses system UI fonts as fallback for offline use */
+
+/* Define Inter as system font stack - works offline without downloading */
+:root {
+  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
+    Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+}
+
+body {
+  font-family: var(--font-inter) !important;
+}

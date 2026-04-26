@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        
+        <!-- Main Content -->
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">System Insights & Analytics</h1>
+                        <p class="text-secondary m-0">Holistic overview of campus registrations, performance, and operational health</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Overview Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="glass-panel text-center">
+                        <div class="sidebar-user-avatar m-0 mx-auto mb-3" style="width: 50px; height: 50px; background: rgba(102, 126, 234, 0.1); color: #667eea; border:none;">
+                            <i class="fas fa-user-graduate" style="font-size: 1.2rem;"></i>
+                        </div>
+                        <div class="h3 fw-bold text-light mb-1"><%= stats.studentCount %></div>
+                        <div class="text-secondary small text-uppercase fw-bold opacity-75">Students</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-panel text-center">
+                        <div class="sidebar-user-avatar m-0 mx-auto mb-3" style="width: 50px; height: 50px; background: rgba(237, 100, 166, 0.1); color: #ed64a6; border:none;">
+                            <i class="fas fa-chalkboard-teacher" style="font-size: 1.2rem;"></i>
+                        </div>
+                        <div class="h3 fw-bold text-light mb-1"><%= stats.teacherCount %></div>
+                        <div class="text-secondary small text-uppercase fw-bold opacity-75">Faculty</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-panel text-center">
+                        <div class="sidebar-user-avatar m-0 mx-auto mb-3" style="width: 50px; height: 50px; background: rgba(72, 187, 120, 0.1); color: #48bb78; border:none;">
+                            <i class="fas fa-school" style="font-size: 1.2rem;"></i>
+                        </div>
+                        <div class="h3 fw-bold text-light mb-1"><%= stats.classCount %></div>
+                        <div class="text-secondary small text-uppercase fw-bold opacity-75">Classes</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-panel text-center position-relative">
+                        <div class="sidebar-user-avatar m-0 mx-auto mb-3" style="width: 50px; height: 50px; background: rgba(236, 151, 33, 0.1); color: #ec9721; border:none;">
+                            <i class="fas fa-envelope-open-text" style="font-size: 1.2rem;"></i>
+                        </div>
+                        <div class="h3 fw-bold text-light mb-1"><%= stats.unreadMessages %></div>
+                        <div class="text-secondary small text-uppercase fw-bold opacity-75">Inquiries</div>
+                        <% if(stats.unreadMessages > 0) { %>
+                            <span class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle" style="margin-top: 15px; margin-left: -25px;"></span>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Analysis Section -->
+            <div class="row g-4 mb-4">
+                <!-- Recent Registrations -->
+                <div class="col-lg-8">
+                    <div class="glass-panel h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="h5 fw-bold m-0"><i class="fas fa-users-cog me-2 text-primary"></i>Recent Registrations</h3>
+                            <a href="/admin/users" class="text-primary small text-decoration-none">View All <i class="fas fa-arrow-right ms-1" style="font-size: 0.7rem;"></i></a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                                <thead>
+                                    <tr class="text-secondary small">
+                                        <th class="border-0">User Profile</th>
+                                        <th class="border-0">Role</th>
+                                        <th class="border-0">Joined On</th>
+                                        <th class="border-0 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (typeof recentRegistrations !== "undefined" && recentRegistrations) { %>
+                                        <% for (let reg of recentRegistrations) { %>
+                                        <tr>
+                                            <td class="border-0">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="sidebar-user-avatar m-0" style="width: 32px; height: 32px; font-size: 0.7rem; background: rgba(255,255,255,0.05); border:none;">
+                                                        <%= (reg.first_name ? reg.first_name.charAt(0) : '?') %>
+                                                    </div>
+                                                    <div class="fw-bold text-light"><%= reg.first_name || 'N/A' %> <%= reg.last_name || '' %></div>
+                                                </div>
+                                            </td>
+                                            <td class="border-0">
+                                                <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 text-capitalize" style="font-size: 0.65rem;">
+                                                    <%= reg.role %>
+                                                </span>
+                                            </td>
+                                            <td class="border-0 text-secondary small"><%= new Date(reg.created_at).toLocaleDateString() %></td>
+                                            <td class="border-0 text-center">
+                                                <span class="text-success small"><i class="fas fa-check-circle me-1"></i>Active</span>
+                                            </td>
+                                        </tr>
+                                        <% } %>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grade Distribution -->
+                <div class="col-lg-4">
+                    <div class="glass-panel h-100">
+                        <h3 class="h5 fw-bold mb-4"><i class="fas fa-chart-pie me-2 text-success"></i>Enrollment Bias</h3>
+                        <div class="mt-4">
+                            <% if (typeof gradeDistribution !== "undefined" && gradeDistribution) { %>
+                                <% for (let grade of gradeDistribution) { %>
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-end mb-2">
+                                        <div>
+                                            <div class="text-light fw-bold small">Grade <%= grade.grade_level %></div>
+                                            <div class="text-secondary" style="font-size: 0.7rem;"><%= grade.count %> Students Enrolled</div>
+                                        </div>
+                                        <% 
+                                            let percentage = 0;
+                                            if (stats && stats.studentCount > 0) {
+                                                percentage = Math.round((grade.count / stats.studentCount) * 100);
+                                            }
+                                        %>
+                                        <div class="text-primary fw-bold small"><%= percentage %>%</div>
+                                    </div>
+                                    <div class="progress" style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                                        <div class="progress-bar-animated progress-bar bg-primary" role="progressbar" data-percent="<%= percentage %>" style="width: 0%; border-radius: 10px; transition: width 1.5s cubic-bezier(0.1, 0, 0, 1);"></div>
+                                    </div>
+                                </div>
+                                <% } %>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Generation Modules -->
+            <div class="row g-4">
+                <div class="col-12 mt-2">
+                    <h3 class="h5 fw-bold text-light mb-3"><i class="fas fa-file-export me-2 text-warning"></i>Generate Specialized Reports</h3>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="glass-panel text-center p-4 h-100 border-top border-primary border-4">
+                        <i class="fas fa-chart-line fa-3x text-primary mb-4 opacity-50"></i>
+                        <h4 class="h5 fw-bold text-light">Attendance Analytics</h4>
+                        <p class="text-secondary small mb-4">Generate trends and heatmaps of student presence across all grades.</p>
+                        <button class="btn-hero btn-primary w-100 py-2">Preview & Export</button>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="glass-panel text-center p-4 h-100 border-top border-success border-4">
+                        <i class="fas fa-graduation-cap fa-3x text-success mb-4 opacity-50"></i>
+                        <h4 class="h5 fw-bold text-light">Grade Performance</h4>
+                        <p class="text-secondary small mb-4">Identify top performers and at-risk students with detailed GPA breakdowns.</p>
+                        <button class="btn-hero btn-secondary w-100 py-2">Preview & Export</button>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="glass-panel text-center p-4 h-100 border-top border-warning border-4">
+                        <i class="fas fa-university fa-3x text-warning mb-4 opacity-50"></i>
+                        <h4 class="h5 fw-bold text-light">System Operations</h4>
+                        <p class="text-secondary small mb-4">Audit logs, system uptime, and resource utilization reports.</p>
+                        <button class="btn-hero btn-secondary w-100 py-2 border-0 bg-opacity-10">Preview & Export</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelectorAll('.progress-bar').forEach(bar => {
+                    const percent = bar.getAttribute('data-percent');
+                    if (percent) bar.style.width = percent + '%';
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>

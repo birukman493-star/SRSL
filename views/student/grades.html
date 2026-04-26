@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SRSL</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="admin-container dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel">
+            <!-- Top Header -->
+            <header class="dashboard-header-modern mb-4">
+                <div class="header-content">
+                    <div class="header-title-block">
+                        <h1 class="header-title">My Academic Progress</h1>
+                        <p class="header-subtitle"><i class="fas fa-chart-bar me-2"></i>Detailed breakdown of your grades</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-soft-primary px-4 rounded-pill" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>Download Report
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Search & Filter Area -->
+            <div class="glass-panel mb-4 py-3">
+                <div class="row g-3 items-center">
+                    <div class="col-md-6">
+                        <div class="search-box-modern">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="form-control" placeholder="Search assignments or courses..." id="gradeSearch">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grades Content -->
+            <div class="glass-panel">
+                <div id="grades-container">
+                    <%- grades_html %>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <script>
+        document.getElementById('gradeSearch')?.addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            const items = document.querySelectorAll('#grades-container .grade-item, #grades-container .grade-card');
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

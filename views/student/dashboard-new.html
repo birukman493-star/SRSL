@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SRSL</title>
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling (matches Admin & Teacher) -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Welcome back, <%= user.first_name %>!</h1>
+                        <p class="text-secondary m-0">Student Portal &bull; Academic Dashboard</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10">
+                            <i class="fas fa-user-graduate me-1"></i> Student Access
+                        </span>
+                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill border border-success border-opacity-10">
+                            <i class="fas fa-check-circle me-1"></i> Enrolled
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="glass-panel text-center h-100 p-4">
+                        <div class="mb-3 mx-auto bg-primary bg-opacity-10 text-primary" style="width:60px;height:60px;font-size:1.5rem;display:flex;align-items:center;justify-content:center;border-radius:16px;">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="h2 fw-bold mb-1 text-light"><%= courses_count %></div>
+                        <div class="text-secondary small">Enrolled Courses</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-panel text-center h-100 p-4">
+                        <div class="mb-3 mx-auto bg-success bg-opacity-10 text-success" style="width:60px;height:60px;font-size:1.5rem;display:flex;align-items:center;justify-content:center;border-radius:16px;">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="h2 fw-bold mb-1 text-light"><%= average_grade %></div>
+                        <div class="text-secondary small">Average Grade</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-panel text-center h-100 p-4">
+                        <div class="mb-3 mx-auto bg-warning bg-opacity-10 text-warning" style="width:60px;height:60px;font-size:1.5rem;display:flex;align-items:center;justify-content:center;border-radius:16px;">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <div class="h2 fw-bold mb-1 text-light"><%= pending_tasks %></div>
+                        <div class="text-secondary small">Pending Tasks</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-panel text-center h-100 p-4">
+                        <div class="mb-3 mx-auto bg-info bg-opacity-10 text-info" style="width:60px;height:60px;font-size:1.5rem;display:flex;align-items:center;justify-content:center;border-radius:16px;">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="h2 fw-bold mb-1 text-light"><%= attendance_rate %>%</div>
+                        <div class="text-secondary small">Attendance Rate</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- My Courses -->
+                <div class="col-lg-8">
+                    <div class="glass-panel h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="h5 fw-bold m-0 text-light"><i class="fas fa-book-open me-2 text-primary"></i>My Enrolled Courses</h3>
+                            <a href="/student/courses" class="btn btn-sm btn-link text-decoration-none text-primary">View All Courses →</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover align-middle mb-0" style="background:transparent;">
+                                <thead>
+                                    <tr class="text-secondary small">
+                                        <th class="border-0">Course</th>
+                                        <th class="border-0">Instructor</th>
+                                        <th class="border-0">Credits</th>
+                                        <th class="border-0">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (courses && courses.length > 0) { %>
+                                        <% courses.slice(0, 6).forEach(course => { %>
+                                        <tr>
+                                            <td class="border-0">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="bg-primary bg-opacity-10 text-primary rounded-3" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                                        <i class="fas fa-book-reader"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold text-light small"><%= course.course_name %></div>
+                                                        <code class="text-secondary smaller"><%= course.course_code %></code>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="border-0 text-secondary small">
+                                                <%= (course.teacher_fname && course.teacher_lname) ? course.teacher_fname + ' ' + course.teacher_lname : 'TBA' %>
+                                            </td>
+                                            <td class="border-0 text-secondary small"><%= course.credits || 3 %></td>
+                                            <td class="border-0">
+                                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3">Enrolled</span>
+                                            </td>
+                                        </tr>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="4" class="border-0 text-center py-5 text-secondary opacity-50">
+                                                <i class="fas fa-book fa-3x mb-3"></i>
+                                                <div>No courses enrolled yet.</div>
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Today's Schedule -->
+                    <div class="glass-panel mb-4">
+                        <h3 class="h5 fw-bold mb-4 text-light"><i class="fas fa-calendar-day me-2 text-primary"></i>Today's Schedule
+                            <span class="badge bg-primary bg-opacity-10 text-primary small rounded-pill ms-2" style="font-size:0.65rem;">
+                                <%= typeof todayName !== 'undefined' ? todayName : 'Today' %>
+                            </span>
+                        </h3>
+                        <% if (typeof todaySchedule !== 'undefined' && todaySchedule.length > 0) { %>
+                            <% todaySchedule.forEach(p => { %>
+                                <div class="glass-card p-3 mb-2 border-0 bg-white bg-opacity-5">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <span class="text-primary small fw-bold"><%= p.period %></span>
+                                        <span class="text-secondary smaller"><%= p.start_time.substring(0,5) %> - <%= p.end_time.substring(0,5) %></span>
+                                    </div>
+                                    <div class="fw-bold text-light small"><%= p.course_name %></div>
+                                    <div class="text-secondary smaller mt-1"><i class="fas fa-map-marker-alt me-1 opacity-50"></i><%= p.room || 'TBD' %></div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="text-center py-4 opacity-50">
+                                <i class="fas fa-calendar-day fa-2x text-secondary mb-2"></i>
+                                <p class="text-secondary small m-0">No classes today.</p>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Academic Progress -->
+                    <div class="glass-panel mb-4">
+                        <h3 class="h5 fw-bold mb-4 text-light"><i class="fas fa-chart-bar me-2 text-info"></i>Academic Progress</h3>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-secondary small">Overall Progress</span>
+                                <span class="text-primary small fw-bold"><%= overall_progress || 0 %>%</span>
+                            </div>
+                            <div class="progress" style="height:8px;background:rgba(255,255,255,0.1);border-radius:10px;">
+                                <div class="progress-bar" role="progressbar" style="width:<%= overall_progress || 0 %>%;background:var(--gradient-1);border-radius:10px;" aria-valuenow="<%= overall_progress || 0 %>" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="text-secondary smaller mt-1"><%= overall_progress_text %></div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-6">
+                                <div class="glass-card p-3 text-center">
+                                    <div class="text-primary fw-bold"><%= cgpa %></div>
+                                    <div class="text-secondary smaller">CGPA</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="glass-card p-3 text-center">
+                                    <div class="text-primary fw-bold"><%= rank %> / <%= total_in_class %></div>
+                                    <div class="text-secondary smaller">Class Rank</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="glass-panel">
+                        <h3 class="h5 fw-bold mb-4 text-light"><i class="fas fa-bolt me-2 text-warning"></i>Quick Actions</h3>
+                        <div class="d-grid gap-3">
+                            <a href="/student/timetable" class="btn-hero btn-primary w-100 py-3">
+                                <i class="fas fa-calendar-alt me-2"></i>View Full Timetable
+                            </a>
+                            <a href="/student/grades" class="btn-hero btn-secondary w-100 py-3">
+                                <i class="fas fa-award me-2"></i>Check My Grades
+                            </a>
+                            <a href="/student/attendance" class="btn-hero btn-primary bg-gradient-2 w-100 py-3" style="border:none;">
+                                <i class="fas fa-clipboard-check me-2"></i>View Attendance
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

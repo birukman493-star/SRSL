@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | Student Registration System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--dark-secondary) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .error-container {
+            text-align: center;
+            max-width: 600px;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .error-code {
+            font-size: 8rem;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .error-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--light-text);
+            margin-bottom: 1rem;
+        }
+        
+        .error-description {
+            font-size: 1.2rem;
+            color: var(--gray-text);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-error {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: var(--gradient-1);
+            color: var(--light-text);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--light-text);
+            border: 2px solid var(--primary-color);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary-color);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .shape-1 {
+            width: 100px;
+            height: 100px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .shape-2 {
+            width: 60px;
+            height: 60px;
+            top: 60%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+        
+        .shape-3 {
+            width: 80px;
+            height: 80px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+        
+        .search-box {
+            background: var(--dark-secondary);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem auto;
+            max-width: 400px;
+        }
+        
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--light-text);
+            flex: 1;
+            outline: none;
+        }
+        
+        .search-box input::placeholder {
+            color: var(--gray-text);
+        }
+        
+        .search-box i {
+            color: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 6rem;
+            }
+            
+            .error-title {
+                font-size: 2rem;
+            }
+            
+            .error-description {
+                font-size: 1rem;
+            }
+            
+            .error-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn-error {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Shapes -->
+    <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <!-- Error Container -->
+    <div class="error-container animate-on-scroll" data-reveal="bottom">
+        <!-- Navigation -->
+        <div class="text-center mb-4">
+            <a href="/" class="navbar-brand">
+                <i class="fas fa-graduation-cap"></i>
+                SRSL
+            </a>
+        </div>
+        
+        <!-- Error Code -->
+        <div class="error-code">404</div>
+        
+        <!-- Error Title -->
+        <h1 class="error-title">Oops! Page Not Found</h1>
+        
+        <!-- Error Description -->
+        <p class="error-description">
+            The page you're looking for seems to have vanished into the digital void. 
+            Don't worry, even the best explorers get lost sometimes!
+        </p>
+        
+        <!-- Search Box -->
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search for something..." onkeyup="handleSearch(event)">
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="error-actions">
+            <a href="/" class="btn-error btn-primary">
+                <i class="fas fa-home"></i>
+                Go Home
+            </a>
+            <a href="javascript:history.back()" class="btn-error btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Go Back
+            </a>
+        </div>
+        
+        <!-- Help Links -->
+        <div class="mt-4">
+            <p class="text-gray-300 mb-2">Looking for something specific?</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="/" class="text-primary text-decoration-none">Home</a>
+                <span class="text-gray-400">•</span>
+                <a href="/about" class="text-primary text-decoration-none">About</a>
+                <span class="text-gray-400">•</span>
+                <a href="/gallery" class="text-primary text-decoration-none">Gallery</a>
+                <span class="text-gray-400">•</span>
+                <a href="/contact" class="text-primary text-decoration-none">Contact</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="/js/brocode-script.js"></script>
+    
+    <!-- Search Functionality -->
+    <script>
+        function handleSearch(event) {
+            if (event.key === 'Enter') {
+                const searchTerm = event.target.value.trim();
+                if (searchTerm) {
+                    // Redirect to search results page or home with search parameter
+                    window.location.href = `/?search=${encodeURIComponent(searchTerm)}`;
+                }
+            }
+        }
+        
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const errorCode = document.querySelector('.error-code');
+            
+            // Add glitch effect on hover
+            errorCode.addEventListener('mouseenter', function() {
+                this.style.animation = 'none';
+                setTimeout(() => {
+                    this.style.animation = 'float 3s ease-in-out infinite, glitch 0.3s ease-in-out';
+                }, 10);
+            });
+            
+            errorCode.addEventListener('mouseleave', function() {
+                this.style.animation = 'float 3s ease-in-out infinite';
+            });
+        });
+        
+        // Glitch animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes glitch {
+                0%, 100% { transform: translate(0); }
+                20% { transform: translate(-2px, 2px); }
+                40% { transform: translate(-2px, -2px); }
+                60% { transform: translate(2px, 2px); }
+                80% { transform: translate(2px, -2px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

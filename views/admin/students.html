@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        
+        <!-- Main Content -->
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Student Admission & Records</h1>
+                        <p class="text-secondary m-0">Manage student enrollments, profiles, and academic status</p>
+                    </div>
+                    <button class="btn-hero btn-primary px-4" onclick="toggleForm()">
+                        <i class="fas fa-user-plus me-2"></i> New Admission
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <% if (typeof error !== "undefined" && error) { %>
+            <div class="alert alert-danger mb-4 rounded-4 border-0 bg-danger bg-opacity-10 text-danger p-3">
+                <i class="fas fa-exclamation-circle me-2"></i> <%= error %>
+            </div>
+            <% } %>
+            <% if (typeof success !== "undefined" && success) { %>
+            <div class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3">
+                <i class="fas fa-check-circle me-2"></i> <%= success %>
+            </div>
+            <% } %>
+
+            <% const submittedStudents = (typeof students !== 'undefined' && students) ? students.filter(s => s.registration_status === 'submitted').length : 0; %>
+            <% if (submittedStudents > 0) { %>
+            <div class="alert bg-info bg-opacity-10 border-info border-opacity-25 rounded-4 mb-4 p-4 d-flex align-items-center justify-content-between glass-card shadow-sm">
+                <div class="d-flex align-items-center">
+                    <div class="bg-info text-dark rounded-circle d-flex align-items-center justify-content-center me-4 shadow-sm" style="width: 50px; height: 50px;">
+                        <i class="fas fa-clipboard-check fs-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="alert-heading text-info fw-bold mb-1"><%= submittedStudents %> Registration(s) Pending Approval</h4>
+                        <p class="mb-0 text-secondary">These students have submitted their semester courses and are waiting for your confirmation.</p>
+                    </div>
+                </div>
+                <button onclick="approveAllRegistrations()" class="btn-hero btn-info border-0 px-4 py-2 text-dark fw-bold">
+                    Approve All <i class="fas fa-check-double ms-2"></i>
+                </button>
+            </div>
+            <% } %>
+
+            <!-- Registration Form -->
+            <div id="registration-form" class="glass-panel mb-4" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h5 fw-bold m-0"><i class="fas fa-user-edit me-2 text-primary"></i>Student Registration Form</h3>
+                    <button class="btn btn-sm btn-link text-secondary text-decoration-none" onclick="toggleForm()">Close <i class="fas fa-times ms-1"></i></button>
+                </div>
+                <form action="/admin/students/register" method="POST">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">First Name</label>
+                            <input type="text" name="firstName" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="e.g. Abebe" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Last Name</label>
+                            <input type="text" name="lastName" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="e.g. Kebede" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Student ID</label>
+                            <input type="text" name="studentId" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="ID Number" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Email Address</label>
+                            <input type="email" name="email" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="email@school.edu" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Phone Number</label>
+                            <input type="tel" name="phone" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Contact number">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="text-secondary small mb-1">Grade</label>
+                            <select name="gradeLevel" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                                <option value="">Select Grade</option>
+                                <option value="9">Grade 9</option>
+                                <option value="10">Grade 10</option>
+                                <option value="11">Grade 11</option>
+                                <option value="12">Grade 12</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="text-secondary small mb-1">Section</label>
+                            <select name="section" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                                <option value="">Select Section</option>
+                                <option value="A">Section A</option>
+                                <option value="B">Section B</option>
+                                <option value="C">Section C</option> Section C</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-secondary small mb-1">Birth Date</label>
+                            <input type="date" name="dateOfBirth" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-secondary small mb-1">Gender</label>
+                            <div class="d-flex gap-4 mt-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" value="male" id="male" required>
+                                    <label class="form-check-label text-light small" for="male">Male</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" value="female" id="female">
+                                    <label class="form-check-label text-light small" for="female">Female</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12"><hr class="border-secondary border-opacity-10 my-2"></div>
+                        
+                        <!-- Account & Enrollment Details -->
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Login Username</label>
+                            <input type="text" name="username" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Username" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Temporary Password</label>
+                            <input type="password" name="password" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Initial password" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Enrollment Date</label>
+                            <input type="date" name="enrollmentDate" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                        </div>
+
+                        <div class="col-12"><hr class="border-secondary border-opacity-10 my-2"></div>
+                        
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Parent / Guardian Name</label>
+                            <input type="text" name="parentGuardianName" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Full name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Parent Email</label>
+                            <input type="email" name="parentEmail" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="parent@example.com">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1">Parent Phone</label>
+                            <input type="tel" name="parentPhone" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Phone number">
+                        </div>
+                        
+                        <div class="col-12 mt-4 text-end">
+                            <button type="button" class="btn-hero btn-secondary py-2 px-4 me-2 bg-opacity-10 border-0" onclick="toggleForm()">Cancel</button>
+                            <button type="submit" class="btn-hero btn-primary py-2 px-4">Finalize Admission</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Students Table -->
+            <div class="glass-panel">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-10">
+                    <h3 class="h5 fw-bold m-0"><i class="fas fa-list-ul me-2 text-primary"></i>Enrolled Students</h3>
+                    <div class="search-bar position-relative" style="min-width: 300px;">
+                        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                        <input type="text" id="studentSearch" class="form-control ps-5 py-2 rounded-pill bg-dark bg-opacity-10 border-secondary border-opacity-25 text-light" placeholder="Search by name, ID, or section..." onkeyup="searchStudents()">
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" id="studentsTable" style="background: transparent;">
+                        <thead>
+                            <tr class="text-secondary small">
+                                <th class="border-0">Student Name</th>
+                                <th class="border-0 text-center">Student ID</th>
+                                <th class="border-0">Grade / Section</th>
+                                <th class="border-0">Admission Date</th>
+                                <th class="border-0 text-center">Reg. Status</th>
+                                <th class="border-0 text-center">Status</th>
+                                <th class="border-0 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (typeof students !== "undefined" && students && students.length > 0) { %>
+                                <% for (let student of students) { %>
+                                <tr>
+                                    <td class="border-0">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="sidebar-user-avatar" style="width: 45px; height: 45px; font-size: 1rem; background: var(--gradient-1); border:none;">
+                                                <%= (student.first_name || 'U').charAt(0).toUpperCase() %>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-light">
+                                                    <%= student.first_name || 'N/A' %> <%= student.last_name || '' %>
+                                                </div>
+                                                <div class="text-secondary small"><%= student.email %></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="border-0 text-center">
+                                        <code class="text-primary bg-primary bg-opacity-10 px-2 py-1 rounded small"><%= student.student_id %></code>
+                                    </td>
+                                    <td class="border-0">
+                                        <div class="fw-bold small text-light">Grade <%= student.grade_level %></div>
+                                        <div class="text-secondary small">Section <%= student.section %></div>
+                                    </td>
+                                    <td class="border-0">
+                                        <span class="text-secondary small"><%= new Date(student.created_at).toLocaleDateString() %></span>
+                                    </td>
+                                    <td class="border-0 text-center text-nowrap">
+                                        <% let regClass = 'bg-secondary'; 
+                                           if(student.registration_status === 'registered') regClass = 'bg-success';
+                                           else if(student.registration_status === 'pending') regClass = 'bg-warning';
+                                           else if(student.registration_status === 'submitted') regClass = 'bg-info';
+                                        %>
+                                        <span class="badge rounded-pill px-3 py-1 <%= regClass %> bg-opacity-10 text-<%= regClass.split('-')[1] %>">
+                                            <%= (student.registration_status || 'unregistered').replace('_', ' ') %>
+                                        </span>
+                                        <% if (student.registration_status === 'pending' || student.registration_status === 'submitted') { %>
+                                            <button onclick="confirmRegistration(<%= student.student_profile_id %>)" class="btn btn-sm btn-link text-primary p-0 ms-1" title="Confirm Registration">
+                                                <i class="fas fa-check-circle"></i>
+                                            </button>
+                                        <% } %>
+                                    </td>
+                                    <td class="border-0 text-center">
+                                        <span class="badge rounded-pill px-3 py-1 <%= student.is_active ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary' %>">
+                                            <%= student.is_active ? 'Active' : 'Inactive' %>
+                                        </span>
+                                    </td>
+                                    <td class="border-0 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <form action="/admin/toggle-user/<%= student.id %>" method="POST" class="m-0">
+                                                <button type="submit" class="btn btn-sm btn-hero btn-secondary py-1 px-3" title="Toggle Status">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </button>
+                                            </form>
+                                            <form action="/admin/delete-user/<%= student.id %>" method="POST" class="m-0" onsubmit="return confirm('Archive this student record?')">
+                                                <button type="submit" class="btn btn-sm btn-hero btn-primary py-1 px-3 bg-danger border-0" title="Archive">
+                                                    <i class="fas fa-archive"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% } %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="border-0 text-center py-5">
+                                        <i class="fas fa-user-slash fa-3x text-secondary mb-3"></i>
+                                        <div class="text-secondary">No student records found</div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    
+    <script>
+        function toggleForm() {
+            const form = document.getElementById('registration-form');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('form') === 'open') {
+                toggleForm();
+            }
+        };
+
+        function searchStudents() {
+            let input = document.getElementById('studentSearch');
+            let filter = input.value.toUpperCase();
+            let table = document.getElementById('studentsTable');
+            let tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                let found = false;
+                let tds = tr[i].getElementsByTagName('td');
+                for(let j = 0; j < tds.length - 1; j++) {
+                    if (tds[j].textContent.toUpperCase().indexOf(filter) > -1) {
+                        found = true;
+                        break;
+                    }
+                }
+                tr[i].style.display = found ? "" : "none";
+            }
+        }
+        function confirmRegistration(studentId) {
+            if (!confirm('Mark this student as registered for the semester?')) return;
+            
+            fetch(`/admin/students/confirm-registration/${studentId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('An error occurred');
+            });
+        }
+
+        function approveAllRegistrations() {
+            if (!confirm('Are you sure you want to approve ALL currently submitted registrations?')) return;
+            
+            fetch(`/admin/students/approve-all`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('An error occurred');
+            });
+        }
+    </script>
+</body>
+</html>

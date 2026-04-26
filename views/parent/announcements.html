@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        
+        <main class="main-panel w-100 p-4">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">School Announcements</h1>
+                <p class="text-secondary">Stay updated with the latest school news and events</p>
+            </div>
+
+            <div class="announcements-container">
+                <% if (announcements && announcements.length > 0) { %>
+                    <% announcements.forEach(announcement => { %>
+                        <div class="glass-panel mb-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h3 class="h4 text-primary m-0"><%= announcement.title %></h3>
+                                <span class="badge bg-primary rounded-pill">
+                                    <%= new Date(announcement.created_at).toLocaleDateString() %>
+                                </span>
+                            </div>
+                            <div class="text-light-50 mb-3" style="font-size: 1.1rem; line-height: 1.6;">
+                                <%- announcement.message %>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 text-secondary" style="font-size: 0.9rem;">
+                                <i class="fas fa-user-circle"></i>
+                                <span>Posted by: <%= announcement.author_name || 'School Admin' %></span>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="glass-panel text-center py-5">
+                        <i class="fas fa-bullhorn fa-3x text-secondary mb-3"></i>
+                        <p class="text-secondary h5">No announcements at this time.</p>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About Us - Student Registration System</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css" />
+
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/brocode-style.css" />
+
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+
+      .timeline {
+        position: relative;
+        padding: 2rem 0;
+      }
+
+      .timeline::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--primary-color);
+        transform: translateX(-50%);
+      }
+
+      .timeline-item {
+        position: relative;
+        margin-bottom: 3rem;
+      }
+
+      .timeline-item:nth-child(odd) .timeline-content {
+        margin-right: 50%;
+        padding-right: 2rem;
+        text-align: right;
+      }
+
+      .timeline-item:nth-child(even) .timeline-content {
+        margin-left: 50%;
+        padding-left: 2rem;
+      }
+
+      .timeline-dot {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        background: var(--primary-color);
+        border-radius: 50%;
+        transform: translateX(-50%);
+        border: 4px solid var(--dark-bg);
+        z-index: 1;
+      }
+
+      .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+      }
+
+      .team-card {
+        background: var(--dark-secondary);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: var(--transition);
+      }
+
+      .team-card:hover {
+        transform: translateY(-10px);
+        box-shadow: var(--shadow-xl);
+        border-color: var(--primary-color);
+      }
+
+      .team-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        background: var(--gradient-1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+      }
+
+      .mission-card {
+        background: var(--dark-secondary);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--primary-color);
+      }
+
+      @media (max-width: 768px) {
+        .timeline::before {
+          left: 20px;
+        }
+
+        .timeline-item .timeline-content {
+          margin-left: 50px !important;
+          margin-right: 0 !important;
+          padding-left: 1rem !important;
+          padding-right: 0 !important;
+          text-align: left !important;
+        }
+
+        .timeline-dot {
+          left: 20px;
+        }
+      }
+
+      /* Dark Theme Navbar Override */
+      .navbar {
+        background: rgba(15, 15, 35, 0.95) !important;
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1rem 0;
+      }
+
+      .navbar-brand {
+        color: var(--primary-color) !important;
+        font-weight: 700;
+        font-size: 1.5rem;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .navbar-brand:hover {
+        color: var(--secondary-color) !important;
+        transform: translateY(-2px);
+      }
+
+      .nav-link {
+        color: var(--gray-text) !important;
+        margin: 0 0.5rem;
+        padding: 0.5rem 1rem !important;
+        border-radius: 25px;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .nav-link::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--gradient-1);
+        transition: var(--transition);
+        z-index: -1;
+      }
+
+      .nav-link:hover::before {
+        left: 0;
+      }
+
+      .nav-link:hover {
+        color: var(--light-text) !important;
+        transform: translateY(-2px);
+      }
+
+      .nav-link.active {
+        color: var(--light-text) !important;
+        background: var(--gradient-1);
+      }
+
+      .navbar-toggler {
+        border-color: var(--primary-color) !important;
+      }
+
+      .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%236c5ce7' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a href="/" class="navbar-brand">
+          <i class="fas fa-graduation-cap"></i>
+          SRSL
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a href="/" class="nav-link">Home</a>
+            </li>
+            <li class="nav-item">
+              <a href="/about" class="nav-link active">About</a>
+            </li>
+            <li class="nav-item">
+              <a href="/gallery" class="nav-link">Gallery</a>
+            </li>
+            <li class="nav-item">
+              <a href="/contact" class="nav-link">Contact</a>
+            </li>
+            <li class="nav-item">
+              <a href="/auth/login" class="nav-link">Login</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" style="min-height: 60vh">
+      <div class="container">
+        <div class="hero-content">
+          <h1 class="hero-title" data-typing>About SRSL</h1>
+          <p class="hero-subtitle">
+            Pioneering the Future of Educational Technology
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section">
+      <div class="container">
+        <div class="about-content">
+          <div class="row align-items-center">
+            <div class="col-lg-6 mb-4">
+              <div class="animate-on-scroll" data-reveal="left">
+                <h2 class="display-4 mb-4" style="color: var(--light-text)">
+                  Our Mission
+                </h2>
+                <p class="lead mb-4" style="color: var(--gray-text)">
+                  We are dedicated to transforming education through innovative
+                  technology solutions. Our Student Registration System (SRSL)
+                  empowers educational institutions with comprehensive
+                  management tools that streamline operations, enhance
+                  communication, and improve learning outcomes.
+                </p>
+                <p class="lead" style="color: var(--gray-text)">
+                  Founded with a vision to bridge the gap between traditional
+                  education and modern technology, we serve thousands of
+                  students, teachers, and administrators worldwide.
+                </p>
+              </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+              <div class="animate-on-scroll" data-reveal="right">
+                <div class="mission-card">
+                  <h3 class="h4 mb-3" style="color: var(--primary-color)">
+                    <i class="fas fa-bullseye me-2"></i>Our Vision
+                  </h3>
+                  <p class="text-gray-300">
+                    To create a world where every educational institution has
+                    access to cutting-edge technology that enhances teaching,
+                    learning, and administrative efficiency.
+                  </p>
+                </div>
+                <div class="mission-card">
+                  <h3 class="h4 mb-3" style="color: var(--secondary-color)">
+                    <i class="fas fa-heart me-2"></i>Our Values
+                  </h3>
+                  <ul class="text-gray-300">
+                    <li>Innovation in education technology</li>
+                    <li>Student-centered approach</li>
+                    <li>Data-driven decision making</li>
+                    <li>Continuous improvement</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Timeline Section -->
+    <section class="about-section">
+      <div class="container">
+        <div class="text-center mb-5">
+          <h2 class="display-4 mb-3" style="color: var(--light-text)">
+            Our Journey
+          </h2>
+          <p class="lead" style="color: var(--gray-text)">
+            Milestones that shaped our success
+          </p>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-item animate-on-scroll" data-reveal="bottom">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <h4 class="h5 mb-2" style="color: var(--primary-color)">2020</h4>
+              <h5 class="h6 mb-2">Foundation</h5>
+              <p class="text-gray-300">
+                SRSL was founded with a mission to revolutionize educational
+                management systems.
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="timeline-item animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="40px"
+          >
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <h4 class="h5 mb-2" style="color: var(--primary-color)">2021</h4>
+              <h5 class="h6 mb-2">First Launch</h5>
+              <p class="text-gray-300">
+                Successfully launched our platform with 50 partner schools and
+                5,000 students.
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="timeline-item animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="60px"
+          >
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <h4 class="h5 mb-2" style="color: var(--primary-color)">2022</h4>
+              <h5 class="h6 mb-2">Major Update</h5>
+              <p class="text-gray-300">
+                Introduced advanced analytics, mobile apps, and AI-powered
+                features.
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="timeline-item animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="80px"
+          >
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <h4 class="h5 mb-2" style="color: var(--primary-color)">2023</h4>
+              <h5 class="h6 mb-2">Global Expansion</h5>
+              <p class="text-gray-300">
+                Expanded to serve 500+ schools across 20 countries with 50,000+
+                active users.
+              </p>
+            </div>
+          </div>
+
+          <div class="timeline-item animate-on-scroll" data-reveal="bottom">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <h4 class="h5 mb-2" style="color: var(--primary-color)">2026</h4>
+              <h5 class="h6 mb-2">Innovation Leader</h5>
+              <p class="text-gray-300">
+                Recognized as the leading educational technology platform with
+                cutting-edge features.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="about-section">
+      <div class="container">
+        <div class="text-center mb-5">
+          <h2 class="display-4 mb-3" style="color: var(--light-text)">
+            Meet Our Team
+          </h2>
+          <p class="lead" style="color: var(--gray-text)">
+            Passionate professionals dedicated to education
+          </p>
+        </div>
+
+        <div class="team-grid">
+          <div class="team-card animate-on-scroll" data-reveal="bottom">
+            <div class="team-avatar">
+              <i class="fas fa-user-tie"></i>
+            </div>
+            <h4 class="h5 mb-2" style="color: var(--light-text)">
+              Biruk Simon
+            </h4>
+            <p class="text-primary mb-2">CEO & Founder</p>
+            <p class="text-gray-300">
+              Visionary leader with 15+ years in educational technology.
+            </p>
+            <div class="d-flex justify-content-center gap-2 mt-3">
+              <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
+              <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+            </div>
+          </div>
+
+          <div
+            class="team-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="40px"
+          >
+            <div class="team-avatar">
+              <i class="fas fa-user-cog"></i>
+            </div>
+            <h4 class="h5 mb-2" style="color: var(--light-text)">
+              Bona Daniel
+            </h4>
+            <p class="text-primary mb-2">CTO</p>
+            <p class="text-gray-300">
+              Tech expert driving innovation and system architecture.
+            </p>
+            <div class="d-flex justify-content-center gap-2 mt-3">
+              <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
+              <a href="#" class="text-white"><i class="fab fa-github"></i></a>
+            </div>
+          </div>
+
+          <div
+            class="team-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="60px"
+          >
+            <div class="team-avatar">
+              <i class="fas fa-user-graduate"></i>
+            </div>
+            <h4 class="h5 mb-2" style="color: var(--light-text)">
+              Dr. Bikila Chen
+            </h4>
+            <p class="text-primary mb-2">Head of Education</p>
+            <p class="text-gray-300">
+              Education specialist ensuring pedagogical excellence.
+            </p>
+            <div class="d-flex justify-content-center gap-2 mt-3">
+              <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
+              <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+            </div>
+          </div>
+
+          <div class="team-card animate-on-scroll" data-reveal="bottom">
+            <div class="team-avatar">
+              <i class="fas fa-user-shield"></i>
+            </div>
+            <h4 class="h5 mb-2" style="color: var(--light-text)">
+              Betaso Davis
+            </h4>
+            <p class="text-primary mb-2">Security Lead</p>
+            <p class="text-gray-300">
+              Ensuring data protection and system security.
+            </p>
+            <div class="d-flex justify-content-center gap-2 mt-3">
+              <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
+              <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+      <div class="container">
+        <div class="text-center mb-5">
+          <h2 class="display-4 mb-3" style="color: var(--light-text)">
+            By the Numbers
+          </h2>
+          <p class="lead" style="color: var(--gray-text)">
+            Our impact in education
+          </p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card animate-on-scroll" data-reveal="bottom">
+            <div
+              class="stat-number"
+              data-counter="<%= typeof stats !== 'undefined' ? stats.parents : 500 %>"
+            >
+              0
+            </div>
+            <div class="stat-label">Parents</div>
+          </div>
+
+          <div
+            class="stat-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="40px"
+          >
+            <div
+              class="stat-number"
+              data-counter="<%= typeof stats !== 'undefined' ? stats.students : 50000 %>"
+            >
+              0
+            </div>
+            <div class="stat-label">Active Students</div>
+          </div>
+
+          <div
+            class="stat-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="60px"
+          >
+            <div
+              class="stat-number"
+              data-counter="<%= typeof stats !== 'undefined' ? stats.teachers : 2000 %>"
+            >
+              0
+            </div>
+            <div class="stat-label">Teachers</div>
+          </div>
+
+          <div
+            class="stat-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="80px"
+          >
+            <div
+              class="stat-number"
+              data-counter="<%= typeof stats !== 'undefined' ? stats.countries : 1 %>"
+            >
+              0
+            </div>
+            <div class="stat-label">Countries</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      class="footer"
+      style="
+        background: var(--dark-secondary);
+        padding: 3rem 0 1rem;
+        margin-top: 0;
+      "
+    >
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4 col-md-6 mb-4">
+            <h5 class="text-white mb-3">
+              <i class="fas fa-graduation-cap me-2"></i>abdigudina school
+            </h5>
+            <p class="text-gray-300">
+              Modern educational management platform for schools and
+              institutions. Empowering education through technology.
+            </p>
+            <div class="d-flex gap-3 mt-3">
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-facebook"></i
+              ></a>
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-twitter"></i
+              ></a>
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-instagram"></i
+              ></a>
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-linkedin"></i
+              ></a>
+            </div>
+          </div>
+
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="text-white mb-3">Quick Links</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2">
+                <a href="/" class="text-gray-300 text-decoration-none">Home</a>
+              </li>
+              <li class="mb-2">
+                <a href="/about" class="text-gray-300 text-decoration-none"
+                  >About</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="/gallery" class="text-gray-300 text-decoration-none"
+                  >Gallery</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="/contact" class="text-gray-300 text-decoration-none"
+                  >Contact</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="col-lg-3 col-md-6 mb-4">
+            <h5 class="text-white mb-3">Services</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Student Management</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Teacher Portal</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Parent Access</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Analytics</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="col-lg-3 col-md-6 mb-4">
+            <h5 class="text-white mb-3">Contact Info</h5>
+            <div class="text-gray-300">
+              <p class="mb-2">
+                <i class="fas fa-map-marker-alt me-2"></i>123 Education Street
+              </p>
+              <p class="mb-2"><i class="fas fa-phone me-2"></i>+251954497337</p>
+              <p class="mb-2">
+                <i class="fas fa-envelope me-2"></i>abdigudina@gmail.com
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="border-secondary my-4" />
+
+        <div class="text-center">
+          <p class="text-gray-400 mb-0">
+            &copy; 2026 abdigudina school. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JS -->
+    <script src="/js/brocode-script.js"></script>
+  </body>
+</html>

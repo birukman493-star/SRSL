@@ -1,0 +1,644 @@
+const mysql = require('mysql2/promise');
+
+// Create connection pool with database
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || 'ru0207/16',
+  database: process.env.DB_NAME || 'student_registration_system',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
+// Database initialization function - creates database and tables dynamically
+async function initDatabase() {
+  try {
+    console.log('Initializing database...');
+
+    // Create a temporary pool without database to create the database
+    const tempPool = mysql.createPool({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || 'ru0207/16',
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
+    });
+
+    const connection = await tempPool.getConnection();
+
+    const dbName = process.env.DB_NAME || 'student_registration_system';
+
+    // Create database if it doesn't exist
+    await connection.execute(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    console.log(`Database '${dbName}' created or already exists`);
+
+    // Release the connection and close temp pool
+    connection.release();
+    await tempPool.end();
+
+    // Now use the main pool (which should have database specified)
+    const dbConnection = await pool.getConnection();
+
+    // Create users table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        first_name VARCHAR(50) NOT NULL,
+        last_name VARCHAR(50) NOT NULL,
+        role ENUM('admin', 'teacher', 'student', 'parent') NOT NULL,
+        is_active BOOLEAN DEFAULT TRUE,
+        phone VARCHAR(20),
+        reset_token VARCHAR(255),
+        reset_token_expiry DATETIME,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_username (username),
+        INDEX idx_email (email),
+        INDEX idx_role (role)
+      )
+    `);
+
+    // Add missing reset_token columns if they don't exist
+    try {
+      await dbConnection.execute('ALTER TABLE users ADD COLUMN reset_token VARCHAR(255)');
+      console.log('Added reset_token to users table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE users ADD COLUMN reset_token_expiry DATETIME');
+      console.log('Added reset_token_expiry to users table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE users ADD COLUMN profile_picture VARCHAR(255)');
+      console.log('Added profile_picture to users table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    // Create teachers table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS teachers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        employee_id VARCHAR(50) UNIQUE,
+        first_name VARCHAR(50),
+        last_name VARCHAR(50),
+        email VARCHAR(100),
+        phone VARCHAR(20),
+        department VARCHAR(100),
+        hire_date DATE,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_employee_id (employee_id),
+        INDEX idx_department (department)
+      )
+    `);
+
+    // Create students table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS students (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        student_id VARCHAR(20) UNIQUE NOT NULL,
+        first_name VARCHAR(50),
+        last_name VARCHAR(50),
+        email VARCHAR(100),
+        phone VARCHAR(20),
+        grade_level VARCHAR(10),
+        section VARCHAR(10),
+        date_of_birth DATE,
+        gender ENUM('male', 'female') NOT NULL,
+        enrollment_date DATE,
+        parent_guardian_name VARCHAR(100),
+        class_id INT,
+        registration_status ENUM('pending', 'registered', 'not_started') DEFAULT 'not_started',
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL,
+        INDEX idx_student_id (student_id),
+        INDEX idx_grade_level (grade_level),
+        INDEX idx_parent_guardian (parent_guardian_name)
+      )
+    `);
+
+    // Create parents table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS parents (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        relationship VARCHAR(50),
+        occupation VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_relationship (relationship)
+      )
+    `);
+
+    // Create courses table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS courses (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        course_name VARCHAR(100) NOT NULL,
+        course_code VARCHAR(20) UNIQUE NOT NULL,
+        description TEXT,
+        credits INT DEFAULT 3,
+        teacher_id INT,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        INDEX idx_course_code (course_code),
+        INDEX idx_teacher_id (teacher_id),
+        INDEX idx_course_name (course_name)
+      )
+    `);
+
+    // Create enrollments table (fixed typo)
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS enrollments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        course_id INT NOT NULL,
+        enrollment_date DATE,
+        grade VARCHAR(5),
+        status ENUM('enrolled', 'completed', 'dropped', 'pending', 'waitlisted') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_enrollment (student_id, course_id),
+        INDEX idx_student_course (student_id, course_id),
+        INDEX idx_status (status)
+      )
+    `);
+
+    // Create classes table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS classes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        grade VARCHAR(10) NOT NULL,
+        section VARCHAR(10),
+        teacher_id INT,
+        room VARCHAR(50),
+        schedule TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        INDEX idx_grade (grade),
+        INDEX idx_teacher_id (teacher_id)
+      )
+    `);
+
+    // Create class_students table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS class_students (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        class_id INT NOT NULL,
+        student_id INT NOT NULL,
+        enrollment_date DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_class_student (class_id, student_id),
+        INDEX idx_class_id (class_id),
+        INDEX idx_student_id (student_id)
+      )
+    `);
+
+    // Create attendance table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS attendance (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        class_id INT NOT NULL,
+        date DATE NOT NULL,
+        status ENUM('present', 'absent', 'late', 'excused') DEFAULT 'present',
+        attendance_type ENUM('daily', 'morning', 'afternoon') DEFAULT 'daily',
+        notes TEXT,
+        created_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES teachers(id) ON DELETE SET NULL,
+        INDEX idx_student_date (student_id, date),
+        INDEX idx_class_date (class_id, date),
+        INDEX idx_status (status),
+        UNIQUE KEY unique_attendance (student_id, class_id, date)
+      )
+    `);
+
+    // Create assignments table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS assignments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        class_id INT NOT NULL,
+        assignment_type ENUM('homework', 'project', 'lab', 'reading', 'worksheet') DEFAULT 'homework',
+        title VARCHAR(200) NOT NULL,
+        description TEXT,
+        learning_objectives TEXT,
+        additional_links TEXT,
+        due_date DATE,
+        max_points DECIMAL(5,2) DEFAULT 100.00,
+        time_limit INT,
+        attempts_allowed ENUM('1', '2', '3', 'unlimited') DEFAULT 'unlimited',
+        visible_to_students BOOLEAN DEFAULT TRUE,
+        created_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES teachers(id) ON DELETE SET NULL,
+        INDEX idx_class_id (class_id),
+        INDEX idx_due_date (due_date),
+        INDEX idx_created_by (created_by)
+      )
+    `);
+
+    // Create course_prerequisites table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS course_prerequisites (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        course_id INT NOT NULL,
+        prerequisite_id INT NOT NULL,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+        FOREIGN KEY (prerequisite_id) REFERENCES courses(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_prerequisite (course_id, prerequisite_id),
+        INDEX idx_course_id (course_id)
+      )
+    `);
+
+    // Create class_schedule table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS class_schedule (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        class_id INT NOT NULL,
+        course_id INT NOT NULL,
+        day_of_week ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday') NOT NULL,
+        start_time TIME NOT NULL,
+        end_time TIME NOT NULL,
+        room VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+        INDEX idx_class_day (class_id, day_of_week)
+      )
+    `);
+
+    // Add period column to class_schedule if missing
+    try {
+      await dbConnection.execute('ALTER TABLE class_schedule ADD COLUMN period VARCHAR(50)');
+      console.log('Added period to class_schedule table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    // Create subjects table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS subjects (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        code VARCHAR(20) UNIQUE NOT NULL,
+        description TEXT,
+        department VARCHAR(100),
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_code (code),
+        INDEX idx_department (department)
+      )
+    `);
+
+    // Create teacher_subjects table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS teacher_subjects (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        teacher_id INT NOT NULL,
+        subject_id INT NOT NULL,
+        assigned_date DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_teacher_subject (teacher_id, subject_id),
+        INDEX idx_teacher_id (teacher_id),
+        INDEX idx_subject_id (subject_id)
+      )
+    `);
+
+    // Create messages table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sender_id INT NOT NULL,
+        recipient_type ENUM('admin', 'student', 'parent', 'teacher', 'class') NOT NULL,
+        recipient_id INT,
+        subject VARCHAR(200) NOT NULL,
+        content TEXT NOT NULL,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_sender_id (sender_id),
+        INDEX idx_recipient (recipient_type, recipient_id),
+        INDEX idx_created_at (created_at)
+      )
+    `);
+
+    // Create parent_student_relations table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS parent_student_relations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        parent_id INT NOT NULL,
+        student_id INT NOT NULL,
+        relationship ENUM('father', 'mother', 'guardian', 'other') NOT NULL,
+        is_primary BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (parent_id) REFERENCES parents(id) ON DELETE CASCADE,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_parent_student (parent_id, student_id),
+        INDEX idx_parent_id (parent_id),
+        INDEX idx_student_id (student_id)
+      )
+    `);
+
+    // Create grades table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS grades (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        class_id INT NOT NULL,
+        course_id INT,
+        assessment_type ENUM('quiz', 'attendance', 'mid-exam', 'final-exam', 'homework', 'exam', 'project', 'participation') NOT NULL,
+        title VARCHAR(100) NOT NULL,
+        score DECIMAL(5,2) NOT NULL,
+        mid_score DECIMAL(5,2) DEFAULT '0.00',
+        test_score DECIMAL(5,2) DEFAULT '0.00',
+        attendance_score DECIMAL(5,2) DEFAULT '0.00',
+        final_score DECIMAL(5,2) DEFAULT '0.00',
+        max_score DECIMAL(5,2) NOT NULL,
+        weight DECIMAL(5,2) DEFAULT 1.0,
+        grade_date DATE,
+        notes TEXT,
+        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        created_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES teachers(id) ON DELETE SET NULL,
+        INDEX idx_student_class_grade (student_id, class_id),
+        INDEX idx_assessment_type (assessment_type),
+        INDEX idx_grade_date (grade_date),
+        INDEX idx_created_by (created_by)
+      )
+    `);
+
+    // Create contact_messages table for contact form
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS contact_messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) NOT NULL,
+        subject VARCHAR(200) NOT NULL,
+        message TEXT NOT NULL,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_email (email),
+        INDEX idx_is_read (is_read)
+      )
+    `);
+
+    // Create system_settings table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS system_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        setting_key VARCHAR(100) UNIQUE NOT NULL,
+        setting_value TEXT,
+        category VARCHAR(50),
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_key (setting_key),
+        INDEX idx_category (category)
+      )
+    `);
+
+    // Create announcements table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS announcements (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        message TEXT NOT NULL,
+        audience ENUM('all', 'students', 'teachers') DEFAULT 'all',
+        created_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_audience (audience),
+        INDEX idx_created_at (created_at)
+      )
+    `);
+
+    console.log('Database and tables created successfully');
+
+    // === SEED DEFAULT ADMIN ===
+    const bcrypt = require('bcryptjs');
+    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@srsl.edu';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin123';
+    const ADMIN_SECRET = process.env.ADMIN_SECRET || 'SRSL-ADMIN-2024';
+
+    const [existingAdmin] = await dbConnection.execute(
+      'SELECT id FROM users WHERE username = ? OR email = ?',
+      [ADMIN_USERNAME, ADMIN_EMAIL]
+    );
+
+    if (existingAdmin.length === 0) {
+      const hashedPw = await bcrypt.hash(ADMIN_PASSWORD, 12);
+      await dbConnection.execute(
+        `INSERT INTO users (username, email, password, first_name, last_name, role, is_active, created_at)
+         VALUES (?, ?, ?, 'System', 'Administrator', 'admin', 1, NOW())`,
+        [ADMIN_USERNAME, ADMIN_EMAIL, hashedPw]
+      );
+      console.log(`>>> DEFAULT ADMIN CREATED: username="${ADMIN_USERNAME}"  secret="${ADMIN_SECRET}"`);
+    }
+    // ===========================
+
+    dbConnection.release();
+  } catch (error) {
+    console.error('Database initialization error:', error);
+    throw error;
+  }
+}
+
+// Function to check if database exists
+async function checkDatabaseExists() {
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.execute(`SHOW DATABASES LIKE '${process.env.DB_NAME || 'student_registration_system'}'`);
+    connection.release();
+    return rows.length > 0;
+  } catch (error) {
+    console.error('Database check error:', error);
+    return false;
+  }
+}
+
+// Function to get table structure
+async function getTableStructure(tableName) {
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.execute(`DESCRIBE ${tableName}`);
+    connection.release();
+    return rows;
+  } catch (error) {
+    console.error(`Table structure error for ${tableName}:`, error);
+    return [];
+  }
+}
+
+// Function to check if table exists
+async function checkTableExists(tableName) {
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.execute(`SHOW TABLES LIKE '${tableName}'`);
+    connection.release();
+    return rows.length > 0;
+  } catch (error) {
+    console.error(`Table check error for ${tableName}:`, error);
+    return false;
+  }
+}
+
+// Function to get database statistics
+async function getDatabaseStats() {
+  try {
+    const connection = await pool.getConnection();
+    const stats = {};
+
+    // Get user counts by role
+    const [userStats] = await connection.execute(`
+      SELECT role, COUNT(*) as count 
+      FROM users 
+      WHERE is_active = TRUE 
+      GROUP BY role
+    `);
+    stats.users = userStats;
+
+    // Get course count
+    const [courseStats] = await connection.execute(`
+      SELECT COUNT(*) as count FROM courses WHERE is_active = TRUE
+    `);
+    stats.courses = courseStats[0].count;
+
+    // Get enrollment count
+    const [enrollmentStats] = await connection.execute(`
+      SELECT COUNT(*) as count FROM enrollments WHERE status = 'enrolled'
+    `);
+    stats.enrollments = enrollmentStats[0].count;
+
+    // Get grade count
+    const [gradeStats] = await connection.execute(`
+      SELECT COUNT(*) as count FROM grades
+    `);
+    stats.grades = gradeStats[0].count;
+
+    connection.release();
+    return stats;
+  } catch (error) {
+    console.error('Database stats error:', error);
+    return {};
+  }
+}
+
+// Function to backup database structure (returns SQL for tables)
+async function getDatabaseSchema() {
+  try {
+    const connection = await pool.getConnection();
+    const [tables] = await connection.execute(`SHOW TABLES`);
+    const schema = [];
+
+    for (const table of tables) {
+      const tableName = Object.values(table)[0];
+      const [createTable] = await connection.execute(`SHOW CREATE TABLE ${tableName}`);
+      schema.push({
+        table: tableName,
+        sql: createTable[0]['Create Table']
+      });
+    }
+
+    connection.release();
+    return schema;
+  } catch (error) {
+    console.error('Database schema error:', error);
+    return [];
+  }
+}
+
+// Function to validate database integrity
+async function validateDatabase() {
+  try {
+    const connection = await pool.getConnection();
+    const issues = [];
+
+    // Check for orphaned records
+    const [orphanedTeachers] = await connection.execute(`
+      SELECT t.id FROM teachers t 
+      LEFT JOIN users u ON t.user_id = u.id 
+      WHERE u.id IS NULL
+    `);
+    if (orphanedTeachers.length > 0) {
+      issues.push(`Found ${orphanedTeachers.length} orphaned teacher records`);
+    }
+
+    const [orphanedStudents] = await connection.execute(`
+      SELECT s.id FROM students s 
+      LEFT JOIN users u ON s.user_id = u.id 
+      WHERE u.id IS NULL
+    `);
+    if (orphanedStudents.length > 0) {
+      issues.push(`Found ${orphanedStudents.length} orphaned student records`);
+    }
+
+    const [orphanedParents] = await connection.execute(`
+      SELECT p.id FROM parents p 
+      LEFT JOIN users u ON p.user_id = u.id 
+      WHERE u.id IS NULL
+    `);
+    if (orphanedParents.length > 0) {
+      issues.push(`Found ${orphanedParents.length} orphaned parent records`);
+    }
+
+    connection.release();
+    return issues;
+  } catch (error) {
+    console.error('Database validation error:', error);
+    return ['Database validation failed'];
+  }
+}
+
+// Export all functions and the pool
+module.exports = {
+  pool,
+  initDatabase,
+  checkDatabaseExists,
+  getTableStructure,
+  checkTableExists,
+  getDatabaseStats,
+  getDatabaseSchema,
+  validateDatabase
+};

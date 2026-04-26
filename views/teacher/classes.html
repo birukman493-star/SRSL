@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SRSL Faculty</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title"><%= title %></h1>
+                        <p class="text-secondary m-0">Manage your active courses and student performance</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10">
+                            <i class="fas fa-calendar-alt me-1"></i> Academic Year 2023-2024
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <% if (classes && classes.length > 0) { %>
+                    <% classes.forEach(classItem => { %>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="glass-panel h-100 p-4 hover-lift transition">
+                                <span class="badge bg-primary bg-opacity-10 text-primary mb-3 px-3 py-1 rounded-pill small" style="letter-spacing: 1px;">
+                                    GRADE <%= classItem.grade %> • <%= classItem.section %>
+                                </span>
+                                <h3 class="h4 fw-bold text-light mb-4"><%= classItem.name %></h3>
+                                
+                                <div class="glass-card p-3 mb-4">
+                                    <div class="d-flex flex-column gap-3">
+                                        <div class="d-flex align-items-center gap-3 text-secondary small">
+                                            <i class="fas fa-fingerprint text-primary" style="width: 20px;"></i>
+                                            <span>Class ID: #<%= classItem.id %></span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-3 text-secondary small">
+                                            <i class="fas fa-clock text-warning" style="width: 20px;"></i>
+                                            <span>Schedule: Mon, Wed, Fri</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-3 text-secondary small">
+                                            <i class="fas fa-map-marker-alt text-info" style="width: 20px;"></i>
+                                            <span>Room: Block B, Room 402</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mb-4">
+                                    <div class="col-6">
+                                        <div class="bg-white bg-opacity-5 rounded-4 p-3 text-center border border-white border-opacity-5">
+                                            <div class="h4 fw-bold text-light m-0"><%= classItem.student_count || 0 %></div>
+                                            <div class="text-secondary small" style="font-size: 0.65rem; text-transform: uppercase;">Students</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="bg-white bg-opacity-5 rounded-4 p-3 text-center border border-white border-opacity-5">
+                                            <div class="h4 fw-bold text-success m-0">94%</div>
+                                            <div class="text-secondary small" style="font-size: 0.65rem; text-transform: uppercase;">Attendance</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <a href="/teacher/attendance/<%= classItem.id %>/<%= new Date().toISOString().split('T')[0] %>" class="btn btn-hero btn-primary py-2">
+                                        <i class="fas fa-user-check me-2"></i>Take Attendance
+                                    </a>
+                                    <a href="/teacher/grades/<%= classItem.id %>" class="btn btn-hero btn-secondary py-2">
+                                        <i class="fas fa-award me-2"></i>Manage Grades
+                                    </a>
+                                    <a href="/teacher/classes/schedule/<%= classItem.id %>" class="btn btn-hero btn-info py-2 text-white">
+                                        <i class="fas fa-calendar-alt me-2"></i>Manage Timetable
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="col-12">
+                        <div class="glass-panel p-5 text-center">
+                            <div class="opacity-25 mb-4">
+                                <i class="fas fa-chalkboard-teacher fa-5x text-secondary"></i>
+                            </div>
+                            <h3 class="text-light fw-bold">No Classes Found</h3>
+                            <p class="text-secondary">You are not currently assigned to any classes. Please contact the administrator.</p>
+                            <a href="/teacher/schedule" class="btn btn-hero btn-primary px-5 mt-3">View Full Schedule</a>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

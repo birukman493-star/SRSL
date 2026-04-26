@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Schedule - SRSL Faculty</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Academic Schedule</h1>
+                        <p class="text-secondary m-0">Weekly timetable for your assigned lectures and lab sessions</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <% const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; %>
+                <% days.forEach(day => { %>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="glass-panel h-100">
+                            <h3 class="h5 fw-bold text-primary mb-3 d-flex justify-content-between align-items-center">
+                                <%= day %>
+                                <% const dayPeriods = schedule.filter(s => s.day_of_week === day); %>
+                                <span class="badge bg-primary bg-opacity-10 text-primary small rounded-pill px-2" style="font-size: 0.7rem;">
+                                    <%= dayPeriods.length %> Sessions
+                                </span>
+                            </h3>
+
+                            <div class="schedule-list">
+                                <% if (dayPeriods.length > 0) { %>
+                                    <% dayPeriods.forEach(p => { %>
+                                        <div class="schedule-item mb-3 p-3 rounded-4 bg-white bg-opacity-5 border border-white border-opacity-10">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <div class="fw-bold text-light">
+                                                        <span class="text-primary smaller me-2"><%= p.period %></span>
+                                                        <%= p.course_name %>
+                                                    </div>
+                                                    <div class="text-primary smaller fw-bold"><%= p.class_name %></div>
+                                                </div>
+                                                <code class="text-secondary smaller"><%= p.course_code %></code>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="text-secondary small">
+                                                    <i class="fas fa-clock me-1 opacity-50"></i>
+                                                    <%= p.start_time.substring(0, 5) %> - <%= p.end_time.substring(0, 5) %>
+                                                </div>
+                                                <div class="text-secondary small">
+                                                    <i class="fas fa-map-marker-alt me-1 opacity-50"></i>
+                                                    <%= p.room || 'TBD' %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }) %>
+                                <% } else { %>
+                                    <div class="text-center py-4 text-secondary opacity-50 small">
+                                        No sessions scheduled
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

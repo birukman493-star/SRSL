@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        
+        <main class="main-panel w-100 p-4">
+            <div class="dashboard-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="/parent/children" class="btn btn-outline-secondary btn-sm border-0">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h1 class="dashboard-title"><%= student.first_name %>'s Grades</h1>
+                        <p class="text-secondary m-0">Detailed academic performance record</p>
+                    </div>
+                </div>
+                <div class="glass-card px-4 py-2 border-primary border-opacity-25">
+                    <div class="text-secondary small">Overall GPA</div>
+                    <div class="h3 fw-bold text-primary m-0"><%= (typeof gpa === 'number' && !isNaN(gpa)) ? gpa.toFixed(2) : '0.00' %></div>
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <div class="table-responsive">
+                    <table class="table table-hover text-light mb-0">
+                        <thead>
+                            <tr class="border-secondary border-opacity-25">
+                                <th class="text-secondary fw-medium py-3">Course</th>
+                                <th class="text-secondary fw-medium py-3">Assessment</th>
+                                <th class="text-secondary fw-medium py-3 text-center">Mid (30)</th>
+                                <th class="text-secondary fw-medium py-3 text-center">Test (10)</th>
+                                <th class="text-secondary fw-medium py-3 text-center">Att (10)</th>
+                                <th class="text-secondary fw-medium py-3 text-center">Final (50)</th>
+                                <th class="text-secondary fw-medium py-3 text-center">Total (100)</th>
+                                <th class="text-secondary fw-medium py-3 text-end">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (grades && grades.length > 0) { %>
+                                <% grades.forEach(grade => { %>
+                                    <tr class="border-secondary border-opacity-10 align-middle">
+                                        <td class="py-3 fw-bold text-primary-light"><%= grade.course_name %></td>
+                                        <td class="py-3">
+                                            <div class="fw-bold text-dark"><%= grade.title %></div>
+                                            <small class="text-secondary text-capitalize" style="font-size: 0.7rem;"><%= grade.assessment_type %></small>
+                                        </td>
+                                        <td class="py-3 text-center text-dark fw-bold"><%= grade.mid_score || 0 %></td>
+                                        <td class="py-3 text-center text-dark fw-bold"><%= grade.test_score || 0 %></td>
+                                        <td class="py-3 text-center text-dark fw-bold"><%= grade.attendance_score || 0 %></td>
+                                        <td class="py-3 text-center text-dark fw-bold"><%= grade.final_score || 0 %></td>
+                                        <td class="py-3 text-center">
+                                            <% 
+                                                const percentage = (grade.score / grade.max_score) * 100;
+                                                let badgeClass = 'text-danger';
+                                                if (percentage >= 80) badgeClass = 'text-success';
+                                                else if (percentage >= 60) badgeClass = 'text-warning';
+                                            %>
+                                            <span class="fw-bold h6 m-0 <%= badgeClass %>"><%= grade.score %></span>
+                                        </td>
+                                        <td class="py-3 text-end text-secondary small">
+                                            <%= new Date(grade.grade_date).toLocaleDateString() %>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-secondary">
+                                        <i class="fas fa-clipboard-list fa-2x mb-3 d-block opacity-25"></i>
+                                        No grades have been recorded yet.
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

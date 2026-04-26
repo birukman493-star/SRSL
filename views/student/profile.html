@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SRSL</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="admin-container dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel">
+            <!-- Top Header -->
+            <header class="dashboard-header-modern mb-4">
+                <div class="header-content text-center d-block">
+                    <div class="profile-avatar-large mx-auto mb-3" style="position: relative; width: 100px; height: 100px; background: var(--gradient-1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.2); overflow: hidden;">
+                        <% if (user.profile_picture) { %>
+                            <img src="<%= user.profile_picture %>" alt="Profile Picture" style="width: 100%; height: 100%; object-fit: cover;">
+                        <% } else { %>
+                            <%= student.first_name.charAt(0).toUpperCase() %><%= student.last_name.charAt(0).toUpperCase() %>
+                        <% } %>
+                        <form action="/auth/profile/upload-picture" method="POST" enctype="multipart/form-data" id="profilePicForm" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                            <input type="file" name="profile_picture" id="profilePicInput" onchange="document.getElementById('profilePicForm').submit()" style="position: absolute; width: 100%; height: 100%; cursor: pointer;">
+                        </form>
+                        <div style="position: absolute; bottom: 0; background: rgba(0,0,0,0.5); width: 100%; text-align: center; font-size: 0.8rem; padding: 2px 0; color: white; pointer-events: none;">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                    </div>
+                    <h1 class="header-title m-0"><%= student.first_name %> <%= student.last_name %></h1>
+                    <p class="header-subtitle mt-1">Student ID: <%= student.student_id %></p>
+                </div>
+            </header>
+
+            <!-- Profile Info Form -->
+            <form action="/student/profile/update" method="POST">
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="glass-panel h-100">
+                            <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;"><i class="fas fa-user me-1"></i> First Name</label>
+                            <input type="text" name="first_name" class="form-control bg-transparent border-0 text-light p-0 fw-bold" value="<%= student.first_name %>" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="glass-panel h-100">
+                            <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;"><i class="fas fa-user me-1"></i> Last Name</label>
+                            <input type="text" name="last_name" class="form-control bg-transparent border-0 text-light p-0 fw-bold" value="<%= student.last_name %>" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="glass-panel h-100">
+                            <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;"><i class="fas fa-envelope me-1"></i> Email address</label>
+                            <input type="email" name="email" class="form-control bg-transparent border-0 text-light p-0 fw-bold" value="<%= student.email %>" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="glass-panel h-100">
+                            <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;"><i class="fas fa-phone me-1"></i> Phone Number</label>
+                            <input type="tel" name="phone" class="form-control bg-transparent border-0 text-light p-0 fw-bold" value="<%= student.phone || '' %>" placeholder="Not provided">
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="glass-panel h-100">
+                            <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;"><i class="fas fa-venus-mars me-1"></i> Gender</label>
+                            <select name="gender" class="form-select bg-transparent border-0 text-light p-0 fw-bold" style="cursor: pointer;">
+                                <option value="male" <%= student.gender === 'male' ? 'selected' : '' %>>Male</option>
+                                <option value="female" <%= student.gender === 'female' ? 'selected' : '' %>>Female</option>
+                                <option value="other" <%= student.gender === 'other' ? 'selected' : '' %>>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="glass-panel h-100">
+                            <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;"><i class="fas fa-birthday-cake me-1"></i> Date of Birth</label>
+                            <input type="date" name="date_of_birth" class="form-control bg-transparent border-0 text-light p-0 fw-bold" value="<%= new Date(student.date_of_birth).toISOString().split('T')[0] %>" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="glass-panel h-100 bg-white bg-opacity-5">
+                            <div class="text-secondary small mb-1"><i class="fas fa-graduation-cap me-1"></i> GRADE LEVEL (READ-ONLY)</div>
+                            <div class="text-light fw-bold opacity-50"><%= student.grade_level %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="glass-panel h-100 bg-white bg-opacity-5">
+                            <div class="text-secondary small mb-1"><i class="fas fa-users me-1"></i> SECTION (READ-ONLY)</div>
+                            <div class="text-light fw-bold opacity-50"><%= student.section %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="glass-panel h-100">
+                            <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;"><i class="fas fa-user-shield me-1"></i> Parent/Guardian</label>
+                            <input type="text" name="parent_guardian_name" class="form-control bg-transparent border-0 text-light p-0 fw-bold" value="<%= student.parent_guardian_name %>">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-5">
+                    <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-lg transition-up">
+                        <i class="fas fa-save me-2"></i>Save Profile Information
+                    </button>
+                    <p class="text-secondary small mt-3">Some academic fields are locked and can only be changed by the administration.</p>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages | SRSL</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8f9fc; min-height: 100vh; }
+        .teacher-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); color: white; padding: 30px 20px; z-index: 1000; }
+        .main-content { flex: 1; padding: 40px; }
+        .sidebar-menu { list-style: none; padding: 0; }
+        .sidebar-menu a { color: white; text-decoration: none; display: flex; align-items: center; gap: 15px; padding: 15px 20px; border-radius: 12px; transition: all 0.3s ease; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: rgba(255,255,255,0.1); color: #48bb78; }
+        .message-container { background: white; border-radius: 20px; display: flex; height: 75vh; box-shadow: 0 5px 20px rgba(0,0,0,0.05); overflow: hidden; }
+        .contact-list { width: 300px; border-right: 1px solid #edf2f7; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; }
+    </style>
+</head>
+<body>
+    <div class="teacher-container">
+        <%- include('partials/sidebar.html') %>
+
+        <div class="main-content">
+            <h1 class="mb-4" style="font-weight: 800; color: #2d3748;">Communication Hub</h1>
+            <div class="message-container">
+                <% if (messages && messages.length > 0) { %>
+                    <div class="list-group list-group-flush w-100">
+                        <% messages.forEach(m => { %>
+                            <div class="list-group-item list-group-item-action p-4 border-bottom">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="mb-0 fw-bold"><%= m.subject %></h5>
+                                    <small class="text-muted"><%= new Date(m.created_at).toLocaleString() %></small>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-soft-primary text-primary px-2 py-1"><%= m.sender_role.toUpperCase() %></span>
+                                    <span class="text-dark fw-600 ms-2"><%= m.first_name %> <%= m.last_name %></span>
+                                </div>
+                                <p class="mb-0 text-secondary" style="font-size: 0.95rem;"><%= m.content %></p>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="m-auto text-center py-5">
+                        <i class="fas fa-inbox fa-5x text-muted mb-4"></i>
+                        <h3>Your Inbox is Empty</h3>
+                        <p class="text-muted">No messages received yet.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

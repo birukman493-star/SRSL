@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SRSL Parent</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="/parent/children" class="btn glass-card p-2 text-primary border-0">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <div>
+                            <h1 class="dashboard-title"><%= (student.first_name || 'Student') %>'s Attendance</h1>
+                            <p class="text-secondary m-0">Daily academic session tracking and engagement record</p>
+                        </div>
+                    </div>
+                    <% if (typeof stats !== 'undefined') { %>
+                    <div class="glass-card px-4 py-2 border-primary border-opacity-10 text-center">
+                        <div class="text-secondary" style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Overall Rate</div>
+                        <div class="h3 fw-bold text-primary m-0"><%= stats.rate %>%</div>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="glass-panel text-center py-4 hover-lift">
+                        <div class="bg-success bg-opacity-10 text-success rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:50px;height:50px;font-size:1.2rem;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size:0.65rem;letter-spacing:1px;">Present Days</div>
+                        <div class="h3 fw-bold text-success m-0"><%= typeof stats !== 'undefined' ? stats.present : attendance.filter(a => a.status === 'present').length %></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-panel text-center py-4 hover-lift">
+                        <div class="bg-danger bg-opacity-10 text-danger rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:50px;height:50px;font-size:1.2rem;">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                        <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size:0.65rem;letter-spacing:1px;">Absent Days</div>
+                        <div class="h3 fw-bold text-danger m-0"><%= typeof stats !== 'undefined' ? stats.absent : attendance.filter(a => a.status === 'absent').length %></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-panel text-center py-4 hover-lift">
+                        <div class="bg-warning bg-opacity-10 text-warning rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:50px;height:50px;font-size:1.2rem;">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size:0.65rem;letter-spacing:1px;">Late Arrivals</div>
+                        <div class="h3 fw-bold text-warning m-0"><%= typeof stats !== 'undefined' ? stats.late : attendance.filter(a => a.status === 'late').length %></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed History Table -->
+            <div class="glass-panel p-4">
+                <div class="d-flex align-items-center gap-2 mb-4">
+                    <i class="fas fa-history text-primary"></i>
+                    <h5 class="m-0 text-light fw-bold">Attendance History</h5>
+                    <span class="badge bg-secondary ms-auto"><%= attendance ? attendance.length : 0 %> records</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                        <thead>
+                            <tr class="text-secondary small">
+                                <th class="border-0 py-3">Session Date</th>
+                                <th class="border-0 py-3">Class / Course</th>
+                                <th class="border-0 py-3">Teacher Notes</th>
+                                <th class="border-0 py-3 text-end">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (attendance && attendance.length > 0) { %>
+                                <% attendance.forEach(record => { %>
+                                <tr class="transition">
+                                    <td class="border-0 py-3">
+                                        <div class="fw-bold text-light"><%= new Date(record.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) %></div>
+                                        <div class="text-secondary" style="font-size:0.7rem;"><%= new Date(record.date).getFullYear() %></div>
+                                    </td>
+                                    <td class="border-0 py-3 text-primary fw-bold small"><%= record.class_name || '—' %></td>
+                                    <td class="border-0 py-3 text-secondary small"><%= record.notes || 'No remarks' %></td>
+                                    <td class="border-0 py-3 text-end">
+                                        <% let sc = record.status === 'present' ? 'success' : (record.status === 'absent' ? 'danger' : 'warning'); %>
+                                        <span class="badge rounded-pill px-3 py-2 text-uppercase bg-<%= sc %> bg-opacity-10 text-<%= sc %> border border-<%= sc %> border-opacity-25" style="font-size:0.65rem;">
+                                            <i class="fas fa-<%= record.status === 'present' ? 'check' : (record.status === 'absent' ? 'times' : 'clock') %>-circle me-1"></i>
+                                            <%= record.status %>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 border-0">
+                                        <div class="opacity-25 mb-3"><i class="fas fa-calendar-times fa-4x text-secondary"></i></div>
+                                        <p class="text-secondary">No attendance records found for this student.</p>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

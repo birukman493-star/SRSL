@@ -1,0 +1,49 @@
+<aside class="glass-sidebar">
+    <div class="sidebar-logo-modern">
+        <i class="fas fa-user-shield"></i>
+        <span>SRSL Parent</span>
+    </div>
+
+    <div class="sidebar-user-section mb-4 text-center">
+        <div class="sidebar-user-avatar mb-2 mx-auto" style="width: 70px; height: 70px; font-size: 1.8rem; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary-color);">
+            <%= user.first_name.charAt(0) %><%= user.last_name.charAt(0) %>
+        </div>
+        <div class="fw-bold text-light"><%= user.first_name %> <%= user.last_name %></div>
+        <small class="text-secondary">Parent Portal</small>
+    </div>
+
+    <nav class="sidebar-nav">
+        <ul class="sidebar-nav-list">
+            <li class="sidebar-nav-item">
+                <a href="/parent/dashboard" class="sidebar-nav-link <%= title === 'Parent Dashboard' ? 'active' : '' %>">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/parent/children" class="sidebar-nav-link <%= title === 'My Children' ? 'active' : '' %>">
+                    <i class="fas fa-users"></i>
+                    <span>My Children</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/parent/announcements" class="sidebar-nav-link <%= title === 'School Announcements' ? 'active' : '' %>">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Announcements</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/parent/profile" class="sidebar-nav-link <%= title === 'My Profile' ? 'active' : '' %>">
+                    <i class="fas fa-user-circle"></i>
+                    <span>My Profile</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item mt-4 pt-4 border-top border-secondary border-opacity-25">
+                <a href="/auth/logout" class="sidebar-nav-link text-danger">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</aside>

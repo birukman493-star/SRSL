@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        
+        <!-- Main Content -->
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Class Schedule: <%= classInfo.name %></h1>
+                        <p class="text-secondary m-0">Define the weekly academic timetable for Grade <%= classInfo.grade %>-<%= classInfo.section %></p>
+                    </div>
+                    <a href="/admin/classes" class="btn btn-hero btn-secondary px-4 border-0">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Classes
+                    </a>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3 alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i> <%= success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <% } %>
+
+            <div class="row g-4">
+                <!-- Add Period Form -->
+                <div class="col-lg-4">
+                    <div class="glass-panel">
+                        <h3 class="h5 fw-bold mb-4"><i class="fas fa-calendar-plus me-2 text-primary"></i>Add Schedule Period</h3>
+                        <form action="/admin/classes/schedule/add" method="POST">
+                            <input type="hidden" name="class_id" value="<%= classInfo.id %>">
+                            
+                            <div class="mb-3">
+                                <label class="text-secondary small mb-1">Select Course</label>
+                                <select name="course_id" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                                    <option value="">Choose a course...</option>
+                                    <% courses.forEach(c => { %>
+                                        <option value="<%= c.id %>"><%= c.course_name %> (<%= c.course_code %>)</option>
+                                    <% }) %>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="text-secondary small mb-1">Day of Week</label>
+                                <select name="day_of_week" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                    <option value="Friday">Friday</option>
+                                    <option value="Saturday">Saturday</option>
+                                    <option value="Sunday">Sunday</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="text-secondary small mb-1">Academic Period</label>
+                                <select name="period" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                                    <option value="Period 1">Period 1</option>
+                                    <option value="Period 2">Period 2</option>
+                                    <option value="Period 3">Period 3</option>
+                                    <option value="Period 4">Period 4</option>
+                                    <option value="Period 5">Period 5</option>
+                                    <option value="Period 6">Period 6</option>
+                                    <option value="Period 7">Period 7</option>
+                                    <option value="Period 8">Period 8</option>
+                                    <option value="Morning Break">Morning Break</option>
+                                    <option value="Lunch Break">Lunch Break</option>
+                                    <option value="Afternoon Break">Afternoon Break</option>
+                                </select>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <label class="text-secondary small mb-1">Start Time</label>
+                                    <input type="time" name="start_time" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="text-secondary small mb-1">End Time</label>
+                                    <input type="time" name="end_time" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-4 mt-3">
+                                <label class="text-secondary small mb-1">Room / Location</label>
+                                <input type="text" name="room" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="e.g. Room 302, Lab B">
+                            </div>
+
+                            <button type="submit" class="btn btn-hero btn-primary w-100 py-2">
+                                <i class="fas fa-plus me-2"></i> Add to Timetable
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Current Schedule List -->
+                <div class="col-lg-8">
+                    <div class="glass-panel">
+                        <h3 class="h5 fw-bold mb-4"><i class="fas fa-clock me-2 text-primary"></i>Weekly Timetable</h3>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                                <thead>
+                                    <tr class="text-secondary small">
+                                        <th class="border-0">Day</th>
+                                        <th class="border-0">Period</th>
+                                        <th class="border-0">Time Slot</th>
+                                        <th class="border-0">Course / Code</th>
+                                        <th class="border-0">Room</th>
+                                        <th class="border-0 text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (schedule && schedule.length > 0) { %>
+                                        <% schedule.forEach(item => { %>
+                                            <tr>
+                                                <td class="border-0">
+                                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3">
+                                                        <%= item.day_of_week %>
+                                                    </span>
+                                                </td>
+                                                <td class="border-0 text-light small fw-bold">
+                                                    <%= item.period || 'N/A' %>
+                                                </td>
+                                                <td class="border-0 text-light small fw-bold text-nowrap">
+                                                    <%= item.start_time.substring(0, 5) %> - <%= item.end_time.substring(0, 5) %>
+                                                </td>
+                                                <td class="border-0">
+                                                    <div class="text-light small fw-bold"><%= item.course_name %></div>
+                                                    <code class="text-secondary smaller"><%= item.course_code %></code>
+                                                </td>
+                                                <td class="border-0 text-secondary small">
+                                                    <i class="fas fa-map-marker-alt me-1 opacity-50"></i> <%= item.room || 'N/A' %>
+                                                </td>
+                                                <td class="border-0 text-end">
+                                                    <form action="/admin/classes/schedule/delete/<%= item.id %>" method="POST" onsubmit="return confirm('Remove this period?')">
+                                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        <% }) %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="5" class="border-0 text-center py-5">
+                                                <i class="fas fa-calendar-times fa-3x text-secondary mb-3 opacity-25"></i>
+                                                <div class="text-secondary">No periods scheduled for this class.</div>
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

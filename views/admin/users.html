@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        
+        <!-- Main Content -->
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">User Management</h1>
+                        <p class="text-secondary m-0">Manage system users, roles, and account status</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn-hero btn-primary px-4" onclick="window.location.href='/admin/students/new'">
+                            <i class="fas fa-user-plus me-2"></i> Add Student
+                        </button>
+                        <button class="btn-hero btn-secondary px-4" onclick="window.location.href='/admin/teachers/new'">
+                            <i class="fas fa-user-tie me-2"></i> Add Teacher
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search & Filters -->
+            <div class="glass-panel mb-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <div class="search-bar position-relative">
+                            <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                            <input type="text" class="form-control ps-5 py-2 rounded-pill" placeholder="Search users by name, email..." id="searchInput">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="text-secondary small mb-1">Role</label>
+                        <select class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill" id="roleFilter">
+                            <option value="">All Roles</option>
+                            <option value="student">Student</option>
+                            <option value="teacher">Teacher</option>
+                            <option value="parent">Parent</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="text-secondary small mb-1">Status</label>
+                        <select class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="text-secondary small mb-1">Grade Level</label>
+                        <select class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill" id="gradeFilter">
+                            <option value="">All Grades</option>
+                            <option value="9">Grade 9</option>
+                            <option value="10">Grade 10</option>
+                            <option value="11">Grade 11</option>
+                            <option value="12">Grade 12</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-hero btn-primary w-100 py-2 rounded-pill" onclick="applyFilters()">
+                            <i class="fas fa-filter me-2"></i> Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="glass-panel">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                        <thead>
+                            <tr class="text-secondary small">
+                                <th class="border-0">User</th>
+                                <th class="border-0 text-center">Role</th>
+                                <th class="border-0">Contact</th>
+                                <th class="border-0 text-center">Status</th>
+                                <th class="border-0">Joined</th>
+                                <th class="border-0 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (typeof users !== "undefined" && users && users.length > 0) { %>
+                                <% for (let u of users) { %>
+                                <tr>
+                                    <td class="border-0">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="sidebar-user-avatar" style="width: 45px; height: 45px; font-size: 1rem; background: rgba(255,255,255,0.05);">
+                                                <%= (u.first_name ? u.first_name.charAt(0).toUpperCase() : 'U') %>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold"><%= u.first_name %> <%= u.last_name %></div>
+                                                <div class="text-secondary small"><%= u.username %></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="border-0 text-center">
+                                        <span class="badge rounded-pill px-3 py-1 bg-opacity-10 
+                                            <%= u.role === 'admin' ? 'bg-danger text-danger' : 
+                                               u.role === 'teacher' ? 'bg-success text-success' : 
+                                               u.role === 'student' ? 'bg-primary text-primary' : 'bg-warning text-warning' %>">
+                                            <%= u.role.toUpperCase() %>
+                                        </span>
+                                    </td>
+                                    <td class="border-0">
+                                        <div class="small fw-500"><%= u.email %></div>
+                                        <div class="text-secondary smaller"><%= u.phone || 'No phone' %></div>
+                                    </td>
+                                    <td class="border-0 text-center">
+                                        <span class="badge rounded-circle p-1 <%= u.is_active ? 'bg-success' : 'bg-secondary' %>" style="width: 10px; height: 10px; display: inline-block;" title="<%= u.is_active ? 'Active' : 'Inactive' %>"></span>
+                                        <span class="small ms-1 text-<%= u.is_active ? 'success' : 'secondary' %>">
+                                            <%= u.is_active ? 'Active' : 'Inactive' %>
+                                        </span>
+                                    </td>
+                                    <td class="border-0">
+                                        <span class="text-secondary small"><%= new Date(u.created_at).toLocaleDateString() %></span>
+                                    </td>
+                                    <td class="border-0 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <form action="/admin/toggle-user/<%= u.id %>" method="POST" class="m-0">
+                                                <button type="submit" class="btn btn-sm btn-hero btn-secondary py-1 px-3" title="Toggle Status">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </button>
+                                            </form>
+                                            <form action="/admin/delete-user/<%= u.id %>" method="POST" class="m-0" onsubmit="return confirm('Delete this user account?')">
+                                                <button type="submit" class="btn btn-sm btn-hero btn-primary py-1 px-3 bg-danger border-0" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% } %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="border-0 text-center py-5">
+                                        <i class="fas fa-users-slash fa-3x text-secondary mb-3"></i>
+                                        <div class="text-secondary">No users found matching your criteria</div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-4 border-top border-secondary border-opacity-10">
+                    <div class="text-secondary small">
+                        Showing <strong class="text-light"><%= users.length %></strong> users
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm m-0">
+                            <li class="page-item <%= (currentPage <= 1) ? 'disabled' : '' %>">
+                                <a class="page-link bg-dark bg-opacity-25 border-0 text-secondary px-3 rounded-start" href="#" onclick="changePage('<%= currentPage - 1 %>')">Previous</a>
+                            </li>
+                            <% for(let i = 1; i <= totalPages; i++) { %>
+                                <li class="page-item <%= (currentPage === i) ? 'active' : '' %>">
+                                    <a class="page-link <%= (currentPage === i) ? 'bg-primary' : 'bg-dark bg-opacity-25 text-secondary' %> border-0 px-3" href="#" onclick="changePage('<%= i %>')"><%= i %></a>
+                                </li>
+                            <% } %>
+                            <li class="page-item <%= (currentPage >= totalPages) ? 'disabled' : '' %>">
+                                <a class="page-link bg-dark bg-opacity-25 border-0 text-secondary px-3 rounded-end" href="#" onclick="changePage('<%= currentPage + 1 %>')">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    
+    <script>
+        function applyFilters() {
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const grade = document.getElementById('gradeFilter').value;
+            
+            const params = new URLSearchParams();
+            if (role) params.append('role', role);
+            if (status) params.append('status', status);
+            if (grade) params.append('grade', grade);
+            
+            window.location.href = '/admin/users?' + params.toString();
+        }
+        
+        function changePage(page) {
+            const currentParams = new URLSearchParams(window.location.search);
+            currentParams.set('page', page);
+            window.location.href = '/admin/users?' + currentParams.toString();
+        }
+        
+        function exportUsers() {
+            const currentParams = new URLSearchParams(window.location.search);
+            window.location.href = '/admin/users/export?' + currentParams.toString();
+        }
+        
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                const searchTerm = e.target.value;
+                const currentParams = new URLSearchParams(window.location.search);
+                if (searchTerm) {
+                    currentParams.set('search', searchTerm);
+                } else {
+                    currentParams.delete('search');
+                }
+                window.location.href = '/admin/users?' + currentParams.toString();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Registration System - Modern Dashboard</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css" />
+
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/brocode-style.css" />
+
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+
+      .hero-particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 4rem;
+      }
+
+      .cta-section {
+        padding: 5rem 0;
+        background: var(--dark-secondary);
+        text-align: center;
+        margin-top: 4rem;
+      }
+
+      .stats-section {
+        padding: 5rem 0;
+        background: var(--dark-bg);
+      }
+
+      .pulse-animation {
+        animation: pulse 2s infinite;
+      }
+
+      .float-animation {
+        animation: float 3s ease-in-out infinite;
+      }
+
+      /* Dark Theme Navbar Override */
+      .navbar {
+        background: rgba(15, 15, 35, 0.95) !important;
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1rem 0;
+      }
+
+      .navbar-brand {
+        color: var(--primary-color) !important;
+        font-weight: 700;
+        font-size: 1.5rem;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .navbar-brand:hover {
+        color: var(--secondary-color) !important;
+        transform: translateY(-2px);
+      }
+
+      .nav-link {
+        color: var(--gray-text) !important;
+        margin: 0 0.5rem;
+        padding: 0.5rem 1rem !important;
+        border-radius: 25px;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .nav-link::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--gradient-1);
+        transition: var(--transition);
+        z-index: -1;
+      }
+
+      .nav-link:hover::before {
+        left: 0;
+      }
+
+      .nav-link:hover {
+        color: var(--light-text) !important;
+        transform: translateY(-2px);
+      }
+
+      .nav-link.active {
+        color: var(--light-text) !important;
+        background: var(--gradient-1);
+      }
+
+      .navbar-toggler {
+        border-color: var(--primary-color) !important;
+      }
+
+      .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%236c5ce7' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a href="/" class="navbar-brand">
+          <i class="fas fa-graduation-cap"></i>
+          SRSL
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a href="/" class="nav-link">Home</a>
+            </li>
+            <li class="nav-item">
+              <a href="/about" class="nav-link">About</a>
+            </li>
+            <li class="nav-item">
+              <a href="/gallery" class="nav-link">Gallery</a>
+            </li>
+            <li class="nav-item">
+              <a href="/contact" class="nav-link">Contact</a>
+            </li>
+            <li class="nav-item">
+              <a href="/auth/login" class="nav-link">Login</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-particles">
+        <div class="floating-element floating-1"></div>
+        <div class="floating-element floating-2"></div>
+        <div class="floating-element floating-3"></div>
+      </div>
+      <div class="container">
+        <div class="hero-content">
+          <h1 class="hero-title" data-typing>
+            Welcome to Student Registration System
+          </h1>
+          <p class="hero-subtitle">
+            Empowering Education Through Modern Technology
+          </p>
+          <div class="hero-buttons">
+            <a
+              href="/auth/register"
+              class="btn-hero btn-primary pulse-animation"
+            >
+              <i class="fas fa-rocket"></i>
+              Get Started
+            </a>
+            <a href="/about" class="btn-hero btn-secondary">
+              <i class="fas fa-info-circle"></i>
+              Learn More
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section
+      class="features-section"
+      style="padding: 5rem 0; background: var(--dark-bg)"
+    >
+      <div class="container">
+        <div class="text-center mb-5">
+          <h2 class="display-4 mb-3" style="color: var(--light-text)">
+            Powerful Features
+          </h2>
+          <p class="lead" style="color: var(--gray-text)">
+            Everything you need for modern education management
+          </p>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-card animate-on-scroll" data-reveal="bottom">
+            <div class="feature-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <h3 class="feature-title">Student Management</h3>
+            <p class="feature-description">
+              Comprehensive student registration, profile management, and
+              academic record tracking with advanced filtering and search
+              capabilities.
+            </p>
+          </div>
+
+          <div
+            class="feature-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="60px"
+          >
+            <div class="feature-icon">
+              <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <h3 class="feature-title">Teacher Portal</h3>
+            <p class="feature-description">
+              Dedicated dashboard for teachers to manage classes, assign
+              homework, and track student progress efficiently.
+            </p>
+          </div>
+
+          <div
+            class="feature-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="80px"
+          >
+            <div class="feature-icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <h3 class="feature-title">Analytics & Reports</h3>
+            <p class="feature-description">
+              Real-time analytics, performance tracking, and comprehensive
+              reporting for data-driven decision making.
+            </p>
+          </div>
+
+          <div class="feature-card animate-on-scroll" data-reveal="bottom">
+            <div class="feature-icon">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 class="feature-title">Secure Platform</h3>
+            <p class="feature-description">
+              Enterprise-grade security with role-based access control and data
+              encryption to protect sensitive information.
+            </p>
+          </div>
+
+          <div
+            class="feature-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="60px"
+          >
+            <div class="feature-icon">
+              <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h3 class="feature-title">Mobile Responsive</h3>
+            <p class="feature-description">
+              Fully responsive design that works seamlessly on desktop, tablet,
+              and mobile devices.
+            </p>
+          </div>
+
+          <div
+            class="feature-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="80px"
+          >
+            <div class="feature-icon">
+              <i class="fas fa-cog"></i>
+            </div>
+            <h3 class="feature-title">Easy Configuration</h3>
+            <p class="feature-description">
+              Intuitive admin panel for system configuration, user management,
+              and customization.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+      <div class="container">
+        <div class="text-center mb-5">
+          <h2 class="display-4 mb-3" style="color: var(--light-text)">
+            Trusted by Educational Institutions
+          </h2>
+          <p class="lead" style="color: var(--gray-text)">
+            Join thousands of schools already using our platform
+          </p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card animate-on-scroll" data-reveal="bottom">
+            <div
+              class="stat-number"
+              data-counter="<%= typeof stats !== 'undefined' ? stats.students : 10000 %>"
+            >
+              0
+            </div>
+            <div class="stat-label">Active Students</div>
+          </div>
+
+          <div
+            class="stat-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="40px"
+          >
+            <div
+              class="stat-number"
+              data-counter="<%= typeof stats !== 'undefined' ? stats.parents : 500 %>"
+            >
+              0
+            </div>
+            <div class="stat-label">Parents</div>
+          </div>
+
+          <div
+            class="stat-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="60px"
+          >
+            <div
+              class="stat-number"
+              data-counter="<%= typeof stats !== 'undefined' ? stats.teachers : 2000 %>"
+            >
+              0
+            </div>
+            <div class="stat-label">Teachers</div>
+          </div>
+
+          <div
+            class="stat-card animate-on-scroll"
+            data-reveal="bottom"
+            data-distance="80px"
+          >
+            <div
+              class="stat-number"
+              data-counter="<%= typeof stats !== 'undefined' ? stats.countries : 1 %>"
+            >
+              0
+            </div>
+            <div class="stat-label">Countries</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+      <div class="container">
+        <h2
+          class="display-4 mb-4"
+          style="color: var(--light-text)"
+          data-reveal="bottom"
+        >
+          Ready to Transform Your School?
+        </h2>
+        <p
+          class="lead mb-4"
+          style="color: var(--gray-text)"
+          data-reveal="bottom"
+          data-distance="40px"
+        >
+          Join the modern education revolution today
+        </p>
+        <div class="hero-buttons" data-reveal="bottom" data-distance="60px">
+          <a href="/auth/register" class="btn-hero btn-primary float-animation">
+            <i class="fas fa-rocket"></i>
+            Start Free Trial
+          </a>
+          <a href="/contact" class="btn-hero btn-secondary">
+            <i class="fas fa-phone"></i>
+            Contact Sales
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      class="footer"
+      style="
+        background: var(--dark-secondary);
+        padding: 3rem 0 1rem;
+        margin-top: 0;
+      "
+    >
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4 col-md-6 mb-4">
+            <h5 class="text-white mb-3">
+              <i class="fas fa-graduation-cap me-2"></i>abdigudina school
+            </h5>
+            <p class="text-gray-300">
+              Modern educational management platform for schools and
+              institutions. Empowering education through technology.
+            </p>
+            <div class="d-flex gap-3 mt-3">
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-facebook"></i
+              ></a>
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-twitter"></i
+              ></a>
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-instagram"></i
+              ></a>
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-linkedin"></i
+              ></a>
+            </div>
+          </div>
+
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="text-white mb-3">Quick Links</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2">
+                <a href="/" class="text-gray-300 text-decoration-none">Home</a>
+              </li>
+              <li class="mb-2">
+                <a href="/about" class="text-gray-300 text-decoration-none"
+                  >About</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="/gallery" class="text-gray-300 text-decoration-none"
+                  >Gallery</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="/contact" class="text-gray-300 text-decoration-none"
+                  >Contact</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="col-lg-3 col-md-6 mb-4">
+            <h5 class="text-white mb-3">Services</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Student Management</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Teacher Portal</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Parent Access</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Analytics</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="col-lg-3 col-md-6 mb-4">
+            <h5 class="text-white mb-3">Contact Info</h5>
+            <div class="text-gray-300">
+              <p class="mb-2">
+                <i class="fas fa-map-marker-alt me-2"></i>123 Education Street
+              </p>
+              <p class="mb-2"><i class="fas fa-phone me-2"></i>+251954497337</p>
+              <p class="mb-2">
+                <i class="fas fa-envelope me-2"></i>abdigudina@gmail.com
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="border-secondary my-4" />
+
+        <div class="text-center">
+          <p class="text-gray-400 mb-0">
+            &copy; 2026 abdigudina school. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JS -->
+    <script src="/js/brocode-script.js"></script>
+  </body>
+</html>

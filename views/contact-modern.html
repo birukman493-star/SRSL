@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Us - Student Registration System</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css" />
+
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/brocode-style.css" />
+
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+
+      .contact-hero {
+        min-height: 40vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(
+          135deg,
+          var(--dark-bg) 0%,
+          var(--dark-secondary) 100%
+        );
+        position: relative;
+        overflow: hidden;
+      }
+
+      .contact-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: start;
+        margin-top: -5rem;
+        position: relative;
+        z-index: 10;
+      }
+
+      .contact-form-section {
+        background: var(--dark-secondary);
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: var(--shadow-xl);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+      }
+
+      .contact-form-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient-1);
+        border-radius: 20px 20px 0 0;
+      }
+
+      .info-card {
+        background: var(--dark-secondary);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .info-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--gradient-1);
+        transform: scaleY(0);
+        transition: var(--transition);
+      }
+
+      .info-card:hover::before {
+        transform: scaleY(1);
+      }
+
+      .info-card:hover {
+        transform: translateX(10px);
+        box-shadow: var(--shadow-xl);
+      }
+
+      .info-icon {
+        width: 60px;
+        height: 60px;
+        background: var(--gradient-1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--light-text);
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .map-container {
+        background: var(--dark-secondary);
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        height: 400px;
+        position: relative;
+      }
+
+      .map-placeholder {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          45deg,
+          var(--dark-tertiary),
+          var(--dark-secondary)
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray-text);
+      }
+
+      .faq-section {
+        padding: 5rem 0;
+        background: var(--dark-bg);
+      }
+
+      .faq-item {
+        background: var(--dark-secondary);
+        border-radius: 15px;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+      }
+
+      .faq-question {
+        padding: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: var(--transition);
+      }
+
+      .faq-question:hover {
+        background: rgba(108, 92, 231, 0.1);
+      }
+
+      .faq-answer {
+        padding: 0 1.5rem;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .faq-item.active .faq-answer {
+        padding: 0 1.5rem 1.5rem;
+        max-height: 300px;
+      }
+
+      .faq-item.active .faq-icon {
+        transform: rotate(180deg);
+      }
+
+      .faq-icon {
+        transition: var(--transition);
+      }
+
+      @media (max-width: 992px) {
+        .contact-grid {
+          grid-template-columns: 1fr;
+          gap: 2rem;
+          margin-top: -3rem;
+        }
+      }
+
+      /* Dark Theme Navbar Override */
+      .navbar {
+        background: rgba(15, 15, 35, 0.95) !important;
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1rem 0;
+      }
+
+      .navbar-brand {
+        color: var(--primary-color) !important;
+        font-weight: 700;
+        font-size: 1.5rem;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .navbar-brand:hover {
+        color: var(--secondary-color) !important;
+        transform: translateY(-2px);
+      }
+
+      .nav-link {
+        color: var(--gray-text) !important;
+        margin: 0 0.5rem;
+        padding: 0.5rem 1rem !important;
+        border-radius: 25px;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .nav-link::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--gradient-1);
+        transition: var(--transition);
+        z-index: -1;
+      }
+
+      .nav-link:hover::before {
+        left: 0;
+      }
+
+      .nav-link:hover {
+        color: var(--light-text) !important;
+        transform: translateY(-2px);
+      }
+
+      .nav-link.active {
+        color: var(--light-text) !important;
+        background: var(--gradient-1);
+      }
+
+      .navbar-toggler {
+        border-color: var(--primary-color) !important;
+      }
+
+      .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%236c5ce7' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a href="/" class="navbar-brand">
+          <i class="fas fa-graduation-cap"></i>
+          SRSL
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a href="/" class="nav-link">Home</a>
+            </li>
+            <li class="nav-item">
+              <a href="/about" class="nav-link">About</a>
+            </li>
+            <li class="nav-item">
+              <a href="/gallery" class="nav-link">Gallery</a>
+            </li>
+            <li class="nav-item">
+              <a href="/contact" class="nav-link active">Contact</a>
+            </li>
+            <li class="nav-item">
+              <a href="/auth/login" class="nav-link">Login</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Contact Hero -->
+    <section class="contact-hero">
+      <div class="container">
+        <div class="hero-content">
+          <h1 class="hero-title" data-typing>Get in Touch</h1>
+          <p class="hero-subtitle">
+            We're here to help and answer any questions you may have
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact-section" style="padding: 5rem 0">
+      <div class="container">
+        <div class="contact-grid">
+          <!-- Contact Form -->
+          <div
+            class="contact-form-section animate-on-scroll"
+            data-reveal="left"
+          >
+            <h2 class="h3 mb-4" style="color: var(--light-text)">
+              <i class="fas fa-envelope me-2"></i>Send us a Message
+            </h2>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger">
+              <i class="fas fa-exclamation-triangle me-2"></i><%= error %>
+            </div>
+            <% } %> <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success">
+              <i class="fas fa-check-circle me-2"></i><%= success %>
+            </div>
+            <% } %>
+
+            <form action="/contact" method="POST" id="contactForm">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <div class="form-group">
+                    <label class="form-label text-gray-300 mb-2"
+                      >First Name *</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="firstName"
+                      required
+                      placeholder="John"
+                    />
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <div class="form-group">
+                    <label class="form-label text-gray-300 mb-2"
+                      >Last Name *</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="lastName"
+                      required
+                      placeholder="Doe"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group mb-3">
+                <label class="form-label text-gray-300 mb-2"
+                  >Email Address *</label
+                >
+                <input
+                  type="email"
+                  class="form-control"
+                  name="email"
+                  required
+                  placeholder="john.doe@example.com"
+                />
+              </div>
+
+              <div class="form-group mb-3">
+                <label class="form-label text-gray-300 mb-2"
+                  >Phone Number</label
+                >
+                <input
+                  type="tel"
+                  class="form-control"
+                  name="phone"
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+
+              <div class="form-group mb-3">
+                <label class="form-label text-gray-300 mb-2">Subject *</label>
+                <select class="form-control" name="subject" required>
+                  <option value="">Select a subject</option>
+                  <option value="general">General Inquiry</option>
+                  <option value="support">Technical Support</option>
+                  <option value="sales">Sales</option>
+                  <option value="partnership">Partnership</option>
+                  <option value="feedback">Feedback</option>
+                </select>
+              </div>
+
+              <div class="form-group mb-4">
+                <label class="form-label text-gray-300 mb-2">Message *</label>
+                <textarea
+                  class="form-control"
+                  name="message"
+                  rows="5"
+                  required
+                  placeholder="Tell us how we can help you..."
+                ></textarea>
+              </div>
+
+              <button type="submit" class="btn-form">
+                <i class="fas fa-paper-plane me-2"></i>Send Message
+              </button>
+            </form>
+          </div>
+
+          <!-- Contact Information -->
+          <div class="animate-on-scroll" data-reveal="right">
+            <h2 class="h3 mb-4" style="color: var(--light-text)">
+              <i class="fas fa-info-circle me-2"></i>Contact Information
+            </h2>
+
+            <div class="info-card">
+              <div class="info-icon">
+                <i class="fas fa-map-marker-alt"></i>
+              </div>
+              <h4 class="h5 mb-2" style="color: var(--light-text)">
+                Office Address
+              </h4>
+              <p class="text-gray-300 mb-0">
+                123 Education Street<br />
+                Learning City, LC 12345<br />
+                United States
+              </p>
+            </div>
+
+            <div class="info-card">
+              <div class="info-icon">
+                <i class="fas fa-phone-alt"></i>
+              </div>
+              <h4 class="h5 mb-2" style="color: var(--light-text)">
+                Phone Numbers
+              </h4>
+              <p class="text-gray-300 mb-0">
+                Main: +251954497337<br />
+                Support: +251954497337<br />
+                Fax: +251954497337
+              </p>
+            </div>
+
+            <div class="info-card">
+              <div class="info-icon">
+                <i class="fas fa-envelope"></i>
+              </div>
+              <h4 class="h5 mb-2" style="color: var(--light-text)">
+                Email Addresses
+              </h4>
+              <p class="text-gray-300 mb-0">
+                General: abdigudina@gmail.com<br />
+                Support: abdigudina@gmail.com<br />
+                Sales: abdigudina@gmail.com
+              </p>
+            </div>
+
+            <div class="info-card">
+              <div class="info-icon">
+                <i class="fas fa-clock"></i>
+              </div>
+              <h4 class="h5 mb-2" style="color: var(--light-text)">
+                Business Hours
+              </h4>
+              <p class="text-gray-300 mb-0">
+                Monday - Friday: 8:00 AM - 6:00 PM<br />
+                Saturday: 9:00 AM - 2:00 PM<br />
+                Sunday: Closed
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section" style="padding: 0 0 5rem">
+      <div class="container">
+        <h2
+          class="h3 mb-4 text-center"
+          style="color: var(--light-text)"
+          data-reveal="bottom"
+        >
+          <i class="fas fa-map me-2"></i>Find Us
+        </h2>
+        <div
+          class="map-container animate-on-scroll"
+          data-reveal="bottom"
+          data-distance="40px"
+        >
+          <div class="map-placeholder">
+            <div class="text-center">
+              <i class="fas fa-map-marked-alt fa-3x mb-3"></i>
+              <p class="lead">Interactive Map</p>
+              <p>123 Education Street, Learning City, LC 12345</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+      <div class="container">
+        <div class="text-center mb-5">
+          <h2
+            class="display-4 mb-3"
+            style="color: var(--light-text)"
+            data-reveal="bottom"
+          >
+            Frequently Asked Questions
+          </h2>
+          <p
+            class="lead"
+            style="color: var(--gray-text)"
+            data-reveal="bottom"
+            data-distance="40px"
+          >
+            Quick answers to common questions
+          </p>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-6">
+            <div class="faq-item animate-on-scroll" data-reveal="bottom">
+              <div class="faq-question">
+                <h5 class="mb-0" style="color: var(--light-text)">
+                  How do I register my school?
+                </h5>
+                <i class="fas fa-chevron-down faq-icon"></i>
+              </div>
+              <div class="faq-answer">
+                <p class="text-gray-300 mb-0">
+                  Simply click on the "Register" button and fill out the school
+                  registration form. Our team will review your application and
+                  get back to you within 24-48 hours.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="faq-item animate-on-scroll"
+              data-reveal="bottom"
+              data-distance="40px"
+            >
+              <div class="faq-question">
+                <h5 class="mb-0" style="color: var(--light-text)">
+                  What are the pricing plans?
+                </h5>
+                <i class="fas fa-chevron-down faq-icon"></i>
+              </div>
+              <div class="faq-answer">
+                <p class="text-gray-300 mb-0">
+                  We offer flexible pricing plans based on school size and
+                  requirements. Contact our sales team for a customized quote
+                  that fits your needs.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="faq-item animate-on-scroll"
+              data-reveal="bottom"
+              data-distance="60px"
+            >
+              <div class="faq-question">
+                <h5 class="mb-0" style="color: var(--light-text)">
+                  Is my data secure?
+                </h5>
+                <i class="fas fa-chevron-down faq-icon"></i>
+              </div>
+              <div class="faq-answer">
+                <p class="text-gray-300 mb-0">
+                  Absolutely! We use enterprise-grade encryption and security
+                  measures to protect your data. All information is stored in
+                  secure, SOC 2 compliant data centers.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="faq-item animate-on-scroll" data-reveal="bottom">
+              <div class="faq-question">
+                <h5 class="mb-0" style="color: var(--light-text)">
+                  Do you provide training?
+                </h5>
+                <i class="fas fa-chevron-down faq-icon"></i>
+              </div>
+              <div class="faq-answer">
+                <p class="text-gray-300 mb-0">
+                  Yes! We provide comprehensive onboarding training for all
+                  staff members, including video tutorials, documentation, and
+                  live support sessions.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="faq-item animate-on-scroll"
+              data-reveal="bottom"
+              data-distance="40px"
+            >
+              <div class="faq-question">
+                <h5 class="mb-0" style="color: var(--light-text)">
+                  Can I integrate with other systems?
+                </h5>
+                <i class="fas fa-chevron-down faq-icon"></i>
+              </div>
+              <div class="faq-answer">
+                <p class="text-gray-300 mb-0">
+                  SRSL offers robust API integration capabilities. We can
+                  connect with your existing LMS, SIS, and other educational
+                  tools.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="faq-item animate-on-scroll"
+              data-reveal="bottom"
+              data-distance="60px"
+            >
+              <div class="faq-question">
+                <h5 class="mb-0" style="color: var(--light-text)">
+                  What support do you offer?
+                </h5>
+                <i class="fas fa-chevron-down faq-icon"></i>
+              </div>
+              <div class="faq-answer">
+                <p class="text-gray-300 mb-0">
+                  We provide 24/7 email support, business hours phone support,
+                  and a comprehensive knowledge base with video tutorials and
+                  documentation.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      class="footer"
+      style="
+        background: var(--dark-secondary);
+        padding: 3rem 0 1rem;
+        margin-top: 0;
+      "
+    >
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4 col-md-6 mb-4">
+            <h5 class="text-white mb-3">
+              <i class="fas fa-graduation-cap me-2"></i>abdigudina school
+            </h5>
+            <p class="text-gray-300">
+              Modern educational management platform for schools and
+              institutions. Empowering education through technology.
+            </p>
+            <div class="d-flex gap-3 mt-3">
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-facebook"></i
+              ></a>
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-twitter"></i
+              ></a>
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-instagram"></i
+              ></a>
+              <a href="#" class="text-white fs-5"
+                ><i class="fab fa-linkedin"></i
+              ></a>
+            </div>
+          </div>
+
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="text-white mb-3">Quick Links</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2">
+                <a href="/" class="text-gray-300 text-decoration-none">Home</a>
+              </li>
+              <li class="mb-2">
+                <a href="/about" class="text-gray-300 text-decoration-none"
+                  >About</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="/gallery" class="text-gray-300 text-decoration-none"
+                  >Gallery</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="/contact" class="text-gray-300 text-decoration-none"
+                  >Contact</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="col-lg-3 col-md-6 mb-4">
+            <h5 class="text-white mb-3">Services</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Student Management</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Teacher Portal</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Parent Access</a
+                >
+              </li>
+              <li class="mb-2">
+                <a href="#" class="text-gray-300 text-decoration-none"
+                  >Analytics</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="col-lg-3 col-md-6 mb-4">
+            <h5 class="text-white mb-3">Contact Info</h5>
+            <div class="text-gray-300">
+              <p class="mb-2">
+                <i class="fas fa-map-marker-alt me-2"></i>123 Education Street
+              </p>
+              <p class="mb-2"><i class="fas fa-phone me-2"></i>+251954497337</p>
+              <p class="mb-2">
+                <i class="fas fa-envelope me-2"></i>abdigudina@gmail.com
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="border-secondary my-4" />
+
+        <div class="text-center">
+          <p class="text-gray-400 mb-0">
+            &copy; 2026 abdigudina school. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JS -->
+    <script src="/js/brocode-script.js"></script>
+
+    <!-- FAQ Toggle Script -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const faqItems = document.querySelectorAll(".faq-item");
+
+        faqItems.forEach((item) => {
+          const question = item.querySelector(".faq-question");
+
+          question.addEventListener("click", () => {
+            const isActive = item.classList.contains("active");
+
+            // Close all other items
+            faqItems.forEach((otherItem) => {
+              if (otherItem !== item) {
+                otherItem.classList.remove("active");
+              }
+            });
+
+            // Toggle current item
+            item.classList.toggle("active");
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

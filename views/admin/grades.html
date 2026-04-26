@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        
+        <!-- Main Content -->
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Academic Records & Grading</h1>
+                        <p class="text-secondary m-0">Validate and manage student performance across all faculties</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn-hero btn-secondary px-3 py-2 bg-opacity-10 border-0" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i> Print Table
+                        </button>
+                        <button class="btn-hero btn-primary px-4 py-2">
+                            <i class="fas fa-plus me-2"></i> Add Record
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grades Table View -->
+            <div class="glass-panel">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                        <thead>
+                            <tr class="text-secondary small">
+                                <th class="border-0">Student Profile</th>
+                                <th class="border-0">Subject & Task</th>
+                                <th class="border-0 text-center">Score</th>
+                                <th class="border-0 text-center">Status</th>
+                                <th class="border-0">Evaluation Date</th>
+                                <th class="border-0 text-end">Management</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (typeof grades !== 'undefined' && grades && grades.length > 0) { %>
+                                 <% for (let grade of grades) { %>
+                                <tr class="<%= grade.status === 'pending' ? 'bg-primary-soft bg-opacity-25' : '' %>">
+                                    <td class="border-0">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="sidebar-user-avatar m-0" style="width: 32px; height: 32px; font-size: 0.8rem; background: var(--gradient-3); border:none;">
+                                                <%= (grade.first_name ? grade.first_name.charAt(0) : '?') %>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-light"><%= grade.first_name %> <%= grade.last_name %></div>
+                                                <div class="text-secondary small opacity-75">ID: #<%= grade.student_reg_id || '---' %></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="border-0">
+                                        <div class="text-light small fw-bold"><%= grade.course_name %></div>
+                                        <div class="text-secondary small"><%= grade.assignment_name %></div>
+                                    </td>
+                                    <td class="border-0 text-center">
+                                        <div class="h6 m-0 text-light"><%= grade.score %> <span class="text-secondary small">/ <%= grade.max_score %></span></div>
+                                        <% let perc = (grade.score / grade.max_score) * 100; %>
+                                        <div class="progress mt-1" style="height: 3px; background: rgba(255,255,255,0.05);">
+                                            <div class="progress-bar <%= perc >= 50 ? 'bg-success' : 'bg-danger' %>" style="width: <%= perc %>%;"></div>
+                                        </div>
+                                    </td>
+                                    <td class="border-0 text-center">
+                                        <% 
+                                            let badgeClass = 'bg-secondary';
+                                            if (grade.status === 'approved') badgeClass = 'bg-success';
+                                            else if (grade.status === 'rejected') badgeClass = 'bg-danger';
+                                            else if (grade.status === 'pending') badgeClass = 'bg-warning';
+                                        %>
+                                        <span class="badge rounded-pill px-3 py-1 <%= badgeClass %> bg-opacity-10 <%= badgeClass.replace('bg-', 'text-') %> border <%= badgeClass.replace('bg-', 'border-') %> border-opacity-25 text-uppercase" style="font-size: 0.6rem;">
+                                            <%= grade.status %>
+                                        </span>
+                                    </td>
+                                    <td class="border-0 text-secondary small">
+                                        <%= new Date(grade.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                    </td>
+                                    <td class="border-0 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <% if (grade.status === 'pending') { %>
+                                                <button class="btn btn-sm btn-hero btn-secondary py-1 px-3 border-0 text-success" onclick="updateGradeStatus('<%= grade.id %>', 'approve')" title="Approve">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-hero btn-secondary py-1 px-3 border-0 text-warning" onclick="updateGradeStatus('<%= grade.id %>', 'reject')" title="Reject">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            <% } %>
+                                            <button class="btn btn-sm btn-hero btn-primary py-1 px-3 bg-danger border-0" onclick="deleteGrade('<%= grade.id %>')" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% } %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="border-0 text-center py-5">
+                                        <i class="fas fa-chart-bar fa-4x text-secondary mb-3 opacity-25"></i>
+                                        <div class="text-secondary">No academic records available for processing.</div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <script>
+        async function updateGradeStatus(id, action) {
+            if (!confirm(`Are you sure you want to ${action} this grade?`)) return;
+            try {
+                const response = await fetch(`/admin/grades/${action}/${id}`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        async function deleteGrade(id) {
+            if (!confirm('Are you sure you want to delete this grade record permanently?')) return;
+            try {
+                const response = await fetch(`/admin/grades/delete/${id}`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                alert('An error occurred. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>

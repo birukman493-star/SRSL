@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SRSL Faculty</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Welcome back, <%= user.first_name %>!</h1>
+                        <p class="text-secondary m-0">Faculty Portal • Academic Management Suite</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10">
+                            <i class="fas fa-id-badge me-1"></i> Faculty Access
+                        </span>
+                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill border border-success border-opacity-10">
+                            <i class="fas fa-check-circle me-1"></i> System Active
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="glass-panel text-center h-100 p-4">
+                        <div class="sidebar-user-avatar mb-3 mx-auto bg-primary bg-opacity-10 text-primary" style="width: 60px; height: 60px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; border-radius: 16px;">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <div class="h2 fw-bold mb-1 text-light"><%= stats.classes %></div>
+                        <div class="text-secondary small">Active Classes</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-panel text-center h-100 p-4">
+                        <div class="sidebar-user-avatar mb-3 mx-auto bg-success bg-opacity-10 text-success" style="width: 60px; height: 60px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; border-radius: 16px;">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="h2 fw-bold mb-1 text-light"><%= stats.students %></div>
+                        <div class="text-secondary small">Total Students</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-panel text-center h-100 p-4">
+                        <div class="sidebar-user-avatar mb-3 mx-auto bg-warning bg-opacity-10 text-warning" style="width: 60px; height: 60px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; border-radius: 16px;">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <div class="h2 fw-bold mb-1 text-light"><%= stats.pendingGrades %></div>
+                        <div class="text-secondary small">Pending Grades</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="glass-panel text-center h-100 p-4">
+                        <div class="sidebar-user-avatar mb-3 mx-auto bg-info bg-opacity-10 text-info" style="width: 60px; height: 60px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; border-radius: 16px;">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="h2 fw-bold mb-1 text-light"><%= stats.attendanceRate %>%</div>
+                        <div class="text-secondary small">Daily Attendance</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- My Classes Section -->
+                <div class="col-lg-8">
+                    <div class="glass-panel h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="h5 fw-bold m-0 text-light"><i class="fas fa-chalkboard me-2 text-primary"></i>My Assigned Classes</h3>
+                            <a href="/teacher/classes" class="btn btn-sm btn-link text-decoration-none text-primary">View All Classes →</a>
+                        </div>
+                        <div class="row g-3">
+                            <% if (classes && classes.length > 0) { %>
+                                <% classes.forEach(classItem => { %>
+                                <div class="col-md-6">
+                                    <div class="glass-card p-4 h-100 hover-lift transition">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="course-badge me-3" style="background: var(--gradient-1); width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem;">
+                                                <i class="fas fa-school"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="m-0 text-light fw-bold"><%= classItem.name %></h6>
+                                                <small class="text-secondary"><%= classItem.grade %> - <%= classItem.section %></small>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white border-opacity-5">
+                                            <div class="d-flex align-items-center text-secondary small">
+                                                <i class="fas fa-users me-2"></i> <%= classItem.student_count || 0 %> Students
+                                            </div>
+                                            <a href="/teacher/attendance/<%= classItem.id %>/<%= new Date().toISOString().split('T')[0] %>" class="btn btn-sm btn-hero btn-primary py-1 px-3" style="font-size: 0.75rem;">Take Attendance</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="col-12 text-center py-5">
+                                    <div class="opacity-25 mb-3">
+                                        <i class="fas fa-folder-open fa-4x text-secondary"></i>
+                                    </div>
+                                    <p class="text-secondary">No classes assigned to you yet.</p>
+                                    <a href="/teacher/schedule" class="btn btn-hero btn-secondary px-4 mt-2">Check Schedule</a>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Content -->
+                <div class="col-lg-4">
+                    <!-- Today's Schedule -->
+                    <div class="glass-panel mb-4">
+                        <h3 class="h5 fw-bold mb-4 text-light"><i class="fas fa-calendar-day me-2 text-primary"></i>Today's Schedule</h3>
+                        <div class="schedule-mini-list">
+                            <% if (typeof todaySchedule !== 'undefined' && todaySchedule.length > 0) { %>
+                                <% todaySchedule.forEach(period => { %>
+                                    <div class="glass-card p-3 mb-2 border-0 bg-white bg-opacity-5">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="text-primary small fw-bold"><%= period.period %></span>
+                                            <span class="text-secondary smaller"><%= period.start_time.substring(0, 5) %></span>
+                                        </div>
+                                        <div class="text-light small fw-bold"><%= period.course_name %></div>
+                                        <div class="d-flex justify-content-between align-items-center mt-1">
+                                            <span class="text-secondary smaller"><%= period.class_name %></span>
+                                            <span class="text-secondary smaller"><i class="fas fa-map-marker-alt me-1"></i><%= period.room || 'TBD' %></span>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="text-center py-4 opacity-50">
+                                    <p class="text-secondary small m-0">No classes today.</p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="glass-panel mb-4">
+                        <h3 class="h5 fw-bold mb-4 text-light"><i class="fas fa-bolt me-2 text-warning"></i>Quick Actions</h3>
+                        <div class="d-grid gap-3">
+                            <a href="/teacher/attendance" class="btn-hero btn-primary w-100 py-3">
+                                <i class="fas fa-user-check me-2"></i>Record Attendance
+                            </a>
+                            <a href="/teacher/grades" class="btn-hero btn-secondary w-100 py-3">
+                                <i class="fas fa-award me-2"></i>Post Student Grades
+                            </a>
+                            <a href="/teacher/assignments" class="btn-hero btn-primary bg-gradient-2 w-100 py-3" style="border: none;">
+                                <i class="fas fa-book me-2"></i>Manage Assignments
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activities (Unified with Admin/Student style) -->
+                    <div class="glass-panel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="h5 fw-bold m-0 text-light"><i class="fas fa-history me-2 text-info"></i>Recent Activity</h3>
+                        </div>
+                        <div class="activity-timeline">
+                            <% if (activities && activities.length > 0) { %>
+                                <% activities.forEach(activity => { %>
+                                <div class="glass-card p-3 mb-3 hover-lift transition">
+                                    <div class="d-flex gap-3">
+                                        <div class="activity-icon bg-<%= activity.type === 'attendance' ? 'success' : (activity.type === 'grade' ? 'info' : 'warning') %> bg-opacity-10 text-<%= activity.type === 'attendance' ? 'success' : (activity.type === 'grade' ? 'info' : 'warning') %>" style="width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fas fa-<%= activity.type === 'attendance' ? 'check' : (activity.type === 'grade' ? 'award' : 'file-alt') %>"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-light small fw-bold"><%= activity.description %></div>
+                                            <div class="text-secondary mt-1" style="font-size: 0.7rem;"><%= new Date(activity.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %> • Today</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="text-center py-5 opacity-50">
+                                    <i class="fas fa-stream fa-2x text-secondary mb-2"></i>
+                                    <p class="text-secondary small">No recent activity logged.</p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

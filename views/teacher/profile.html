@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SRSL Faculty</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">Faculty Profile</h1>
+                        <p class="text-secondary m-0">Manage your personal information and academic credentials</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Profile Overview -->
+                <div class="col-lg-4">
+                    <div class="glass-panel p-4 text-center h-100">
+                        <div class="sidebar-user-avatar mx-auto mb-4" style="position: relative; width: 120px; height: 120px; font-size: 3rem; background: rgba(255,255,255,0.05); border: 2px solid var(--primary-color); border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                            <% if (user.profile_picture) { %>
+                                <img src="<%= user.profile_picture %>" alt="Profile Picture" style="width: 100%; height: 100%; object-fit: cover;">
+                            <% } else { %>
+                                <%= teacher.first_name ? teacher.first_name.charAt(0).toUpperCase() : 'T' %>
+                            <% } %>
+                            <form action="/auth/profile/upload-picture" method="POST" enctype="multipart/form-data" id="profilePicForm" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                                <input type="file" name="profile_picture" id="profilePicInput" onchange="document.getElementById('profilePicForm').submit()" style="position: absolute; width: 100%; height: 100%; cursor: pointer;">
+                            </form>
+                            <div style="position: absolute; bottom: 0; background: rgba(0,0,0,0.5); width: 100%; text-align: center; font-size: 0.8rem; padding: 2px 0; color: white; pointer-events: none;">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                        </div>
+                        <h2 class="h4 fw-bold text-light mb-1"><%= teacher.first_name %> <%= teacher.last_name %></h2>
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10 mb-4">
+                            Faculty Member
+                        </span>
+                        
+                        <div class="d-flex flex-column gap-3 text-start mt-2">
+                            <div class="glass-card p-3 d-flex align-items-center gap-3">
+                                <i class="fas fa-id-badge text-primary w-25 text-center h4 m-0"></i>
+                                <div>
+                                    <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.6rem;">Employee ID</div>
+                                    <div class="text-light fw-bold"><%= teacher.employee_id %></div>
+                                </div>
+                            </div>
+                            <div class="glass-card p-3 d-flex align-items-center gap-3">
+                                <i class="fas fa-university text-info w-25 text-center h4 m-0"></i>
+                                <div>
+                                    <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.6rem;">Department</div>
+                                    <div class="text-light fw-bold"><%= teacher.department || 'Academic Affairs' %></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Info -->
+                <div class="col-lg-8">
+                    <div class="glass-panel p-4 h-100">
+                        <h3 class="h5 fw-bold text-light mb-4 d-flex align-items-center gap-2">
+                            <i class="fas fa-user-circle text-primary"></i> Personal Details
+                        </h3>
+                        
+                        <form action="/teacher/profile/update" method="POST">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="glass-card p-3">
+                                        <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;">First Name</label>
+                                        <input type="text" name="first_name" class="form-control bg-transparent border-0 text-light p-0" value="<%= teacher.first_name %>" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="glass-card p-3">
+                                        <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;">Last Name</label>
+                                        <input type="text" name="last_name" class="form-control bg-transparent border-0 text-light p-0" value="<%= teacher.last_name %>" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="glass-card p-3">
+                                        <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;">Email Address</label>
+                                        <input type="email" name="email" class="form-control bg-transparent border-0 text-light p-0" value="<%= teacher.email %>" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="glass-card p-3">
+                                        <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;">Contact Number</label>
+                                        <input type="tel" name="phone" class="form-control bg-transparent border-0 text-light p-0" value="<%= teacher.phone || '' %>" placeholder="Not provided">
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="glass-card p-3">
+                                        <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;">Department</label>
+                                        <input type="text" name="department" class="form-control bg-transparent border-0 text-light p-0" value="<%= teacher.department || 'Academic Affairs' %>">
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-4 text-end">
+                                    <button type="submit" class="btn btn-primary rounded-pill px-5">
+                                        <i class="fas fa-save me-2"></i>Update Profile Details
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <hr class="border-white border-opacity-10 my-5">
+
+                        <h3 class="h5 fw-bold text-light mb-4 d-flex align-items-center gap-2">
+                            <i class="fas fa-book-open text-primary"></i> Assigned Expertise
+                        </h3>
+                        <div class="d-flex flex-wrap gap-2">
+                            <% if (subjects && subjects.length > 0) { %>
+                                <% for(let subject of subjects) { %>
+                                    <div class="badge bg-white bg-opacity-5 text-secondary border border-white border-opacity-10 px-3 py-2 rounded-3 d-flex align-items-center gap-2">
+                                        <i class="fas fa-check-circle text-success small"></i>
+                                        <span class="fw-bold"><%= subject.name %></span>
+                                        <span class="opacity-50 small">(<%= subject.code %>)</span>
+                                    </div>
+                                <% } %>
+                            <% } else { %>
+                                <div class="glass-card p-4 text-center w-100 bg-white bg-opacity-5">
+                                    <p class="text-secondary m-0">No specific subjects currently assigned.</p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

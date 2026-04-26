@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Materials - SRSL</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="admin-container dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel">
+            <!-- Top Header -->
+            <header class="dashboard-header-modern mb-4">
+                <div class="header-content">
+                    <div class="header-title-block">
+                        <h1 class="header-title">Course Materials</h1>
+                        <p class="header-subtitle"><i class="fas fa-folder-open me-2"></i>Study resources and handouts from your teachers</p>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Materials Grid -->
+            <div class="row g-4">
+                <% if (materials && materials.length > 0) { %>
+                    <% materials.forEach(m => { %>
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <div class="glass-panel h-100 hover-lift transition d-flex flex-column p-4">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                    <% if (m.material_type === 'reading') { %>
+                                        <i class="fas fa-book-open"></i>
+                                    <% } else if (m.material_type === 'video') { %>
+                                        <i class="fas fa-video"></i>
+                                    <% } else if (m.material_type === 'link') { %>
+                                        <i class="fas fa-link"></i>
+                                    <% } else { %>
+                                        <i class="fas fa-file-pdf"></i>
+                                    <% } %>
+                                </div>
+                                <div>
+                                    <h5 class="text-light m-0 fw-bold"><%= m.title %></h5>
+                                    <div class="text-secondary small"><%= m.class_name %></div>
+                                </div>
+                            </div>
+                            
+                            <p class="text-secondary small mb-3 flex-grow-1"><%= m.description || 'No description provided.' %></p>
+                            
+                            <div class="mt-auto pt-3 border-top border-white border-opacity-5">
+                                <div class="d-flex justify-content-between align-items-center mb-3 text-secondary small">
+                                    <span><i class="fas fa-chalkboard-teacher me-1"></i> <%= m.teacher_fname %> <%= m.teacher_lname %></span>
+                                    <span><%= new Date(m.created_at).toLocaleDateString() %></span>
+                                </div>
+                                
+                                <% if (m.file_url) { %>
+                                <a href="<%= m.file_url %>" target="_blank" class="btn btn-primary w-100 rounded-pill">
+                                    <i class="fas fa-download me-2"></i> Access Material
+                                </a>
+                                <% } else { %>
+                                <button class="btn btn-soft-secondary w-100 rounded-pill" disabled>
+                                    No Link Provided
+                                </button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="col-12 text-center py-5">
+                        <div class="glass-panel py-5">
+                            <div class="mb-4">
+                                <i class="fas fa-folder fa-4x text-secondary opacity-25"></i>
+                            </div>
+                            <h4 class="text-light">No materials available yet.</h4>
+                            <p class="text-secondary">Your teachers haven't uploaded any study materials for your classes yet.</p>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

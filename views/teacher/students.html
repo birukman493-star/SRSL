@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SRSL Faculty</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title">My Students</h1>
+                        <p class="text-secondary m-0">Directory of all students enrolled in your assigned classes</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10">
+                            <i class="fas fa-users me-1"></i> Total: <%= students ? students.length : 0 %> Students
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel p-4">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                        <thead>
+                            <tr>
+                                <th class="border-0 text-secondary small py-3">Student Name</th>
+                                <th class="border-0 text-secondary small py-3">Assigned Class</th>
+                                <th class="border-0 text-secondary small py-3">Contact Info</th>
+                                <th class="border-0 text-secondary small py-3 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (typeof students !== "undefined" && students && students.length > 0) { %>
+                                <% for (let s of students) { %>
+                                <tr class="transition">
+                                    <td class="border-0 py-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="sidebar-user-avatar" style="width: 45px; height: 45px; font-size: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                                                <%= (s.first_name ? s.first_name.charAt(0).toUpperCase() : '?') %>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-light"><%= s.first_name || 'Unknown' %> <%= s.last_name || '' %></div>
+                                                <div class="text-secondary small" style="font-size: 0.7rem;"><%= s.student_id || 'N/A' %></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="border-0 py-3">
+                                        <div class="d-flex flex-column">
+                                            <span class="text-primary fw-bold small"><%= s.class_name %></span>
+                                            <span class="text-secondary" style="font-size: 0.7rem;">Grade <%= s.grade %> - <%= s.section %></span>
+                                        </div>
+                                    </td>
+                                    <td class="border-0 py-3">
+                                        <div class="d-flex flex-column gap-1">
+                                            <div class="text-light small"><i class="far fa-envelope me-2 opacity-50"></i><%= s.email %></div>
+                                            <div class="text-secondary" style="font-size: 0.7rem;"><i class="fas fa-phone-alt me-2 opacity-50"></i><%= s.phone || 'No contact provided' %></div>
+                                        </div>
+                                    </td>
+                                    <td class="border-0 py-3 text-end">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-hero btn-secondary py-1 px-3" type="button" data-bs-toggle="dropdown">
+                                                <i class="fas fa-ellipsis-h me-1"></i> Options
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-dark glass-card border-white border-opacity-10 shadow-lg">
+                                                <li><a class="dropdown-item py-2" href="/teacher/messages?to=<%= s.user_id %>"><i class="far fa-comment-dots me-2 text-primary"></i> Send Message</a></li>
+                                                <li><a class="dropdown-item py-2" href="/teacher/grades/<%= s.class_id %>"><i class="fas fa-chart-line me-2 text-success"></i> Academic Performance</a></li>
+                                                <li><hr class="dropdown-divider opacity-10"></li>
+                                                <li><a class="dropdown-item py-2" href="#"><i class="fas fa-info-circle me-2 text-info"></i> Full Profile</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% } %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="border-0 text-center py-5">
+                                        <div class="opacity-25 mb-3">
+                                            <i class="fas fa-user-slash fa-4x text-secondary"></i>
+                                        </div>
+                                        <p class="text-secondary">No students found in your active classes.</p>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>
