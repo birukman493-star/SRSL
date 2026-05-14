@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Abdigudina Admin</title>
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel p-4">
+            <!-- Header Area -->
+            <div class="premium-panel mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Transcript Center</h1>
+                        <p class="text-secondary m-0 fw-medium">Academic Records Management & Official Transcript Generation</p>
+                    </div>
+                    <div class="d-none d-md-block">
+                        <div class="badge bg-primary bg-opacity-10 text-primary px-4 py-2 rounded-pill fw-bold border border-primary border-opacity-10">
+                            <i class="fas fa-certificate me-2"></i>Official Records
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="premium-panel mb-4 p-4 shadow-sm border-0">
+                <form action="/admin/transcripts" method="GET" class="row g-3 align-items-end">
+                    <div class="col-md-9">
+                        <label class="form-label fw-800 small text-secondary mb-2" style="letter-spacing: 1px;">STUDENT SEARCH</label>
+                        <div class="input-group search-group-modern">
+                            <span class="input-group-text bg-light border-0 px-3"><i class="fas fa-search text-primary"></i></span>
+                            <input type="text" name="search" class="form-control bg-light border-0 py-3" placeholder="Enter Student Name or Registration ID (e.g. STU-2024...)" value="<%= locals.search || (locals.filters && locals.filters.search) || '' %>" style="border-radius: 0 12px 12px 0;">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm">
+                            <i class="fas fa-magnifying-glass me-2"></i>Filter Records
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Student List -->
+            <div class="premium-panel p-0 overflow-hidden shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr class="bg-light text-secondary small fw-800" style="text-transform: uppercase; letter-spacing: 1px;">
+                                <th class="px-4 py-3 border-0">Student Profile</th>
+                                <th class="py-3 border-0">Registration ID</th>
+                                <th class="py-3 border-0">Grade Level</th>
+                                <th class="py-3 border-0 text-end px-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (students && students.length > 0) { %>
+                                <% students.forEach(student => { %>
+                                    <tr>
+                                        <td class="px-4 py-3 border-0">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-circle me-3 fw-bold" style="background: var(--gradient-1); width: 40px; height: 40px; font-size: 0.9rem;">
+                                                    <%= (student.first_name||'?')[0].toUpperCase() %><%= (student.last_name||'?')[0].toUpperCase() %>
+                                                </div>
+                                                <div class="fw-bold text-dark" style="font-size: 1rem;"><%= student.first_name %> <%= student.last_name %></div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 border-0">
+                                            <code class="fw-bold text-primary px-2 py-1 bg-primary bg-opacity-10 rounded" style="font-size: 0.85rem;"><%= student.student_id %></code>
+                                        </td>
+                                        <td class="py-3 border-0">
+                                            <span class="badge bg-light text-dark px-3 py-2 rounded-pill fw-bold border border-secondary border-opacity-10">Grade <%= student.grade_level %> — <%= student.section %></span>
+                                        </td>
+                                        <td class="py-3 border-0 text-end px-4">
+                                            <a href="/admin/transcripts/generate/<%= student.id %>" data-no-transition class="btn btn-sm btn-dark px-4 py-2 rounded-pill fw-bold shadow-sm transition-all hover-up">
+                                                <i class="fas fa-file-invoice me-2"></i>Generate Transcript
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="text-center py-5">
+                                        <div class="empty-state py-5">
+                                            <div class="text-secondary opacity-20 mb-4"><i class="fas fa-file-circle-xmark fa-5x"></i></div>
+                                            <h5 class="text-dark fw-bold">No academic records found</h5>
+                                            <p class="text-secondary">Try searching with a different name or ID</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer Stats -->
+            <div class="mt-4 d-flex justify-content-between align-items-center text-secondary small px-2">
+                <div class="fw-medium">Showing <%= students ? students.length : 0 %> active academic profiles</div>
+                <div class="fw-medium"><i class="fas fa-shield-halved me-1"></i> Secure Transcript Generation System</div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <style>
+        .hover-up:hover {
+            transform: translateY(-2px);
+            background: #000 !important;
+        }
+        .avatar-circle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+        }
+    </style>
+</body>
+</html>

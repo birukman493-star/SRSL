@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - SRSL Faculty</title>
+    <title><%= title %> - Abdigudina Faculty</title>
     
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
@@ -13,65 +13,99 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .announcement-card {
+            background: white;
+            border-radius: 28px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .announcement-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+        .announcement-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: var(--gradient-1);
+        }
+        .date-badge {
+            background: #f8fafc;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 800;
+            color: var(--primary-color);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
 </head>
-<body class="dashboard-body">
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
+            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title">School Announcements</h1>
-                        <p class="text-secondary m-0">Latest updates and notifications from school administration</p>
+                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                            School Announcements
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Stay updated with the latest news and academic broadcasts</p>
                     </div>
                 </div>
             </div>
 
-            <% if (typeof announcements !== "undefined" && announcements && announcements.length > 0) { %>
-                <div class="row g-4">
-                    <% for (let a of announcements) { %>
-                        <div class="col-12">
-                            <div class="glass-panel p-4 hover-lift transition" style="border-left: 5px solid var(--primary-color) !important;">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div>
-                                        <h3 class="h4 fw-bold text-light mb-2"><%= a.title %></h3>
-                                        <div class="d-flex gap-4 text-secondary small">
-                                            <span>
-                                                <i class="far fa-calendar-alt text-primary me-2"></i> 
-                                                <%= new Date(a.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) %>
-                                            </span>
-                                            <span>
-                                                <i class="far fa-user text-info me-2"></i> 
-                                                <%= a.first_name %> <%= a.last_name %>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10 small" style="text-transform: capitalize;">
-                                        <%= a.audience %>
-                                    </span>
+            <div class="row g-4">
+                <% if (announcements && announcements.length > 0) { %>
+                    <% announcements.forEach(a => { %>
+                    <div class="col-12">
+                        <div class="announcement-card p-4 p-md-5">
+                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                <div class="date-badge shadow-xs">
+                                    <i class="far fa-calendar-alt me-2"></i> <%= new Date(a.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) %>
                                 </div>
-                                <div class="glass-card p-4 mt-3" style="background: rgba(255,255,255,0.03);">
-                                    <div class="text-secondary" style="line-height: 1.8; font-size: 1rem;">
-                                        <%- a.message %>
-                                    </div>
+                                <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase" style="background: rgba(37,99,235,0.08); color: var(--primary-color); font-size: 0.65rem;">
+                                    Public Broadcast
+                                </span>
+                            </div>
+                            <h3 class="fw-bold mb-3" style="color: var(--dark-text); font-size: 1.8rem;"><%= a.title %></h3>
+                            <div class="text-secondary fw-medium fs-5" style="line-height: 1.7; opacity: 0.85;">
+                                <%= a.content %>
+                            </div>
+                            <div class="mt-4 pt-4 border-top d-flex align-items-center gap-3">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-bullhorn"></i>
                                 </div>
+                                <div class="small fw-bold text-secondary">Posted by <span class="text-dark">Administration Office</span></div>
                             </div>
                         </div>
-                    <% } %>
-                </div>
-            <% } else { %>
-                <div class="glass-panel p-5 text-center">
-                    <div class="opacity-25 mb-4">
-                        <i class="fas fa-bullhorn fa-5x text-secondary"></i>
                     </div>
-                    <h3 class="text-light fw-bold">No Announcements Found</h3>
-                    <p class="text-secondary">All system updates will appear here when posted by administration.</p>
-                </div>
-            <% } %>
+                    <% }); %>
+                <% } else { %>
+                    <div class="col-12 text-center py-5">
+                        <div class="announcement-card py-5">
+                            <div class="text-secondary opacity-10 mb-4">
+                                <i class="fas fa-comment-slash fa-6x"></i>
+                            </div>
+                            <h3 class="fw-900" style="color: var(--dark-text);">No Active Announcements</h3>
+                            <p class="text-secondary fw-medium">There are currently no new announcements or updates to display.</p>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
         </main>
     </div>
+    
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
 </body>

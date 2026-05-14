@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .rank-badge {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+        .rank-1 { background: #ffd700; color: #856404; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+        .rank-2 { background: #c0c0c0; color: #495057; box-shadow: 0 0 15px rgba(192, 192, 192, 0.3); }
+        .rank-3 { background: #cd7f32; color: #fff; box-shadow: 0 0 15px rgba(205, 127, 50, 0.3); }
+        .rank-other { background: rgba(0,0,0,0.05); color: #6c757d; }
+        
+        .score-pill {
+            background: rgba(37, 99, 235, 0.1);
+            color: #2563eb;
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-weight: 700;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        
+        <!-- Main Content -->
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="dashboard-header mb-4" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title" style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            Academic Rankings
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Track top academic performers and class-based distributions</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light px-3 py-2 border-0 fw-bold rounded-3" onclick="window.print()" style="color: var(--dark-text);">
+                            <i class="fas fa-print me-2"></i> Export Rankings
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Grade Badges -->
+            <div class="mb-4 d-flex flex-wrap gap-2">
+                <% for(let i=1; i<=8; i++) { %>
+                    <button type="button" 
+                       onclick="document.getElementById('gradeInput').value='<%= i %>'; document.getElementById('filterForm').submit();"
+                       class="btn btn-light filter-badge <%= (filters.selectedGrade == i) ? 'active' : '' %> rounded-pill px-3 py-1 fw-bold small shadow-sm border"
+                       style="font-size: 0.75rem;">
+                        Grade <%= i %>
+                    </button>
+                <% } %>
+            </div>
+
+            <!-- Filter Panel -->
+            <div class="glass-panel mb-4 p-3 shadow-sm" style="background: white !important; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                <form id="filterForm" action="/admin/rankings" method="GET" class="row g-2 align-items-center">
+                    <input type="hidden" name="grade" id="gradeInput" value="<%= filters.selectedGrade || '' %>">
+                    <div class="col-md-3">
+                        <select name="year" class="form-select form-select-sm border-0 bg-light fw-bold" onchange="this.form.submit()" style="border-radius: 8px;">
+                            <% for(let year of filters.years) { %>
+                                <option value="<%= year %>" <%= filters.selectedYear === year ? 'selected' : '' %>><%= year %></option>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm border-0 bg-light fw-bold" onchange="document.getElementById('gradeInput').value=this.value; this.form.submit()" style="border-radius: 8px;">
+                            <option value="">All Elementary Grades</option>
+                            <% for(let i=1; i<=8; i++) { %>
+                                <option value="<%= i %>" <%= filters.selectedGrade == i ? 'selected' : '' %>>Grade <%= i %></option>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="classId" class="form-select form-select-sm border-0 bg-light fw-bold" onchange="this.form.submit()" style="border-radius: 8px;">
+                            <option value="">All Classes</option>
+                            <% for(let cls of filters.classes) { %>
+                                <option value="<%= cls.id %>" <%= filters.selectedClass == cls.id ? 'selected' : '' %>><%= cls.name %></option>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold rounded-2">Apply Filters</button>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="/admin/rankings" class="btn btn-light btn-sm w-100 fw-bold rounded-2 border">Clear</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Rankings Table -->
+            <div class="glass-panel" style="background: white !important; border-radius: 24px;">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background: rgba(0,0,0,0.02)">
+                            <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                <th class="border-0 py-3 ps-4" style="width: 80px;">Rank</th>
+                                <th class="border-0 py-3">Student Profile</th>
+                                <th class="border-0 py-3 text-center">Avg Score</th>
+                                <th class="border-0 py-3 text-center">Assessments</th>
+                                <th class="border-0 py-3 text-end pe-4">Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (rankedStudents && rankedStudents.length > 0) { %>
+                                <% for (let student of rankedStudents) { %>
+                                <tr>
+                                    <td class="border-0 py-3 ps-4">
+                                        <div class="rank-badge rank-<%= student.rank <= 3 ? student.rank : 'other' %>">
+                                            <% if(student.rank === 1) { %> <i class="fas fa-crown"></i> <% } else { %> <%= student.rank %> <% } %>
+                                        </div>
+                                    </td>
+                                    <td class="border-0 py-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="avatar-initials" style="width: 38px; height: 38px; font-size: 0.9rem; background: <%= student.rank === 1 ? 'rgba(255,215,0,0.1)' : 'rgba(37,99,235,0.05)' %>; color: <%= student.rank === 1 ? '#856404' : '#2563eb' %>;">
+                                                <%= (student.first_name ? student.first_name.charAt(0) : '?') %>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold" style="color: var(--dark-text);"><%= student.first_name %> <%= student.last_name %></div>
+                                                <div class="text-secondary small">Grade <%= student.grade %><%= student.section %> • #<%= student.student_id %></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="border-0 text-center py-3">
+                                        <div class="score-pill small"><%= parseFloat(student.average_score).toFixed(2) %>%</div>
+                                    </td>
+                                    <td class="border-0 text-center py-3">
+                                        <span class="fw-bold text-secondary small"><%= student.assessments_count %> Units</span>
+                                    </td>
+                                    <td class="border-0 text-end py-3 pe-4">
+                                        <% if(student.rank <= 3) { %>
+                                            <span class="text-success small fw-bold"><i class="fas fa-award me-1"></i>Distinction</span>
+                                        <% } else { %>
+                                            <span class="text-secondary small fw-medium">Satisfactory</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                                <% } %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="border-0 text-center py-5">
+                                        <div class="text-secondary opacity-30 mb-3">
+                                            <i class="fas fa-medal fa-4x"></i>
+                                        </div>
+                                        <div class="fw-bold text-secondary">No rankings found for this criteria.</div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

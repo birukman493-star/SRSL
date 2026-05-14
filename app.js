@@ -47,7 +47,9 @@ app.use((req, res, next) => {
 });
 
 // Initialize database
-initDatabase().catch(err => console.error("Database initialization error:", err));
+initDatabase().catch((err) =>
+  console.error("Database initialization error:", err)
+);
 
 // Routes
 const authRoutes = require("./routes/auth");
@@ -65,50 +67,66 @@ app.use("/parent", parentRoutes);
 // Main routes - Updated to use modern templates
 app.get("/", async (req, res) => {
   try {
-    const [studentCount] = await pool.query('SELECT COUNT(*) as count FROM students WHERE is_active = 1');
-    const [teacherCount] = await pool.query('SELECT COUNT(*) as count FROM teachers WHERE is_active = 1');
-    const [parentCount] = await pool.query('SELECT COUNT(*) as count FROM parents');
-    
+    const [studentCount] = await pool.query(
+      "SELECT COUNT(*) as count FROM students WHERE is_active = 1"
+    );
+    const [teacherCount] = await pool.query(
+      "SELECT COUNT(*) as count FROM teachers WHERE is_active = 1"
+    );
+    const [parentCount] = await pool.query(
+      "SELECT COUNT(*) as count FROM parents"
+    );
+    const [courseCount] = await pool.query(
+      "SELECT COUNT(*) as count FROM courses WHERE is_active = 1"
+    );
+
     res.render("index-modern", {
       title: "Student Registration and Management System",
       stats: {
         students: studentCount[0].count,
         teachers: teacherCount[0].count,
         parents: parentCount[0].count,
-        schools: 1, 
-        countries: 1
-      }
+        courses: courseCount[0].count,
+      },
     });
   } catch (error) {
     console.error("Error fetching stats for homepage:", error);
     res.render("index-modern", {
       title: "Student Registration and Management System",
-      stats: { students: 0, teachers: 0, parents: 0, schools: 1, countries: 1 }
+      stats: { students: 0, teachers: 0, parents: 0, courses: 0 },
     });
   }
 });
 
 app.get("/about", async (req, res) => {
   try {
-    const [studentCount] = await pool.query('SELECT COUNT(*) as count FROM students WHERE is_active = 1');
-    const [teacherCount] = await pool.query('SELECT COUNT(*) as count FROM teachers WHERE is_active = 1');
-    const [parentCount] = await pool.query('SELECT COUNT(*) as count FROM parents');
+    const [studentCount] = await pool.query(
+      "SELECT COUNT(*) as count FROM students WHERE is_active = 1"
+    );
+    const [teacherCount] = await pool.query(
+      "SELECT COUNT(*) as count FROM teachers WHERE is_active = 1"
+    );
+    const [parentCount] = await pool.query(
+      "SELECT COUNT(*) as count FROM parents"
+    );
+    const [courseCount] = await pool.query(
+      "SELECT COUNT(*) as count FROM courses WHERE is_active = 1"
+    );
 
-    res.render("about-modern", { 
+    res.render("about-modern", {
       title: "About Us",
       stats: {
         students: studentCount[0].count,
         teachers: teacherCount[0].count,
         parents: parentCount[0].count,
-        schools: 1,
-        countries: 1
-      }
+        courses: courseCount[0].count,
+      },
     });
   } catch (error) {
     console.error("Error fetching stats for about page:", error);
-    res.render("about-modern", { 
+    res.render("about-modern", {
       title: "About Us",
-      stats: { students: 0, teachers: 0, parents: 0, schools: 1, countries: 1 }
+      stats: { students: 0, teachers: 0, parents: 0, courses: 0 },
     });
   }
 });

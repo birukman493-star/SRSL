@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 - Page Not Found | Student Registration System</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="/css/all.min.css">
-    
+
     <!-- Google Fonts -->
     <link href="/css/inter-font.css" rel="stylesheet">
-    
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/css/brocode-style.css">
-    
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -28,7 +29,7 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .error-container {
             text-align: center;
             max-width: 600px;
@@ -36,7 +37,7 @@
             position: relative;
             z-index: 10;
         }
-        
+
         .error-code {
             font-size: 8rem;
             font-weight: 800;
@@ -48,28 +49,28 @@
             margin-bottom: 1rem;
             animation: float 3s ease-in-out infinite;
         }
-        
+
         .error-title {
             font-size: 2.5rem;
             font-weight: 700;
             color: var(--light-text);
             margin-bottom: 1rem;
         }
-        
+
         .error-description {
             font-size: 1.2rem;
             color: var(--gray-text);
             margin-bottom: 2rem;
             line-height: 1.6;
         }
-        
+
         .error-actions {
             display: flex;
             gap: 1rem;
             justify-content: center;
             flex-wrap: wrap;
         }
-        
+
         .btn-error {
             padding: 1rem 2rem;
             border: none;
@@ -83,30 +84,30 @@
             transition: var(--transition);
             cursor: pointer;
         }
-        
+
         .btn-primary {
             background: var(--gradient-1);
             color: var(--light-text);
             box-shadow: var(--shadow-lg);
         }
-        
+
         .btn-primary:hover {
             transform: translateY(-3px);
             box-shadow: var(--shadow-xl);
         }
-        
+
         .btn-secondary {
             background: transparent;
             color: var(--light-text);
             border: 2px solid var(--primary-color);
         }
-        
+
         .btn-secondary:hover {
             background: var(--primary-color);
             transform: translateY(-3px);
             box-shadow: var(--shadow-lg);
         }
-        
+
         .floating-shapes {
             position: absolute;
             top: 0;
@@ -116,7 +117,7 @@
             overflow: hidden;
             z-index: 1;
         }
-        
+
         .shape {
             position: absolute;
             border-radius: 50%;
@@ -124,7 +125,7 @@
             opacity: 0.1;
             animation: float 6s ease-in-out infinite;
         }
-        
+
         .shape-1 {
             width: 100px;
             height: 100px;
@@ -132,7 +133,7 @@
             left: 10%;
             animation-delay: 0s;
         }
-        
+
         .shape-2 {
             width: 60px;
             height: 60px;
@@ -140,7 +141,7 @@
             right: 10%;
             animation-delay: 2s;
         }
-        
+
         .shape-3 {
             width: 80px;
             height: 80px;
@@ -148,7 +149,7 @@
             left: 20%;
             animation-delay: 4s;
         }
-        
+
         .search-box {
             background: var(--dark-secondary);
             border: 2px solid rgba(255, 255, 255, 0.1);
@@ -160,7 +161,7 @@
             margin: 2rem auto;
             max-width: 400px;
         }
-        
+
         .search-box input {
             background: transparent;
             border: none;
@@ -168,33 +169,33 @@
             flex: 1;
             outline: none;
         }
-        
+
         .search-box input::placeholder {
             color: var(--gray-text);
         }
-        
+
         .search-box i {
             color: var(--primary-color);
         }
-        
+
         @media (max-width: 768px) {
             .error-code {
                 font-size: 6rem;
             }
-            
+
             .error-title {
                 font-size: 2rem;
             }
-            
+
             .error-description {
                 font-size: 1rem;
             }
-            
+
             .error-actions {
                 flex-direction: column;
                 align-items: center;
             }
-            
+
             .btn-error {
                 width: 100%;
                 max-width: 300px;
@@ -202,6 +203,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Floating Shapes -->
     <div class="floating-shapes">
@@ -216,28 +218,28 @@
         <div class="text-center mb-4">
             <a href="/" class="navbar-brand">
                 <i class="fas fa-graduation-cap"></i>
-                SRSL
+                Abdigudina
             </a>
         </div>
-        
+
         <!-- Error Code -->
         <div class="error-code">404</div>
-        
+
         <!-- Error Title -->
         <h1 class="error-title">Oops! Page Not Found</h1>
-        
+
         <!-- Error Description -->
         <p class="error-description">
-            The page you're looking for seems to have vanished into the digital void. 
+            The page you're looking for seems to have vanished into the digital void.
             Don't worry, even the best explorers get lost sometimes!
         </p>
-        
+
         <!-- Search Box -->
         <div class="search-box">
             <i class="fas fa-search"></i>
             <input type="text" placeholder="Search for something..." onkeyup="handleSearch(event)">
         </div>
-        
+
         <!-- Action Buttons -->
         <div class="error-actions">
             <a href="/" class="btn-error btn-primary">
@@ -249,7 +251,7 @@
                 Go Back
             </a>
         </div>
-        
+
         <!-- Help Links -->
         <div class="mt-4">
             <p class="text-gray-300 mb-2">Looking for something specific?</p>
@@ -267,10 +269,10 @@
 
     <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- Custom JS -->
     <script src="/js/brocode-script.js"></script>
-    
+
     <!-- Search Functionality -->
     <script>
         function handleSearch(event) {
@@ -282,24 +284,24 @@
                 }
             }
         }
-        
+
         // Add some interactive effects
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const errorCode = document.querySelector('.error-code');
-            
+
             // Add glitch effect on hover
-            errorCode.addEventListener('mouseenter', function() {
+            errorCode.addEventListener('mouseenter', function () {
                 this.style.animation = 'none';
                 setTimeout(() => {
                     this.style.animation = 'float 3s ease-in-out infinite, glitch 0.3s ease-in-out';
                 }, 10);
             });
-            
-            errorCode.addEventListener('mouseleave', function() {
+
+            errorCode.addEventListener('mouseleave', function () {
                 this.style.animation = 'float 3s ease-in-out infinite';
             });
         });
-        
+
         // Glitch animation
         const style = document.createElement('style');
         style.textContent = `
@@ -314,4 +316,5 @@
         document.head.appendChild(style);
     </script>
 </body>
+
 </html>

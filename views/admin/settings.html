@@ -20,11 +20,13 @@
         <!-- Main Content -->
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
+            <div class="dashboard-header mb-4" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title">System Configuration</h1>
-                        <p class="text-secondary m-0">Manage global academic rules, institution profile, and system behavior</p>
+                        <h1 class="dashboard-title" style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            System Configuration
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Manage global academic rules, institution profile, and system behavior</p>
                     </div>
                 </div>
             </div>
@@ -41,104 +43,139 @@
                 <div class="col-xl-9">
                     <form action="/admin/settings/update" method="POST">
                         <!-- Institution Profile Section -->
-                        <div class="glass-panel mb-4 p-4 p-md-5">
-                            <h3 class="h5 fw-bold mb-4 text-light d-flex align-items-center">
-                                <span class="sidebar-user-avatar d-inline-flex me-3" style="width: 32px; height: 32px; font-size: 0.9rem; border:none; background: var(--gradient-1);">
+                        <div class="glass-panel mb-4 p-4 p-md-5" style="background: white !important; border-radius: 24px;">
+                            <h3 class="h5 fw-bold mb-4 d-flex align-items-center" style="color: var(--dark-text)">
+                                <span class="avatar-initials avatar-blue d-inline-flex me-3" style="width: 38px; height: 38px; font-size: 1rem;">
                                     <i class="fas fa-university"></i>
                                 </span>
                                 Institution Profile
                             </h3>
                             <div class="row g-4">
                                 <div class="col-md-6">
-                                    <label class="text-secondary small mb-2 opacity-75">Legal School Name</label>
-                                    <input type="text" name="schoolName" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" value="<%= settings.schoolName %>" required>
+                                    <label class="text-secondary small mb-2 fw-bold">Legal School Name</label>
+                                    <input type="text" name="schoolName" class="form-control bg-light border-0 rounded-3 px-3 py-2" value="<%= settings.schoolName %>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="text-secondary small mb-2 opacity-75">Academic Calendar Year</label>
-                                    <input type="text" name="academicYear" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" value="<%= settings.academicYear %>" required>
+                                    <label class="text-secondary small mb-2 fw-bold">Academic Calendar Year</label>
+                                    <input type="text" name="academicYear" class="form-control bg-light border-0 rounded-3 px-3 py-2" value="<%= settings.academicYear %>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="text-secondary small mb-2 opacity-75">Official Correspondence Email</label>
-                                    <input type="email" name="contactEmail" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" value="<%= settings.contactEmail %>" required>
+                                    <label class="text-secondary small mb-2 fw-bold">Official Correspondence Email</label>
+                                    <input type="email" name="contactEmail" class="form-control bg-light border-0 rounded-3 px-3 py-2" value="<%= settings.contactEmail %>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="text-secondary small mb-2 opacity-75">Phone International Prefix</label>
-                                    <input type="text" name="phonePrefix" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" value="<%= settings.phonePrefix %>" required>
+                                    <label class="text-secondary small mb-2 fw-bold">Phone International Prefix</label>
+                                    <input type="text" name="phonePrefix" class="form-control bg-light border-0 rounded-3 px-3 py-2" value="<%= settings.phonePrefix %>" required>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Academic Rules & Control Section -->
-                        <div class="glass-panel mb-4 p-4 p-md-5">
-                            <h3 class="h5 fw-bold mb-4 text-light d-flex align-items-center">
-                                <span class="sidebar-user-avatar d-inline-flex me-3" style="width: 32px; height: 32px; font-size: 0.9rem; border:none; background: var(--gradient-2);">
+                        <div class="glass-panel mb-4 p-4 p-md-5" style="background: white !important; border-radius: 24px;">
+                            <h3 class="h5 fw-bold mb-4 d-flex align-items-center" style="color: var(--dark-text)">
+                                <span class="avatar-initials avatar-orange d-inline-flex me-3" style="width: 38px; height: 38px; font-size: 1rem;">
                                     <i class="fas fa-calendar-check"></i>
                                 </span>
                                 Academic Governance
                             </h3>
                             <div class="row g-4 align-items-end">
                                 <div class="col-md-4">
-                                    <label class="text-secondary small mb-2 opacity-75">Active Semester</label>
-                                    <select name="semester" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3">
+                                    <label class="text-secondary small mb-2 fw-bold">Active Semester</label>
+                                    <select name="semester" class="form-select bg-light border-0 rounded-3 px-3 py-2">
                                         <option value="1" <%= settings.semester == '1' ? 'selected' : '' %>>Semester 1 (Primary)</option>
                                         <option value="2" <%= settings.semester == '2' ? 'selected' : '' %>>Semester 2 (Secondary)</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="text-secondary small mb-2 opacity-75">Attendance Threshold (%)</label>
+                                    <label class="text-secondary small mb-2 fw-bold">Attendance Threshold (%)</label>
                                     <div class="input-group">
-                                        <input type="number" name="attendanceThreshold" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-start-pill px-3" value="<%= settings.attendanceThreshold %>">
-                                        <span class="input-group-text bg-dark bg-opacity-25 border-secondary border-opacity-25 text-secondary border-start-0 rounded-end-pill px-3">%</span>
+                                        <input type="number" name="attendanceThreshold" class="form-control bg-light border-0 rounded-start-3 px-3 py-2" value="<%= settings.attendanceThreshold %>">
+                                        <span class="input-group-text bg-light border-0 text-secondary rounded-end-3 px-3 fw-bold">%</span>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="text-secondary small mb-2 opacity-75">Passing Grade Criterion (%)</label>
+                                    <label class="text-secondary small mb-2 fw-bold">Passing Grade Criterion (%)</label>
                                     <div class="input-group">
-                                        <input type="number" name="passingGrade" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-start-pill px-3" value="<%= settings.passingGrade %>">
-                                        <span class="input-group-text bg-dark bg-opacity-25 border-secondary border-opacity-25 text-secondary border-start-0 rounded-end-pill px-3">%</span>
+                                        <input type="number" name="passingGrade" class="form-control bg-light border-0 rounded-start-3 px-3 py-2" value="<%= settings.passingGrade %>">
+                                        <span class="input-group-text bg-light border-0 text-secondary rounded-end-3 px-3 fw-bold">%</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- System Security & Availability Section -->
-                        <div class="glass-panel mb-5 p-4 p-md-5">
-                            <h3 class="h5 fw-bold mb-4 text-light d-flex align-items-center">
-                                <span class="sidebar-user-avatar d-inline-flex me-3" style="width: 32px; height: 32px; font-size: 0.9rem; border:none; background: var(--gradient-3);">
+                        <div class="glass-panel mb-5 p-4 p-md-5" style="background: white !important; border-radius: 24px;">
+                            <h3 class="h5 fw-bold mb-4 d-flex align-items-center" style="color: var(--dark-text)">
+                                <span class="avatar-initials avatar-purple d-inline-flex me-3" style="width: 38px; height: 38px; font-size: 1rem;">
                                     <i class="fas fa-shield-alt"></i>
                                 </span>
                                 System Availability & Ops
                             </h3>
                             <div class="row g-4">
                                 <div class="col-md-6">
-                                    <div class="p-4 rounded-4 border border-secondary border-opacity-10 bg-dark bg-opacity-10">
+                                    <div class="p-4 rounded-4 border border-secondary border-opacity-10 bg-light">
                                         <div class="form-check form-switch p-0 d-flex justify-content-between align-items-center">
                                             <div>
-                                                <label class="fw-bold text-light d-block mb-1" for="regOpen">Open Admissions</label>
-                                                <small class="text-secondary d-block opacity-75">Allow public registration for new students</small>
+                                                <label class="fw-bold d-block mb-1" style="color: var(--dark-text);" for="regOpen">Open Admissions</label>
+                                                <small class="text-secondary d-block">Allow public registration for new students</small>
                                             </div>
-                                            <input class="form-check-input ms-0" style="width: 3rem; height: 1.5rem;" type="checkbox" name="regOpen" id="regOpen" <%= settings.regOpen == 'on' ? 'checked' : '' %>>
+                                            <input class="form-check-input ms-0" style="width: 3rem; height: 1.5rem; cursor: pointer;" type="checkbox" name="regOpen" id="regOpen" <%= settings.regOpen == 'on' ? 'checked' : '' %>>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="p-4 rounded-4 border border-secondary border-opacity-10 bg-dark bg-opacity-10">
+                                    <div class="p-4 rounded-4 border border-secondary border-opacity-10 bg-light">
                                         <div class="form-check form-switch p-0 d-flex justify-content-between align-items-center">
                                             <div>
-                                                <label class="fw-bold text-light d-block mb-1" for="maintMode">Maintenance Mode</label>
-                                                <small class="text-secondary d-block opacity-75">Lock the portal for non-admin personnel</small>
+                                                <label class="fw-bold d-block mb-1" style="color: var(--dark-text);" for="maintMode">Maintenance Mode</label>
+                                                <small class="text-secondary d-block">Lock the portal for non-admin personnel</small>
                                             </div>
-                                            <input class="form-check-input ms-0" style="width: 3rem; height: 1.5rem;" type="checkbox" name="maintMode" id="maintMode" <%= settings.maintMode == 'on' ? 'checked' : '' %>>
+                                            <input class="form-check-input ms-0" style="width: 3rem; height: 1.5rem; cursor: pointer;" type="checkbox" name="maintMode" id="maintMode" <%= settings.maintMode == 'on' ? 'checked' : '' %>>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Data Management Section -->
+                        <div class="glass-panel mb-5 p-4 p-md-5" style="background: white !important; border-radius: 24px;">
+                            <h3 class="h5 fw-bold mb-4 d-flex align-items-center" style="color: var(--dark-text)">
+                                <span class="avatar-initials avatar-blue d-inline-flex me-3" style="width: 38px; height: 38px; font-size: 1rem; background: rgba(37,99,235,0.08); color: var(--primary-color);">
+                                    <i class="fas fa-database"></i>
+                                </span>
+                                Data Management & Maintenance
+                            </h3>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="p-4 rounded-4 border border-primary border-opacity-10 bg-primary bg-opacity-10 h-100">
+                                        <h4 class="h6 fw-bold mb-2 text-primary">System Backup</h4>
+                                        <p class="small text-secondary mb-4">Generate a full snapshot of the database including students, grades, and system settings.</p>
+                                        <a href="/admin/backup" class="btn btn-primary w-100 py-2 rounded-3 fw-bold">
+                                            <i class="fas fa-download me-2"></i> Download Backup (.json)
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-4 rounded-4 border border-warning border-opacity-10 bg-warning bg-opacity-10 h-100">
+                                        <h4 class="h6 fw-bold mb-2 text-warning">Restore System</h4>
+                                        <p class="small text-secondary mb-4">Upload a previously generated backup file to restore system state. <span class="text-danger fw-bold">Warning: Overwrites current data!</span></p>
+                                        <form action="/admin/restore" method="POST" enctype="multipart/form-data">
+                                            <div class="input-group">
+                                                <input type="file" name="backupFile" class="form-control form-control-sm border-0" accept=".json" required>
+                                                <button type="submit" class="btn btn-warning btn-sm fw-bold px-3">
+                                                    <i class="fas fa-upload me-1"></i> Restore
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Submission Panel -->
-                        <div class="glass-panel py-3 px-4 d-flex justify-content-between align-items-center position-sticky bottom-0 z-3 bg-blur border-top-0 rounded-top-0 shadow-lg" style="margin-top: -3rem; border-color: rgba(255,255,255,0.05);">
-                            <div class="text-secondary small"><i class="fas fa-info-circle me-1"></i> Changes will propagate immediately to all components</div>
-                            <button type="submit" class="btn-hero btn-primary py-2 px-5 shadow-lg">
+                        <div class="glass-panel py-3 px-4 d-flex justify-content-between align-items-center position-sticky bottom-0 z-3 bg-white border border-secondary border-opacity-10 rounded-4 shadow-lg mb-4">
+                            <div class="text-secondary small fw-medium"><i class="fas fa-info-circle me-1 text-primary"></i> Changes propagate immediately to all components</div>
+                            <button type="submit" class="btn btn-primary py-2 px-5 rounded-3 fw-bold shadow-sm">
                                 <i class="fas fa-save me-2"></i> Save Changes
                             </button>
                         </div>
@@ -146,16 +183,20 @@
                 </div>
                 
                 <div class="col-xl-3">
-                    <div class="glass-panel text-center p-4 h-100">
-                        <i class="fas fa-history fa-2x text-primary mb-4 opacity-50"></i>
-                        <h4 class="h6 fw-bold text-light uppercase tracking-wider mb-4">Configuration Log</h4>
+                    <div class="glass-panel p-4 h-100" style="background: white !important; border-radius: 24px;">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-history fa-2x text-primary opacity-20"></i>
+                        </div>
+                        <h4 class="h6 fw-bold uppercase tracking-wider mb-4" style="color: var(--dark-text)">Configuration Log</h4>
                         <div class="text-start">
-                            <div class="mb-3 border-start border-primary border-2 ps-3">
-                                <div class="text-light small fw-bold">SysAdmin changed Semester</div>
+                            <div class="mb-4 border-start border-primary border-3 ps-3">
+                                <div class="fw-bold small" style="color: var(--dark-text)">Semester Updated</div>
+                                <div class="text-secondary extra-small">Changed to Semester 1</div>
                                 <div class="text-secondary" style="font-size: 0.65rem;">Today, 10:45 AM</div>
                             </div>
-                            <div class="mb-3 border-start border-secondary border-1 ps-3 opacity-50">
-                                <div class="text-light small">Threshold updated to 75%</div>
+                            <div class="mb-4 border-start border-light border-3 ps-3">
+                                <div class="fw-bold small text-secondary">Threshold Updated</div>
+                                <div class="text-secondary extra-small">Set to 75%</div>
                                 <div class="text-secondary" style="font-size: 0.65rem;">Yesterday, 02:30 PM</div>
                             </div>
                         </div>

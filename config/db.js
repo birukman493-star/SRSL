@@ -106,6 +106,35 @@ async function initDatabase() {
       )
     `);
 
+    // Add missing columns to teachers if they don't exist
+    try {
+      await dbConnection.execute('ALTER TABLE teachers ADD COLUMN qualification VARCHAR(255)');
+      console.log('Added qualification to teachers table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE teachers ADD COLUMN experience VARCHAR(255)');
+      console.log('Added experience to teachers table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE teachers ADD COLUMN certificate_url VARCHAR(255)');
+      console.log('Added certificate_url to teachers table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE teachers ADD COLUMN id_card_url VARCHAR(255)');
+      console.log('Added id_card_url to teachers table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
     // Create students table
     await dbConnection.execute(`
       CREATE TABLE IF NOT EXISTS students (
@@ -122,8 +151,17 @@ async function initDatabase() {
         gender ENUM('male', 'female') NOT NULL,
         enrollment_date DATE,
         parent_guardian_name VARCHAR(100),
+        address TEXT,
+        previous_school VARCHAR(255),
         class_id INT,
         registration_status ENUM('pending', 'registered', 'not_started') DEFAULT 'not_started',
+        withdrawal_status ENUM('active', 'withdrawn', 'transferred', 'dropped_out') DEFAULT 'active',
+        withdrawal_reason TEXT,
+        withdrawal_date DATE,
+        admission_type ENUM('new', 'transfer') DEFAULT 'new',
+        transfer_date DATE,
+        transfer_reason TEXT,
+        previous_transcript_url VARCHAR(255),
         is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -131,9 +169,89 @@ async function initDatabase() {
         FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL,
         INDEX idx_student_id (student_id),
         INDEX idx_grade_level (grade_level),
-        INDEX idx_parent_guardian (parent_guardian_name)
+        INDEX idx_parent_guardian (parent_guardian_name),
+        INDEX idx_withdrawal_status (withdrawal_status)
       )
     `);
+
+    // Add missing columns to students if they don't exist
+    try {
+      await dbConnection.execute('ALTER TABLE students ADD COLUMN address TEXT');
+      console.log('Added address to students table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE students ADD COLUMN previous_school VARCHAR(255)');
+      console.log('Added previous_school to students table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute("ALTER TABLE students ADD COLUMN withdrawal_status ENUM('active', 'withdrawn', 'transferred', 'dropped_out') DEFAULT 'active'");
+      console.log('Added withdrawal_status to students table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE students ADD COLUMN withdrawal_reason TEXT');
+      console.log('Added withdrawal_reason to students table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE students ADD COLUMN withdrawal_date DATE');
+      console.log('Added withdrawal_date to students table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE students ADD COLUMN admission_type ENUM(\'new\', \'transfer\') DEFAULT \'new\'');
+      console.log('Added admission_type to students table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE students ADD COLUMN transfer_date DATE');
+      console.log('Added transfer_date to students table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE students ADD COLUMN transfer_reason TEXT');
+      console.log('Added transfer_reason to students table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute('ALTER TABLE students ADD COLUMN previous_transcript_url VARCHAR(255)');
+      console.log('Added previous_transcript_url to students table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    // Create student_documents table for multiple uploads
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS student_documents (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        document_type ENUM('transcript', 'report_card', 'id_card', 'other') DEFAULT 'transcript',
+        file_url VARCHAR(255) NOT NULL,
+        file_name VARCHAR(255),
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        INDEX idx_student_id (student_id)
+      )
+    `);
+    console.log('Verified student_documents table');
 
     // Create parents table
     await dbConnection.execute(`
@@ -205,6 +323,34 @@ async function initDatabase() {
         INDEX idx_teacher_id (teacher_id)
       )
     `);
+
+    // Create class_teachers table for multiple teacher assignments
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS class_teachers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        class_id INT NOT NULL,
+        teacher_id INT NOT NULL,
+        assigned_date DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_class_teacher (class_id, teacher_id),
+        INDEX idx_class_id (class_id),
+        INDEX idx_teacher_id (teacher_id)
+      )
+    `);
+
+    // Migrate existing teacher_id from classes to class_teachers if needed
+    try {
+      await dbConnection.execute(`
+        INSERT IGNORE INTO class_teachers (class_id, teacher_id, assigned_date)
+        SELECT id, teacher_id, CURDATE() FROM classes WHERE teacher_id IS NOT NULL
+      `);
+      console.log('Migrated existing class teachers to class_teachers table');
+    } catch (e) {
+      console.error('Migration error:', e);
+    }
+
 
     // Create class_students table
     await dbConnection.execute(`
@@ -424,6 +570,22 @@ async function initDatabase() {
       )
     `);
 
+    // Create academic_history table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS academic_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        grade_level VARCHAR(10) NOT NULL,
+        academic_year VARCHAR(20) NOT NULL,
+        average_score DECIMAL(5,2),
+        status ENUM('promoted', 'retained', 'graduated') NOT NULL,
+        remarks TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        INDEX idx_student_year (student_id, academic_year)
+      )
+    `);
+
     // Create system_settings table
     await dbConnection.execute(`
       CREATE TABLE IF NOT EXISTS system_settings (
@@ -437,19 +599,38 @@ async function initDatabase() {
       )
     `);
 
-    // Create announcements table
+    // Create national_exams table
     await dbConnection.execute(`
-      CREATE TABLE IF NOT EXISTS announcements (
+      CREATE TABLE IF NOT EXISTS national_exams (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        title VARCHAR(200) NOT NULL,
-        message TEXT NOT NULL,
-        audience ENUM('all', 'students', 'teachers') DEFAULT 'all',
-        created_by INT,
+        student_id INT NOT NULL,
+        exam_type ENUM('Grade 6', 'Grade 8') NOT NULL,
+        academic_year VARCHAR(20) NOT NULL,
+        total_score DECIMAL(5,2),
+        result_status ENUM('Pass', 'Fail') DEFAULT 'Pass',
+        remarks TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
-        INDEX idx_audience (audience),
-        INDEX idx_created_at (created_at)
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_exam (student_id, exam_type),
+        INDEX idx_student_exam (student_id, exam_type)
+      )
+    `);
+
+    // Create transcripts table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS transcripts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        transcript_number VARCHAR(50) UNIQUE NOT NULL,
+        issued_date DATE NOT NULL,
+        academic_years_covered TEXT, -- JSON or comma separated years
+        remarks TEXT,
+        issued_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (issued_by) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_transcript_num (transcript_number),
+        INDEX idx_student_transcript (student_id)
       )
     `);
 
@@ -458,9 +639,9 @@ async function initDatabase() {
     // === SEED DEFAULT ADMIN ===
     const bcrypt = require('bcryptjs');
     const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@srsl.edu';
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@abdigudina.edu';
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin123';
-    const ADMIN_SECRET = process.env.ADMIN_SECRET || 'SRSL-ADMIN-2024';
+    const ADMIN_SECRET = process.env.ADMIN_SECRET || 'ABDIGUDINA-ADMIN-2024';
 
     const [existingAdmin] = await dbConnection.execute(
       'SELECT id FROM users WHERE username = ? OR email = ?',

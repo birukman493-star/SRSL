@@ -1,7 +1,12 @@
-<aside class="glass-sidebar">
+<aside class="glass-sidebar" id="sidebar">
+    <!-- Mobile Close Button -->
+    <button class="sidebar-close-btn d-lg-none" id="sidebar-close" aria-label="Close sidebar">
+        <i class="fas fa-times"></i>
+    </button>
+
     <div class="sidebar-logo-modern">
         <i class="fas fa-user-shield"></i>
-        <span>SRSL Parent</span>
+        <span style="font-size: 0.9rem; letter-spacing: 0px;">Abdigudina Parent</span>
     </div>
 
     <div class="sidebar-user-section mb-4 text-center">
@@ -9,7 +14,6 @@
             <%= user.first_name.charAt(0) %><%= user.last_name.charAt(0) %>
         </div>
         <div class="fw-bold text-light"><%= user.first_name %> <%= user.last_name %></div>
-        <small class="text-secondary">Parent Portal</small>
     </div>
 
     <nav class="sidebar-nav">

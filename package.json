@@ -18,7 +18,7 @@
     "attendance",
     "grades"
   ],
-  "author": "SRSL Development Team",
+  "author": "Abdigudina Development Team",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",

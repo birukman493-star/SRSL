@@ -1,22 +1,31 @@
 <!-- Student Sidebar Partial -->
 <aside class="glass-sidebar" id="sidebar">
+    <!-- Mobile Close Button -->
+    <button class="sidebar-close-btn d-lg-none" id="sidebar-close" aria-label="Close sidebar">
+        <i class="fas fa-times"></i>
+    </button>
+
     <div class="sidebar-logo-modern">
         <i class="fas fa-graduation-cap"></i>
-        <span>SRSL Student</span>
+        <span style="font-size: 0.9rem; letter-spacing: 0px;">Abdigudina Student</span>
     </div>
 
     <div class="sidebar-user-section mb-4 text-center">
-        <div class="sidebar-user-avatar mb-2 mx-auto" style="width: 70px; height: 70px; font-size: 1.8rem; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary-color);">
-            <%= (user && user.first_name ? user.first_name.charAt(0).toUpperCase() : 'S') %>
+        <div class="sidebar-user-avatar mb-2 mx-auto"
+            style="width: 70px; height: 70px; font-size: 1.8rem; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary-color);">
+            <%= (user && user.first_name ? user.first_name.charAt(0).toUpperCase() : 'S' ) %>
         </div>
-        <div class="fw-bold text-light"><%= user && user.first_name ? user.first_name : 'Student' %> <%= user && user.last_name ? user.last_name : '' %></div>
-        <small class="text-secondary">Official Student</small>
+        <div class="fw-bold text-light">
+            <%= user && user.first_name ? user.first_name : 'Student' %>
+                <%= user && user.last_name ? user.last_name : '' %>
+        </div>
     </div>
 
     <nav class="sidebar-nav">
         <ul class="sidebar-nav-list">
             <li class="sidebar-nav-item">
-                <a href="/student/dashboard" class="sidebar-nav-link <%= title === 'Student Dashboard' ? 'active' : '' %>">
+                <a href="/student/dashboard"
+                    class="sidebar-nav-link <%= title === 'Student Dashboard' ? 'active' : '' %>">
                     <i class="fas fa-th-large"></i>
                     <span>Dashboard</span>
                 </a>
@@ -25,12 +34,6 @@
                 <a href="/student/profile" class="sidebar-nav-link <%= title === 'My Profile' ? 'active' : '' %>">
                     <i class="fas fa-user-circle"></i>
                     <span>My Profile</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/student/courses" class="sidebar-nav-link <%= title === 'My Courses' ? 'active' : '' %>">
-                    <i class="fas fa-book"></i>
-                    <span>My Courses</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
@@ -46,35 +49,20 @@
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/student/assignments" class="sidebar-nav-link <%= title === 'Assignments' ? 'active' : '' %>">
-                    <i class="fas fa-tasks"></i>
-                    <span>Assignments</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/student/materials" class="sidebar-nav-link <%= title === 'Course Materials' ? 'active' : '' %>">
+                <a href="/student/materials"
+                    class="sidebar-nav-link <%= title === 'Course Materials' ? 'active' : '' %>">
                     <i class="fas fa-file-pdf"></i>
                     <span>Course Materials</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/student/registration" class="sidebar-nav-link <%= title === 'Course Registration' ? 'active' : '' %>">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Registration</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/student/timetable" class="sidebar-nav-link <%= title === 'Timetable' ? 'active' : '' %>">
-                    <i class="fas fa-calendar"></i>
-                    <span>Timetable</span>
-                </a>
-            </li>
-            <li class="sidebar-nav-item">
-                <a href="/student/announcements" class="sidebar-nav-link <%= title === 'Announcements' ? 'active' : '' %>">
+                <a href="/student/announcements"
+                    class="sidebar-nav-link <%= title === 'Announcements' ? 'active' : '' %>">
                     <i class="fas fa-bullhorn"></i>
                     <span>Announcements</span>
                 </a>
             </li>
+
             <li class="sidebar-nav-item mt-4 pt-4 border-top border-secondary border-opacity-25">
                 <a href="/auth/logout" class="sidebar-nav-link text-danger">
                     <i class="fas fa-sign-out-alt"></i>

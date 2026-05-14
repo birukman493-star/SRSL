@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-    
+    <title>
+        <%= title %>
+    </title>
+
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -13,208 +16,367 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/brocode-style.css">
 </head>
+
 <body>
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-        
-        <!-- Main Content -->
-        <main class="main-panel w-100 p-4">
-            <!-- Header -->
-            <div class="dashboard-header mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="dashboard-title">User Management</h1>
-                        <p class="text-secondary m-0">Manage system users, roles, and account status</p>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn-hero btn-primary px-4" onclick="window.location.href='/admin/students/new'">
-                            <i class="fas fa-user-plus me-2"></i> Add Student
-                        </button>
-                        <button class="btn-hero btn-secondary px-4" onclick="window.location.href='/admin/teachers/new'">
-                            <i class="fas fa-user-tie me-2"></i> Add Teacher
-                        </button>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Search & Filters -->
-            <div class="glass-panel mb-4">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <div class="search-bar position-relative">
-                            <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
-                            <input type="text" class="form-control ps-5 py-2 rounded-pill" placeholder="Search users by name, email..." id="searchInput">
+            <!-- Main Content -->
+            <main class="main-panel w-100 p-4">
+                <!-- Header -->
+                <div class="dashboard-header mb-4"
+                    style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="dashboard-title"
+                                style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                User Management
+                            </h1>
+                            <p class="text-secondary m-0" style="font-weight: 500;">Manage system users, roles, and
+                                account status</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-hero btn-primary px-4 py-2 border-0 fw-bold rounded-3"
+                                onclick="window.location.href='/admin/students/new'">
+                                <i class="fas fa-user-plus me-2"></i> Add Student
+                            </button>
+                            <button class="btn btn-light px-4 py-2 border-0 fw-bold rounded-3"
+                                onclick="window.location.href='/admin/teachers/new'" style="color: var(--dark-text);">
+                                <i class="fas fa-user-tie me-2"></i> Add Teacher
+                            </button>
                         </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="text-secondary small mb-1">Role</label>
-                        <select class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill" id="roleFilter">
-                            <option value="">All Roles</option>
-                            <option value="student">Student</option>
-                            <option value="teacher">Teacher</option>
-                            <option value="parent">Parent</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="text-secondary small mb-1">Status</label>
-                        <select class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill" id="statusFilter">
-                            <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="text-secondary small mb-1">Grade Level</label>
-                        <select class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill" id="gradeFilter">
-                            <option value="">All Grades</option>
-                            <option value="9">Grade 9</option>
-                            <option value="10">Grade 10</option>
-                            <option value="11">Grade 11</option>
-                            <option value="12">Grade 12</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-hero btn-primary w-100 py-2 rounded-pill" onclick="applyFilters()">
-                            <i class="fas fa-filter me-2"></i> Filter
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Users Table -->
-            <div class="glass-panel">
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
-                        <thead>
-                            <tr class="text-secondary small">
-                                <th class="border-0">User</th>
-                                <th class="border-0 text-center">Role</th>
-                                <th class="border-0">Contact</th>
-                                <th class="border-0 text-center">Status</th>
-                                <th class="border-0">Joined</th>
-                                <th class="border-0 text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (typeof users !== "undefined" && users && users.length > 0) { %>
-                                <% for (let u of users) { %>
-                                <tr>
-                                    <td class="border-0">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="sidebar-user-avatar" style="width: 45px; height: 45px; font-size: 1rem; background: rgba(255,255,255,0.05);">
-                                                <%= (u.first_name ? u.first_name.charAt(0).toUpperCase() : 'U') %>
-                                            </div>
-                                            <div>
-                                                <div class="fw-bold"><%= u.first_name %> <%= u.last_name %></div>
-                                                <div class="text-secondary small"><%= u.username %></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="border-0 text-center">
-                                        <span class="badge rounded-pill px-3 py-1 bg-opacity-10 
-                                            <%= u.role === 'admin' ? 'bg-danger text-danger' : 
-                                               u.role === 'teacher' ? 'bg-success text-success' : 
-                                               u.role === 'student' ? 'bg-primary text-primary' : 'bg-warning text-warning' %>">
-                                            <%= u.role.toUpperCase() %>
-                                        </span>
-                                    </td>
-                                    <td class="border-0">
-                                        <div class="small fw-500"><%= u.email %></div>
-                                        <div class="text-secondary smaller"><%= u.phone || 'No phone' %></div>
-                                    </td>
-                                    <td class="border-0 text-center">
-                                        <span class="badge rounded-circle p-1 <%= u.is_active ? 'bg-success' : 'bg-secondary' %>" style="width: 10px; height: 10px; display: inline-block;" title="<%= u.is_active ? 'Active' : 'Inactive' %>"></span>
-                                        <span class="small ms-1 text-<%= u.is_active ? 'success' : 'secondary' %>">
-                                            <%= u.is_active ? 'Active' : 'Inactive' %>
-                                        </span>
-                                    </td>
-                                    <td class="border-0">
-                                        <span class="text-secondary small"><%= new Date(u.created_at).toLocaleDateString() %></span>
-                                    </td>
-                                    <td class="border-0 text-end">
-                                        <div class="d-flex justify-content-end gap-2">
-                                            <form action="/admin/toggle-user/<%= u.id %>" method="POST" class="m-0">
-                                                <button type="submit" class="btn btn-sm btn-hero btn-secondary py-1 px-3" title="Toggle Status">
-                                                    <i class="fas fa-sync-alt"></i>
-                                                </button>
-                                            </form>
-                                            <form action="/admin/delete-user/<%= u.id %>" method="POST" class="m-0" onsubmit="return confirm('Delete this user account?')">
-                                                <button type="submit" class="btn btn-sm btn-hero btn-primary py-1 px-3 bg-danger border-0" title="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <% } %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="6" class="border-0 text-center py-5">
-                                        <i class="fas fa-users-slash fa-3x text-secondary mb-3"></i>
-                                        <div class="text-secondary">No users found matching your criteria</div>
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
                 </div>
 
-                <!-- Pagination -->
-                <div class="d-flex justify-content-between align-items-center mt-4 pt-4 border-top border-secondary border-opacity-10">
-                    <div class="text-secondary small">
-                        Showing <strong class="text-light"><%= users.length %></strong> users
+                <!-- Quick Grade Badges -->
+                <div class="mb-4 d-flex flex-wrap gap-2">
+                    <% for(let i=1; i<=8; i++) { %>
+                        <a href="/admin/users?grade=<%= i %>"
+                            class="btn btn-light filter-badge <%= (typeof grade !== 'undefined' && grade == i) ? 'active' : '' %> rounded-pill px-3 py-1 fw-bold small shadow-sm border"
+                            style="font-size: 0.75rem;">
+                            Grade <%= i %>
+                        </a>
+                        <% } %>
+                </div>
+
+                <!-- Filter Panel -->
+                <div class="glass-panel mb-4 p-4"
+                    style="background: white !important; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05);">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="text-secondary small mb-1 fw-bold text-uppercase"
+                                style="font-size: 0.65rem;">Search Records</label>
+                            <div class="search-bar position-relative">
+                                <i
+                                    class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                                <input type="text" id="searchInput"
+                                    class="form-control bg-light border-0 rounded-3 ps-5 py-2 fw-medium"
+                                    placeholder="Username, Email..."
+                                    value="<%= typeof search !== 'undefined' ? search : '' %>">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-secondary small mb-1 fw-bold text-uppercase"
+                                style="font-size: 0.65rem;">Filter by Role</label>
+                            <select class="form-select bg-light border-0 rounded-3 py-2 fw-bold" id="roleFilter" onchange="applyFilters()">
+                                <option value="">All Roles</option>
+                                <option value="student" <%=typeof role !=='undefined' && role==='student' ? 'selected'
+                                    : '' %>>Student</option>
+                                <option value="teacher" <%=typeof role !=='undefined' && role==='teacher' ? 'selected'
+                                    : '' %>>Teacher</option>
+                                <option value="parent" <%=typeof role !=='undefined' && role==='parent' ? 'selected'
+                                    : '' %>>Parent</option>
+                                <option value="admin" <%=typeof role !=='undefined' && role==='admin' ? 'selected' : ''
+                                    %>>Admin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="text-secondary small mb-1 fw-bold text-uppercase"
+                                style="font-size: 0.65rem;">Status</label>
+                            <select class="form-select bg-light border-0 rounded-3 py-2 fw-bold" id="statusFilter" onchange="applyFilters()">
+                                <option value="">All Status</option>
+                                <option value="active" <%=typeof status !=='undefined' && status==='active' ? 'selected'
+                                    : '' %>>Active</option>
+                                <option value="inactive" <%=typeof status !=='undefined' && status==='inactive'
+                                    ? 'selected' : '' %>>Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="text-secondary small mb-1 fw-bold text-uppercase"
+                                style="font-size: 0.65rem;">Level</label>
+                            <select class="form-select bg-light border-0 rounded-3 py-2 fw-bold" id="gradeFilter" onchange="applyFilters()">
+                                <option value="">All Grades</option>
+                                <% for(let i=1; i<=8; i++) { %>
+                                    <option value="<%= i %>" <%=typeof grade !=='undefined' && grade==i ? 'selected'
+                                        : '' %>>Grade <%= i %>
+                                    </option>
+                                    <% } %>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button class="btn btn-primary w-100 py-2 rounded-3 fw-bold shadow-sm"
+                                onclick="applyFilters()" style="padding-left: 0; padding-right: 0;"
+                                title="Apply Filters">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </div>
                     </div>
-                    <nav>
-                        <ul class="pagination pagination-sm m-0">
-                            <li class="page-item <%= (currentPage <= 1) ? 'disabled' : '' %>">
-                                <a class="page-link bg-dark bg-opacity-25 border-0 text-secondary px-3 rounded-start" href="#" onclick="changePage('<%= currentPage - 1 %>')">Previous</a>
-                            </li>
-                            <% for(let i = 1; i <= totalPages; i++) { %>
-                                <li class="page-item <%= (currentPage === i) ? 'active' : '' %>">
-                                    <a class="page-link <%= (currentPage === i) ? 'bg-primary' : 'bg-dark bg-opacity-25 text-secondary' %> border-0 px-3" href="#" onclick="changePage('<%= i %>')"><%= i %></a>
+                </div>
+
+                <!-- Users Table -->
+                <div class="glass-panel" style="background: white !important; border-radius: 24px;">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="usersTable">
+                            <thead style="background: rgba(0,0,0,0.02)">
+                                <tr class="text-secondary small fw-bold"
+                                    style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                    <th class="border-0 py-3">User Profile</th>
+                                    <th class="border-0 py-3 text-center">Role</th>
+                                    <th class="border-0 py-3">Class / Grade</th>
+                                    <th class="border-0 py-3">Contact Details</th>
+                                    <th class="border-0 py-3 text-center">Status</th>
+                                    <th class="border-0 py-3">Joined Date</th>
+                                    <th class="border-0 py-3 text-end">Management</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (typeof users !=="undefined" && users && users.length> 0) { %>
+                                    <% for (let u of users) { %>
+                                        <tr class="<%= u.is_active ? '' : 'opacity-50' %>">
+                                            <td class="border-0 py-3">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <% let avatarClass='avatar-blue' ; if (u.role==='admin' )
+                                                        avatarClass='avatar-purple' ; else if (u.role==='teacher' )
+                                                        avatarClass='avatar-orange' ; else if (u.role==='parent' )
+                                                        avatarClass='avatar-green' ; %>
+                                                        <div class="avatar-initials <%= avatarClass %>"
+                                                            style="width: 42px; height: 42px; font-size: 1rem;">
+                                                            <%= (u.first_name ? u.first_name.charAt(0).toUpperCase()
+                                                                : 'U' ) %>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold" style="color: var(--dark-text);">
+                                                                <%= u.first_name %>
+                                                                    <%= u.last_name %>
+                                                            </div>
+                                                            <div class="text-secondary small">@<%= u.username %>
+                                                            </div>
+                                                        </div>
+                                                </div>
+                                            </td>
+                                            <td class="border-0 text-center py-3">
+                                                <% let badgeBg='rgba(37,99,235,0.1)' ; let
+                                                    badgeCol='var(--primary-color)' ; if (u.role==='admin' ) {
+                                                    badgeBg='rgba(239,68,68,0.1)' ; badgeCol='#ef4444' ; } else if
+                                                    (u.role==='teacher' ) { badgeBg='rgba(16,185,129,0.1)' ;
+                                                    badgeCol='#10b981' ; } else if (u.role==='parent' ) {
+                                                    badgeBg='rgba(245,158,11,0.1)' ; badgeCol='#f59e0b' ; } %>
+                                                    <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase"
+                                                        style="background: <%= badgeBg %>; color: <%= badgeCol %>; font-size: 0.7rem;">
+                                                        <%= u.role %>
+                                                    </span>
+                                            </td>
+                                            <td class="border-0 py-3">
+                                                <div class="fw-bold small" style="color: var(--dark-text);">
+                                                    <% if (u.role==='student' ) { %>
+                                                        Grade <%= u.grade_level || 'N/A' %>
+                                                            <% } else if (u.role==='teacher' ) { %>
+                                                                <% if (u.teacher_classes) { %>
+                                                                    <% const teacherClasses = u.teacher_classes.split(', '); %>
+                                                                    <div class="d-flex flex-wrap gap-1">
+                                                                        <% for(let cls of teacherClasses) { %>
+                                                                            <% const gradePart = cls.split('-')[0]; %>
+                                                                            <a href="/admin/classes?grade=<%= gradePart %>" 
+                                                                               class="text-decoration-none badge bg-light text-primary border rounded-pill px-2 py-1 small fw-bold">
+                                                                                <i class="fas fa-school me-1"></i><%= cls %>
+                                                                            </a>
+                                                                        <% } %>
+                                                                    </div>
+                                                                <% } else { %>
+                                                                    <span class="text-secondary opacity-50 small">No Classes Assigned</span>
+                                                                <% } %>
+                                                            <% } else { %>
+                                                                <span
+                                                                    class="text-secondary opacity-50">N/A</span>
+                                                                <% } %>
+                                                </div>
+                                            </td>
+                                            <td class="border-0 py-3">
+                                                <div class="fw-bold small" style="color: var(--dark-text);">
+                                                    <%= u.email %>
+                                                </div>
+                                                <div class="text-secondary smaller">
+                                                    <%= u.phone || 'No phone record' %>
+                                                </div>
+                                            </td>
+                                            <td class="border-0 text-center py-3">
+                                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                                    <span
+                                                        class="badge rounded-circle p-1 <%= u.is_active ? 'bg-success' : 'bg-secondary' %>"
+                                                        style="width: 8px; height: 8px; display: inline-block;"></span>
+                                                    <span
+                                                        class="small fw-bold text-<%= u.is_active ? 'success' : 'secondary' %>">
+                                                        <%= u.is_active ? 'Active' : 'Inactive' %>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td class="border-0 py-3">
+                                                <span class="text-secondary small fw-medium">
+                                                    <%= new Date(u.created_at).toLocaleDateString(undefined, {
+                                                        year: 'numeric' , month: 'short' , day: 'numeric' }) %>
+                                                </span>
+                                            </td>
+                                            <td class="border-0 text-end py-3">
+                                                <div class="d-flex justify-content-end gap-2">
+                                                    <% if (u.role==='teacher' ) { %>
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3 text-success"
+                                                            title="Assign Classes"
+                                                            onclick="openAssignClassesModal('<%= u.id %>', '<%= u.first_name %> <%= u.last_name %>')">
+                                                            <i class="fas fa-chalkboard-teacher"></i>
+                                                        </button>
+                                                        <% } %>
+                                                            <form action="/admin/toggle-user/<%= u.id %>" method="POST"
+                                                                class="m-0">
+                                                                <button type="submit"
+                                                                    class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3 text-primary"
+                                                                    title="Toggle Status">
+                                                                    <i class="fas fa-sync-alt"></i>
+                                                                </button>
+                                                            </form>
+                                                            <form action="/admin/delete-user/<%= u.id %>" method="POST"
+                                                                class="m-0"
+                                                                onsubmit="return confirm('Delete this user account permanently?')">
+                                                                <button type="submit"
+                                                                    class="btn btn-sm rounded-3 fw-bold px-3"
+                                                                    title="Delete"
+                                                                    style="background: rgba(239,68,68,0.08); color: #ef4444; border: none;">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <% } %>
+                                            <% } else { %>
+                                                <tr>
+                                                    <td colspan="6" class="border-0 text-center py-5">
+                                                        <div class="text-secondary opacity-30 mb-3">
+                                                            <i class="fas fa-users-slash fa-4x"></i>
+                                                        </div>
+                                                        <div class="fw-bold text-secondary">No users found matching your
+                                                            criteria</div>
+                                                    </td>
+                                                </tr>
+                                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div
+                        class="d-flex justify-content-between align-items-center mt-4 pt-4 border-top border-secondary border-opacity-10">
+                        <div class="text-secondary small fw-medium">
+                            Showing <strong style="color: var(--dark-text);">
+                                <%= users.length %>
+                            </strong> records
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm m-0 gap-1">
+                                <li class="page-item <%= (currentPage <= 1) ? 'disabled' : '' %>">
+                                    <a class="page-link bg-light border-0 text-secondary px-3 py-2 rounded-3 fw-bold"
+                                        href="#" onclick="changePage('<%= currentPage - 1 %>')">Previous</a>
                                 </li>
-                            <% } %>
-                            <li class="page-item <%= (currentPage >= totalPages) ? 'disabled' : '' %>">
-                                <a class="page-link bg-dark bg-opacity-25 border-0 text-secondary px-3 rounded-end" href="#" onclick="changePage('<%= currentPage + 1 %>')">Next</a>
-                            </li>
-                        </ul>
-                    </nav>
+                                <% for(let i=1; i <=totalPages; i++) { %>
+                                    <li class="page-item <%= (currentPage === i) ? 'active' : '' %>">
+                                        <a class="page-link <%= (currentPage === i) ? 'btn-primary text-white shadow-sm' : 'bg-light text-secondary' %> border-0 px-3 py-2 rounded-3 fw-bold mx-1"
+                                            href="#" onclick="changePage('<%= i %>')">
+                                            <%= i %>
+                                        </a>
+                                    </li>
+                                    <% } %>
+                                        <li class="page-item <%= (currentPage >= totalPages) ? 'disabled' : '' %>">
+                                            <a class="page-link bg-light border-0 text-secondary px-3 py-2 rounded-3 fw-bold"
+                                                href="#" onclick="changePage('<%= currentPage + 1 %>')">Next</a>
+                                        </li>
+                            </ul>
+                        </nav>
+                    </div>
                 </div>
+
+            </main>
+    </div>
+
+    <!-- Assign Classes Modal -->
+    <div class="modal fade" id="assignClassesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 24px;">
+                <div class="modal-header border-bottom border-secondary border-opacity-10 px-4 py-3">
+                    <h5 class="modal-title fw-bold" style="color: var(--dark-text)" id="assignClassesModalTitle">Assign
+                        Classes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="assign-classes-form" method="POST">
+                    <div class="modal-body p-4">
+                        <p class="text-secondary small mb-3">Select the classes this teacher will be assigned to.</p>
+                        <div class="border rounded-3 p-2 bg-light form-control" style="height: 200px; overflow-y: auto;"
+                            id="classes-checkbox-container">
+                            <% if (typeof classes !=='undefined' && classes && classes.length> 0) { %>
+                                <% for(let c of classes) { %>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input class-checkbox" type="checkbox" name="class_id"
+                                            value="<%= c.id %>" id="class_<%= c.id %>">
+                                        <label class="form-check-label small fw-medium" for="class_<%= c.id %>">
+                                            <%= c.name %> (Grade <%= c.grade %> - <%= c.section %>)
+                                        </label>
+                                    </div>
+                                    <% } %>
+                                        <% } else { %>
+                                            <span class="text-secondary small">No classes available.</span>
+                                            <% } %>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Save
+                            Assignments</button>
+                    </div>
+                </form>
             </div>
-        </main>
+        </div>
     </div>
 
     <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
-    
+
     <script>
         function applyFilters() {
             const role = document.getElementById('roleFilter').value;
             const status = document.getElementById('statusFilter').value;
             const grade = document.getElementById('gradeFilter').value;
-            
+
             const params = new URLSearchParams();
             if (role) params.append('role', role);
             if (status) params.append('status', status);
             if (grade) params.append('grade', grade);
-            
+
             window.location.href = '/admin/users?' + params.toString();
         }
-        
+
         function changePage(page) {
             const currentParams = new URLSearchParams(window.location.search);
             currentParams.set('page', page);
             window.location.href = '/admin/users?' + currentParams.toString();
         }
-        
+
         function exportUsers() {
             const currentParams = new URLSearchParams(window.location.search);
             window.location.href = '/admin/users/export?' + currentParams.toString();
         }
-        
-        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+
+        document.getElementById('searchInput').addEventListener('keyup', function (e) {
             if (e.key === 'Enter') {
                 const searchTerm = e.target.value;
                 const currentParams = new URLSearchParams(window.location.search);
@@ -226,6 +388,36 @@
                 window.location.href = '/admin/users?' + currentParams.toString();
             }
         });
+
+        const assignClassesModal = new bootstrap.Modal(document.getElementById('assignClassesModal'));
+
+        async function openAssignClassesModal(userId, teacherName) {
+            document.getElementById('assignClassesModalTitle').innerText = 'Assign Classes to ' + teacherName;
+            document.getElementById('assign-classes-form').action = '/admin/users/assign-classes/' + userId;
+
+            // Uncheck all first
+            const checkboxes = document.querySelectorAll('.class-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+
+            try {
+                // Fetch existing assignments
+                const response = await fetch('/admin/teachers/' + userId + '/classes');
+                const data = await response.json();
+
+                if (data.success && data.classIds) {
+                    checkboxes.forEach(cb => {
+                        if (data.classIds.includes(parseInt(cb.value))) {
+                            cb.checked = true;
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to load teacher classes', err);
+            }
+
+            assignClassesModal.show();
+        }
     </script>
 </body>
+
 </html>

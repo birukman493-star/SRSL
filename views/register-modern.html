@@ -1,37 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account - SRSL</title>
+    <title>Create Account - Abdigudina EMS</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/all.min.css">
     <link href="/css/brocode-style.css" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
-            background-color: var(--dark-bg);
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: 'Inter', sans-serif;
             display: flex;
-            align-items: center; /* Center horizontally/vertically */
+            align-items: center;
             justify-content: center;
             min-height: 100vh;
             color: var(--light-text);
-            padding-top: 100px; /* Space for the navbar to avoid overlap */
+            padding-top: 100px;
             padding-bottom: 40px;
+            position: relative;
+            background-color: #0f172a;
+            z-index: 1;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+                url('/image/hero-bg.jpg') center/cover no-repeat;
+            z-index: -2;
+            animation: heroDynamicPan 30s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95);
+            will-change: transform, filter;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(37, 99, 235, 0.3) 0%, rgba(249, 115, 22, 0.3) 100%);
+            mix-blend-mode: overlay;
+            z-index: -1;
+            animation: pulseGradient 15s infinite alternate ease-in-out;
+            pointer-events: none;
         }
 
         .login-wrapper {
             width: 100%;
-            max-width: 550px; /* Made slightly wider than login for parallel fields */
+            max-width: 550px;
             padding: 40px 30px;
-            background: var(--dark-secondary);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-radius: 20px;
-            box-shadow: var(--shadow-xl);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             margin: auto;
+            position: relative;
+            z-index: 10;
         }
 
         .header {
@@ -60,7 +99,8 @@
             margin-bottom: 20px;
         }
 
-        .error-alert, .success-alert {
+        .error-alert,
+        .success-alert {
             padding: 14px 20px;
             border-radius: 12px;
             margin-bottom: 24px;
@@ -98,8 +138,8 @@
         }
 
         .role-card {
-            background: var(--dark-tertiary);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #f8fafc;
+            border: 1px solid rgba(0, 0, 0, 0.1);
             border-radius: 12px;
             padding: 14px 8px;
             text-align: center;
@@ -122,7 +162,8 @@
         }
 
         .role-card small {
-            display: none; /* Hide for extreme minimal look */
+            display: none;
+            /* Hide for extreme minimal look */
         }
 
         .role-card:hover {
@@ -131,8 +172,8 @@
 
         .role-card.active {
             border-color: var(--primary-color);
-            background: rgba(0, 200, 255, 0.05);
-            box-shadow: 0 0 0 2px rgba(0, 200, 255, 0.2);
+            background: rgba(37, 99, 235, 0.05);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
         }
 
         .role-card.active i {
@@ -160,11 +201,11 @@
         .input-control {
             width: 100%;
             padding: 16px 16px 16px 44px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
             border-radius: 12px;
             font-size: 15px;
-            color: var(--light-text);
-            background-color: var(--dark-tertiary);
+            color: var(--dark-text);
+            background-color: #f8fafc;
             transition: all 0.2s ease;
             outline: none;
         }
@@ -182,8 +223,8 @@
 
         .input-control:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 200, 255, 0.15);
-            background-color: rgba(255, 255, 255, 0.03);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            background-color: #ffffff;
         }
 
         .input-group:focus-within i.icon-left {
@@ -202,7 +243,7 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
-        
+
         .row-gap {
             margin-bottom: 16px;
         }
@@ -223,22 +264,23 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            box-shadow: 0 4px 15px rgba(0, 200, 255, 0.3);
-            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 200, 255, 0.4);
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35);
         }
 
         .submit-btn:active {
-            transform: translateY(1px);
+            transform: translateY(0) scale(0.97);
+            box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
         }
 
         .divider {
             height: 1px;
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(0, 0, 0, 0.1);
             margin-bottom: 24px;
         }
 
@@ -285,20 +327,24 @@
         }
 
         /* Hide heavy/ugly progress bars entirely to match the elegant minimal state */
-        .progress-bar-custom, .step-indicators {
+        .progress-bar-custom,
+        .step-indicators {
             display: none !important;
         }
     </style>
 </head>
+
 <body>
-    <nav class="navbar navbar-expand-lg">
-        <div class="container-fluid">
+    <nav class="navbar navbar-expand-lg navbar-transparent">
+        <div class="container">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-graduation-cap"></i>
-                SRSL
+                Abdigudina EMS
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler" type="button" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
@@ -310,6 +356,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/contact">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/gallery">Gallery</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/auth/login">Login</a>
@@ -329,178 +378,203 @@
             <p>Select your role below to begin.</p>
         </div>
 
-        <% if (typeof error !== 'undefined' && error) { %>
-        <div class="error-alert">
-            <i class="fas fa-exclamation-circle"></i>
-            <span><%= error %></span>
-        </div>
-        <% } %>
-
-        <% if (typeof success !== 'undefined' && success) { %>
-        <div class="success-alert">
-            <i class="fas fa-check-circle"></i>
-            <span><%= success %></span>
-        </div>
-        <% } %>
-
-        <div class="error-alert" id="errorAlert" style="display: none;">
-            <i class="fas fa-exclamation-circle"></i>
-            <span id="errorMessage"></span>
-        </div>
-
-        <form id="registerForm" action="/auth/register" method="POST">
-            <!-- Replacing old Role Buttons with new Grid Style Map -->
-            <div class="role-grid">
-                <div class="role-card" data-role="student">
-                    <i class="fas fa-user-graduate"></i>
-                    <h5>Student</h5>
-                </div>
-                <div class="role-card" data-role="teacher">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <h5>Teacher</h5>
-                </div>
-                <div class="role-card" data-role="parent">
-                    <i class="fas fa-user-friends"></i>
-                    <h5>Parent</h5>
-                </div>
-                <div class="role-card" data-role="admin">
-                    <i class="fas fa-user-shield"></i>
-                    <h5>Admin</h5>
-                </div>
+        <% if (typeof error !=='undefined' && error) { %>
+            <div class="error-alert">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>
+                    <%= error %>
+                </span>
             </div>
-            
-            <input type="hidden" id="userType" name="userType" required>
+            <% } %>
 
-            <div id="studentFields" style="display: none;">
-                <div class="input-row row-gap">
-                    <div class="input-group">
-                        <input type="text" id="studentId" name="studentId" class="input-control" placeholder="Student ID">
-                        <i class="fas fa-id-card icon-left"></i>
+                <% if (typeof success !=='undefined' && success) { %>
+                    <div class="success-alert">
+                        <i class="fas fa-check-circle"></i>
+                        <span>
+                            <%= success %>
+                        </span>
                     </div>
-                    <div class="input-group">
-                        <input type="text" id="grade" name="grade" class="input-control" placeholder="Grade/Class">
-                        <i class="fas fa-level-up-alt icon-left"></i>
-                    </div>
-                </div>
-            </div>
+                    <% } %>
 
-            <div id="teacherFields" style="display: none;">
-                <div class="input-row row-gap">
-                    <div class="input-group">
-                        <input type="text" id="employeeId" name="employeeId" class="input-control" placeholder="Employee ID">
-                        <i class="fas fa-id-badge icon-left"></i>
-                    </div>
-                    <div class="input-group">
-                        <input type="text" id="department" name="department" class="input-control" placeholder="Department">
-                        <i class="fas fa-building icon-left"></i>
-                    </div>
-                </div>
-            </div>
+                        <div class="error-alert" id="errorAlert" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="errorMessage"></span>
+                        </div>
 
-            <div id="parentFields" style="display: none;">
-                <div class="input-row row-gap">
-                    <div class="input-group">
-                        <input type="text" id="occupation" name="occupation" class="input-control" placeholder="Occupation">
-                        <i class="fas fa-briefcase icon-left"></i>
-                    </div>
-                    <div class="input-group">
-                        <select id="relationship" name="relationship" class="input-control">
-                            <option value="">Relationship</option>
-                            <option value="father">Father</option>
-                            <option value="mother">Mother</option>
-                            <option value="guardian">Guardian</option>
-                            <option value="other">Other</option>
-                        </select>
-                        <i class="fas fa-users icon-left"></i>
-                    </div>
-                </div>
-            </div>
+                        <form id="registerForm" action="/auth/register" method="POST">
+                            <!-- Replacing old Role Buttons with new Grid Style Map -->
+                            <div class="role-grid">
+                                <div class="role-card" data-role="student">
+                                    <i class="fas fa-user-graduate"></i>
+                                    <h5>Student</h5>
+                                </div>
+                                <div class="role-card" data-role="teacher">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                    <h5>Teacher</h5>
+                                </div>
+                                <div class="role-card" data-role="parent">
+                                    <i class="fas fa-user-friends"></i>
+                                    <h5>Parent</h5>
+                                </div>
+                                <div class="role-card" data-role="admin">
+                                    <i class="fas fa-user-shield"></i>
+                                    <h5>Admin</h5>
+                                </div>
+                            </div>
 
-            <div class="input-row row-gap">
-                <div class="input-group">
-                    <input type="text" id="firstName" name="firstName" class="input-control" placeholder="First Name" required>
-                    <i class="fas fa-user icon-left"></i>
-                </div>
-                <div class="input-group">
-                    <input type="text" id="lastName" name="lastName" class="input-control" placeholder="Last Name" required>
-                    <i class="fas fa-user icon-left"></i>
-                </div>
-            </div>
+                            <input type="hidden" id="userType" name="userType" required>
 
-            <div class="input-row row-gap">
-                <div class="input-group">
-                    <input type="email" id="email" name="email" class="input-control" placeholder="Email Address" required>
-                    <i class="fas fa-envelope icon-left"></i>
-                </div>
-                <div class="input-group">
-                    <input type="tel" id="phone" name="phone" class="input-control" placeholder="Phone Number">
-                    <i class="fas fa-phone icon-left"></i>
-                </div>
-            </div>
+                            <div id="studentFields" style="display: none;">
+                                <div class="input-row row-gap">
+                                    <div class="input-group">
+                                        <input type="text" id="studentId" name="studentId" class="input-control"
+                                            placeholder="Student ID">
+                                        <i class="fas fa-id-card icon-left"></i>
+                                    </div>
+                                    <div class="input-group">
+                                        <select id="grade" name="grade" class="input-control">
+                                            <option value="">Select Grade</option>
+                                            <% for(let i=1; i<=8; i++) { %>
+                                                <option value="<%= i %>">Grade <%= i %>
+                                                </option>
+                                                <% } %>
+                                        </select>
+                                        <i class="fas fa-level-up-alt icon-left"></i>
+                                    </div>
+                                </div>
+                            </div>
 
-            <div class="input-group row-gap">
-                <input type="text" id="username" name="username" class="input-control" placeholder="Username" required>
-                <i class="fas fa-at icon-left"></i>
-            </div>
+                            <div id="teacherFields" style="display: none;">
+                                <div class="input-row row-gap">
+                                    <div class="input-group">
+                                        <input type="text" id="employeeId" name="employeeId" class="input-control"
+                                            placeholder="Employee ID">
+                                        <i class="fas fa-id-badge icon-left"></i>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="text" id="department" name="department" class="input-control"
+                                            placeholder="Department">
+                                        <i class="fas fa-building icon-left"></i>
+                                    </div>
+                                </div>
+                            </div>
 
-            <div class="input-row">
-                <div class="input-group">
-                    <input type="password" id="password" name="password" class="input-control" placeholder="Password" required>
-                    <i class="fas fa-lock icon-left"></i>
-                </div>
-                <div class="input-group">
-                    <input type="password" id="confirmPassword" name="confirmPassword" class="input-control" placeholder="Confirm Password" required>
-                    <i class="fas fa-lock icon-left"></i>
-                </div>
-            </div>
+                            <div id="parentFields" style="display: none;">
+                                <div class="input-row row-gap">
+                                    <div class="input-group">
+                                        <input type="text" id="occupation" name="occupation" class="input-control"
+                                            placeholder="Occupation">
+                                        <i class="fas fa-briefcase icon-left"></i>
+                                    </div>
+                                    <div class="input-group">
+                                        <select id="relationship" name="relationship" class="input-control">
+                                            <option value="">Relationship</option>
+                                            <option value="father">Father</option>
+                                            <option value="mother">Mother</option>
+                                            <option value="guardian">Guardian</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                        <i class="fas fa-users icon-left"></i>
+                                    </div>
+                                </div>
+                            </div>
 
-            <div class="requirements">
-                <div class="requirement" id="lengthReq"><i class="fas fa-circle"></i> At least 8 chars</div>
-            </div>
+                            <div class="input-row row-gap">
+                                <div class="input-group">
+                                    <input type="text" id="firstName" name="firstName" class="input-control"
+                                        placeholder="First Name" data-i18n-placeholder="placeholder_first_name"
+                                        required>
+                                    <i class="fas fa-user icon-left"></i>
+                                </div>
+                                <div class="input-group">
+                                    <input type="text" id="lastName" name="lastName" class="input-control"
+                                        placeholder="Last Name" data-i18n-placeholder="placeholder_last_name" required>
+                                    <i class="fas fa-user icon-left"></i>
+                                </div>
+                            </div>
 
-            <div class="form-check mt-3 mb-4 ps-1 d-flex gap-2">
-                <input class="form-check-input flex-shrink-0" type="checkbox" id="terms" name="terms" value="on" required style="margin-top: 4px;">
-                <label class="form-check-label" for="terms">
-                    I agree to the <a href="/terms" class="text-decoration-none" style="color: var(--primary-color);">Terms and Conditions</a>
-                </label>
-            </div>
+                            <div class="input-row row-gap">
+                                <div class="input-group">
+                                    <input type="email" id="email" name="email" class="input-control"
+                                        placeholder="Email Address" data-i18n-placeholder="placeholder_email" required>
+                                    <i class="fas fa-envelope icon-left"></i>
+                                </div>
+                                <div class="input-group">
+                                    <input type="tel" id="phone" name="phone" class="input-control"
+                                        placeholder="Phone Number" data-i18n-placeholder="placeholder_phone">
+                                    <i class="fas fa-phone icon-left"></i>
+                                </div>
+                            </div>
 
-            <button type="submit" class="submit-btn" id="submitBtn">
-                <span id="btnText">Create Account</span>
-                <i class="fas fa-arrow-right" id="btnIcon"></i>
-            </button>
-        </form>
+                            <div class="input-group row-gap">
+                                <input type="text" id="username" name="username" class="input-control"
+                                    placeholder="Username" required>
+                                <i class="fas fa-at icon-left"></i>
+                            </div>
 
-        <div class="divider"></div>
+                            <div class="input-row">
+                                <div class="input-group">
+                                    <input type="password" id="password" name="password" class="input-control"
+                                        placeholder="Password" required>
+                                    <i class="fas fa-lock icon-left"></i>
+                                </div>
+                                <div class="input-group">
+                                    <input type="password" id="confirmPassword" name="confirmPassword"
+                                        class="input-control" placeholder="Confirm Password" required>
+                                    <i class="fas fa-lock icon-left"></i>
+                                </div>
+                            </div>
 
-        <div class="login-text">
-            Already have an account? <a href="/auth/login">Login here</a>
-        </div>
+                            <div class="requirements">
+                                <div class="requirement" id="lengthReq"><i class="fas fa-circle"></i> At least 8 chars
+                                </div>
+                            </div>
+
+                            <div class="form-check mt-3 mb-4 ps-1 d-flex gap-2">
+                                <input class="form-check-input flex-shrink-0" type="checkbox" id="terms" name="terms"
+                                    value="on" required style="margin-top: 4px;">
+                                <label class="form-check-label" for="terms">
+                                    I agree to the <a href="/terms" class="text-decoration-none"
+                                        style="color: var(--primary-color);">Terms and Conditions</a>
+                                </label>
+                            </div>
+
+                            <button type="submit" class="submit-btn" id="submitBtn">
+                                <span id="btnText">Create Account</span>
+                                <i class="fas fa-arrow-right" id="btnIcon"></i>
+                            </button>
+                        </form>
+
+                        <div class="divider"></div>
+
+                        <div class="login-text">
+                            Already have an account? <a href="/auth/login">Login here</a>
+                        </div>
     </div>
 
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Restore role JS toggle without bulky step flow
             const roleBtns = document.querySelectorAll('.role-card');
             const userTypeInput = document.getElementById('userType');
             const parentFields = document.getElementById('parentFields');
             const studentFields = document.getElementById('studentFields');
             const teacherFields = document.getElementById('teacherFields');
-            
+
             roleBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function () {
                     const role = this.getAttribute('data-role');
-                    
+
                     roleBtns.forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
                     userTypeInput.value = role;
-                    
-                    if(studentFields) studentFields.style.display = (role === 'student') ? 'block' : 'none';
-                    if(teacherFields) teacherFields.style.display = (role === 'teacher') ? 'block' : 'none';
-                    if(parentFields) parentFields.style.display = (role === 'parent') ? 'block' : 'none';
+
+                    if (studentFields) studentFields.style.display = (role === 'student') ? 'block' : 'none';
+                    if (teacherFields) teacherFields.style.display = (role === 'teacher') ? 'block' : 'none';
+                    if (parentFields) parentFields.style.display = (role === 'parent') ? 'block' : 'none';
                 });
             });
 
@@ -510,13 +584,13 @@
             const btnIcon = document.getElementById('btnIcon');
 
             if (registerForm) {
-                registerForm.addEventListener('submit', function(e) {
-                    if(!userTypeInput.value) {
-                         const errorAlert = document.getElementById('errorAlert');
-                         errorAlert.style.display = 'flex';
-                         document.getElementById('errorMessage').textContent = 'Please select a role first.';
-                         e.preventDefault();
-                         return;
+                registerForm.addEventListener('submit', function (e) {
+                    if (!userTypeInput.value) {
+                        const errorAlert = document.getElementById('errorAlert');
+                        errorAlert.style.display = 'flex';
+                        document.getElementById('errorMessage').textContent = 'Please select a role first.';
+                        e.preventDefault();
+                        return;
                     }
 
                     // High speed transition setup
@@ -526,7 +600,21 @@
                     submitBtn.style.opacity = '0.9';
                 });
             }
+
+            // Instant.page-like prefetching for ultra-high speed
+            document.querySelectorAll('a').forEach(link => {
+                link.addEventListener('mouseover', () => {
+                    const url = link.getAttribute('href');
+                    if (url && url.startsWith('/') && !url.includes('logout')) {
+                        const prefetchLink = document.createElement('link');
+                        prefetchLink.rel = 'prefetch';
+                        prefetchLink.href = url;
+                        document.head.appendChild(prefetchLink);
+                    }
+                }, { once: true });
+            });
         });
     </script>
 </body>
+
 </html>

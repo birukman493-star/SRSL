@@ -1,148 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - SRSL Admin</title>
+    <title>
+        <%= title %>
+    </title>
+
+    <!-- CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/all.min.css">
     <link href="/css/inter-font.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/brocode-style.css">
 </head>
-<body class="dashboard-body">
+
+<body>
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-        
-        <main class="main-panel w-100 p-4">
-            <!-- Header -->
-            <div class="dashboard-header mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="dashboard-title">Global Attendance Tracking</h1>
-                        <p class="text-secondary m-0">Monitor student presence across all active classes and academic sessions</p>
+
+            <!-- Main Content -->
+            <main class="main-panel w-100 p-4">
+                <!-- Header -->
+                <div class="dashboard-header mb-4 notranslate"
+                    style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="dashboard-title"
+                                style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                Attendance Management
+                            </h1>
+                            <p class="text-secondary m-0" style="font-weight: 500;">Monitor daily presence and tracking
+                                records across all grades</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light px-3 py-2 border-0 fw-bold rounded-3" onclick="window.print()"
+                                style="color: var(--dark-text);">
+                                <i class="fas fa-print me-2"></i> Print Report
+                            </button>
+                        </div>
                     </div>
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10">
-                            <i class="fas fa-calendar-alt me-1"></i> System-Wide Data
-                        </span>
-                        <% if (typeof stats !== 'undefined' && stats.total > 0) { %>
-                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill border border-success border-opacity-10">
-                            <i class="fas fa-chart-line me-1"></i> <%= stats.rate %>% Rate
-                        </span>
+                </div>
+
+                <!-- Quick Grade Badges -->
+                <div class="mb-4 d-flex flex-wrap gap-2">
+                    <% for(let i=1; i<=8; i++) { %>
+                        <button type="button"
+                            onclick="document.getElementById('gradeInput').value='<%= i %>'; document.getElementById('filterForm').submit();"
+                            class="btn btn-light filter-badge <%= (typeof filters !== 'undefined' && filters.grade == i) ? 'active' : '' %> rounded-pill px-3 py-1 fw-bold small shadow-sm border"
+                            style="font-size: 0.75rem;">
+                            Grade <%= i %>
+                        </button>
                         <% } %>
-                    </div>
                 </div>
-            </div>
 
-            <!-- Stats Overview -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-3">
-                    <div class="glass-panel text-center py-4 hover-lift">
-                        <div class="bg-primary bg-opacity-10 text-primary rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;font-size:1.2rem;">
-                            <i class="fas fa-layer-group"></i>
+                <!-- Filter Panel -->
+                <div class="glass-panel mb-4 p-3 shadow-sm"
+                    style="background: white !important; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                    <form id="filterForm" action="/admin/attendance" method="GET" class="row g-2 align-items-center">
+                        <input type="hidden" name="grade" id="gradeInput"
+                            value="<%= (typeof filters !== 'undefined') ? filters.grade : '' %>">
+                        <div class="col-md-4">
+                            <div class="search-bar position-relative">
+                                <i
+                                    class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary small"></i>
+                                <input type="text" name="search"
+                                    class="form-control form-control-sm bg-light border-0 ps-5 py-2 fw-bold"
+                                    placeholder="Search Student ID or Name..."
+                                    value="<%= (typeof filters !== 'undefined') ? filters.search : '' %>"
+                                    style="border-radius: 8px;">
+                            </div>
                         </div>
-                        <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size:0.65rem;letter-spacing:1px;">Total Records</div>
-                        <div class="h4 fw-bold text-light m-0"><%= typeof stats !== 'undefined' ? stats.total : (attendance ? attendance.length : 0) %></div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="glass-panel text-center py-4 hover-lift">
-                        <div class="bg-success bg-opacity-10 text-success rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;font-size:1.2rem;">
-                            <i class="fas fa-check-circle"></i>
+                        <div class="col-md-2">
+                            <input type="date" name="date"
+                                class="form-control form-control-sm border-0 bg-light fw-bold py-2"
+                                onchange="this.form.submit()"
+                                value="<%= (typeof filters !== 'undefined') ? filters.date : '' %>"
+                                style="border-radius: 8px;">
                         </div>
-                        <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size:0.65rem;letter-spacing:1px;">Present</div>
-                        <div class="h4 fw-bold text-success m-0"><%= typeof stats !== 'undefined' ? stats.present : (attendance ? attendance.filter(r => r.status === 'present').length : 0) %></div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="glass-panel text-center py-4 hover-lift">
-                        <div class="bg-danger bg-opacity-10 text-danger rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;font-size:1.2rem;">
-                            <i class="fas fa-times-circle"></i>
+                        <div class="col-md-2">
+                            <select class="form-select form-select-sm border-0 bg-light fw-bold"
+                                onchange="document.getElementById('gradeInput').value=this.value; this.form.submit()"
+                                style="border-radius: 8px;">
+                                <option value="">All Elementary Grades</option>
+                                <% for(let i=1; i<=8; i++) { %>
+                                    <option value="<%= i %>" <%=(typeof filters !=='undefined' && filters.grade==i)
+                                        ? 'selected' : '' %>>Grade <%= i %>
+                                    </option>
+                                    <% } %>
+                            </select>
                         </div>
-                        <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size:0.65rem;letter-spacing:1px;">Absent</div>
-                        <div class="h4 fw-bold text-danger m-0"><%= typeof stats !== 'undefined' ? stats.absent : (attendance ? attendance.filter(r => r.status === 'absent').length : 0) %></div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="glass-panel text-center py-4 hover-lift">
-                        <div class="bg-warning bg-opacity-10 text-warning rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;font-size:1.2rem;">
-                            <i class="fas fa-clock"></i>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold rounded-2">Apply
+                                Filters</button>
                         </div>
-                        <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size:0.65rem;letter-spacing:1px;">Late</div>
-                        <div class="h4 fw-bold text-warning m-0"><%= typeof stats !== 'undefined' ? stats.late : (attendance ? attendance.filter(r => r.status === 'late').length : 0) %></div>
-                    </div>
+                        <div class="col-md-2">
+                            <a href="/admin/attendance"
+                                class="btn btn-light btn-sm w-100 fw-bold rounded-2 border">Clear</a>
+                        </div>
+                    </form>
                 </div>
-            </div>
 
-            <!-- Attendance List -->
-            <div class="glass-panel p-4">
-                <div class="d-flex align-items-center gap-2 mb-4">
-                    <i class="fas fa-list-alt text-primary"></i>
-                    <h5 class="m-0 text-light fw-bold">Attendance Log</h5>
-                    <span class="badge bg-secondary ms-auto"><%= attendance ? attendance.length : 0 %> records</span>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
-                        <thead>
-                            <tr class="text-secondary small">
-                                <th class="border-0 py-3">Student Name</th>
-                                <th class="border-0 py-3">Class</th>
-                                <th class="border-0 py-3">Date</th>
-                                <th class="border-0 py-3 text-center">Status</th>
-                                <th class="border-0 py-3">Type</th>
-                                <th class="border-0 py-3">Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (typeof attendance !== "undefined" && attendance && attendance.length > 0) { %>
-                                <% for (let record of attendance) { %>
-                                <tr class="transition">
-                                    <td class="border-0 py-3">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="sidebar-user-avatar" style="width:35px;height:35px;font-size:0.8rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
-                                                <%= (record.first_name ? record.first_name.charAt(0).toUpperCase() : '?') %>
-                                            </div>
-                                            <div class="fw-bold text-light"><%= record.first_name || 'Unknown' %> <%= record.last_name || '' %></div>
-                                        </div>
-                                    </td>
-                                    <td class="border-0 py-3">
-                                        <span class="text-primary fw-bold small"><%= record.class_name || '—' %></span>
-                                    </td>
-                                    <td class="border-0 py-3 text-secondary small">
-                                        <%= new Date(record.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) %>
-                                    </td>
-                                    <td class="border-0 py-3 text-center">
-                                        <% 
-                                            let sc = 'secondary';
-                                            if(record.status === 'present') sc = 'success';
-                                            else if(record.status === 'absent') sc = 'danger';
-                                            else if(record.status === 'late') sc = 'warning';
-                                        %>
-                                        <span class="badge rounded-pill px-3 py-2 text-uppercase bg-<%= sc %> bg-opacity-10 text-<%= sc %> border border-<%= sc %> border-opacity-25" style="font-size:0.65rem;letter-spacing:0.5px;">
-                                            <i class="fas fa-<%= record.status === 'present' ? 'check' : (record.status === 'absent' ? 'times' : 'clock') %>-circle me-1"></i>
-                                            <%= record.status %>
-                                        </span>
-                                    </td>
-                                    <td class="border-0 py-3 text-secondary small text-capitalize"><%= record.attendance_type || 'daily' %></td>
-                                    <td class="border-0 py-3 text-secondary small"><%= record.notes || '—' %></td>
+                <!-- Attendance Table -->
+                <div class="glass-panel" style="background: white !important; border-radius: 24px;">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead style="background: rgba(0,0,0,0.02)">
+                                <tr class="text-secondary small fw-bold"
+                                    style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                    <th class="border-0 py-3 ps-4">Student Profile</th>
+                                    <th class="border-0 py-3">Class / Level</th>
+                                    <th class="border-0 py-3 text-center">Status</th>
+                                    <th class="border-0 py-3">Date</th>
+                                    <th class="border-0 py-3">Notes</th>
+                                    <th class="border-0 py-3 text-end pe-4">Management</th>
                                 </tr>
-                                <% } %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="6" class="border-0 text-center py-5">
-                                        <div class="opacity-25 mb-3"><i class="fas fa-calendar-check fa-4x text-secondary"></i></div>
-                                        <p class="text-secondary">No attendance logs found in the system registry.</p>
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <% if (typeof attendance !=='undefined' && attendance && attendance.length> 0) { %>
+                                    <% for (let record of attendance) { %>
+                                        <tr>
+                                            <td class="border-0 py-3 ps-4">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="avatar-initials avatar-blue"
+                                                        style="width: 38px; height: 38px; font-size: 0.9rem;">
+                                                        <%= (record.first_name ? record.first_name.charAt(0) : '?' ) %>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold" style="color: var(--dark-text);">
+                                                            <%= record.first_name %>
+                                                                <%= record.last_name %>
+                                                        </div>
+                                                        <div class="text-secondary small">ID: #<%= record.student_id
+                                                                || '---' %>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="border-0 py-3">
+                                                <div class="fw-bold small" style="color: var(--dark-text);">
+                                                    <%= record.class_name %>
+                                                </div>
+                                                <div class="text-secondary small">Grade <%= record.grade_level %>
+                                                </div>
+                                            </td>
+                                            <td class="border-0 text-center py-3">
+                                                <% let badgeColor='#64748b' ; let badgeBg='rgba(100,116,139,0.1)' ; if
+                                                    (record.status==='present' ) { badgeColor='#10b981' ;
+                                                    badgeBg='rgba(16,185,129,0.1)' ; } else if (record.status==='absent'
+                                                    ) { badgeColor='#ef4444' ; badgeBg='rgba(239,68,68,0.1)' ; } else if
+                                                    (record.status==='late' ) { badgeColor='#f59e0b' ;
+                                                    badgeBg='rgba(245,158,11,0.1)' ; } %>
+                                                    <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase"
+                                                        style="background: <%= badgeBg %>; color: <%= badgeColor %>; font-size: 0.7rem;">
+                                                        <%= record.status %>
+                                                    </span>
+                                            </td>
+                                            <td class="border-0 py-3">
+                                                <span class="text-secondary small fw-medium">
+                                                    <%= new Date(record.date).toLocaleDateString(undefined, {
+                                                        year: 'numeric' , month: 'short' , day: 'numeric' }) %>
+                                                </span>
+                                            </td>
+                                            <td class="border-0 py-3">
+                                                <span class="text-secondary small">
+                                                    <%= record.notes || '—' %>
+                                                </span>
+                                            </td>
+                                            <td class="border-0 text-end py-3 pe-4">
+                                                <button
+                                                    class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3 text-primary"
+                                                    title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <% } %>
+                                            <% } else { %>
+                                                <tr>
+                                                    <td colspan="6" class="border-0 text-center py-5">
+                                                        <div class="text-secondary opacity-30 mb-3">
+                                                            <i class="fas fa-calendar-times fa-4x"></i>
+                                                        </div>
+                                                        <div class="fw-bold text-secondary">No attendance logs found for
+                                                            the selected criteria.</div>
+                                                    </td>
+                                                </tr>
+                                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-        </main>
+            </main>
     </div>
 
+    <!-- Scripts -->
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/brocode-script.js"></script>
 </body>
+
 </html>

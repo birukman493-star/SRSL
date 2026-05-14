@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-    
+    <title><%= title %> - Abdigudina Faculty</title>
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -12,162 +11,271 @@
     <!-- Google Fonts -->
     <link href="/css/inter-font.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .schedule-container {
+            background: white;
+            border-radius: 28px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        .timetable {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+        .timetable th {
+            background: #f8fafc;
+            color: #2563eb;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 1px;
+            padding: 1.2rem 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            text-align: center;
+        }
+        .timetable td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f1f5f9;
+            border-right: 1px solid #f1f5f9;
+            vertical-align: top;
+            height: 110px;
+            transition: background 0.2s;
+        }
+        .timetable td:last-child { border-right: none; }
+        .timetable tr:last-child td { border-bottom: none; }
+        .time-col {
+            background: #f8fafc;
+            width: 110px;
+            font-weight: 700;
+            color: #1e293b;
+            text-align: center !important;
+            border-right: 2px solid #e2e8f0 !important;
+        }
+        .schedule-slot {
+            height: 100%;
+            padding: 0.65rem;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #eff6ff 0%, #f8faff 100%);
+            border-left: 4px solid #2563eb;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+        .schedule-slot:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(37,99,235,0.1);
+        }
+        .slot-title {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 0.8rem;
+            line-height: 1.3;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .slot-code {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #2563eb;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .slot-footer {
+            margin-top: 6px;
+            font-size: 0.62rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .empty-slot {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.05;
+            font-size: 1.2rem;
+        }
+        .read-only-badge {
+            background: rgba(245,158,11,0.1);
+            color: #d97706;
+            border: 1px solid rgba(245,158,11,0.2);
+            border-radius: 50px;
+            padding: 0.3rem 1rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+    </style>
 </head>
-<body class="dashboard-body">
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-        
-        <!-- Main Content -->
+
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
-                        <h1 class="dashboard-title">Class Schedule: <%= classInfo.name %></h1>
-                        <p class="text-secondary m-0">Define the weekly academic timetable for Grade <%= classInfo.grade %>-<%= classInfo.section %></p>
+                        <h1 class="dashboard-title" style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                            Class Timetable
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">
+                            Schedule for <strong><%= classInfo.name %></strong> — Grade <%= classInfo.grade %>-<%= classInfo.section %>
+                        </p>
                     </div>
-                    <a href="/teacher/classes" class="btn btn-hero btn-secondary px-4 border-0">
-                        <i class="fas fa-arrow-left me-2"></i> Back to Classes
-                    </a>
-                </div>
-            </div>
-
-            <div class="row g-4">
-                <!-- Add Period Form -->
-                <div class="col-lg-4">
-                    <div class="glass-panel">
-                        <h3 class="h5 fw-bold mb-4"><i class="fas fa-calendar-plus me-2 text-primary"></i>Add Schedule Period</h3>
-                        <form action="/teacher/classes/schedule/add" method="POST">
-                            <input type="hidden" name="class_id" value="<%= classInfo.id %>">
-                            
-                            <div class="mb-3">
-                                <label class="text-secondary small mb-1">Select Course</label>
-                                <select name="course_id" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
-                                    <option value="">Choose a course...</option>
-                                    <% courses.forEach(c => { %>
-                                        <option value="<%= c.id %>"><%= c.course_name %> (<%= c.course_code %>)</option>
-                                    <% }) %>
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="text-secondary small mb-1">Day of Week</label>
-                                <select name="day_of_week" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
-                                    <option value="Monday">Monday</option>
-                                    <option value="Tuesday">Tuesday</option>
-                                    <option value="Wednesday">Wednesday</option>
-                                    <option value="Thursday">Thursday</option>
-                                    <option value="Friday">Friday</option>
-                                    <option value="Saturday">Saturday</option>
-                                    <option value="Sunday">Sunday</option>
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="text-secondary small mb-1">Academic Period</label>
-                                <select name="period" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
-                                    <option value="Period 1">Period 1</option>
-                                    <option value="Period 2">Period 2</option>
-                                    <option value="Period 3">Period 3</option>
-                                    <option value="Period 4">Period 4</option>
-                                    <option value="Period 5">Period 5</option>
-                                    <option value="Period 6">Period 6</option>
-                                    <option value="Period 7">Period 7</option>
-                                    <option value="Period 8">Period 8</option>
-                                    <option value="Morning Break">Morning Break</option>
-                                    <option value="Lunch Break">Lunch Break</option>
-                                    <option value="Afternoon Break">Afternoon Break</option>
-                                </select>
-                            </div>
-
-                            <div class="row g-3">
-                                <div class="col-6">
-                                    <label class="text-secondary small mb-1">Start Time</label>
-                                    <input type="time" name="start_time" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
-                                </div>
-                                <div class="col-6">
-                                    <label class="text-secondary small mb-1">End Time</label>
-                                    <input type="time" name="end_time" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
-                                </div>
-                            </div>
-
-                            <div class="mb-4 mt-3">
-                                <label class="text-secondary small mb-1">Room / Location</label>
-                                <input type="text" name="room" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="e.g. Room 302">
-                            </div>
-
-                            <button type="submit" class="btn btn-hero btn-primary w-100 py-2">
-                                <i class="fas fa-plus me-2"></i> Add to Timetable
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Timetable List -->
-                <div class="col-lg-8">
-                    <div class="glass-panel">
-                        <h3 class="h5 fw-bold mb-4"><i class="fas fa-clock me-2 text-primary"></i>Weekly Timetable</h3>
-                        <div class="table-responsive">
-                            <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
-                                <thead>
-                                    <tr class="text-secondary small">
-                                        <th class="border-0">Day</th>
-                                        <th class="border-0">Period</th>
-                                        <th class="border-0">Time Slot</th>
-                                        <th class="border-0">Course</th>
-                                        <th class="border-0">Room</th>
-                                        <th class="border-0 text-end">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% if (schedule && schedule.length > 0) { %>
-                                        <% schedule.forEach(item => { %>
-                                            <tr>
-                                                <td class="border-0">
-                                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3">
-                                                        <%= item.day_of_week %>
-                                                    </span>
-                                                </td>
-                                                <td class="border-0 text-light small fw-bold">
-                                                    <%= item.period || 'N/A' %>
-                                                </td>
-                                                <td class="border-0 text-light small fw-bold">
-                                                    <%= item.start_time.substring(0, 5) %> - <%= item.end_time.substring(0, 5) %>
-                                                </td>
-                                                <td class="border-0">
-                                                    <div class="text-light small fw-bold"><%= item.course_name %></div>
-                                                    <code class="text-secondary smaller"><%= item.course_code %></code>
-                                                </td>
-                                                <td class="border-0 text-secondary small">
-                                                    <i class="fas fa-map-marker-alt me-1 opacity-50"></i> <%= item.room || 'TBD' %>
-                                                </td>
-                                                <td class="border-0 text-end">
-                                                    <form action="/teacher/classes/schedule/delete/<%= item.id %>" method="POST" onsubmit="return confirm('Remove this period?')">
-                                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0">
-                                                            <i class="fas fa-trash-alt"></i>
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        <% }) %>
-                                    <% } else { %>
-                                        <tr>
-                                            <td colspan="5" class="border-0 text-center py-5">
-                                                <i class="fas fa-calendar-times fa-3x text-secondary mb-3 opacity-25"></i>
-                                                <div class="text-secondary">No periods scheduled for this class.</div>
-                                            </td>
-                                        </tr>
-                                    <% } %>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="read-only-badge">
+                            <i class="fas fa-lock me-1"></i> View Only — Managed by Admin
+                        </span>
+                        <button class="btn btn-light px-4 py-2 rounded-pill fw-bold border-0 shadow-sm" onclick="window.print()">
+                            <i class="fas fa-print me-2 text-primary"></i>Print
+                        </button>
+                        <a href="/teacher/classes" class="btn btn-light px-4 py-2 rounded-pill fw-bold border-0 shadow-sm" style="color: var(--dark-text);">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Classes
+                        </a>
                     </div>
                 </div>
             </div>
+
+            <!-- Info Notice -->
+            <div class="alert border-0 mb-4 d-flex align-items-center gap-3" style="background: rgba(245,158,11,0.08); border-radius: 16px; padding: 1rem 1.5rem;">
+                <i class="fas fa-info-circle fa-lg" style="color: #d97706;"></i>
+                <div>
+                    <div class="fw-bold" style="color: #92400e; font-size: 0.9rem;">Timetable is set by Administration</div>
+                    <div class="text-secondary small">To request changes to this schedule, please contact your system administrator.</div>
+                </div>
+            </div>
+
+            <% 
+                const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                const allPeriods = ['Period 1', 'Period 2', 'Period 3', 'Period 4', 'Period 5', 'Period 6', 'Period 7', 'Period 8'];
+                const usedPeriods = allPeriods.filter(p => schedule.some(s => s.period === p));
+                const periodsToShow = usedPeriods.length > 0 ? usedPeriods : allPeriods.slice(0, 6);
+            %>
+
+            <% if (schedule && schedule.length > 0) { %>
+            <!-- Timetable Grid -->
+            <div class="schedule-container shadow-sm mb-4">
+                <div class="table-responsive">
+                    <table class="timetable">
+                        <thead>
+                            <tr>
+                                <th class="time-col">Period</th>
+                                <% weekDays.forEach(day => { %>
+                                    <th><%= day %></th>
+                                <% }); %>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% periodsToShow.forEach(period => { %>
+                                <tr>
+                                    <td class="time-col">
+                                        <div style="font-size: 0.82rem; font-weight: 800; color: #1e293b;"><%= period %></div>
+                                        <% 
+                                            const firstMatch = schedule.find(s => s.period === period);
+                                            if (firstMatch) {
+                                        %>
+                                            <div class="text-secondary mt-1" style="font-size: 0.6rem; font-weight: 600;">
+                                                <%= firstMatch.start_time.substring(0, 5) %> - <%= firstMatch.end_time.substring(0, 5) %>
+                                            </div>
+                                        <% } %>
+                                    </td>
+                                    <% weekDays.forEach(day => { %>
+                                        <td>
+                                            <% 
+                                                const slot = schedule.find(s => s.day_of_week === day && s.period === period);
+                                                if (slot) {
+                                            %>
+                                                <div class="schedule-slot">
+                                                    <div>
+                                                        <div class="slot-code"><%= slot.course_code || '' %></div>
+                                                        <div class="slot-title"><%= slot.course_name %></div>
+                                                    </div>
+                                                    <div class="slot-footer">
+                                                        <i class="fas fa-map-marker-alt me-1"></i><%= slot.room || 'TBD' %>
+                                                    </div>
+                                                </div>
+                                            <% } else { %>
+                                                <div class="empty-slot">
+                                                    <i class="fas fa-minus"></i>
+                                                </div>
+                                            <% } %>
+                                        </td>
+                                    <% }); %>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- List View as backup -->
+            <div style="background: white; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05);" class="p-4">
+                <h3 class="h6 fw-bold text-uppercase mb-3" style="letter-spacing: 0.05em; color: #64748b;">
+                    <i class="fas fa-list me-2 text-primary"></i>All Scheduled Periods
+                </h3>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead style="background: #f8fafc;">
+                            <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.7rem;">
+                                <th class="border-0 py-3">Day</th>
+                                <th class="border-0 py-3">Period</th>
+                                <th class="border-0 py-3">Time</th>
+                                <th class="border-0 py-3">Course</th>
+                                <th class="border-0 py-3">Room</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% schedule.forEach(item => { %>
+                            <tr>
+                                <td class="border-0 py-3">
+                                    <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase" style="background: rgba(37,99,235,0.08); color: #2563eb; font-size: 0.65rem;">
+                                        <%= item.day_of_week %>
+                                    </span>
+                                </td>
+                                <td class="border-0 py-3">
+                                    <span class="fw-bold text-secondary small"><%= item.period || 'N/A' %></span>
+                                </td>
+                                <td class="border-0 py-3">
+                                    <span class="fw-bold small" style="color: #1e293b;"><%= item.start_time.substring(0, 5) %> – <%= item.end_time.substring(0, 5) %></span>
+                                </td>
+                                <td class="border-0 py-3">
+                                    <div class="fw-bold small" style="color: #1e293b;"><%= item.course_name %></div>
+                                    <code class="text-secondary" style="font-size: 0.65rem;"><%= item.course_code || '' %></code>
+                                </td>
+                                <td class="border-0 py-3">
+                                    <span class="text-secondary small"><i class="fas fa-map-marker-alt me-1 opacity-50"></i><%= item.room || 'TBD' %></span>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <% } else { %>
+            <!-- Empty State -->
+            <div class="text-center py-5" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05);">
+                <div class="mb-4" style="opacity: 0.15; font-size: 5rem; color: #2563eb;">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h3 class="fw-bold" style="color: #1e293b;">No Schedule Set Yet</h3>
+                <p class="text-secondary fw-medium mb-0">
+                    The administrator has not published a timetable for <strong><%= classInfo.name %></strong> yet.<br>
+                    Please check back later or contact your admin.
+                </p>
+            </div>
+            <% } %>
+
         </main>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
 </body>

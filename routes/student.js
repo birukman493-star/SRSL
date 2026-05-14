@@ -17,7 +17,7 @@ router.use(isStudent);
 router.get('/dashboard', async (req, res) => {
   try {
     const studentId = req.session.user.id;
-    
+
     // Get student information
     const [studentInfo] = await pool.execute(`
       SELECT s.*, u.username, u.email
@@ -25,7 +25,7 @@ router.get('/dashboard', async (req, res) => {
       JOIN users u ON s.user_id = u.id
       WHERE s.user_id = ?
     `, [studentId]);
-    
+
     // Get enrolled courses with teacher details
     const [courses] = await pool.execute(`
       SELECT c.*, e.enrollment_date, e.grade, e.status, t.first_name as teacher_fname, t.last_name as teacher_lname
@@ -35,15 +35,15 @@ router.get('/dashboard', async (req, res) => {
       WHERE e.student_id = ? AND e.status = 'enrolled'
       ORDER BY c.course_name
     `, [studentInfo[0].id]);
-    
+
     // Calculate Average Grade from all approved grades
     const [allGrades] = await pool.execute(`
       SELECT score, max_score FROM grades WHERE student_id = ? AND status = 'approved'
     `, [studentInfo[0].id]);
-    
+
     let average_grade = 'N/A';
     let overall_progress = 0;
-    
+
     if (allGrades.length > 0) {
       let totalScore = 0;
       let totalMax = 0;
@@ -57,7 +57,7 @@ router.get('/dashboard', async (req, res) => {
         overall_progress = avg.toFixed(1);
       }
     }
-    
+
     let overall_progress_text = overall_progress ? `${overall_progress}% Complete` : 'No grades yet';
 
     // Get Pending Tasks
@@ -71,7 +71,7 @@ router.get('/dashboard', async (req, res) => {
       `, [studentInfo[0].id]);
       pending_tasks = (assignments[0] && assignments[0].count) || 0;
     } catch (e) { pending_tasks = 0; }
-    
+
     // Attendance rate
     const [attendance] = await pool.execute(`
        SELECT 
@@ -80,18 +80,18 @@ router.get('/dashboard', async (req, res) => {
        FROM attendance
        WHERE student_id = ?
     `, [studentInfo[0].id]);
-    
+
     let attendance_rate = '100';
     if (attendance[0].total_count > 0) {
       attendance_rate = ((attendance[0].present_count / attendance[0].total_count) * 100).toFixed(1);
     }
-    
+
     // Pre-render courses HTML
     let courses_html = '';
     if (courses.length > 0) {
-        courses.slice(0, 5).forEach(course => {
-            const teacherName = (course.teacher_fname && course.teacher_lname) ? `${course.teacher_fname} ${course.teacher_lname}` : 'Assigned Teacher';
-            courses_html += `
+      courses.slice(0, 5).forEach(course => {
+        const teacherName = (course.teacher_fname && course.teacher_lname) ? `${course.teacher_fname} ${course.teacher_lname}` : 'Assigned Teacher';
+        courses_html += `
             <li class="course-item">
                 <div class="course-icon">
                     <i class="fas fa-book"></i>
@@ -103,16 +103,16 @@ router.get('/dashboard', async (req, res) => {
                     </div>
                 </div>
             </li>`;
-        });
+      });
     } else {
-        courses_html = `
+      courses_html = `
             <li class="course-item">
                 <div class="course-info" style="text-align: center; color: #6c757d; width: 100%;">
                     No courses enrolled yet
                 </div>
             </li>`;
     }
-    
+
     // Calculate Statistics
     const [stats] = await pool.execute(`
       SELECT 
@@ -164,26 +164,26 @@ router.get('/dashboard', async (req, res) => {
     const daysArr = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const todayName = daysArr[new Date().getDay()];
     let todaySchedule = [];
-    
+
     // Resolve class_id for schedule
     let classIdForSchedule = studentInfo[0].class_id;
     if (!classIdForSchedule && studentInfo[0].grade_level && studentInfo[0].section) {
-        const [clsRes] = await pool.execute(
-          'SELECT id FROM classes WHERE CAST(grade AS CHAR) = CAST(? AS CHAR) AND section = ? LIMIT 1',
-          [studentInfo[0].grade_level, studentInfo[0].section]
-        );
-        if (clsRes.length > 0) classIdForSchedule = clsRes[0].id;
+      const [clsRes] = await pool.execute(
+        'SELECT id FROM classes WHERE CAST(grade AS CHAR) = CAST(? AS CHAR) AND section = ? LIMIT 1',
+        [studentInfo[0].grade_level, studentInfo[0].section]
+      );
+      if (clsRes.length > 0) classIdForSchedule = clsRes[0].id;
     }
-    
+
     if (classIdForSchedule) {
-        const [todaySchedRes] = await pool.execute(`
+      const [todaySchedRes] = await pool.execute(`
             SELECT cs.*, c.course_name, c.course_code
             FROM class_schedule cs
             JOIN courses c ON cs.course_id = c.id
             WHERE cs.class_id = ? AND cs.day_of_week = ?
             ORDER BY cs.start_time
         `, [classIdForSchedule, todayName]);
-        todaySchedule = todaySchedRes;
+      todaySchedule = todaySchedRes;
     }
 
     const attendanceData = {
@@ -191,12 +191,52 @@ router.get('/dashboard', async (req, res) => {
       sessions: (attendance[0] && attendance[0].present_count) || 0
     };
 
+    // Check if Registration is Open via system settings
+    let isRegistrationOpen = false;
+    try {
+      const [regSetting] = await pool.execute("SELECT setting_value FROM system_settings WHERE setting_key = 'regOpen'");
+      isRegistrationOpen = (regSetting.length > 0 && regSetting[0].setting_value === 'on');
+    } catch (e) { console.error("Reg setting fetch error:", e); }
+
+    // Get Recent Assignments
+    let dashboardAssignments = [];
+    try {
+      const [assignmentRes] = await pool.execute(`
+            SELECT a.*, c.course_name, t.first_name as teacher_fname, t.last_name as teacher_lname
+            FROM assignments a
+            JOIN courses c ON a.class_id = c.id
+            JOIN enrollments e ON c.id = e.course_id
+            LEFT JOIN teachers t ON a.created_by = t.id
+            WHERE e.student_id = ? AND e.status = 'enrolled'
+            ORDER BY a.due_date ASC
+            LIMIT 5
+        `, [studentInfo[0].id]);
+      dashboardAssignments = assignmentRes;
+    } catch (e) { console.error("Dashboard assignments error:", e); }
+
+    // Get Full Weekly Schedule
+    let fullSchedule = [];
+    if (classIdForSchedule) {
+      try {
+        const [schedRes] = await pool.execute(`
+                SELECT cs.*, c.course_name, c.course_code
+                FROM class_schedule cs
+                JOIN courses c ON cs.course_id = c.id
+                WHERE cs.class_id = ?
+                ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), start_time
+            `, [classIdForSchedule]);
+        fullSchedule = schedRes;
+      } catch (e) { console.error("Full schedule fetch error:", e); }
+    }
+
     res.render('student/dashboard-new', {
       title: 'Student Dashboard',
       user: req.session.user,
       student: studentInfo[0],
       courses_count: courses.length,
       courses,
+      assignments: dashboardAssignments,
+      fullSchedule,
       attendance_rate: attendance_rate,
       attendance: attendanceData,
       cgpa: parseFloat(cgpa).toFixed(2),
@@ -209,11 +249,12 @@ router.get('/dashboard', async (req, res) => {
       rank: rankData[0].rank,
       total_in_class: totalStudents[0].total,
       pending_tasks: pending_tasks,
+      isRegistrationOpen,
       courses_html,
       todaySchedule,
       todayName
     });
-    
+
   } catch (error) {
     console.error('Student dashboard error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
@@ -224,20 +265,20 @@ router.get('/dashboard', async (req, res) => {
 router.get('/profile', async (req, res) => {
   try {
     const studentId = req.session.user.id;
-    
+
     const [studentInfo] = await pool.execute(`
       SELECT s.*, u.username, u.email, u.phone
       FROM students s
       JOIN users u ON s.user_id = u.id
       WHERE s.user_id = ?
     `, [studentId]);
-    
+
     res.render('student/profile', {
       title: 'My Profile',
       user: req.session.user,
       student: studentInfo[0]
     });
-    
+
   } catch (error) {
     console.error('Student profile error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
@@ -248,7 +289,10 @@ router.get('/profile', async (req, res) => {
 router.post('/profile/update', async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const { first_name, last_name, email, phone, gender, date_of_birth, parent_guardian_name } = req.body;
+    const {
+      first_name, last_name, email, phone, gender,
+      date_of_birth, parent_guardian_name, address, previous_school
+    } = req.body;
 
     // Update users table
     await pool.execute(
@@ -258,8 +302,8 @@ router.post('/profile/update', async (req, res) => {
 
     // Update students table
     await pool.execute(
-      'UPDATE students SET first_name = ?, last_name = ?, gender = ?, date_of_birth = ?, parent_guardian_name = ? WHERE user_id = ?',
-      [first_name, last_name, gender, date_of_birth, parent_guardian_name, userId]
+      'UPDATE students SET first_name = ?, last_name = ?, gender = ?, date_of_birth = ?, parent_guardian_name = ?, address = ?, previous_school = ? WHERE user_id = ?',
+      [first_name, last_name, gender, date_of_birth, parent_guardian_name, address, previous_school, userId]
     );
 
     // Update session
@@ -278,12 +322,12 @@ router.post('/profile/update', async (req, res) => {
 router.get('/courses', async (req, res) => {
   try {
     const studentId = req.session.user.id;
-    
+
     // Get student information
     const [studentInfo] = await pool.execute(`
       SELECT id FROM students WHERE user_id = ?
     `, [req.session.user.id]);
-    
+
     // Get enrolled courses with grades
     const [courses] = await pool.execute(`
       SELECT c.*, e.enrollment_date, e.grade, e.status,
@@ -297,13 +341,13 @@ router.get('/courses', async (req, res) => {
       WHERE e.student_id = ?
       ORDER BY c.course_name
     `, [studentInfo[0].id, studentInfo[0].id]);
-    
+
     res.render('student/courses', {
       title: 'My Courses',
       user: req.session.user,
       courses: courses
     });
-    
+
   } catch (error) {
     console.error('Student courses error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
@@ -316,7 +360,7 @@ router.get('/attendance', async (req, res) => {
     const [studentInfo] = await pool.execute(`
       SELECT id FROM students WHERE user_id = ?
     `, [req.session.user.id]);
-    
+
     const [attendance] = await pool.execute(`
       SELECT a.*, c.name as class_name
       FROM attendance a
@@ -324,7 +368,7 @@ router.get('/attendance', async (req, res) => {
       WHERE a.student_id = ?
       ORDER BY a.date DESC
     `, [studentInfo[0].id]);
-    
+
     // Calculate stats
     const stats = {
       present: attendance.filter(a => a.status === 'present').length,
@@ -333,7 +377,7 @@ router.get('/attendance', async (req, res) => {
       excused: attendance.filter(a => a.status === 'excused').length,
       total: attendance.length
     };
-    
+
     // Consistent rate calculation: present, late, and excused count as attended
     const attendedCount = stats.present + stats.late + stats.excused;
     stats.percentage = stats.total > 0 ? ((attendedCount / stats.total) * 100).toFixed(1) : '100';
@@ -344,7 +388,7 @@ router.get('/attendance', async (req, res) => {
       attendance,
       stats
     });
-    
+
   } catch (error) {
     console.error('Student attendance error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
@@ -357,7 +401,7 @@ router.get('/assignments', async (req, res) => {
     const [studentInfo] = await pool.execute(`
       SELECT id FROM students WHERE user_id = ?
     `, [req.session.user.id]);
-    
+
     const [assignments] = await pool.execute(`
       SELECT a.*, c.name as class_name, t.first_name as teacher_fname, t.last_name as teacher_lname
       FROM assignments a
@@ -367,13 +411,13 @@ router.get('/assignments', async (req, res) => {
       WHERE cs.student_id = ?
       ORDER BY a.due_date ASC
     `, [studentInfo[0].id]);
-    
+
     res.render('student/assignments', {
       title: 'My Assignments',
       user: req.session.user,
       assignments
     });
-    
+
   } catch (error) {
     console.error('Student assignments error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
@@ -384,7 +428,7 @@ router.get('/assignments', async (req, res) => {
 router.get('/timetable', async (req, res) => {
   try {
     const [students] = await pool.execute(
-      'SELECT id, class_id, grade_level, section FROM students WHERE user_id = ?', 
+      'SELECT id, class_id, grade_level, section FROM students WHERE user_id = ?',
       [req.session.user.id]
     );
 
@@ -393,7 +437,7 @@ router.get('/timetable', async (req, res) => {
     }
 
     let classId = students[0].class_id;
-    
+
     // Fallback: If class_id is missing, look it up by grade and section
     if (!classId && students[0].grade_level && students[0].section) {
       // Use CAST to handle numeric/string grade mismatches
@@ -419,13 +463,13 @@ router.get('/timetable', async (req, res) => {
       WHERE cs.class_id = ?
       ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), start_time
     `, [classId]);
-    
+
     res.render('student/timetable', {
       title: 'My Timetable',
       user: req.session.user,
       schedule
     });
-    
+
   } catch (error) {
     console.error('Student timetable error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
@@ -442,13 +486,13 @@ router.get('/announcements', async (req, res) => {
       WHERE a.audience IN ('all', 'students')
       ORDER BY a.created_at DESC
     `);
-    
+
     res.render('student/announcements', {
       title: 'Announcements',
       user: req.session.user,
       announcements
     });
-    
+
   } catch (error) {
     console.error('Student announcements error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
@@ -461,7 +505,7 @@ router.get('/grades', async (req, res) => {
     const [studentInfo] = await pool.execute(`
       SELECT id FROM students WHERE user_id = ?
     `, [req.session.user.id]);
-    
+
     // Get grades grouped by class
     const [grades] = await pool.execute(`
       SELECT g.*, c.name as class_name
@@ -470,73 +514,78 @@ router.get('/grades', async (req, res) => {
       WHERE g.student_id = ? AND g.status = 'approved'
       ORDER BY c.name, g.grade_date DESC
     `, [studentInfo[0].id]);
-    
+
     // Group grades by class name
     const groupedGrades = {};
     grades.forEach(g => {
-        if (!groupedGrades[g.class_name]) {
-            groupedGrades[g.class_name] = {
-                items: []
-            };
-        }
-        groupedGrades[g.class_name].items.push(g);
+      if (!groupedGrades[g.class_name]) {
+        groupedGrades[g.class_name] = {
+          items: []
+        };
+      }
+      groupedGrades[g.class_name].items.push(g);
     });
-    
-    let grades_html = '';
-    if (Object.keys(groupedGrades).length > 0) {
-        for (const [className, data] of Object.entries(groupedGrades)) {
-            grades_html += `
-            <div class="grade-card mb-4 glass-panel p-4" style="background: rgba(255,255,255,0.03); border-radius: 20px;">
-                <h4 class="mb-4 d-flex align-items-center"><i class="fas fa-book-open me-3 text-primary"></i>${className}</h4>
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
-                        <thead>
-                            <tr class="text-secondary small fw-bold">
-                                <th class="border-0">Assessment Title</th>
-                                <th class="border-0 text-center">Mid (30)</th>
-                                <th class="border-0 text-center">Test (10)</th>
-                                <th class="border-0 text-center">Att (10)</th>
-                                <th class="border-0 text-center">Final (50)</th>
-                                <th class="border-0 text-center">Total (100)</th>
-                                <th class="border-0 text-end">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
-            
-            data.items.forEach(item => {
-                const totalScore = parseFloat(item.score).toFixed(1);
-                const perc = (item.score / item.max_score) * 100;
-                let colorClass = 'text-danger';
-                if (perc >= 80) colorClass = 'text-success';
-                else if (perc >= 60) colorClass = 'text-warning';
 
-                grades_html += `
-                    <tr class="transition">
-                        <td class="border-0 py-3">
-                            <div class="fw-bold text-dark">${item.title}</div>
-                            <small class="text-secondary" style="font-size: 0.7rem;">${item.assessment_type.toUpperCase()}</small>
-                        </td>
-                        <td class="border-0 text-center text-dark fw-bold">${item.mid_score || 0}</td>
-                        <td class="border-0 text-center text-dark fw-bold">${item.test_score || 0}</td>
-                        <td class="border-0 text-center text-dark fw-bold">${item.attendance_score || 0}</td>
-                        <td class="border-0 text-center text-dark fw-bold">${item.final_score || 0}</td>
-                        <td class="border-0 text-center">
-                            <span class="${colorClass} fw-bold h6 m-0">${totalScore}</span>
-                        </td>
-                        <td class="border-0 text-end text-secondary small">
-                            ${new Date(item.grade_date).toLocaleDateString()}
-                        </td>
-                    </tr>`;
-            });
-            
-            grades_html += `
-                        </tbody>
-                    </table>
-                </div>
-            </div>`;
-        }
+    let grades_html = '';
+    if (grades.length > 0) {
+      grades_html += `
+        <div class="premium-panel">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold text-dark m-0"><i class="fas fa-file-invoice me-2 text-primary"></i>Complete Academic Transcript</h4>
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold" style="font-size: 0.7rem;">TOTAL RECORDS: ${grades.length}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead style="background: #f8fafc">
+                        <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 1px;">
+                            <th class="border-0 py-3">Course / Subject</th>
+                            <th class="border-0 py-3">Assessment Title</th>
+                            <th class="border-0 text-center py-3">Mid (30)</th>
+                            <th class="border-0 text-center py-3">Test (10)</th>
+                            <th class="border-0 text-center py-3">Att (10)</th>
+                            <th class="border-0 text-center py-3">Final (50)</th>
+                            <th class="border-0 text-center py-3">Total (100)</th>
+                            <th class="border-0 text-end py-3">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+      grades.forEach(item => {
+        const totalScore = parseFloat(item.score).toFixed(1);
+        const perc = (item.score / item.max_score) * 100;
+        let colorClass = 'text-danger';
+        if (perc >= 80) colorClass = 'text-success';
+        else if (perc >= 60) colorClass = 'text-warning';
+
+        grades_html += `
+                <tr>
+                    <td class="border-0 py-3">
+                        <div class="fw-bold text-dark">${item.class_name}</div>
+                    </td>
+                    <td class="border-0 py-3">
+                        <div class="fw-medium text-dark">${item.title}</div>
+                        <small class="text-secondary" style="font-size: 0.7rem; font-weight: 600;">${item.assessment_type.toUpperCase()}</small>
+                    </td>
+                    <td class="border-0 text-center text-dark fw-bold">${item.mid_score || 0}</td>
+                    <td class="border-0 text-center text-dark fw-bold">${item.test_score || 0}</td>
+                    <td class="border-0 text-center text-dark fw-bold">${item.attendance_score || 0}</td>
+                    <td class="border-0 text-center text-dark fw-bold">${item.final_score || 0}</td>
+                    <td class="border-0 text-center">
+                        <span class="${colorClass} fw-bold h6 m-0">${totalScore}</span>
+                    </td>
+                    <td class="border-0 text-end text-secondary small fw-bold">
+                        ${new Date(item.grade_date).toLocaleDateString()}
+                    </td>
+                </tr>`;
+      });
+
+      grades_html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
     } else {
-        grades_html = '<div class="alert alert-info border-0 rounded-4 p-4 text-center">No academic records found yet.</div>';
+      grades_html = '<div class="premium-panel text-center py-5"><div class="text-secondary opacity-30 mb-3"><i class="fas fa-file-invoice fa-4x"></i></div><h4 class="text-dark fw-bold">No grades found</h4><p class="text-secondary fw-medium">You haven\'t received any academic results yet.</p></div>';
     }
 
     res.render('student/grades', {
@@ -544,7 +593,7 @@ router.get('/grades', async (req, res) => {
       user: req.session.user,
       grades_html: grades_html
     });
-    
+
   } catch (error) {
     console.error('Student grades error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
@@ -555,19 +604,19 @@ router.get('/grades', async (req, res) => {
 router.get('/materials', async (req, res) => {
   try {
     const studentUserId = req.session.user.id;
-    
+
     // Get student profile ID
     const [studentProfile] = await pool.execute(
       'SELECT id, grade_level, section FROM students WHERE user_id = ?',
       [studentUserId]
     );
-    
+
     if (studentProfile.length === 0) {
       return res.status(404).render('500-modern', { title: '404', message: 'Student profile not found.' });
     }
-    
+
     const studentId = studentProfile[0].id;
-    
+
     // Fetch materials for all classes the student belongs to
     const [materials] = await pool.execute(`
       SELECT m.*, c.name as class_name, t.first_name as teacher_fname, t.last_name as teacher_lname
@@ -578,13 +627,13 @@ router.get('/materials', async (req, res) => {
       WHERE cs.student_id = ?
       ORDER BY m.created_at DESC
     `, [studentId]);
-    
+
     res.render('student/materials', {
       title: 'Course Materials',
       user: req.session.user,
       materials
     });
-    
+
   } catch (error) {
     console.error('Student materials error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
@@ -714,33 +763,33 @@ router.post('/registration/assisted', async (req, res) => {
     const studentUserId = req.session.user.id;
     const [studentInfo] = await pool.execute('SELECT id FROM students WHERE user_id = ?', [studentUserId]);
     const studentId = studentInfo[0].id;
-    
+
     // Get all active courses
     const [activeCourses] = await pool.execute('SELECT id FROM courses WHERE is_active = TRUE');
-    
+
     // Auto-enroll in all active courses
     if (activeCourses.length > 0) {
-        for (const course of activeCourses) {
-            // Check if already enrolled to avoid uniqueness constraint error without IGNORE if IGNORE isn't bulletproof
-            const [existing] = await pool.execute(
-              "SELECT id FROM enrollments WHERE student_id = ? AND course_id = ?",
-              [studentId, course.id]
-            );
-            
-            if (existing.length === 0) {
-                await pool.execute(
-                  "INSERT INTO enrollments (student_id, course_id, status, enrollment_date) VALUES (?, ?, 'pending', CURDATE())",
-                  [studentId, course.id]
-                );
-            }
+      for (const course of activeCourses) {
+        // Check if already enrolled to avoid uniqueness constraint error without IGNORE if IGNORE isn't bulletproof
+        const [existing] = await pool.execute(
+          "SELECT id FROM enrollments WHERE student_id = ? AND course_id = ?",
+          [studentId, course.id]
+        );
+
+        if (existing.length === 0) {
+          await pool.execute(
+            "INSERT INTO enrollments (student_id, course_id, status, enrollment_date) VALUES (?, ?, 'pending', CURDATE())",
+            [studentId, course.id]
+          );
         }
+      }
     }
 
     // Try to safely alter the ENUM to include 'submitted' if it doesn't already
     try {
-        await pool.execute("ALTER TABLE students MODIFY COLUMN registration_status ENUM('not_started', 'pending', 'submitted', 'registered') DEFAULT 'not_started'");
-    } catch(e) {
-        console.log("Could not alter students table enum silently, moving on.");
+      await pool.execute("ALTER TABLE students MODIFY COLUMN registration_status ENUM('not_started', 'pending', 'submitted', 'registered') DEFAULT 'not_started'");
+    } catch (e) {
+      console.log("Could not alter students table enum silently, moving on.");
     }
 
     await pool.execute(
@@ -761,11 +810,11 @@ router.post('/registration/assisted', async (req, res) => {
 router.post('/registration/submit', async (req, res) => {
   try {
     const studentUserId = req.session.user.id;
-    
+
     // Try to safely alter the ENUM to include 'submitted' if it doesn't already
     try {
-        await pool.execute("ALTER TABLE students MODIFY COLUMN registration_status ENUM('not_started', 'pending', 'submitted', 'registered') DEFAULT 'not_started'");
-    } catch(e) {}
+      await pool.execute("ALTER TABLE students MODIFY COLUMN registration_status ENUM('not_started', 'pending', 'submitted', 'registered') DEFAULT 'not_started'");
+    } catch (e) { }
 
     await pool.execute(
       "UPDATE students SET registration_status = 'submitted' WHERE user_id = ?",

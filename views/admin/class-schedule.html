@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
+    <title><%= title %> - Abdigudina Admin</title>
     
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
@@ -12,160 +12,267 @@
     <!-- Google Fonts -->
     <link href="/css/inter-font.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .premium-panel {
+            background: white !important;
+            border-radius: 28px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        }
+        .schedule-grid-container {
+            background: white;
+            border-radius: 24px;
+            border: 1px solid rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .timetable {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+        .timetable th {
+            background: #f8fafc;
+            color: var(--primary-color);
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            padding: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            text-align: center;
+        }
+        .timetable td {
+            padding: 0.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            border-right: 1px solid #f1f5f9;
+            vertical-align: top;
+            height: 100px;
+        }
+        .time-col {
+            background: #f8fafc;
+            width: 100px;
+            font-weight: 800;
+            color: var(--dark-text);
+            text-align: center !important;
+            border-right: 2px solid #e2e8f0 !important;
+        }
+        .schedule-slot {
+            height: 100%;
+            padding: 0.5rem;
+            border-radius: 12px;
+            background: #f8fafc;
+            border-left: 3px solid var(--primary-color);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .slot-title {
+            font-weight: 800;
+            color: var(--dark-text);
+            font-size: 0.75rem;
+            line-height: 1.2;
+            margin-bottom: 2px;
+        }
+        .slot-footer {
+            font-size: 0.6rem;
+            color: #64748b;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+        }
+        .delete-btn-overlay {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .schedule-slot:hover .delete-btn-overlay {
+            opacity: 1;
+        }
+        .empty-slot {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.03;
+        }
+    </style>
 </head>
-<body>
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
         
-        <!-- Main Content -->
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
+            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title">Class Schedule: <%= classInfo.name %></h1>
-                        <p class="text-secondary m-0">Define the weekly academic timetable for Grade <%= classInfo.grade %>-<%= classInfo.section %></p>
+                        <h1 class="dashboard-title" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px;">
+                            Timetable Manager
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500; font-size: 1.1rem;">Editing Schedule for: <span class="text-primary fw-900"><%= classInfo.name %></span></p>
                     </div>
-                    <a href="/admin/classes" class="btn btn-hero btn-secondary px-4 border-0">
+                    <a href="/admin/classes" class="btn btn-light px-4 py-2 rounded-pill fw-bold shadow-sm" style="color: var(--dark-text);">
                         <i class="fas fa-arrow-left me-2"></i> Back to Classes
                     </a>
                 </div>
             </div>
 
-            <!-- Alerts -->
-            <% if (typeof success !== 'undefined' && success) { %>
-            <div class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3 alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i> <%= success %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <!-- Curriculum Load Analysis -->
+            <% 
+                const uniqueCourses = new Set();
+                schedule.forEach(slot => {
+                    if (!uniqueCourses.has(slot.course_id)) {
+                        uniqueCourses.add(slot.course_id);
+                    }
+                });
+                const courseLimit = classInfo.course_limit || 10;
+                const coursePercent = Math.min((uniqueCourses.size / courseLimit) * 100, 100);
+            %>
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="premium-panel p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="h6 fw-bold m-0 text-secondary text-uppercase"><i class="fas fa-book-open me-2 text-primary"></i>Class Curriculum Density</h4>
+                            <span class="badge rounded-pill px-3 py-1 <%= uniqueCourses.size > courseLimit ? 'bg-danger' : 'bg-primary' %> bg-opacity-10 <%= uniqueCourses.size > courseLimit ? 'text-danger' : 'text-primary' %> fw-800">
+                                <%= uniqueCourses.size %> / <%= courseLimit %> Academic Units Assigned
+                            </span>
+                        </div>
+                        <div class="progress rounded-pill" style="height: 12px; background: rgba(0,0,0,0.05);">
+                            <div class="progress-bar rounded-pill <%= uniqueCourses.size > courseLimit ? 'bg-danger' : 'bg-primary' %> progress-bar-striped progress-bar-animated" role="progressbar" style="width: <%= coursePercent %>%"></div>
+                        </div>
+                        <p class="small text-secondary mt-2 mb-0 fw-medium">
+                            <i class="fas fa-info-circle me-1"></i> Administrators have assigned a maximum capacity of <strong><%= courseLimit %> courses</strong> for this class. 
+                            Currently, <%= uniqueCourses.size %> unique subjects are integrated into the weekly schedule.
+                        </p>
+                    </div>
+                </div>
             </div>
-            <% } %>
 
             <div class="row g-4">
                 <!-- Add Period Form -->
-                <div class="col-lg-4">
-                    <div class="glass-panel">
-                        <h3 class="h5 fw-bold mb-4"><i class="fas fa-calendar-plus me-2 text-primary"></i>Add Schedule Period</h3>
+                <div class="col-xl-3">
+                    <div class="premium-panel p-4 sticky-top" style="top: 2rem;">
+                        <h3 class="h5 fw-900 mb-4" style="color: var(--dark-text);"><i class="fas fa-calendar-plus me-2 text-primary"></i>Assign Slot</h3>
                         <form action="/admin/classes/schedule/add" method="POST">
                             <input type="hidden" name="class_id" value="<%= classInfo.id %>">
                             
                             <div class="mb-3">
-                                <label class="text-secondary small mb-1">Select Course</label>
-                                <select name="course_id" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
-                                    <option value="">Choose a course...</option>
+                                <label class="text-secondary small mb-1 fw-800 text-uppercase" style="letter-spacing: 0.5px;">Academic Course</label>
+                                <select name="course_id" class="form-select bg-light border-0 rounded-3 py-2 fw-bold" required style="font-size: 0.85rem;">
+                                    <option value="">Select Course...</option>
                                     <% courses.forEach(c => { %>
-                                        <option value="<%= c.id %>"><%= c.course_name %> (<%= c.course_code %>)</option>
+                                        <option value="<%= c.id %>"><%= c.course_name %></option>
                                     <% }) %>
                                 </select>
                             </div>
 
                             <div class="mb-3">
-                                <label class="text-secondary small mb-1">Day of Week</label>
-                                <select name="day_of_week" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                                <label class="text-secondary small mb-1 fw-800 text-uppercase" style="letter-spacing: 0.5px;">Day</label>
+                                <select name="day_of_week" class="form-select bg-light border-0 rounded-3 py-2 fw-bold" required style="font-size: 0.85rem;">
                                     <option value="Monday">Monday</option>
                                     <option value="Tuesday">Tuesday</option>
                                     <option value="Wednesday">Wednesday</option>
                                     <option value="Thursday">Thursday</option>
                                     <option value="Friday">Friday</option>
-                                    <option value="Saturday">Saturday</option>
-                                    <option value="Sunday">Sunday</option>
                                 </select>
                             </div>
 
                             <div class="mb-3">
-                                <label class="text-secondary small mb-1">Academic Period</label>
-                                <select name="period" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
-                                    <option value="Period 1">Period 1</option>
-                                    <option value="Period 2">Period 2</option>
-                                    <option value="Period 3">Period 3</option>
-                                    <option value="Period 4">Period 4</option>
-                                    <option value="Period 5">Period 5</option>
-                                    <option value="Period 6">Period 6</option>
-                                    <option value="Period 7">Period 7</option>
-                                    <option value="Period 8">Period 8</option>
-                                    <option value="Morning Break">Morning Break</option>
-                                    <option value="Lunch Break">Lunch Break</option>
-                                    <option value="Afternoon Break">Afternoon Break</option>
+                                <label class="text-secondary small mb-1 fw-800 text-uppercase" style="letter-spacing: 0.5px;">Slot / Period</label>
+                                <select name="period" class="form-select bg-light border-0 rounded-3 py-2 fw-bold" required style="font-size: 0.85rem;">
+                                    <% for(let i=1; i<=8; i++) { %>
+                                        <option value="Period <%= i %>">Period <%= i %></option>
+                                    <% } %>
+                                    <option value="Break">Break</option>
                                 </select>
                             </div>
 
-                            <div class="row g-3">
+                            <div class="row g-2 mb-3">
                                 <div class="col-6">
-                                    <label class="text-secondary small mb-1">Start Time</label>
-                                    <input type="time" name="start_time" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                                    <label class="text-secondary small mb-1 fw-800 text-uppercase" style="letter-spacing: 0.5px;">Start</label>
+                                    <input type="time" name="start_time" class="form-control bg-light border-0 rounded-3 py-2 fw-bold" required style="font-size: 0.85rem;">
                                 </div>
                                 <div class="col-6">
-                                    <label class="text-secondary small mb-1">End Time</label>
-                                    <input type="time" name="end_time" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
+                                    <label class="text-secondary small mb-1 fw-800 text-uppercase" style="letter-spacing: 0.5px;">End</label>
+                                    <input type="time" name="end_time" class="form-control bg-light border-0 rounded-3 py-2 fw-bold" required style="font-size: 0.85rem;">
                                 </div>
                             </div>
 
-                            <div class="mb-4 mt-3">
-                                <label class="text-secondary small mb-1">Room / Location</label>
-                                <input type="text" name="room" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="e.g. Room 302, Lab B">
+                            <div class="mb-4">
+                                <label class="text-secondary small mb-1 fw-800 text-uppercase" style="letter-spacing: 0.5px;">Location</label>
+                                <input type="text" name="room" class="form-control bg-light border-0 rounded-3 py-2 fw-bold" placeholder="e.g. Lab 1" style="font-size: 0.85rem;">
                             </div>
 
-                            <button type="submit" class="btn btn-hero btn-primary w-100 py-2">
-                                <i class="fas fa-plus me-2"></i> Add to Timetable
+                            <button type="submit" class="btn btn-primary w-100 py-3 fw-900 rounded-3 shadow-sm">
+                                <i class="fas fa-plus-circle me-2"></i> Update Timetable
                             </button>
                         </form>
                     </div>
                 </div>
 
-                <!-- Current Schedule List -->
-                <div class="col-lg-8">
-                    <div class="glass-panel">
-                        <h3 class="h5 fw-bold mb-4"><i class="fas fa-clock me-2 text-primary"></i>Weekly Timetable</h3>
+                <!-- Tabular Grid View -->
+                <div class="col-xl-9">
+                    <% 
+                        const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                        const periods = ['Period 1', 'Period 2', 'Period 3', 'Period 4', 'Period 5', 'Period 6', 'Period 7', 'Period 8'];
+                    %>
+                    <div class="schedule-grid-container shadow-sm">
                         <div class="table-responsive">
-                            <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                            <table class="timetable">
                                 <thead>
-                                    <tr class="text-secondary small">
-                                        <th class="border-0">Day</th>
-                                        <th class="border-0">Period</th>
-                                        <th class="border-0">Time Slot</th>
-                                        <th class="border-0">Course / Code</th>
-                                        <th class="border-0">Room</th>
-                                        <th class="border-0 text-end">Action</th>
+                                    <tr>
+                                        <th class="time-col">Period</th>
+                                        <% weekDays.forEach(day => { %>
+                                            <th><%= day %></th>
+                                        <% }); %>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <% if (schedule && schedule.length > 0) { %>
-                                        <% schedule.forEach(item => { %>
-                                            <tr>
-                                                <td class="border-0">
-                                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3">
-                                                        <%= item.day_of_week %>
-                                                    </span>
-                                                </td>
-                                                <td class="border-0 text-light small fw-bold">
-                                                    <%= item.period || 'N/A' %>
-                                                </td>
-                                                <td class="border-0 text-light small fw-bold text-nowrap">
-                                                    <%= item.start_time.substring(0, 5) %> - <%= item.end_time.substring(0, 5) %>
-                                                </td>
-                                                <td class="border-0">
-                                                    <div class="text-light small fw-bold"><%= item.course_name %></div>
-                                                    <code class="text-secondary smaller"><%= item.course_code %></code>
-                                                </td>
-                                                <td class="border-0 text-secondary small">
-                                                    <i class="fas fa-map-marker-alt me-1 opacity-50"></i> <%= item.room || 'N/A' %>
-                                                </td>
-                                                <td class="border-0 text-end">
-                                                    <form action="/admin/classes/schedule/delete/<%= item.id %>" method="POST" onsubmit="return confirm('Remove this period?')">
-                                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0">
-                                                            <i class="fas fa-trash-alt"></i>
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        <% }) %>
-                                    <% } else { %>
+                                    <% periods.forEach(pName => { %>
                                         <tr>
-                                            <td colspan="5" class="border-0 text-center py-5">
-                                                <i class="fas fa-calendar-times fa-3x text-secondary mb-3 opacity-25"></i>
-                                                <div class="text-secondary">No periods scheduled for this class.</div>
+                                            <td class="time-col">
+                                                <div class="fw-900" style="font-size: 0.85rem;"><%= pName %></div>
+                                                <% 
+                                                    const match = schedule.find(s => s.period === pName);
+                                                    if (match) {
+                                                %>
+                                                    <div class="text-secondary smaller fw-bold mt-1" style="font-size: 0.6rem;">
+                                                        <%= match.start_time.substring(0, 5) %> - <%= match.end_time.substring(0, 5) %>
+                                                    </div>
+                                                <% } %>
                                             </td>
+                                            <% weekDays.forEach(day => { %>
+                                                <td>
+                                                    <% 
+                                                        const slot = schedule.find(s => s.day_of_week === day && s.period === pName);
+                                                        if (slot) {
+                                                    %>
+                                                        <div class="schedule-slot shadow-xs">
+                                                            <div class="slot-title"><%= slot.course_name %></div>
+                                                            <div class="slot-footer">
+                                                                <span><i class="fas fa-map-marker-alt me-1"></i><%= slot.room || 'TBD' %></span>
+                                                            </div>
+                                                            <div class="delete-btn-overlay">
+                                                                <form action="/admin/classes/schedule/delete/<%= slot.id %>" method="POST" onsubmit="return confirm('Remove slot?')">
+                                                                    <button type="submit" class="btn btn-danger btn-sm p-1 rounded-circle" style="width: 20px; height: 20px; line-height: 1;">
+                                                                        <i class="fas fa-times" style="font-size: 0.6rem;"></i>
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    <% } else { %>
+                                                        <div class="empty-slot">
+                                                            <i class="fas fa-plus"></i>
+                                                        </div>
+                                                    <% } %>
+                                                </td>
+                                            <% }); %>
                                         </tr>
-                                    <% } %>
+                                    <% }); %>
                                 </tbody>
                             </table>
                         </div>
@@ -178,5 +285,9 @@
     <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
+    <style>
+        .fw-900 { font-weight: 900; }
+        .fw-800 { font-weight: 800; }
+    </style>
 </body>
 </html>

@@ -3,111 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
+    <title><%= title %> - Abdigudina Parent</title>
+    
+    <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .premium-panel {
+            background: white !important;
+            border-radius: 28px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        }
+        .profile-avatar-wrap {
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 1.5rem;
+            background: var(--gradient-1);
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 15px 35px rgba(37,99,235,0.2);
+        }
+        .premium-input {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 14px;
+            padding: 0.8rem 1.2rem;
+            font-weight: 700;
+            color: var(--dark-text) !important;
+        }
+        .info-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+    </style>
 </head>
-<body>
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-        
+
         <main class="main-panel w-100 p-4">
-            <div class="dashboard-header">
-                <h1 class="dashboard-title">My Profile</h1>
-                <p class="text-secondary">Manage your personal information and contact details</p>
+            <!-- Header -->
+            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                            Guardian Profile
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Manage your administrative details and contact channels</p>
+                    </div>
+                </div>
             </div>
 
+            <!-- Alerts -->
             <% if (success) { %>
-                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-                    <i class="fas fa-check-circle me-2"></i><%= success %>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="alert alert-success border-0 rounded-4 shadow-sm p-4 mb-4" style="background: #ecfdf5; color: #065f46;">
+                    <i class="fas fa-check-circle me-2"></i> <span class="fw-bold"><%= success %></span>
                 </div>
             <% } %>
 
-            <% if (error) { %>
-                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-                    <i class="fas fa-exclamation-circle me-2"></i><%= error %>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="row g-4">
+                <!-- Overview -->
+                <div class="col-lg-4">
+                    <div class="premium-panel p-5 text-center h-100">
+                        <div class="profile-avatar-wrap">
+                            <%= parent.first_name[0] %><%= parent.last_name[0] %>
+                        </div>
+                        <h2 class="fw-bold mb-1" style="color: var(--dark-text); font-size: 1.8rem;"><%= parent.first_name %> <%= parent.last_name %></h2>
+                        <div class="text-primary fw-800 text-uppercase mb-4" style="font-size: 0.75rem; letter-spacing: 1px;">Official Guardian</div>
+                        
+                        <div class="d-grid gap-3 text-start">
+                            <div class="p-3 rounded-4 bg-light d-flex align-items-center gap-3 border">
+                                <div class="bg-white shadow-sm rounded-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; color: var(--primary-color);">
+                                    <i class="fas fa-briefcase"></i>
+                                </div>
+                                <div>
+                                    <div class="info-label mb-0">Occupation</div>
+                                    <div class="fw-bold" style="color: var(--dark-text);"><%= parent.occupation || 'N/A' %></div>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-4 bg-light d-flex align-items-center gap-3 border">
+                                <div class="bg-white shadow-sm rounded-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; color: #10b981;">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <div>
+                                    <div class="info-label mb-0" style="color: #10b981;">Relationship</div>
+                                    <div class="fw-bold" style="color: var(--dark-text);"><%= parent.relationship || 'Guardian' %></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            <% } %>
 
-            <div class="row">
+                <!-- Edit Form -->
                 <div class="col-lg-8">
-                    <div class="glass-panel">
+                    <div class="premium-panel p-5 h-100">
+                        <h3 class="fw-bold mb-4" style="color: var(--dark-text);"><i class="fas fa-id-card me-2 text-primary opacity-50"></i> Guardian Details</h3>
+                        
                         <form action="/parent/profile/update" method="POST">
                             <div class="row g-4">
                                 <div class="col-md-6">
-                                    <label class="form-label text-secondary">First Name</label>
-                                    <input type="text" name="first_name" class="form-control" value="<%= parent.first_name %>" required>
+                                    <label class="info-label">First Name</label>
+                                    <input type="text" name="first_name" class="form-control premium-input" value="<%= parent.first_name %>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-secondary">Last Name</label>
-                                    <input type="text" name="last_name" class="form-control" value="<%= parent.last_name %>" required>
+                                    <label class="info-label">Last Name</label>
+                                    <input type="text" name="last_name" class="form-control premium-input" value="<%= parent.last_name %>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-secondary">Email Address</label>
-                                    <input type="email" class="form-control" value="<%= parent.email %>" readonly disabled>
-                                    <small class="text-muted">Username: <%= parent.username %></small>
+                                    <label class="info-label">Email Address</label>
+                                    <input type="email" class="form-control premium-input opacity-75" value="<%= parent.email %>" readonly>
+                                    <small class="text-secondary fw-bold" style="font-size: 0.6rem;">Contact Admin to change email</small>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-secondary">Phone Number</label>
-                                    <input type="tel" name="phone" class="form-control" value="<%= parent.phone %>">
+                                    <label class="info-label">Phone Number</label>
+                                    <input type="tel" name="phone" class="form-control premium-input" value="<%= parent.phone || '' %>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-secondary">Occupation</label>
-                                    <input type="text" name="occupation" class="form-control" value="<%= parent.occupation %>">
+                                    <label class="info-label">Professional Occupation</label>
+                                    <input type="text" name="occupation" class="form-control premium-input" value="<%= parent.occupation || '' %>">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label text-secondary">Relationship to Student(s)</label>
-                                    <input type="text" name="relationship" class="form-control" value="<%= parent.relationship %>">
+                                    <label class="info-label">Relationship to Student</label>
+                                    <select name="relationship" class="form-select premium-input">
+                                        <option value="Father" <%= parent.relationship === 'Father' ? 'selected' : '' %>>Father</option>
+                                        <option value="Mother" <%= parent.relationship === 'Mother' ? 'selected' : '' %>>Mother</option>
+                                        <option value="Guardian" <%= parent.relationship === 'Guardian' ? 'selected' : '' %>>Guardian</option>
+                                        <option value="Other" <%= parent.relationship === 'Other' ? 'selected' : '' %>>Other</option>
+                                    </select>
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label text-secondary">Residential Address</label>
-                                    <textarea name="address" class="form-control" rows="3"><%= parent.address %></textarea>
+                                    <label class="info-label">Residential Address</label>
+                                    <textarea name="address" class="form-control premium-input" rows="3"><%= parent.address || '' %></textarea>
                                 </div>
-                                <div class="col-12">
-                                    <button type="submit" class="btn-hero btn-primary px-5">
-                                        <i class="fas fa-save me-2"></i>Update Profile
+                                <div class="col-12 mt-5">
+                                    <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-sm transition hover-up">
+                                        <i class="fas fa-save me-2"></i> Update Guardian Profile
                                     </button>
                                 </div>
                             </div>
                         </form>
                     </div>
                 </div>
-                
-                <div class="col-lg-4">
-                    <div class="glass-panel text-center">
-                        <div class="sidebar-user-avatar mx-auto mb-4" style="position: relative; width: 120px; height: 120px; font-size: 3.5rem; background: rgba(255,255,255,0.05); border: 2px solid var(--primary-color); border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                            <% if (user.profile_picture) { %>
-                                <img src="<%= user.profile_picture %>" alt="Profile Picture" style="width: 100%; height: 100%; object-fit: cover;">
-                            <% } else { %>
-                                <%= parent.first_name.charAt(0) %><%= parent.last_name.charAt(0) %>
-                            <% } %>
-                            <form action="/auth/profile/upload-picture" method="POST" enctype="multipart/form-data" id="profilePicForm" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
-                                <input type="file" name="profile_picture" id="profilePicInput" onchange="document.getElementById('profilePicForm').submit()" style="position: absolute; width: 100%; height: 100%; cursor: pointer;">
-                            </form>
-                            <div style="position: absolute; bottom: 0; background: rgba(0,0,0,0.5); width: 100%; text-align: center; font-size: 0.8rem; padding: 2px 0; color: white; pointer-events: none;">
-                                <i class="fas fa-camera"></i>
-                            </div>
-                        </div>
-                        <h3 class="h4 mb-1"><%= parent.first_name %> <%= parent.last_name %></h3>
-                        <p class="text-primary mb-4">Parent Portal Account</p>
-                        <div class="text-start border-top border-secondary pt-4 mt-2">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-secondary">Account ID:</span>
-                                <span>#PRT-<%= parent.id %></span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-secondary">Role:</span>
-                                <span class="badge bg-success">Verified Parent</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </main>
     </div>
+
     <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <style>
+        .fw-900 { font-weight: 900; }
+        .fw-800 { font-weight: 800; }
+        .hover-up:hover { transform: translateY(-3px); }
+    </style>
 </body>
 </html>

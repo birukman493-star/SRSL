@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-    
+    <title>
+        <%= title %>
+    </title>
+
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -13,202 +16,414 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/brocode-style.css">
 </head>
+
 <body>
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-        
-        <!-- Main Content -->
-        <main class="main-panel w-100 p-4">
-            <!-- Header -->
-            <div class="dashboard-header mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="dashboard-title">Teacher Faculty Management</h1>
-                        <p class="text-secondary m-0">Manage faculty members, departments, and academic assignments</p>
-                    </div>
-                    <button class="btn-hero btn-primary px-4" onclick="toggleForm()">
-                        <i class="fas fa-plus me-2"></i> Add Faculty Member
-                    </button>
-                </div>
-            </div>
 
-            <!-- Alerts -->
-            <% if (typeof error !== "undefined" && error) { %>
-            <div class="alert alert-danger mb-4 rounded-4 border-0 bg-danger bg-opacity-10 text-danger p-3">
-                <i class="fas fa-exclamation-circle me-2"></i> <%= error %>
-            </div>
-            <% } %>
-            <% if (typeof success !== "undefined" && success) { %>
-            <div class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3">
-                <i class="fas fa-check-circle me-2"></i> <%= success %>
-            </div>
-            <% } %>
-
-            <!-- Faculty Form -->
-            <div id="teacher-form" class="glass-panel mb-4" style="display: none;">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="h5 fw-bold m-0"><i class="fas fa-chalkboard-teacher me-2 text-primary"></i>Faculty Registration</h3>
-                    <button class="btn btn-sm btn-link text-secondary text-decoration-none" onclick="toggleForm()">Close <i class="fas fa-times ms-1"></i></button>
-                </div>
-                <form action="/admin/teachers/add" method="POST">
-                    <div class="row g-4">
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1">First Name</label>
-                            <input type="text" name="firstName" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="First Name" required>
+            <!-- Main Content -->
+            <main class="main-panel w-100 p-4">
+                <!-- Header -->
+                <div class="dashboard-header mb-4"
+                    style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="dashboard-title"
+                                style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                Faculty Management
+                            </h1>
+                            <p class="text-secondary m-0" style="font-weight: 500;">Oversee academic faculty,
+                                departmental assignments, and performance</p>
                         </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1">Last Name</label>
-                            <input type="text" name="lastName" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Last Name" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1">Employee ID</label>
-                            <input type="text" name="employeeId" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="EMP-2024-XXX" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1">Email Address</label>
-                            <input type="email" name="email" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="teacher@school.edu" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1">Phone Number</label>
-                            <input type="tel" name="phone" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Contact number" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1">Department</label>
-                            <select name="department" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
-                                <option value="">Select Department</option>
-                                <option value="Mathematics">Mathematics</option>
-                                <option value="Science">Science</option>
-                                <option value="Social Studies">Social Studies</option>
-                                <option value="Languages">Languages</option>
-                                <option value="Arts & Music">Arts & Music</option>
-                                <option value="Physical Education">Physical Education</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1">Hire Date</label>
-                            <input type="date" name="hireDate" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" required>
-                        </div>
-                        <div class="col-md-8">
-                            <label class="text-secondary small mb-1">Primary Subjects (Comma separated)</label>
-                            <input type="text" name="subjects" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="e.g. Physics, Calculus, Algebra">
-                        </div>
-
-                        <div class="col-12"><hr class="border-secondary border-opacity-10 my-2"></div>
-
-                        <div class="col-md-6">
-                            <label class="text-secondary small mb-1">Login Username</label>
-                            <input type="text" name="username" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Username" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="text-secondary small mb-1">Temporary Password</label>
-                            <input type="password" name="password" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Initial password" required>
-                        </div>
-                        
-                        <div class="col-12 mt-4 text-end">
-                            <button type="button" class="btn-hero btn-secondary py-2 px-4 me-2 bg-opacity-10 border-0" onclick="toggleForm()">Cancel</button>
-                            <button type="submit" class="btn-hero btn-primary py-2 px-4">Create Faculty Account</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Teachers Table -->
-            <div class="glass-panel">
-                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-10">
-                    <h3 class="h5 fw-bold m-0"><i class="fas fa-users-cog me-2 text-primary"></i>Faculty Directory</h3>
-                    <div class="search-bar position-relative" style="min-width: 300px;">
-                        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
-                        <input type="text" id="teacherSearch" class="form-control ps-5 py-2 rounded-pill bg-dark bg-opacity-10 border-secondary border-opacity-25 text-light" placeholder="Search by name, ID or department..." onkeyup="searchTeachers()">
+                        <button
+                            class="btn btn-primary px-4 py-2 border-0 d-flex align-items-center gap-2 fw-bold shadow-sm"
+                            onclick="toggleForm()" style="border-radius: 12px;">
+                            <i class="fas fa-plus"></i> Add Faculty
+                        </button>
                     </div>
                 </div>
-                
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0" id="teachersTable" style="background: transparent;">
-                        <thead>
-                            <tr class="text-secondary small">
-                                <th class="border-0">Faculty Member</th>
-                                <th class="border-0 text-center">Employee ID</th>
-                                <th class="border-0">Department</th>
-                                <th class="border-0">Contact</th>
-                                <th class="border-0 text-center">Status</th>
-                                <th class="border-0 text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (typeof teachers !== "undefined" && teachers && teachers.length > 0) { %>
-                                <% for (let teacher of teachers) { %>
-                                <tr>
-                                    <td class="border-0">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="sidebar-user-avatar" style="width: 45px; height: 45px; font-size: 1rem; background: var(--gradient-1); border:none;">
-                                                <%= (teacher.first_name || 'T').charAt(0).toUpperCase() %>
-                                            </div>
-                                            <div>
-                                                <div class="fw-bold text-light">
-                                                    <%= teacher.first_name || 'N/A' %> <%= teacher.last_name || '' %>
-                                                </div>
-                                                <div class="text-secondary small"><%= teacher.email %></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="border-0 text-center">
-                                        <code class="text-primary bg-primary bg-opacity-10 px-2 py-1 rounded small"><%= teacher.employee_id %></code>
-                                    </td>
-                                    <td class="border-0">
-                                        <span class="badge rounded-pill px-3 py-1 bg-primary bg-opacity-10 text-primary">
-                                            <%= teacher.department %>
-                                        </span>
-                                    </td>
-                                    <td class="border-0">
-                                        <div class="small text-light"><%= teacher.phone %></div>
-                                    </td>
-                                    <td class="border-0 text-center">
-                                        <span class="badge rounded-pill px-3 py-1 <%= teacher.is_active ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary' %>">
-                                            <%= teacher.is_active ? 'Active' : 'Inactive' %>
-                                        </span>
-                                    </td>
-                                    <td class="border-0 text-end">
-                                        <div class="d-flex justify-content-end gap-2">
-                                            <form action="/admin/toggle-user/<%= teacher.id %>" method="POST" class="m-0">
-                                                <button type="submit" class="btn btn-sm btn-hero btn-secondary py-1 px-3" title="Toggle Status">
-                                                    <i class="fas fa-sync-alt"></i>
-                                                </button>
-                                            </form>
-                                            <form action="/admin/delete-user/<%= teacher.id %>" method="POST" class="m-0" onsubmit="return confirm('Remove this faculty member from the system?')">
-                                                <button type="submit" class="btn btn-sm btn-hero btn-primary py-1 px-3 bg-danger border-0" title="Remove">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <% } %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="6" class="border-0 text-center py-5">
-                                        <i class="fas fa-chalkboard-teacher fa-3x text-secondary mb-3"></i>
-                                        <div class="text-secondary">No faculty records found</div>
-                                    </td>
-                                </tr>
+
+                <!-- Alerts -->
+                <% if (typeof error !=="undefined" && error) { %>
+                    <div
+                        class="alert alert-danger mb-4 rounded-4 border-0 bg-danger bg-opacity-10 text-danger p-3 shadow-sm">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <%= error %>
+                    </div>
+                    <% } %>
+                        <% if (typeof success !=="undefined" && success) { %>
+                            <div
+                                class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3 shadow-sm">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <%= success %>
+                            </div>
                             <% } %>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
+
+                                <!-- Faculty Form -->
+                                <div id="teacher-form" class="glass-panel mb-4 shadow-lg"
+                                    style="display: none; background: white !important; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05);">
+                                    <div
+                                        class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                                        <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i
+                                                class="fas fa-chalkboard-teacher me-2 text-primary"></i>Faculty
+                                            Registration</h3>
+                                        <button class="btn btn-sm btn-light rounded-pill px-3 fw-bold"
+                                            onclick="toggleForm()" style="color: var(--dark-text);">Cancel <i
+                                                class="fas fa-times ms-1"></i></button>
+                                    </div>
+                                    <form action="/admin/teachers/add" method="POST" enctype="multipart/form-data">
+                                        <div class="row g-4">
+                                            <div class="col-md-4">
+                                                <label class="text-secondary small mb-1 fw-bold">First Name</label>
+                                                <input type="text" name="firstName"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    placeholder="Legal first name" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="text-secondary small mb-1 fw-bold">Last Name</label>
+                                                <input type="text" name="lastName"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    placeholder="Family name" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="text-secondary small mb-1 fw-bold">Employee ID</label>
+                                                <input type="text" 
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-bold"
+                                                    style="color: var(--primary-color);" placeholder="AES-T-xxxx (Auto)" disabled>
+                                                <small class="text-muted">Will be generated automatically</small>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="text-secondary small mb-1 fw-bold">Work Email</label>
+                                                <input type="email" name="email"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    placeholder="teacher@school.edu" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="text-secondary small mb-1 fw-bold">Contact Number</label>
+                                                <input type="tel" name="phone"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    placeholder="+251..." required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="text-secondary small mb-1 fw-bold">Primary
+                                                    Department</label>
+                                                <select name="department"
+                                                    class="form-select bg-light border-0 rounded-3 px-3 py-2 fw-bold"
+                                                    required>
+                                                    <option value="">Select Department</option>
+                                                    <option value="Mathematics">Mathematics</option>
+                                                    <option value="Science">Science</option>
+                                                    <option value="Social Studies">Social Studies</option>
+                                                    <option value="Languages">Languages</option>
+                                                    <option value="Arts & Music">Arts & Music</option>
+                                                    <option value="Physical Education">Physical Education</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="text-secondary small mb-1 fw-bold">Hire Date</label>
+                                                <input type="date" name="hireDate"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="text-secondary small mb-1 fw-bold">Qualification</label>
+                                                <input type="text" name="qualification"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    placeholder="e.g. B.Ed, M.Sc" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="text-secondary small mb-1 fw-bold">Experience (Years)</label>
+                                                <input type="number" name="experience"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    placeholder="Years of experience" required>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label class="text-secondary small mb-1 fw-bold">Primary
+                                                    Subjects</label>
+                                                <input type="text" name="subjects"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    placeholder="e.g. Physics, Calculus (Comma separated)">
+                                            </div>
+
+                                            <div class="col-12 mt-4">
+                                                <h6 class="fw-bold mb-3"
+                                                    style="color: var(--dark-text); opacity: 0.6; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;">
+                                                    Document Uploads</h6>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="text-secondary small mb-1 fw-bold">Certificate (PDF/Image)</label>
+                                                <input type="file" name="certificate"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    accept=".pdf,.jpg,.jpeg,.png">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="text-secondary small mb-1 fw-bold">ID Card (PDF/Image)</label>
+                                                <input type="file" name="idCard"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    accept=".pdf,.jpg,.jpeg,.png">
+                                            </div>
+
+                                            <div class="col-12 mt-4">
+                                                <h6 class="fw-bold mb-3"
+                                                    style="color: var(--dark-text); opacity: 0.6; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;">
+                                                    Access Credentials</h6>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="text-secondary small mb-1 fw-bold">Portal Username</label>
+                                                <input type="text" name="username"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    placeholder="Username" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="text-secondary small mb-1 fw-bold">Access Password</label>
+                                                <input type="password" name="password"
+                                                    class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                    placeholder="Temporary password" required>
+                                            </div>
+
+                                            <div class="col-12 mt-4 text-end pt-3 border-top">
+                                                <button type="submit"
+                                                    class="btn btn-primary py-2 px-5 rounded-3 fw-bold shadow-sm">Confirm
+                                                    Faculty Registration</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <!-- Teachers Table -->
+                                <div class="glass-panel" style="background: white !important; border-radius: 24px;">
+                                    <!-- Filter Panel -->
+                                    <div class="glass-panel mb-4 p-4"
+                                        style="background: white !important; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05);">
+                                        <div class="row g-3 align-items-end">
+                                            <div class="col-md-6">
+                                                <label class="text-secondary small mb-1 fw-bold text-uppercase"
+                                                    style="font-size: 0.65rem;">Search Records</label>
+                                                <div class="search-bar position-relative">
+                                                    <i
+                                                        class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                                                    <input type="text" id="searchInput"
+                                                        class="form-control bg-light border-0 rounded-3 ps-5 py-2 fw-medium"
+                                                        placeholder="Name, ID or Department..."
+                                                        value="<%= typeof filters !== 'undefined' ? filters.search : '' %>">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="text-secondary small mb-1 fw-bold text-uppercase"
+                                                    style="font-size: 0.65rem;">Filter by Grade</label>
+                                                <select class="form-select bg-light border-0 rounded-3 py-2 fw-bold"
+                                                    id="gradeFilter" onchange="applyFilters()">
+                                                    <option value="">All Grades</option>
+                                                    <% for(let i=1; i<=8; i++) { %>
+                                                        <option value="<%= i %>" <%=typeof filters !=='undefined' &&
+                                                            filters.grade==i ? 'selected' : '' %>>Grade <%= i %>
+                                                        </option>
+                                                        <% } %>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button class="btn btn-primary w-100 py-2 rounded-3 fw-bold shadow-sm"
+                                                    onclick="applyFilters()">
+                                                    <i class="fas fa-filter me-2"></i> Apply
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Teachers Table -->
+                                    <div class="glass-panel" style="background: white !important; border-radius: 24px;">
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i
+                                                    class="fas fa-users-cog me-2 text-primary"></i>Faculty Directory
+                                            </h3>
+                                        </div>
+
+                                        <div class="table-responsive">
+                                            <table class="table table-hover align-middle mb-0" id="teachersTable">
+                                                <thead style="background: rgba(0,0,0,0.02)">
+                                                    <tr class="text-secondary small fw-bold"
+                                                        style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                                        <th class="border-0 py-3">Faculty Profile</th>
+                                                        <th class="border-0 py-3">Academic Unit</th>
+                                                        <th class="border-0 py-3">Professional</th>
+                                                        <th class="border-0 py-3">Assigned Classes</th>
+                                                        <th class="border-0 py-3 text-center">Employee ID</th>
+                                                        <th class="border-0 py-3 text-center">Documents</th>
+                                                        <th class="border-0 py-3">Contact</th>
+                                                        <th class="border-0 py-3 text-center">Status</th>
+                                                        <th class="border-0 py-3 text-end">Management</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <% if (typeof teachers !=="undefined" && teachers &&
+                                                        teachers.length> 0) { %>
+                                                        <% for (let teacher of teachers) { %>
+                                                            <tr>
+                                                                <td class="border-0 py-3">
+                                                                    <div class="d-flex align-items-center gap-3">
+                                                                        <div class="avatar-initials avatar-orange"
+                                                                            style="width: 42px; height: 42px; font-size: 1rem;">
+                                                                            <%= (teacher.first_name || 'T'
+                                                                                ).charAt(0).toUpperCase() %>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div class="fw-bold"
+                                                                                style="color: var(--dark-text);">
+                                                                                <%= teacher.first_name || 'N/A' %>
+                                                                                    <%= teacher.last_name || '' %>
+                                                                            </div>
+                                                                            <div class="text-secondary small fw-medium">
+                                                                                @<%= teacher.username %>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="border-0 py-3">
+                                                                    <div class="fw-bold small"
+                                                                        style="color: var(--dark-text);">
+                                                                        <%= teacher.department || 'General' %>
+                                                                    </div>
+                                                                    <div class="text-secondary smaller">Primary Dept
+                                                                    </div>
+                                                                </td>
+                                                                <td class="border-0 py-3">
+                                                                    <div class="fw-bold small"
+                                                                        style="color: var(--dark-text);">
+                                                                        <%= teacher.qualification || 'N/A' %>
+                                                                    </div>
+                                                                    <div class="text-secondary smaller">
+                                                                        <%= teacher.experience || 0 %> Years Experience
+                                                                    </div>
+                                                                </td>
+                                                                <td class="border-0 py-3">
+                                                                    <div class="d-flex flex-wrap gap-1">
+                                                                        <% if (teacher.assigned_classes) { %>
+                                                                            <% const
+                                                                                assignedClasses=teacher.assigned_classes.split(', '); %>
+                                                <% for(let cls of assignedClasses) { %>
+                                                    <% const gradePart = cls.split(' -')[0]; %>
+                                                                                <a href="/admin/classes?grade=<%= gradePart %>"
+                                                                                    class="text-decoration-none badge bg-light text-primary border rounded-pill px-2 py-1 small fw-bold">
+                                                                                    <i class="fas fa-school me-1"></i>
+                                                                                    <%= cls %>
+                                                                                </a>
+                                                                                <% } %>
+                                                                                    <% } else { %>
+                                                                                        <span
+                                                                                            class="text-secondary opacity-50 small fst-italic">No
+                                                                                            Classes</span>
+                                                                                        <% } %>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="border-0 text-center py-3">
+                                                                    <span class="badge rounded-pill px-3 py-1 fw-bold"
+                                                                        style="background: rgba(249,115,22,0.08); color: #f97316; font-size: 0.75rem;">
+                                                                        <%= teacher.employee_id %>
+                                                                    </span>
+                                                                </td>
+                                                                <td class="border-0 text-center py-3">
+                                                                    <div class="d-flex justify-content-center gap-2">
+                                                                        <% if (teacher.certificate_url) { %>
+                                                                            <a href="<%= teacher.certificate_url %>" target="_blank" class="btn btn-sm btn-light border-0 rounded-3" title="View Certificate">
+                                                                                <i class="fas fa-certificate text-primary"></i>
+                                                                            </a>
+                                                                        <% } %>
+                                                                        <% if (teacher.id_card_url) { %>
+                                                                            <a href="<%= teacher.id_card_url %>" target="_blank" class="btn btn-sm btn-light border-0 rounded-3" title="View ID Card">
+                                                                                <i class="fas fa-id-card text-success"></i>
+                                                                            </a>
+                                                                        <% } %>
+                                                                        <% if (!teacher.certificate_url && !teacher.id_card_url) { %>
+                                                                            <span class="text-secondary opacity-50 smaller fst-italic">No Docs</span>
+                                                                        <% } %>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="border-0 py-3">
+                                                                    <div class="small fw-bold text-secondary">
+                                                                        <i class="fas fa-phone-alt me-1 opacity-50"></i>
+                                                                        <%= teacher.phone %>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="border-0 text-center py-3">
+                                                                    <span
+                                                                        class="badge rounded-pill px-3 py-2 fw-bold text-uppercase"
+                                                                        style="background: <%= teacher.is_active ? 'rgba(16,185,129,0.08)' : 'rgba(100,116,139,0.08)' %>; color: <%= teacher.is_active ? '#10b981' : '#64748b' %>; font-size: 0.65rem;">
+                                                                        <%= teacher.is_active ? 'Active' : 'Inactive' %>
+                                                                    </span>
+                                                                </td>
+                                                                <td class="border-0 text-end py-3">
+                                                                    <div class="d-flex justify-content-end gap-2">
+                                                                        <form
+                                                                            action="/admin/toggle-user/<%= teacher.id %>"
+                                                                            method="POST" class="m-0">
+                                                                            <button type="submit"
+                                                                                class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3"
+                                                                                title="Toggle Status"
+                                                                                style="color: var(--primary-color);">
+                                                                                <i class="fas fa-sync-alt"></i>
+                                                                            </button>
+                                                                        </form>
+                                                                        <form
+                                                                            action="/admin/delete-user/<%= teacher.id %>"
+                                                                            method="POST" class="m-0"
+                                                                            onsubmit="return confirm('Archive this faculty record permanently?')">
+                                                                            <button type="submit"
+                                                                                class="btn btn-sm rounded-3 fw-bold px-3"
+                                                                                title="Archive"
+                                                                                style="background: rgba(239,68,68,0.08); color: #ef4444; border: none;">
+                                                                                <i class="fas fa-trash-alt"></i>
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            <% } %>
+                                                                <% } else { %>
+                                                                    <tr>
+                                                                        <td colspan="7"
+                                                                            class="border-0 text-center py-5">
+                                                                            <div class="text-secondary opacity-30 mb-3">
+                                                                                <i
+                                                                                    class="fas fa-chalkboard-teacher fa-4x"></i>
+                                                                            </div>
+                                                                            <div class="fw-bold text-secondary">No
+                                                                                faculty records found in system</div>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <% } %>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+
+            </main>
     </div>
-    
+
     <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
-    
+
     <script>
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value;
+            const grade = document.getElementById('gradeFilter').value;
+
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (grade) params.append('grade', grade);
+
+            window.location.href = '/admin/teachers?' + params.toString();
+        }
+
         function toggleForm() {
             const form = document.getElementById('teacher-form');
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
         }
 
-        window.onload = function() {
+        window.onload = function () {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('form') === 'open') {
                 toggleForm();
@@ -224,7 +439,7 @@
             for (let i = 1; i < tr.length; i++) {
                 let found = false;
                 let tds = tr[i].getElementsByTagName('td');
-                for(let j = 0; j < tds.length - 1; j++) {
+                for (let j = 0; j < tds.length - 1; j++) {
                     if (tds[j].textContent.toUpperCase().indexOf(filter) > -1) {
                         found = true;
                         break;
@@ -235,4 +450,5 @@
         }
     </script>
 </body>
+
 </html>

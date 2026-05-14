@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - SRSL Faculty</title>
+    <title><%= title %> - Abdigudina Faculty</title>
     
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
@@ -13,75 +13,119 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .premium-panel {
+            background: white !important;
+            border-radius: 28px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        }
+        .student-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 14px;
+            background: var(--gradient-1);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(37,99,235,0.1);
+        }
+        .table thead th {
+            background: #f8fafc;
+            color: var(--primary-color);
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            padding: 1.25rem 1rem;
+            border: none;
+        }
+        .table tbody td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+    </style>
 </head>
-<body class="dashboard-body">
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
+            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title">My Students</h1>
-                        <p class="text-secondary m-0">Directory of all students enrolled in your assigned classes</p>
+                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                            Student Directory
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Roster of students enrolled across all your academic courses</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10">
-                            <i class="fas fa-users me-1"></i> Total: <%= students ? students.length : 0 %> Students
+                    <div>
+                         <span class="badge rounded-pill px-4 py-2 fw-bold text-uppercase shadow-sm" style="background: rgba(37,99,235,0.08); color: var(--primary-color); font-size: 0.75rem; border: 1px solid rgba(37,99,235,0.1); letter-spacing: 1px;">
+                            <i class="fas fa-users me-1"></i> <%= students ? students.length : 0 %> Students
                         </span>
                     </div>
                 </div>
             </div>
 
-            <div class="glass-panel p-4">
+            <div class="premium-panel overflow-hidden">
                 <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                    <table class="table table-hover align-middle mb-0">
                         <thead>
                             <tr>
-                                <th class="border-0 text-secondary small py-3">Student Name</th>
-                                <th class="border-0 text-secondary small py-3">Assigned Class</th>
-                                <th class="border-0 text-secondary small py-3">Contact Info</th>
-                                <th class="border-0 text-secondary small py-3 text-end">Actions</th>
+                                <th>Student Identity</th>
+                                <th>Academic Class</th>
+                                <th>Contact Channels</th>
+                                <th class="text-end">Management</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% if (typeof students !== "undefined" && students && students.length > 0) { %>
                                 <% for (let s of students) { %>
                                 <tr class="transition">
-                                    <td class="border-0 py-3">
+                                    <td>
                                         <div class="d-flex align-items-center gap-3">
-                                            <div class="sidebar-user-avatar" style="width: 45px; height: 45px; font-size: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                                            <div class="student-avatar">
                                                 <%= (s.first_name ? s.first_name.charAt(0).toUpperCase() : '?') %>
                                             </div>
                                             <div>
-                                                <div class="fw-bold text-light"><%= s.first_name || 'Unknown' %> <%= s.last_name || '' %></div>
-                                                <div class="text-secondary small" style="font-size: 0.7rem;"><%= s.student_id || 'N/A' %></div>
+                                                <div class="fw-bold" style="color: var(--dark-text);"><%= s.first_name || 'Unknown' %> <%= s.last_name || '' %></div>
+                                                <div class="text-secondary fw-bold" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;">ID: <%= s.student_id || 'N/A' %></div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="border-0 py-3">
+                                    <td>
                                         <div class="d-flex flex-column">
-                                            <span class="text-primary fw-bold small"><%= s.class_name %></span>
-                                            <span class="text-secondary" style="font-size: 0.7rem;">Grade <%= s.grade %> - <%= s.section %></span>
+                                            <span class="fw-bold text-primary" style="font-size: 0.95rem;"><%= s.class_name %></span>
+                                            <span class="text-secondary fw-bold" style="font-size: 0.7rem; text-transform: uppercase;">Grade <%= s.grade %> • <%= s.section %></span>
                                         </div>
                                     </td>
-                                    <td class="border-0 py-3">
+                                    <td>
                                         <div class="d-flex flex-column gap-1">
-                                            <div class="text-light small"><i class="far fa-envelope me-2 opacity-50"></i><%= s.email %></div>
-                                            <div class="text-secondary" style="font-size: 0.7rem;"><i class="fas fa-phone-alt me-2 opacity-50"></i><%= s.phone || 'No contact provided' %></div>
+                                            <div class="fw-bold" style="color: var(--dark-text); font-size: 0.85rem;"><i class="far fa-envelope me-2 text-primary opacity-75"></i><%= s.email %></div>
+                                            <div class="text-secondary fw-bold" style="font-size: 0.7rem;"><i class="fas fa-phone-alt me-2 text-info opacity-75"></i><%= s.phone || 'N/A' %></div>
                                         </div>
                                     </td>
-                                    <td class="border-0 py-3 text-end">
+                                    <td class="text-end">
                                         <div class="dropdown">
-                                            <button class="btn btn-sm btn-hero btn-secondary py-1 px-3" type="button" data-bs-toggle="dropdown">
-                                                <i class="fas fa-ellipsis-h me-1"></i> Options
+                                            <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold border shadow-xs" type="button" data-bs-toggle="dropdown" style="font-size: 0.75rem;">
+                                                Actions <i class="fas fa-chevron-down ms-1 small opacity-50"></i>
                                             </button>
-                                            <ul class="dropdown-menu dropdown-menu-dark glass-card border-white border-opacity-10 shadow-lg">
-                                                <li><a class="dropdown-item py-2" href="/teacher/messages?to=<%= s.user_id %>"><i class="far fa-comment-dots me-2 text-primary"></i> Send Message</a></li>
-                                                <li><a class="dropdown-item py-2" href="/teacher/grades/<%= s.class_id %>"><i class="fas fa-chart-line me-2 text-success"></i> Academic Performance</a></li>
-                                                <li><hr class="dropdown-divider opacity-10"></li>
-                                                <li><a class="dropdown-item py-2" href="#"><i class="fas fa-info-circle me-2 text-info"></i> Full Profile</a></li>
+                                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2" style="border-radius: 16px;">
+                                                <li><a class="dropdown-item rounded-3 py-2 fw-bold" href="/teacher/messages?to=<%= s.user_id %>" style="font-size: 0.85rem;"><i class="far fa-comment-dots me-2 text-primary"></i> Direct Message</a></li>
+                                                <li><a class="dropdown-item rounded-3 py-2 fw-bold text-success" href="/teacher/grades/<%= s.class_id %>" style="font-size: 0.85rem;"><i class="fas fa-chart-line me-2"></i> Performance Log</a></li>
+                                                <li><hr class="dropdown-divider opacity-50"></li>
+                                                <li><a class="dropdown-item rounded-3 py-2 fw-bold" href="#" style="font-size: 0.85rem;"><i class="fas fa-id-card me-2 text-info"></i> View Full Dossier</a></li>
                                             </ul>
                                         </div>
                                     </td>
@@ -89,11 +133,12 @@
                                 <% } %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="4" class="border-0 text-center py-5">
-                                        <div class="opacity-25 mb-3">
-                                            <i class="fas fa-user-slash fa-4x text-secondary"></i>
+                                    <td colspan="4" class="text-center py-5">
+                                        <div class="text-secondary opacity-10 mb-3">
+                                            <i class="fas fa-user-graduate fa-5x"></i>
                                         </div>
-                                        <p class="text-secondary">No students found in your active classes.</p>
+                                        <h5 class="fw-900" style="color: var(--dark-text);">No Students Found</h5>
+                                        <p class="text-secondary fw-medium">Your current academic assignments do not have any enrolled students yet.</p>
                                     </td>
                                 </tr>
                             <% } %>
@@ -104,8 +149,11 @@
         </main>
     </div>
     
-    <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
+    <style>
+        .fw-900 { font-weight: 900; }
+        .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    </style>
 </body>
 </html>

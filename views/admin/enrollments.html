@@ -20,11 +20,13 @@
         <!-- Main Content -->
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
+            <div class="dashboard-header mb-4" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title">Enrollment Management</h1>
-                        <p class="text-secondary m-0">Review and confirm student course registrations</p>
+                        <h1 class="dashboard-title" style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            Enrollment Management
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Review and confirm student course registrations</p>
                     </div>
                 </div>
             </div>
@@ -38,58 +40,72 @@
             <% } %>
 
             <!-- Enrollments List -->
-            <div class="glass-panel">
+            <div class="glass-panel" style="background: white !important; border-radius: 24px;">
                 <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
-                        <thead>
-                            <tr class="text-secondary small">
-                                <th class="border-0">Student</th>
-                                <th class="border-0">Course</th>
-                                <th class="border-0">Date</th>
-                                <th class="border-0 text-center">Status</th>
-                                <th class="border-0 text-end">Actions</th>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background: rgba(0,0,0,0.02)">
+                            <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                <th class="border-0 py-3">Student</th>
+                                <th class="border-0 py-3">Course Detail</th>
+                                <th class="border-0 py-3">Enrollment Date</th>
+                                <th class="border-0 py-3 text-center">Status</th>
+                                <th class="border-0 py-3 text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% if (typeof enrollments !== "undefined" && enrollments && enrollments.length > 0) { %>
                                 <% for (let e of enrollments) { %>
                                 <tr>
-                                    <td class="border-0">
-                                        <div class="fw-bold text-light"><%= e.first_name %> <%= e.last_name %></div>
-                                        <div class="text-secondary smaller">ID: <%= e.student_id %></div>
+                                    <td class="border-0 py-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="avatar-initials avatar-blue" style="width: 38px; height: 38px; font-size: 0.9rem;">
+                                                <%= e.first_name ? e.first_name.charAt(0) : '?' %>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold" style="color: var(--dark-text);"><%= e.first_name %> <%= e.last_name %></div>
+                                                <div class="text-secondary small">ID: <%= e.student_id %></div>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="border-0">
-                                        <div class="text-light small"><%= e.course_name %></div>
-                                        <code class="text-primary smaller"><%= e.course_code %></code>
-                                    </td>
-                                    <td class="border-0 text-secondary small">
-                                        <%= new Date(e.created_at).toLocaleDateString() %>
-                                    </td>
-                                    <td class="border-0 text-center">
-                                        <span class="badge rounded-pill px-3 py-1 
-                                            <%= e.status === 'enrolled' ? 'bg-success bg-opacity-10 text-success' : 
-                                               e.status === 'pending' ? 'bg-warning bg-opacity-10 text-warning' : 
-                                               e.status === 'waitlisted' ? 'bg-info bg-opacity-10 text-info' : 
-                                               'bg-danger bg-opacity-10 text-danger' %> border border-opacity-25">
-                                            <%= e.status.charAt(0) + e.status.slice(1) %>
+                                    <td class="border-0 py-3">
+                                        <div class="fw-bold small" style="color: var(--dark-text);"><%= e.course_name %></div>
+                                        <span class="badge rounded-pill px-2 py-1 fw-bold text-uppercase" style="background: rgba(37,99,235,0.08); color: var(--primary-color); font-size: 0.6rem;">
+                                            <%= e.course_code %>
                                         </span>
                                     </td>
-                                    <td class="border-0 text-end">
+                                    <td class="border-0 py-3">
+                                        <span class="text-secondary small fw-medium">
+                                            <%= new Date(e.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                        </span>
+                                    </td>
+                                    <td class="border-0 text-center py-3">
+                                        <% 
+                                            let badgeBg = 'rgba(100,116,139,0.1)'; let badgeCol = '#64748b';
+                                            if (e.status === 'enrolled') { badgeBg = 'rgba(16,185,129,0.1)'; badgeCol = '#10b981'; }
+                                            else if (e.status === 'pending') { badgeBg = 'rgba(245,158,11,0.1)'; badgeCol = '#f59e0b'; }
+                                            else if (e.status === 'waitlisted') { badgeBg = 'rgba(37,99,235,0.1)'; badgeCol = 'var(--primary-color)'; }
+                                            else if (e.status === 'dropped') { badgeBg = 'rgba(239,68,68,0.1)'; badgeCol = '#ef4444'; }
+                                        %>
+                                        <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase" style="background: <%= badgeBg %>; color: <%= badgeCol %>; font-size: 0.7rem;">
+                                            <%= e.status %>
+                                        </span>
+                                    </td>
+                                    <td class="border-0 text-end py-3">
                                         <div class="d-flex justify-content-end gap-2">
                                             <% if (e.status === 'pending' || e.status === 'waitlisted') { %>
-                                                <button class="btn btn-sm btn-hero btn-primary py-1 px-3 border-0" onclick="updateStatus('<%= e.id %>', 'enrolled')">
+                                                <button class="btn btn-sm btn-primary py-1 px-3 border-0 fw-bold rounded-3" onclick="updateStatus('<%= e.id %>', 'enrolled')">
                                                     Confirm
                                                 </button>
                                             <% } %>
                                             <div class="dropdown">
-                                                <button class="btn btn-sm btn-hero btn-secondary py-1 px-3 border-0 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <button class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown" style="color: var(--dark-text);">
                                                     Status
                                                 </button>
-                                                <ul class="dropdown-menu dropdown-menu-dark">
-                                                    <li><a class="dropdown-item" href="#" onclick="updateStatus('<%= e.id %>', 'pending')">Pending</a></li>
-                                                    <li><a class="dropdown-item" href="#" onclick="updateStatus('<%= e.id %>', 'enrolled')">Enrolled</a></li>
-                                                    <li><a class="dropdown-item" href="#" onclick="updateStatus('<%= e.id %>', 'waitlisted')">Waitlisted</a></li>
-                                                    <li><a class="dropdown-item" href="#" onclick="updateStatus('<%= e.id %>', 'dropped')">Dropped</a></li>
+                                                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2" style="border-radius: 12px;">
+                                                    <li><a class="dropdown-item rounded-3 small py-2 fw-medium" href="#" onclick="updateStatus('<%= e.id %>', 'pending')">Pending</a></li>
+                                                    <li><a class="dropdown-item rounded-3 small py-2 fw-medium" href="#" onclick="updateStatus('<%= e.id %>', 'enrolled')">Enrolled</a></li>
+                                                    <li><a class="dropdown-item rounded-3 small py-2 fw-medium" href="#" onclick="updateStatus('<%= e.id %>', 'waitlisted')">Waitlisted</a></li>
+                                                    <li><a class="dropdown-item rounded-3 small py-2 fw-medium text-danger" href="#" onclick="updateStatus('<%= e.id %>', 'dropped')">Dropped</a></li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -99,8 +115,10 @@
                             <% } else { %>
                                 <tr>
                                     <td colspan="5" class="border-0 text-center py-5">
-                                        <i class="fas fa-user-graduate fa-3x text-secondary mb-3 opacity-25"></i>
-                                        <div class="text-secondary">No enrollment records found.</div>
+                                        <div class="text-secondary opacity-30 mb-3">
+                                            <i class="fas fa-user-graduate fa-4x"></i>
+                                        </div>
+                                        <div class="fw-bold text-secondary">No enrollment records found.</div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -108,6 +126,7 @@
                     </table>
                 </div>
             </div>
+
         </main>
     </div>
 

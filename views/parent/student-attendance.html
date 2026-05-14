@@ -3,110 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - SRSL Parent</title>
+    <title><%= title %> - Abdigudina Parent</title>
+    
+    <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
     <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .premium-panel {
+            background: white !important;
+            border-radius: 28px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        }
+        .attendance-stat-card {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0,0,0,0.03);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .attendance-stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        .table thead th {
+            background: #f8fafc;
+            color: var(--primary-color);
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            padding: 1.25rem 1rem;
+            border: none;
+        }
+        .table tbody td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-present { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .status-absent { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .status-late { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .status-excused { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+    </style>
 </head>
-<body class="dashboard-body">
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <a href="/parent/children" class="btn glass-card p-2 text-primary border-0">
-                            <i class="fas fa-arrow-left"></i>
-                        </a>
-                        <div>
-                            <h1 class="dashboard-title"><%= (student.first_name || 'Student') %>'s Attendance</h1>
-                            <p class="text-secondary m-0">Daily academic session tracking and engagement record</p>
-                        </div>
+            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                            Attendance Report
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Presence logs for: <span class="text-dark fw-bold"><%= student.first_name %> <%= student.last_name %></span></p>
                     </div>
-                    <% if (typeof stats !== 'undefined') { %>
-                    <div class="glass-card px-4 py-2 border-primary border-opacity-10 text-center">
-                        <div class="text-secondary" style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Overall Rate</div>
-                        <div class="h3 fw-bold text-primary m-0"><%= stats.rate %>%</div>
-                    </div>
-                    <% } %>
+                    <a href="/parent/dashboard" class="btn btn-light px-4 py-2 rounded-pill fw-bold shadow-sm" style="color: var(--dark-text);">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+                    </a>
                 </div>
             </div>
 
-            <!-- Stats Cards -->
+            <!-- Quick Stats -->
             <div class="row g-4 mb-4">
-                <div class="col-md-4">
-                    <div class="glass-panel text-center py-4 hover-lift">
-                        <div class="bg-success bg-opacity-10 text-success rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:50px;height:50px;font-size:1.2rem;">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size:0.65rem;letter-spacing:1px;">Present Days</div>
-                        <div class="h3 fw-bold text-success m-0"><%= typeof stats !== 'undefined' ? stats.present : attendance.filter(a => a.status === 'present').length %></div>
+                <div class="col-md-3">
+                    <div class="attendance-stat-card">
+                        <div class="h2 fw-bold text-primary mb-0"><%= stats.rate %>%</div>
+                        <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Attendance Rate</div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="glass-panel text-center py-4 hover-lift">
-                        <div class="bg-danger bg-opacity-10 text-danger rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:50px;height:50px;font-size:1.2rem;">
-                            <i class="fas fa-times-circle"></i>
-                        </div>
-                        <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size:0.65rem;letter-spacing:1px;">Absent Days</div>
-                        <div class="h3 fw-bold text-danger m-0"><%= typeof stats !== 'undefined' ? stats.absent : attendance.filter(a => a.status === 'absent').length %></div>
+                <div class="col-md-3">
+                    <div class="attendance-stat-card">
+                        <div class="h2 fw-bold text-success mb-0"><%= stats.present %></div>
+                        <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Present Days</div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="glass-panel text-center py-4 hover-lift">
-                        <div class="bg-warning bg-opacity-10 text-warning rounded-4 mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:50px;height:50px;font-size:1.2rem;">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size:0.65rem;letter-spacing:1px;">Late Arrivals</div>
-                        <div class="h3 fw-bold text-warning m-0"><%= typeof stats !== 'undefined' ? stats.late : attendance.filter(a => a.status === 'late').length %></div>
+                <div class="col-md-3">
+                    <div class="attendance-stat-card">
+                        <div class="h2 fw-bold text-danger mb-0"><%= stats.absent %></div>
+                        <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Total Absences</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="attendance-stat-card">
+                        <div class="h2 fw-bold text-warning mb-0"><%= stats.late %></div>
+                        <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Late Arrivals</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Detailed History Table -->
-            <div class="glass-panel p-4">
-                <div class="d-flex align-items-center gap-2 mb-4">
-                    <i class="fas fa-history text-primary"></i>
-                    <h5 class="m-0 text-light fw-bold">Attendance History</h5>
-                    <span class="badge bg-secondary ms-auto"><%= attendance ? attendance.length : 0 %> records</span>
+            <!-- Attendance History -->
+            <div class="premium-panel overflow-hidden">
+                <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-light bg-opacity-50">
+                    <h5 class="m-0 fw-bold text-dark">Recent History</h5>
+                    <button class="btn btn-sm btn-white border px-3 rounded-pill fw-bold shadow-xs">Download Report</button>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
+                    <table class="table table-hover align-middle mb-0">
                         <thead>
-                            <tr class="text-secondary small">
-                                <th class="border-0 py-3">Session Date</th>
-                                <th class="border-0 py-3">Class / Course</th>
-                                <th class="border-0 py-3">Teacher Notes</th>
-                                <th class="border-0 py-3 text-end">Status</th>
+                            <tr>
+                                <th>Date of Record</th>
+                                <th>Course / Class</th>
+                                <th>Session Status</th>
+                                <th>Observations</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% if (attendance && attendance.length > 0) { %>
-                                <% attendance.forEach(record => { %>
-                                <tr class="transition">
-                                    <td class="border-0 py-3">
-                                        <div class="fw-bold text-light"><%= new Date(record.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) %></div>
-                                        <div class="text-secondary" style="font-size:0.7rem;"><%= new Date(record.date).getFullYear() %></div>
-                                    </td>
-                                    <td class="border-0 py-3 text-primary fw-bold small"><%= record.class_name || '—' %></td>
-                                    <td class="border-0 py-3 text-secondary small"><%= record.notes || 'No remarks' %></td>
-                                    <td class="border-0 py-3 text-end">
-                                        <% let sc = record.status === 'present' ? 'success' : (record.status === 'absent' ? 'danger' : 'warning'); %>
-                                        <span class="badge rounded-pill px-3 py-2 text-uppercase bg-<%= sc %> bg-opacity-10 text-<%= sc %> border border-<%= sc %> border-opacity-25" style="font-size:0.65rem;">
-                                            <i class="fas fa-<%= record.status === 'present' ? 'check' : (record.status === 'absent' ? 'times' : 'clock') %>-circle me-1"></i>
-                                            <%= record.status %>
-                                        </span>
-                                    </td>
-                                </tr>
+                                <% attendance.forEach(a => { %>
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold" style="color: var(--dark-text);">
+                                                <%= new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                                            </div>
+                                            <small class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Recorded: <%= a.created_at ? new Date(a.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'TBD' %></small>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-dark"><%= a.class_name %></div>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge status-<%= a.status.toLowerCase() %>">
+                                                <i class="fas fa-circle me-1" style="font-size: 0.4rem; vertical-align: middle;"></i>
+                                                <%= a.status %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="text-secondary small fw-bold"><%= a.remarks || '--' %></div>
+                                        </td>
+                                    </tr>
                                 <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="4" class="text-center py-5 border-0">
-                                        <div class="opacity-25 mb-3"><i class="fas fa-calendar-times fa-4x text-secondary"></i></div>
-                                        <p class="text-secondary">No attendance records found for this student.</p>
+                                    <td colspan="4" class="text-center py-5">
+                                        <div class="text-secondary opacity-10 mb-3"><i class="far fa-calendar-times fa-5x"></i></div>
+                                        <h5 class="fw-900" style="color: var(--dark-text);">No Records Logged</h5>
+                                        <p class="text-secondary fw-medium">Attendance records for this child are not yet available for the current term.</p>
                                     </td>
                                 </tr>
                             <% } %>
@@ -116,7 +165,13 @@
             </div>
         </main>
     </div>
+    
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
+    <style>
+        .fw-900 { font-weight: 900; }
+        .fw-800 { font-weight: 800; }
+        .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    </style>
 </body>
 </html>

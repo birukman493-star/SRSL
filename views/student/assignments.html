@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - SRSL</title>
-    
+    <title><%= title %> - Abdigudina</title>
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -13,58 +12,82 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        body { background: #f8fafc; color: #0f172a; }
+        .main-panel { background: #f8fafc; }
+        .premium-panel {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-sm);
+        }
+        .assignment-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+        .assignment-card:hover {
+            transform: scale(1.01);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+        }
+    </style>
 </head>
 <body class="dashboard-body">
-    <div class="admin-container dashboard-wrapper">
+    <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
-        <main class="main-panel">
-            <!-- Top Header -->
-            <header class="dashboard-header-modern mb-4">
-                <div class="header-content">
-                    <div class="header-title-block">
-                        <h1 class="header-title">My Assignments</h1>
-                        <p class="header-subtitle"><i class="fas fa-tasks me-2"></i>Track your homework and project deadlines</p>
+        <main class="main-panel w-100 p-4">
+            <!-- Header -->
+            <div class="premium-panel mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">My Assignments</h1>
+                        <p class="text-secondary m-0 fw-medium"><i class="fas fa-tasks me-2"></i>Track your homework and project deadlines</p>
                     </div>
-                    <div class="header-actions">
-                        <span class="badge bg-soft-warning text-warning rounded-pill px-3 py-2 border border-warning border-opacity-10">
+                    <div>
+                        <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill fw-bold text-uppercase" style="font-size: 0.7rem;">
                             <i class="fas fa-clock me-1"></i> <%= assignments.filter(a => !a.is_submitted).length %> Pending
                         </span>
                     </div>
                 </div>
-            </header>
+            </div>
 
             <!-- Assignments Grid -->
-            <div class="row g-4">
+            <div class="row g-3">
                 <% if (assignments && assignments.length > 0) { %>
                     <% assignments.forEach(assignment => { %>
                     <div class="col-12">
-                        <div class="glass-panel hover-lift transition">
+                        <div class="assignment-card">
                             <div class="row align-items-center">
-                                <div class="col-md-1 d-none d-md-block">
-                                    <div class="icon-box-modern bg-primary bg-opacity-10 text-primary">
+                                <div class="col-md-1 d-none d-md-block text-center">
+                                    <div class="rounded-3 bg-primary bg-opacity-10 text-primary mx-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
                                         <i class="fas fa-file-alt"></i>
                                     </div>
                                 </div>
                                 <div class="col-md-5">
-                                    <h5 class="text-light m-0 fw-bold"><%= assignment.title %></h5>
-                                    <div class="text-secondary small">
-                                        <i class="fas fa-book me-1"></i> <%= assignment.class_name %> • 
-                                        <i class="fas fa-user-tie me-1"></i> <%= assignment.teacher_fname %> <%= assignment.teacher_lname %>
+                                    <h5 class="text-dark m-0 fw-bold"><%= assignment.title %></h5>
+                                    <div class="text-secondary small fw-medium mt-1">
+                                        <i class="fas fa-book me-1 text-primary"></i> <%= assignment.class_name %> &bull; 
+                                        <i class="fas fa-user-tie me-1 text-primary"></i> <%= assignment.teacher_fname %> <%= assignment.teacher_lname %>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="text-secondary small mb-1">Due Date</div>
-                                    <div class="text-<%= (new Date(assignment.due_date) < new Date()) ? 'danger' : 'light' %> fw-bold">
+                                    <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Due Date</div>
+                                    <div class="text-<%= (new Date(assignment.due_date) < new Date()) ? 'danger' : 'dark' %> fw-bold small">
                                         <i class="far fa-calendar-alt me-1"></i> 
                                         <%= assignment.due_date ? new Date(assignment.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Due Date' %>
                                     </div>
                                 </div>
                                 <div class="col-md-3 text-md-end mt-3 mt-md-0">
-                                    <span class="badge rounded-pill bg-soft-<%= assignment.is_submitted ? 'success' : 'warning' %> text-<%= assignment.is_submitted ? 'success' : 'warning' %> px-3 py-2 me-2">
+                                    <span class="badge rounded-pill bg-<%= assignment.is_submitted ? 'success' : 'warning' %> bg-opacity-10 text-<%= assignment.is_submitted ? 'success' : 'warning' %> px-3 py-2 fw-bold text-uppercase me-2" style="font-size: 0.65rem;">
                                         <%= assignment.is_submitted ? 'SUBMITTED' : 'PENDING' %>
                                     </span>
-                                    <button class="btn btn-sm btn-soft-primary rounded-pill px-3">View</button>
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">View</button>
                                 </div>
                             </div>
                         </div>
@@ -72,12 +95,12 @@
                     <% }); %>
                 <% } else { %>
                     <div class="col-12">
-                        <div class="glass-panel text-center py-5">
+                        <div class="premium-panel text-center py-5">
                             <div class="mb-4">
-                                <i class="fas fa-check-double fa-4x text-success opacity-25"></i>
+                                <i class="fas fa-check-double fa-4x text-success opacity-30"></i>
                             </div>
-                            <h4 class="text-light">All caught up!</h4>
-                            <p class="text-secondary">No pending assignments at the moment.</p>
+                            <h4 class="text-dark fw-bold">All caught up!</h4>
+                            <p class="text-secondary fw-medium">No pending assignments at the moment.</p>
                         </div>
                     </div>
                 <% } %>
@@ -85,7 +108,6 @@
         </main>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
 </body>

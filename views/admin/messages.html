@@ -20,64 +20,77 @@
         <!-- Main Content -->
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
+            <div class="dashboard-header mb-4" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title">Contact Messages</h1>
-                        <p class="text-secondary m-0">Inquiries and messages from the school website</p>
+                        <h1 class="dashboard-title" style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            Contact Messages
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Inquiries and messages from the school website</p>
                     </div>
                 </div>
             </div>
 
             <!-- Messages Table -->
-            <div class="glass-panel">
+            <div class="glass-panel" style="background: white !important; border-radius: 24px;">
                 <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
-                        <thead>
-                            <tr class="text-secondary small">
-                                <th class="border-0">Sender</th>
-                                <th class="border-0">Subject</th>
-                                <th class="border-0">Message</th>
-                                <th class="border-0">Date</th>
-                                <th class="border-0 text-center">Status</th>
-                                <th class="border-0 text-end">Actions</th>
+                    <table class="table table-hover align-middle mb-0" id="messagesTable">
+                        <thead style="background: rgba(0,0,0,0.02)">
+                            <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                <th class="border-0 py-3">Sender</th>
+                                <th class="border-0 py-3">Subject</th>
+                                <th class="border-0 py-3">Message Snippet</th>
+                                <th class="border-0 py-3">Received</th>
+                                <th class="border-0 py-3 text-center">Status</th>
+                                <th class="border-0 py-3 text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% if (typeof messages !== "undefined" && messages && messages.length > 0) { %>
                                 <% for (let msg of messages) { %>
                                 <tr class="<%= msg.is_read ? 'opacity-75' : 'fw-bold' %>">
-                                    <td class="border-0">
-                                        <div class="fw-bold text-light"><%= msg.name %></div>
-                                        <div class="text-secondary small"><%= msg.email %></div>
+                                    <td class="border-0 py-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="avatar-initials avatar-blue" style="width: 38px; height: 38px; font-size: 0.9rem;">
+                                                <%= msg.name ? msg.name.charAt(0) : '?' %>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold" style="color: var(--dark-text);"><%= msg.name %></div>
+                                                <div class="text-secondary small"><%= msg.email %></div>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="border-0">
-                                        <span class="text-light"><%= msg.subject %></span>
+                                    <td class="border-0 py-3">
+                                        <span class="fw-bold" style="color: var(--dark-text);"><%= msg.subject %></span>
                                     </td>
-                                    <td class="border-0">
-                                        <div class="text-secondary small text-truncate" style="max-width: 300px;" title="<%= msg.message %>">
+                                    <td class="border-0 py-3">
+                                        <div class="text-secondary small text-truncate" style="max-width: 250px; font-weight: 500;" title="<%= msg.message %>">
                                             <%= msg.message %>
                                         </div>
                                     </td>
-                                    <td class="border-0">
-                                        <span class="text-secondary small"><%= new Date(msg.created_at).toLocaleString() %></span>
-                                    </td>
-                                    <td class="border-0 text-center">
-                                        <span class="badge rounded-pill px-3 py-1 <%= msg.is_read ? 'bg-secondary bg-opacity-10 text-secondary' : 'bg-primary bg-opacity-10 text-primary' %>">
-                                            <%= msg.is_read ? 'Read' : 'New' %>
+                                    <td class="border-0 py-3">
+                                        <span class="text-secondary small fw-medium">
+                                            <%= new Date(msg.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
                                         </span>
                                     </td>
-                                    <td class="border-0 text-end">
+                                    <td class="border-0 text-center py-3">
+                                        <% if (msg.is_read) { %>
+                                            <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase" style="background: rgba(100,116,139,0.1); color: #64748b; font-size: 0.7rem;">Read</span>
+                                        <% } else { %>
+                                            <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase" style="background: rgba(37,99,235,0.1); color: var(--primary-color); font-size: 0.7rem;">New</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="border-0 text-end py-3">
                                         <div class="d-flex justify-content-end gap-2">
                                             <% if (!msg.is_read) { %>
                                             <form action="/admin/messages/read/<%= msg.id %>" method="POST" class="m-0">
-                                                <button type="submit" class="btn btn-sm btn-hero btn-secondary py-1 px-3" title="Mark as Read">
+                                                <button type="submit" class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3 text-success" title="Mark as Read">
                                                     <i class="fas fa-check"></i>
                                                 </button>
                                             </form>
                                             <% } %>
                                             <form action="/admin/messages/delete/<%= msg.id %>" method="POST" class="m-0" onsubmit="return confirm('Delete this message?')">
-                                                <button type="submit" class="btn btn-sm btn-hero btn-primary py-1 px-3 bg-danger border-0" title="Delete">
+                                                <button type="submit" class="btn btn-sm rounded-3 fw-bold px-3" title="Delete" style="background: rgba(239,68,68,0.08); color: #ef4444; border: none;">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -88,8 +101,10 @@
                             <% } else { %>
                                 <tr>
                                     <td colspan="6" class="border-0 text-center py-5">
-                                        <i class="fas fa-envelope-open fa-3x text-secondary mb-3 opacity-25"></i>
-                                        <div class="text-secondary">No messages received yet</div>
+                                        <div class="text-secondary opacity-30 mb-3">
+                                            <i class="fas fa-envelope-open fa-4x"></i>
+                                        </div>
+                                        <div class="fw-bold text-secondary">No messages received yet</div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -97,6 +112,7 @@
                     </table>
                 </div>
             </div>
+
         </main>
     </div>
 

@@ -1,88 +1,133 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
+    <title><%= title %> - Abdigudina Parent</title>
+    
+    <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .premium-card {
+            background: white;
+            border-radius: 28px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        .premium-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary-color);
+            box-shadow: 0 20px 50px rgba(37,99,235,0.08);
+        }
+        .child-header {
+            background: #f8fafc;
+            padding: 2.5rem;
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+            text-align: center;
+        }
+        .child-avatar-wrap {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 1.5rem;
+            background: white;
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+    </style>
 </head>
-<body>
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-        
+
         <main class="main-panel w-100 p-4">
-            <div class="dashboard-header d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="dashboard-title">My Children</h1>
-                    <p class="text-secondary m-0">Overview of academic performance and attendance</p>
+            <!-- Header -->
+            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                            My Children
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Comprehensive academic oversight for linked students</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="row g-4 mt-2">
+            <div class="row g-4">
                 <% if (children && children.length > 0) { %>
                     <% children.forEach(child => { %>
-                        <div class="col-lg-6">
-                            <div class="glass-panel">
-                                <div class="d-flex align-items-center gap-4 mb-4">
-                                    <div class="sidebar-user-avatar" style="width: 80px; height: 80px; font-size: 2.5rem; background: rgba(0,200,255,0.05); color: var(--primary-color);">
-                                        <%= child.first_name.charAt(0) %><%= child.last_name.charAt(0) %>
+                        <div class="col-lg-4 col-md-6">
+                            <div class="premium-card h-100">
+                                <div class="child-header">
+                                    <div class="child-avatar-wrap">
+                                        <%= child.first_name[0] %><%= child.last_name[0] %>
                                     </div>
-                                    <div class="flex-grow-1">
-                                        <h3 class="h4 fw-bold mb-1"><%= child.first_name %> <%= child.last_name %></h3>
-                                        <div class="text-secondary mb-2">
-                                            <i class="fas fa-graduation-cap me-2"></i>Grade <%= child.grade_level %> - <%= child.section %>
-                                        </div>
-                                        <div class="d-flex gap-3">
-                                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
-                                                ID: #STU-<%= child.id %>
-                                            </span>
-                                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
-                                                Active
-                                            </span>
-                                        </div>
+                                    <h2 class="fw-bold mb-1" style="color: var(--dark-text); font-size: 1.5rem;"><%= child.first_name %> <%= child.last_name %></h2>
+                                    <div class="text-primary fw-800 text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">
+                                        <%= child.student_id %> • Grade <%= child.grade_level %>-<%= child.section %>
                                     </div>
                                 </div>
-
-                                <div class="row g-3 mb-4">
-                                    <div class="col-6">
-                                        <div class="glass-card text-center p-3">
-                                            <div class="text-secondary small mb-1">Average Grade</div>
-                                            <div class="h4 fw-bold text-primary mb-0"><%= child.average_grade ? Math.round(child.average_grade) + '%' : 'N/A' %></div>
+                                <div class="p-4 p-xl-5">
+                                    <div class="row g-3 mb-5">
+                                        <div class="col-6">
+                                            <div class="p-3 rounded-4 bg-light text-center border">
+                                                <div class="h3 fw-bold text-dark mb-0"><%= child.grade_count || 0 %></div>
+                                                <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Graded Subjects</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="p-3 rounded-4 bg-light text-center border">
+                                                <div class="h3 fw-bold text-primary mb-0"><%= child.average_grade ? Math.round(child.average_grade) + '%' : '0%' %></div>
+                                                <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Avg. Achievement</div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-6">
-                                        <div class="glass-card text-center p-3">
-                                            <div class="text-secondary small mb-1">Grades Recorded</div>
-                                            <div class="h4 fw-bold text-info mb-0"><%= child.grade_count || 0 %></div>
-                                        </div>
+                                    
+                                    <div class="d-grid gap-3">
+                                        <a href="/parent/grades/<%= child.id %>" class="btn btn-primary py-3 rounded-pill fw-bold shadow-sm">
+                                            <i class="fas fa-file-invoice me-2"></i> Academic Performance
+                                        </a>
+                                        <a href="/parent/attendance/<%= child.id %>" class="btn btn-light py-3 rounded-pill fw-bold border shadow-xs" style="background: #f8fafc; color: var(--dark-text);">
+                                            <i class="fas fa-user-clock me-2 text-info"></i> Attendance History
+                                        </a>
                                     </div>
-                                </div>
-
-                                <div class="d-flex gap-2">
-                                    <a href="/parent/grades/<%= child.id %>" class="btn-hero btn-primary w-50 py-2" style="font-size: 0.9rem;">
-                                        <i class="fas fa-chart-bar me-2"></i>View Grades
-                                    </a>
-                                    <a href="/parent/attendance/<%= child.id %>" class="btn-hero btn-secondary w-50 py-2" style="font-size: 0.9rem;">
-                                        <i class="fas fa-calendar-check me-2"></i>Attendance
-                                    </a>
                                 </div>
                             </div>
                         </div>
                     <% }); %>
                 <% } else { %>
-                    <div class="col-12">
-                        <div class="glass-panel text-center py-5">
-                            <i class="fas fa-user-slash fa-3x text-secondary mb-3"></i>
-                            <p class="text-secondary h5">No children are currently linked to your account.</p>
-                            <p class="text-muted small">Please contact the administration office to link your children's profiles.</p>
+                    <div class="col-12 text-center py-5">
+                        <div class="premium-card py-5">
+                            <div class="text-secondary opacity-10 mb-4"><i class="fas fa-child fa-6x"></i></div>
+                            <h3 class="fw-900" style="color: var(--dark-text);">No Children Associated</h3>
+                            <p class="text-secondary fw-medium px-5">Your account is not yet linked to any student profiles. Please contact school support for assistance.</p>
                         </div>
                     </div>
                 <% } %>
             </div>
         </main>
     </div>
+    
     <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <style>
+        .fw-900 { font-weight: 900; }
+        .fw-800 { font-weight: 800; }
+        .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    </style>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Materials - SRSL Faculty</title>
+    <title>Course Materials - Abdigudina Faculty</title>
     
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
@@ -13,21 +13,54 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .premium-card {
+            background: white;
+            border-radius: 24px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .premium-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary-color);
+        }
+        .premium-input {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: var(--dark-text) !important;
+        }
+        .icon-box {
+            width: 55px;
+            height: 55px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+    </style>
 </head>
-<body class="dashboard-body">
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
+            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title">Course Materials</h1>
-                        <p class="text-secondary m-0">Upload and manage study resources for your students</p>
+                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                            Study Resources
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Manage and distribute learning materials to your students</p>
                     </div>
                     <div>
-                        <button class="btn btn-hero btn-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#newMaterialModal">
+                        <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#newMaterialModal">
                             <i class="fas fa-plus-circle me-2"></i> Add Material
                         </button>
                     </div>
@@ -38,47 +71,47 @@
                 <% if (materials && materials.length > 0) { %>
                     <% materials.forEach(m => { %>
                     <div class="col-12 col-md-6 col-xl-4">
-                        <div class="glass-panel p-4 h-100 hover-lift transition d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div class="bg-primary bg-opacity-10 text-primary rounded-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                        <div class="premium-card p-4 h-100 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                <div class="icon-box bg-primary bg-opacity-10 text-primary">
                                     <% if (m.material_type === 'reading') { %>
                                         <i class="fas fa-book-open"></i>
                                     <% } else if (m.material_type === 'video') { %>
-                                        <i class="fas fa-video"></i>
+                                        <i class="fas fa-play-circle"></i>
                                     <% } else if (m.material_type === 'link') { %>
-                                        <i class="fas fa-link"></i>
+                                        <i class="fas fa-external-link-alt"></i>
                                     <% } else { %>
                                         <i class="fas fa-file-pdf"></i>
                                     <% } %>
                                 </div>
                                 <div class="dropdown">
-                                    <button class="btn btn-link text-secondary p-0" data-bs-toggle="dropdown">
-                                        <i class="fas fa-ellipsis-v"></i>
+                                    <button class="btn btn-light btn-sm rounded-circle p-0" style="width: 32px; height: 32px;" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v text-secondary" style="font-size: 0.8rem;"></i>
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end bg-dark border-secondary">
-                                        <li><button class="dropdown-item text-danger delete-btn" data-id="<%= m.id %>"><i class="fas fa-trash-alt me-2"></i> Delete</button></li>
+                                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg" style="border-radius: 12px;">
+                                        <li><button class="dropdown-item text-danger fw-bold delete-btn" data-id="<%= m.id %>"><i class="fas fa-trash-alt me-2"></i> Delete Material</button></li>
                                     </ul>
                                 </div>
                             </div>
                             
-                            <h5 class="fw-bold text-light mb-1"><%= m.title %></h5>
-                            <p class="text-secondary small mb-3 flex-grow-1"><%= m.description || 'No description provided.' %></p>
+                            <h5 class="fw-bold mb-2" style="color: var(--dark-text);"><%= m.title %></h5>
+                            <p class="text-secondary fw-medium small mb-4 flex-grow-1" style="line-height: 1.6;"><%= m.description || 'Access and review the shared study resources for your upcoming lectures.' %></p>
                             
                             <div class="mt-auto">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="badge bg-white bg-opacity-5 text-secondary border border-white border-opacity-10 px-2 py-1" style="font-size: 0.7rem;">
+                                    <span class="badge px-3 py-2 rounded-pill fw-bold text-uppercase" style="background: rgba(37,99,235,0.08); color: var(--primary-color); font-size: 0.65rem; letter-spacing: 0.5px;">
                                         <%= m.class_name %>
                                     </span>
-                                    <span class="text-secondary small"><%= new Date(m.created_at).toLocaleDateString() %></span>
+                                    <span class="text-secondary fw-bold" style="font-size: 0.75rem;"><%= new Date(m.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) %></span>
                                 </div>
                                 
                                 <% if (m.file_url) { %>
-                                <a href="<%= m.file_url %>" target="_blank" class="btn btn-outline-primary btn-sm w-100 rounded-pill">
-                                    <i class="fas fa-external-link-alt me-2"></i> View Material
+                                <a href="<%= m.file_url %>" target="_blank" class="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm">
+                                    <i class="fas fa-rocket me-2"></i> Access Resource
                                 </a>
                                 <% } else { %>
-                                <button class="btn btn-outline-secondary btn-sm w-100 rounded-pill" disabled>
-                                    No Link Provided
+                                <button class="btn btn-light w-100 rounded-pill fw-bold py-2 text-secondary" disabled>
+                                    No Link Attached
                                 </button>
                                 <% } %>
                             </div>
@@ -86,13 +119,14 @@
                     </div>
                     <% }); %>
                 <% } else { %>
-                    <div class="col-12">
-                        <div class="glass-panel p-5 text-center">
-                            <div class="opacity-25 mb-3">
-                                <i class="fas fa-folder-open fa-4x text-secondary"></i>
+                    <div class="col-12 text-center py-5">
+                        <div class="p-5 premium-card">
+                            <div class="text-secondary opacity-20 mb-4">
+                                <i class="fas fa-box-open fa-6x"></i>
                             </div>
-                            <h3 class="text-light fw-bold">No Materials Uploaded</h3>
-                            <p class="text-secondary">Click the "Add Material" button above to share resources with your students.</p>
+                            <h3 class="fw-900" style="color: var(--dark-text);">Repository Empty</h3>
+                            <p class="text-secondary fw-medium px-5">You haven't uploaded any study materials yet. Start building your academic repository to support student learning.</p>
+                            <button class="btn btn-primary px-5 mt-3 rounded-pill fw-bold shadow" data-bs-toggle="modal" data-bs-target="#newMaterialModal">Add Your First Material</button>
                         </div>
                     </div>
                 <% } %>
@@ -103,50 +137,50 @@
     <!-- Add Material Modal -->
     <div class="modal fade" id="newMaterialModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content glass-panel border-white border-opacity-10 shadow-lg">
+            <div class="modal-content" style="border-radius: 28px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
                 <div class="modal-header border-0 p-4">
-                    <h5 class="modal-title fw-bold text-light"><i class="fas fa-plus-circle text-primary me-2"></i> New Course Material</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title fw-900" style="color: var(--dark-text); font-size: 1.5rem;"><i class="fas fa-cloud-upload-alt text-primary me-2"></i> Share Material</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 pt-0">
                     <form id="materialForm">
                         <div class="row g-4">
                             <div class="col-md-8">
-                                <label class="form-label text-secondary small fw-bold text-uppercase">Title</label>
-                                <input type="text" class="form-control glass-card bg-white bg-opacity-5 border-white border-opacity-10 text-light py-3 px-4" name="title" placeholder="e.g. Introduction to Physics Notes" required>
+                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing: 1px;">Material Title</label>
+                                <input type="text" class="form-control premium-input" name="title" placeholder="e.g. Calculus Basics PDF" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label text-secondary small fw-bold text-uppercase">Material Type</label>
-                                <select class="form-select glass-card bg-white bg-opacity-5 border-white border-opacity-10 text-light py-3 px-4" name="materialType" style="background-image: none;">
-                                    <option value="reading" class="bg-dark">Reading (PDF/Doc)</option>
-                                    <option value="video" class="bg-dark">Video Lesson</option>
-                                    <option value="link" class="bg-dark">External Link</option>
-                                    <option value="other" class="bg-dark">Other</option>
+                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing: 1px;">Resource Type</label>
+                                <select class="form-select premium-input" name="materialType" style="background-image: none;">
+                                    <option value="reading">Reading (PDF/Doc)</option>
+                                    <option value="video">Video Lesson</option>
+                                    <option value="link">External Link</option>
+                                    <option value="other">General Resource</option>
                                 </select>
                             </div>
                             <div class="col-md-12">
-                                <label class="form-label text-secondary small fw-bold text-uppercase">Target Class</label>
-                                <select class="form-select glass-card bg-white bg-opacity-5 border-white border-opacity-10 text-light py-3 px-4" name="classId" style="background-image: none;" required>
+                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing: 1px;">Target Class</label>
+                                <select class="form-select premium-input" name="classId" required style="background-image: none;">
                                     <% classes.forEach(c => { %>
-                                        <option value="<%= c.id %>" class="bg-dark"><%= c.name %> (<%= c.grade %>-<%= c.section %>)</option>
+                                        <option value="<%= c.id %>"><%= c.name %> (<%= c.grade %>-<%= c.section %>)</option>
                                     <% }); %>
                                 </select>
                             </div>
                             <div class="col-md-12">
-                                <label class="form-label text-secondary small fw-bold text-uppercase">File URL / Resource Link</label>
-                                <input type="text" class="form-control glass-card bg-white bg-opacity-5 border-white border-opacity-10 text-light py-3 px-4" name="fileUrl" placeholder="https://example.com/resource.pdf">
+                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing: 1px;">Direct Access Link (URL)</label>
+                                <input type="text" class="form-control premium-input" name="fileUrl" placeholder="https://example.com/share/physics-notes.pdf">
                             </div>
                             <div class="col-12">
-                                <label class="form-label text-secondary small fw-bold text-uppercase">Description</label>
-                                <textarea class="form-control glass-card bg-white bg-opacity-5 border-white border-opacity-10 text-light py-3 px-4" name="description" rows="4" placeholder="Briefly describe what this material covers..."></textarea>
+                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing: 1px;">Brief Description</label>
+                                <textarea class="form-control premium-input" name="description" rows="3" placeholder="Explain what students should focus on in this material..."></textarea>
                             </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">
-                    <button type="button" class="btn btn-hero btn-secondary px-4 py-2" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-hero btn-primary px-4 py-2" id="submitMaterial">
-                        <i class="fas fa-check-circle me-2"></i> Add Material
+                    <button type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" data-bs-dismiss="modal">Discard</button>
+                    <button type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" id="submitMaterial">
+                        <i class="fas fa-share-square me-2"></i> Publish Material
                     </button>
                 </div>
             </div>
@@ -160,20 +194,29 @@
             const formData = new FormData(document.getElementById('materialForm'));
             const data = Object.fromEntries(formData.entries());
             
+            const btn = document.getElementById('submitMaterial');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Publishing...';
+
             try {
                 const response = await fetch('/teacher/materials/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                const result = await response.json();
                 if (response.ok) {
                     window.location.reload();
                 } else {
+                    const result = await response.json();
                     alert('Error: ' + result.message);
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
                 }
             } catch (err) {
                 alert('Connection error while saving material');
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
             }
         });
 
@@ -198,5 +241,9 @@
             });
         });
     </script>
+    <style>
+        .fw-800 { font-weight: 800; }
+        .fw-900 { font-weight: 900; }
+    </style>
 </body>
 </html>

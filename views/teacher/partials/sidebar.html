@@ -1,7 +1,12 @@
-<aside class="glass-sidebar">
+<aside class="glass-sidebar" id="sidebar">
+    <!-- Mobile Close Button -->
+    <button class="sidebar-close-btn d-lg-none" id="sidebar-close" aria-label="Close sidebar">
+        <i class="fas fa-times"></i>
+    </button>
+
     <div class="sidebar-logo-modern">
         <i class="fas fa-graduation-cap"></i>
-        <span>SRSL Faculty</span>
+        <span style="font-size: 0.9rem; letter-spacing: 0px;">Abdigudina Faculty</span>
     </div>
 
     <div class="sidebar-user-section mb-4 text-center">
@@ -9,7 +14,6 @@
             <%= (user && user.first_name ? user.first_name.charAt(0).toUpperCase() : 'T') %>
         </div>
         <div class="fw-bold text-light"><%= user && user.first_name ? user.first_name : 'Teacher' %> <%= user && user.last_name ? user.last_name : '' %></div>
-        <small class="text-secondary opacity-75">Faculty Member</small>
     </div>
 
     <nav class="sidebar-nav">
@@ -74,6 +78,7 @@
                     <span>Profile</span>
                 </a>
             </li>
+
             <li class="sidebar-nav-item mt-4 pt-4 border-top border-secondary border-opacity-25">
                 <a href="/auth/logout" class="sidebar-nav-link text-danger">
                     <i class="fas fa-sign-out-alt"></i>

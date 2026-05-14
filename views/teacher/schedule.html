@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weekly Schedule - SRSL Faculty</title>
+    <title>Weekly Schedule - Abdigudina Faculty</title>
     
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
@@ -13,70 +13,190 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .schedule-container {
+            background: white;
+            border-radius: 28px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        .timetable {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+        .timetable th {
+            background: #f8fafc;
+            color: var(--primary-color);
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            padding: 1.5rem 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            text-align: center;
+        }
+        .timetable td {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            border-right: 1px solid #f1f5f9;
+            vertical-align: top;
+            height: 120px;
+            transition: all 0.3s ease;
+        }
+        .timetable td:last-child { border-right: none; }
+        .timetable tr:last-child td { border-bottom: none; }
+        
+        .time-col {
+            background: #f8fafc;
+            width: 120px;
+            font-weight: 700;
+            color: var(--dark-text);
+            text-align: center !important;
+            border-right: 2px solid #e2e8f0 !important;
+        }
+        
+        .schedule-slot {
+            height: 100%;
+            padding: 0.75rem;
+            border-radius: 16px;
+            background: #f8fafc;
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .schedule-slot:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            background: white;
+            z-index: 10;
+        }
+        .slot-title {
+            font-weight: 700;
+            color: var(--dark-text);
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .slot-subtitle {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-transform: uppercase;
+        }
+        .slot-footer {
+            margin-top: 8px;
+            font-size: 0.65rem;
+            color: #64748b;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+        .empty-slot {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.05;
+        }
+    </style>
 </head>
-<body class="dashboard-body">
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
+            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title">Academic Schedule</h1>
-                        <p class="text-secondary m-0">Weekly timetable for your assigned lectures and lab sessions</p>
+                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                            Faculty Timetable
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Comprehensive weekly schedule and session distribution</p>
+                    </div>
+                    <div class="d-flex gap-3">
+                         <button class="btn btn-light px-4 py-2 rounded-pill fw-bold border-0 shadow-sm" onclick="window.print()">
+                            <i class="fas fa-print me-2 text-primary"></i> Print Schedule
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="row g-4">
-                <% const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; %>
-                <% days.forEach(day => { %>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="glass-panel h-100">
-                            <h3 class="h5 fw-bold text-primary mb-3 d-flex justify-content-between align-items-center">
-                                <%= day %>
-                                <% const dayPeriods = schedule.filter(s => s.day_of_week === day); %>
-                                <span class="badge bg-primary bg-opacity-10 text-primary small rounded-pill px-2" style="font-size: 0.7rem;">
-                                    <%= dayPeriods.length %> Sessions
-                                </span>
-                            </h3>
+            <% 
+                const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                const periodNames = [...new Set(schedule.map(s => s.period))].sort((a, b) => {
+                    return a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'});
+                });
+            %>
 
-                            <div class="schedule-list">
-                                <% if (dayPeriods.length > 0) { %>
-                                    <% dayPeriods.forEach(p => { %>
-                                        <div class="schedule-item mb-3 p-3 rounded-4 bg-white bg-opacity-5 border border-white border-opacity-10">
-                                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                                <div>
-                                                    <div class="fw-bold text-light">
-                                                        <span class="text-primary smaller me-2"><%= p.period %></span>
-                                                        <%= p.course_name %>
+            <div class="schedule-container shadow-sm mb-4">
+                <div class="table-responsive">
+                    <table class="timetable">
+                        <thead>
+                            <tr>
+                                <th class="time-col">Period</th>
+                                <% weekDays.forEach(day => { %>
+                                    <th><%= day %></th>
+                                <% }); %>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% periodNames.forEach(period => { %>
+                                <tr>
+                                    <td class="time-col">
+                                        <div class="fw-900" style="font-size: 0.9rem;"><%= period %></div>
+                                        <% 
+                                            const firstMatch = schedule.find(s => s.period === period);
+                                            if (firstMatch) {
+                                        %>
+                                            <div class="text-secondary smaller mt-1">
+                                                <%= firstMatch.start_time.substring(0, 5) %> - <%= firstMatch.end_time.substring(0, 5) %>
+                                            </div>
+                                        <% } %>
+                                    </td>
+                                    <% weekDays.forEach(day => { %>
+                                        <td>
+                                            <% 
+                                                const slot = schedule.find(s => s.day_of_week === day && s.period === period);
+                                                if (slot) {
+                                            %>
+                                                <div class="schedule-slot shadow-xs">
+                                                    <div>
+                                                        <div class="slot-subtitle"><%= slot.class_name %></div>
+                                                        <div class="slot-title"><%= slot.course_name %></div>
                                                     </div>
-                                                    <div class="text-primary smaller fw-bold"><%= p.class_name %></div>
+                                                    <div class="slot-footer">
+                                                        <span><i class="fas fa-door-open me-1"></i><%= slot.room || 'TBD' %></span>
+                                                        <span><%= slot.course_code || '' %></span>
+                                                    </div>
                                                 </div>
-                                                <code class="text-secondary smaller"><%= p.course_code %></code>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div class="text-secondary small">
-                                                    <i class="fas fa-clock me-1 opacity-50"></i>
-                                                    <%= p.start_time.substring(0, 5) %> - <%= p.end_time.substring(0, 5) %>
+                                            <% } else { %>
+                                                <div class="empty-slot">
+                                                    <i class="fas fa-plus fa-2x"></i>
                                                 </div>
-                                                <div class="text-secondary small">
-                                                    <i class="fas fa-map-marker-alt me-1 opacity-50"></i>
-                                                    <%= p.room || 'TBD' %>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <% }) %>
-                                <% } else { %>
-                                    <div class="text-center py-4 text-secondary opacity-50 small">
-                                        No sessions scheduled
-                                    </div>
-                                <% } %>
-                            </div>
-                        </div>
-                    </div>
-                <% }) %>
+                                            <% } %>
+                                        </td>
+                                    <% }); %>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mobile Hint -->
+            <div class="d-lg-none text-center p-3 text-secondary small fw-bold">
+                <i class="fas fa-arrows-alt-h me-2"></i> Scroll horizontally to view full timetable
             </div>
         </main>
     </div>

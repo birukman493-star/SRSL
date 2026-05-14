@@ -3,32 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-    
+    <title><%= title %> - Abdigudina</title>
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="/css/all.min.css">
     <!-- Google Fonts -->
     <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        body { background: #f8fafc; color: #0f172a; }
+        .main-panel { background: #f8fafc; }
+        .premium-panel {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-sm);
+        }
+        .registration-card {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        .registration-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+        }
+    </style>
 </head>
-<body>
+<body class="dashboard-body">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-        
-        <!-- Main Content -->
+
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="premium-panel mb-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
-                        <h1 class="dashboard-title">Course Registration</h1>
-                        <p class="text-secondary m-0">Browse and enroll in available academic courses</p>
+                        <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Course Registration</h1>
+                        <p class="text-secondary m-0 fw-medium">Browse and enroll in available academic courses</p>
                     </div>
                     <div class="d-flex align-items-center gap-3">
-                        <div class="text-end">
-                            <div class="text-secondary small">Status</div>
+                        <div class="text-end d-none d-sm-block">
+                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Enrollment Status</div>
                             <div class="fw-bold text-<%= registrationStatus === 'registered' ? 'success' : registrationStatus === 'pending' ? 'warning' : 'info' %>">
                                 <%= registrationStatus.replace('_', ' ').toUpperCase() %>
                             </div>
@@ -36,12 +61,12 @@
                         <% if (registrationStatus === 'not_started' || registrationStatus === 'pending') { %>
                             <div class="d-flex gap-2">
                                 <form action="/student/registration/assisted" method="POST" class="m-0" onsubmit="return confirm('This will automatically register you for all required active courses. Continue?')">
-                                    <button type="submit" class="btn btn-hero btn-success px-4 py-2 fw-bold text-dark border-0">
-                                        <i class="fas fa-magic me-2"></i> Assisted Auto-Register
+                                    <button type="submit" class="btn btn-success px-4 py-2 fw-bold text-white border-0 shadow-sm rounded-pill">
+                                        <i class="fas fa-magic me-2"></i> Auto-Register
                                     </button>
                                 </form>
                                 <form action="/student/registration/submit" method="POST" class="m-0" onsubmit="return confirm('Submit your manual enrollment selections to the administration?')">
-                                    <button type="submit" class="btn btn-hero btn-primary px-4 py-2 fw-bold border-0">
+                                    <button type="submit" class="btn btn-primary px-4 py-2 fw-bold border-0 shadow-sm rounded-pill">
                                         <i class="fas fa-paper-plane me-2"></i> Submit Final
                                     </button>
                                 </form>
@@ -53,13 +78,13 @@
 
             <!-- Alerts -->
             <% if (typeof success !== 'undefined' && success) { %>
-            <div class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3 alert-dismissible fade show" role="alert">
+            <div class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-4 alert-dismissible fade show fw-bold" role="alert">
                 <i class="fas fa-check-circle me-2"></i> <%= success %>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
             <% } %>
             <% if (typeof error !== 'undefined' && error) { %>
-            <div class="alert alert-danger mb-4 rounded-4 border-0 bg-danger bg-opacity-10 text-danger p-3 alert-dismissible fade show" role="alert">
+            <div class="alert alert-danger mb-4 rounded-4 border-0 bg-danger bg-opacity-10 text-danger p-4 alert-dismissible fade show fw-bold" role="alert">
                 <i class="fas fa-exclamation-circle me-2"></i> <%= error %>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -67,14 +92,12 @@
 
             <!-- Course Selection -->
             <% if (registrationStatus === 'not_started') { %>
-                <div class="col-12">
-                    <div class="glass-panel text-center py-5 d-flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
-                        <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
-                            <i class="fas fa-lock fa-3x"></i>
-                        </div>
-                        <h3 class="fw-bold text-light mb-2">Registration is Closed</h3>
-                        <p class="text-secondary max-w-md mx-auto">The administration has not currently opened course enrollment for the upcoming semester. Please wait for an official announcement.</p>
+                <div class="premium-panel text-center py-5 d-flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
+                    <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 100px; height: 100px;">
+                        <i class="fas fa-lock fa-3x"></i>
                     </div>
+                    <h3 class="fw-bold text-dark mb-2">Registration is Closed</h3>
+                    <p class="text-secondary fw-medium max-w-md mx-auto">The administration has not currently opened course enrollment for the upcoming semester. Please wait for an official announcement.</p>
                 </div>
             <% } else { %>
                 <div class="row g-4">
@@ -86,44 +109,44 @@
                                 const prereqs = allPrereqs.filter(p => p.course_id === course.id);
                             %>
                             <div class="col-md-6 col-lg-4">
-                                <div class="glass-panel h-100 d-flex flex-column">
-                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="registration-card">
+                                    <div class="d-flex justify-content-between align-items-start mb-4">
                                         <div>
-                                            <h3 class="h5 fw-bold text-light mb-1"><%= course.course_name %></h3>
-                                            <code class="text-primary small"><%= course.course_code %></code>
+                                            <h3 class="h5 fw-bold text-dark mb-1"><%= course.course_name %></h3>
+                                            <span class="badge bg-primary bg-opacity-10 text-primary fw-bold" style="font-size: 0.7rem;"><%= course.course_code %></span>
                                         </div>
-                                        <span class="badge rounded-pill px-3 py-1 
+                                        <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase
                                             <%= status === 'enrolled' ? 'bg-success bg-opacity-10 text-success' : 
                                                status === 'pending' ? 'bg-warning bg-opacity-10 text-warning' : 
                                                status === 'waitlisted' ? 'bg-info bg-opacity-10 text-info' : 
                                                status === 'dropped' ? 'bg-danger bg-opacity-10 text-danger' :
-                                               'bg-secondary bg-opacity-10 text-secondary' %> border border-opacity-25">
-                                            <%= status.charAt(0).toUpperCase() + status.slice(1) %>
+                                               'bg-secondary bg-opacity-10 text-secondary' %>" style="font-size: 0.65rem;">
+                                            <%= status %>
                                         </span>
                                     </div>
                                     
-                                    <p class="text-secondary small mb-3 flex-grow-1">
-                                        <%= course.description || 'No description available for this curriculum unit.' %>
+                                    <p class="text-secondary small mb-4 flex-grow-1 fw-medium" style="line-height: 1.6;">
+                                        <%= course.description || 'Comprehensive curriculum unit designed for advanced academic achievement.' %>
                                     </p>
 
-                                    <div class="mb-3">
-                                        <div class="d-flex align-items-center gap-2 mb-2 text-secondary small">
-                                            <i class="fas fa-chalkboard-teacher text-primary opacity-50"></i>
+                                    <div class="mb-4">
+                                        <div class="d-flex align-items-center gap-2 mb-2 text-dark small fw-bold">
+                                            <i class="fas fa-chalkboard-teacher text-primary"></i>
                                             <span><%= course.teacher_fname ? course.teacher_fname + ' ' + course.teacher_lname : 'Assigned Instructor' %></span>
                                         </div>
-                                        <div class="d-flex align-items-center gap-2 text-secondary small">
-                                            <i class="fas fa-star text-warning opacity-50"></i>
+                                        <div class="d-flex align-items-center gap-2 text-dark small fw-bold">
+                                            <i class="fas fa-star text-warning"></i>
                                             <span><%= course.credits %> Credits</span>
                                         </div>
                                     </div>
 
                                     <!-- Prerequisites -->
                                     <% if (prereqs.length > 0) { %>
-                                        <div class="mb-3 pt-2 border-top border-secondary border-opacity-25">
-                                            <label class="text-secondary smaller fw-bold mb-1 d-block uppercase">Prerequisites:</label>
-                                            <div class="d-flex flex-wrap gap-1">
+                                        <div class="mb-4 pt-3 border-top">
+                                            <label class="text-secondary small fw-800 mb-2 d-block text-uppercase" style="letter-spacing: 0.5px; font-size: 0.6rem;">Requirements:</label>
+                                            <div class="d-flex flex-wrap gap-2">
                                                 <% prereqs.forEach(p => { %>
-                                                    <span class="badge bg-dark bg-opacity-25 text-secondary border border-secondary border-opacity-10 small fw-normal">
+                                                    <span class="badge bg-light text-dark fw-bold border" style="font-size: 0.65rem;">
                                                         <%= p.prereq_name %>
                                                     </span>
                                                 <% }) %>
@@ -133,25 +156,25 @@
 
                                     <div class="mt-auto d-grid">
                                         <% if (registrationStatus === 'registered' || registrationStatus === 'submitted') { %>
-                                            <button class="btn btn-hero btn-secondary w-100 py-2 disabled opacity-50 border-0">
-                                                Locked
+                                            <button class="btn btn-light w-100 py-3 disabled opacity-50 fw-bold rounded-3">
+                                                <i class="fas fa-lock me-2"></i> Locked
                                             </button>
                                         <% } else { %>
                                             <% if (status === 'unregistered' || status === 'dropped') { %>
-                                                <form action="/student/courses/enroll" method="POST">
+                                                <form action="/student/courses/enroll" method="POST" class="d-grid">
                                                     <input type="hidden" name="course_id" value="<%= course.id %>">
-                                                    <button type="submit" class="btn btn-hero btn-primary w-100 py-2">
+                                                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow-sm">
                                                         Enroll Now
                                                     </button>
                                                 </form>
                                             <% } else if (status === 'enrolled' || status === 'pending') { %>
-                                                <form action="/student/courses/drop/<%= enrollment.id %>" method="POST" onsubmit="return confirm('Are you sure you want to drop this course?')">
-                                                    <button type="submit" class="btn btn-hero btn-secondary bg-danger bg-opacity-10 text-danger w-100 py-2 border-0">
+                                                <form action="/student/courses/drop/<%= enrollment.id %>" method="POST" onsubmit="return confirm('Are you sure you want to drop this course?')" class="d-grid">
+                                                    <button type="submit" class="btn btn-outline-danger w-100 py-3 fw-bold rounded-3">
                                                         Drop Course
                                                     </button>
                                                 </form>
                                             <% } else { %>
-                                                <button class="btn btn-hero btn-secondary w-100 py-2 disabled opacity-50 border-0">
+                                                <button class="btn btn-light w-100 py-3 disabled fw-bold rounded-3">
                                                     Registered
                                                 </button>
                                             <% } %>
@@ -162,10 +185,10 @@
                         <% } %>
                     <% } else { %>
                         <div class="col-12">
-                            <div class="glass-panel text-center py-5">
-                                <i class="fas fa-book-open fa-3x text-secondary mb-3 opacity-25"></i>
-                                <h4 class="text-light">No Courses Available</h4>
-                                <p class="text-secondary">The curriculum is currently not open for registration.</p>
+                            <div class="premium-panel text-center py-5">
+                                <i class="fas fa-book-open fa-4x text-secondary mb-3 opacity-30"></i>
+                                <h4 class="text-dark fw-bold">No Courses Available</h4>
+                                <p class="text-secondary fw-medium">The curriculum is currently not open for registration.</p>
                             </div>
                         </div>
                     <% } %>
@@ -174,7 +197,6 @@
         </main>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
 </body>

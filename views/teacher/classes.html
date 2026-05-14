@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - SRSL Faculty</title>
+    <title><%= title %> - Abdigudina Faculty</title>
     
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
@@ -14,21 +14,23 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
 </head>
-<body class="dashboard-body">
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
+            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title"><%= title %></h1>
-                        <p class="text-secondary m-0">Manage your active courses and student performance</p>
+                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                            Academic Portfolio
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Overview and management of your assigned courses</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10">
-                            <i class="fas fa-calendar-alt me-1"></i> Academic Year 2023-2024
+                    <div class="d-none d-md-block">
+                         <span class="badge rounded-pill px-4 py-2 fw-bold text-uppercase shadow-sm" style="background: rgba(16, 185, 129, 0.08); color: #10b981; font-size: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.1); letter-spacing: 1px;">
+                            <i class="fas fa-calendar-check me-1"></i> Term: 2023-2024
                         </span>
                     </div>
                 </div>
@@ -38,53 +40,53 @@
                 <% if (classes && classes.length > 0) { %>
                     <% classes.forEach(classItem => { %>
                         <div class="col-md-6 col-lg-4">
-                            <div class="glass-panel h-100 p-4 hover-lift transition">
-                                <span class="badge bg-primary bg-opacity-10 text-primary mb-3 px-3 py-1 rounded-pill small" style="letter-spacing: 1px;">
-                                    GRADE <%= classItem.grade %> • <%= classItem.section %>
-                                </span>
-                                <h3 class="h4 fw-bold text-light mb-4"><%= classItem.name %></h3>
+                            <div class="h-100 p-4 transition hover-up shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05);">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <span class="badge px-3 py-2 rounded-pill fw-bold text-uppercase" style="background: rgba(37,99,235,0.08); color: var(--primary-color); font-size: 0.65rem; letter-spacing: 1px;">
+                                        GRADE <%= classItem.grade %> • <%= classItem.section %>
+                                    </span>
+                                    <div class="text-secondary small fw-bold">ID: #<%= classItem.id %></div>
+                                </div>
                                 
-                                <div class="glass-card p-3 mb-4">
-                                    <div class="d-flex flex-column gap-3">
-                                        <div class="d-flex align-items-center gap-3 text-secondary small">
-                                            <i class="fas fa-fingerprint text-primary" style="width: 20px;"></i>
-                                            <span>Class ID: #<%= classItem.id %></span>
+                                <h3 class="h5 fw-800 mb-4" style="color: var(--dark-text); min-height: 2.5rem; display: flex; align-items: center;"><%= classItem.name %></h3>
+                                
+                                <div class="p-3 mb-4 rounded-4" style="background: #f8fafc; border: 1px solid rgba(0,0,0,0.02);">
+                                    <div class="d-flex flex-column gap-2">
+                                        <div class="d-flex align-items-center gap-3 text-secondary smaller fw-bold">
+                                            <i class="fas fa-clock text-primary opacity-50" style="width: 16px;"></i>
+                                            <span>Full-Time Academic Schedule</span>
                                         </div>
-                                        <div class="d-flex align-items-center gap-3 text-secondary small">
-                                            <i class="fas fa-clock text-warning" style="width: 20px;"></i>
-                                            <span>Schedule: Mon, Wed, Fri</span>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-3 text-secondary small">
-                                            <i class="fas fa-map-marker-alt text-info" style="width: 20px;"></i>
-                                            <span>Room: Block B, Room 402</span>
+                                        <div class="d-flex align-items-center gap-3 text-secondary smaller fw-bold">
+                                            <i class="fas fa-map-marker-alt text-primary opacity-50" style="width: 16px;"></i>
+                                            <span>Institutional Classroom Access</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="row g-2 mb-4">
                                     <div class="col-6">
-                                        <div class="bg-white bg-opacity-5 rounded-4 p-3 text-center border border-white border-opacity-5">
-                                            <div class="h4 fw-bold text-light m-0"><%= classItem.student_count || 0 %></div>
-                                            <div class="text-secondary small" style="font-size: 0.65rem; text-transform: uppercase;">Students</div>
+                                        <div class="rounded-4 p-3 text-center border" style="background: white;">
+                                            <div class="h4 fw-bold m-0" style="color: var(--dark-text)"><%= classItem.student_count || 0 %></div>
+                                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Students</div>
                                         </div>
                                     </div>
                                     <div class="col-6">
-                                        <div class="bg-white bg-opacity-5 rounded-4 p-3 text-center border border-white border-opacity-5">
-                                            <div class="h4 fw-bold text-success m-0">94%</div>
-                                            <div class="text-secondary small" style="font-size: 0.65rem; text-transform: uppercase;">Attendance</div>
+                                        <div class="rounded-4 p-3 text-center border" style="background: white;">
+                                            <div class="h4 fw-bold text-success m-0">Live</div>
+                                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Status</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="d-grid gap-2">
-                                    <a href="/teacher/attendance/<%= classItem.id %>/<%= new Date().toISOString().split('T')[0] %>" class="btn btn-hero btn-primary py-2">
-                                        <i class="fas fa-user-check me-2"></i>Take Attendance
+                                    <a href="/teacher/attendance/<%= classItem.id %>/<%= new Date().toISOString().split('T')[0] %>" class="btn btn-primary py-2 rounded-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                        <i class="fas fa-user-check small"></i> Take Attendance
                                     </a>
-                                    <a href="/teacher/grades/<%= classItem.id %>" class="btn btn-hero btn-secondary py-2">
-                                        <i class="fas fa-award me-2"></i>Manage Grades
+                                    <a href="/teacher/grades/<%= classItem.id %>" class="btn btn-light py-2 rounded-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 border-0" style="color: var(--dark-text)">
+                                        <i class="fas fa-award small"></i> Result Management
                                     </a>
-                                    <a href="/teacher/classes/schedule/<%= classItem.id %>" class="btn btn-hero btn-info py-2 text-white">
-                                        <i class="fas fa-calendar-alt me-2"></i>Manage Timetable
+                                    <a href="/teacher/classes/schedule/<%= classItem.id %>" class="btn py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2" style="background: rgba(245,158,11,0.08); color: #d97706; border: 1px solid rgba(245,158,11,0.2);">
+                                        <i class="fas fa-calendar-alt small"></i> View Timetable
                                     </a>
                                 </div>
                             </div>
@@ -92,13 +94,13 @@
                     <% }); %>
                 <% } else { %>
                     <div class="col-12">
-                        <div class="glass-panel p-5 text-center">
-                            <div class="opacity-25 mb-4">
-                                <i class="fas fa-chalkboard-teacher fa-5x text-secondary"></i>
+                        <div class="p-5 text-center shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05);">
+                            <div class="text-secondary opacity-20 mb-4">
+                                <i class="fas fa-chalkboard-teacher fa-5x"></i>
                             </div>
-                            <h3 class="text-light fw-bold">No Classes Found</h3>
-                            <p class="text-secondary">You are not currently assigned to any classes. Please contact the administrator.</p>
-                            <a href="/teacher/schedule" class="btn btn-hero btn-primary px-5 mt-3">View Full Schedule</a>
+                            <h3 class="fw-bold" style="color: var(--dark-text)">No Classes Assigned</h3>
+                            <p class="text-secondary fw-medium">You are not currently assigned as a primary teacher to any classes.</p>
+                            <a href="/teacher/schedule" class="btn btn-primary px-5 mt-3 rounded-pill fw-bold shadow-sm">View Full Schedule</a>
                         </div>
                     </div>
                 <% } %>
@@ -107,5 +109,9 @@
     </div>
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
+    <style>
+        .hover-up { transition: all 0.3s ease; }
+        .hover-up:hover { transform: translateY(-8px); border-color: var(--primary-color) !important; }
+    </style>
 </body>
 </html>

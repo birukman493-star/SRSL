@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grade Management - SRSL Faculty</title>
-    
+    <title>Result Management - Abdigudina Faculty</title>
+
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -14,154 +15,289 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
-        .grade-component::-webkit-inner-spin-button, 
-        .grade-component::-webkit-outer-spin-button { 
-            -webkit-appearance: none; margin: 0; 
+        :root {
+            --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.05);
         }
-        .grade-component { -moz-appearance: textfield; }
-        .glass-input {
-            background: rgba(255, 255, 255, 0.05) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+        .grade-component::-webkit-inner-spin-button,
+        .grade-component::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .grade-component {
+            -moz-appearance: textfield;
+        }
+
+        .premium-input {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            color: var(--dark-text) !important;
             transition: all 0.3s ease;
         }
-        .glass-input:focus {
-            background: rgba(255, 255, 255, 0.1) !important;
+
+        .premium-input:focus {
+            background: white !important;
             border-color: var(--primary-color) !important;
-            box-shadow: 0 0 15px rgba(0, 200, 255, 0.2);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .grade-card {
+            background: white;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow-premium);
+        }
+
+        .rank-badge {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
         }
     </style>
 </head>
-<body class="dashboard-body">
+
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
-        <main class="main-panel w-100 p-4">
-            <!-- Header -->
-            <div class="dashboard-header mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="dashboard-title">Academic Records</h1>
-                        <p class="text-secondary m-0">Record and manage student performance for the current assessment</p>
-                    </div>
-                    <div class="d-flex gap-3">
-                         <button class="btn btn-hero btn-primary px-4 py-2 shadow-lg" id="saveGrades">
-                            <i class="fas fa-paper-plane me-2"></i> Submit for Approval
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Configuration Section -->
-            <div class="glass-panel p-4 mb-4">
-                <div class="row g-4 align-items-end">
-                    <div class="col-md-5">
-                        <label class="form-label text-secondary small fw-bold text-uppercase">Assessment Title</label>
-                        <div class="position-relative">
-                            <i class="fas fa-edit position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary opacity-50"></i>
-                            <input type="text" class="form-control glass-input text-light py-2 ps-5 pe-3" id="assessmentTitle" value="Semester Final Grades" placeholder="e.g. Semester 1 Final">
+            <main class="main-panel w-100 p-4">
+                <!-- Header -->
+                <div class="dashboard-header mb-4 shadow-sm"
+                    style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="dashboard-title"
+                                style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px;">
+                                Result Management
+                            </h1>
+                            <p class="text-secondary m-0" style="font-weight: 500; font-size: 1.1rem;">Academic
+                                performance analysis and grading suite</p>
                         </div>
-                        <input type="hidden" id="assessmentType" value="final-exam">
-                        <input type="hidden" id="maxPoints" value="100">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label text-secondary small fw-bold text-uppercase">Session Date</label>
-                        <div class="position-relative">
-                            <i class="fas fa-calendar-day position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary opacity-50"></i>
-                            <input type="date" class="form-control glass-input text-light py-2 ps-5 pe-3" id="gradeDate" value="<%= new Date().toISOString().split('T')[0] %>">
+                        <div class="d-flex gap-3">
+                            <button class="btn btn-light px-4 py-2 rounded-pill fw-bold border-0 shadow-sm"
+                                onclick="calculateRanks()" style="background: #f8fafc; color: var(--dark-text);">
+                                <i class="fas fa-calculator me-2 text-primary"></i> Auto-Rank Students
+                            </button>
+                            <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" id="saveGrades">
+                                <i class="fas fa-cloud-upload-alt me-2"></i> Publish Results
+                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Grades Table -->
-            <div class="glass-panel p-4">
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0" style="background: transparent;">
-                        <thead>
-                            <tr>
-                                <th class="border-0 text-secondary small py-3" style="width: 20%;">Student Name</th>
-                                <th class="border-0 text-secondary small py-3 text-center" style="width: 12%;">Mid (30)</th>
-                                <th class="border-0 text-secondary small py-3 text-center" style="width: 12%;">Test (10)</th>
-                                <th class="border-0 text-secondary small py-3 text-center" style="width: 12%;">Att (10)</th>
-                                <th class="border-0 text-secondary small py-3 text-center" style="width: 12%;">Final (50)</th>
-                                <th class="border-0 text-secondary small py-3 text-center" style="width: 12%;">Total</th>
-                                <th class="border-0 text-secondary small py-3" style="width: 20%;">Teacher Comments</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% grades.forEach(student => { %>
-                            <tr class="transition grade-row" data-student-id="<%= student.student_pk %>">
-                                <td class="border-0 py-3">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="sidebar-user-avatar" style="width: 45px; height: 45px; font-size: 1rem; background: var(--gradient-1); border:none; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
-                                            <%= (student.first_name ? student.first_name.charAt(0).toUpperCase() : '?') %>
-                                        </div>
-                                        <div>
-                                            <div class="fw-bold text-light"><%= student.first_name || 'Unknown' %> <%= student.last_name || '' %></div>
-                                            <div class="text-secondary small" style="font-size: 0.7rem;">ID: STU-<%= student.student_id %></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="border-0 py-3 text-center">
-                                    <input type="number" step="0.01" max="30" min="0" class="form-control glass-input text-light text-center py-2 px-2 mx-auto grade-component" 
-                                           name="mid_<%= student.student_pk %>" 
-                                           value="<%= student.mid_score || 0 %>" 
-                                           style="width: 80px; font-weight: 700; border-radius: 10px;">
-                                </td>
-                                <td class="border-0 py-3 text-center">
-                                    <input type="number" step="0.01" max="10" min="0" class="form-control glass-input text-light text-center py-2 px-2 mx-auto grade-component" 
-                                           name="test_<%= student.student_pk %>" 
-                                           value="<%= student.test_score || 0 %>" 
-                                           style="width: 80px; font-weight: 700; border-radius: 10px;">
-                                </td>
-                                <td class="border-0 py-3 text-center">
-                                    <input type="number" step="0.01" max="10" min="0" class="form-control glass-input text-light text-center py-2 px-2 mx-auto grade-component" 
-                                           name="att_<%= student.student_pk %>" 
-                                           value="<%= student.attendance_score || 0 %>" 
-                                           style="width: 80px; font-weight: 700; border-radius: 10px;">
-                                </td>
-                                <td class="border-0 py-3 text-center">
-                                    <input type="number" step="0.01" max="50" min="0" class="form-control glass-input text-light text-center py-2 px-2 mx-auto grade-component" 
-                                           name="final_<%= student.student_pk %>" 
-                                           value="<%= student.final_score || 0 %>" 
-                                           style="width: 80px; font-weight: 700; border-radius: 10px;">
-                                </td>
-                                <td class="border-0 py-3 text-center">
-                                    <div class="badge bg-dark bg-opacity-30 p-2 rounded-3 border border-white border-opacity-5">
-                                        <span class="text-secondary fw-bold total-display" style="font-size: 0.95rem;"><%= student.score || 0 %> / 100</span>
-                                    </div>
-                                </td>
-                                <td class="border-0 py-3">
-                                    <div class="position-relative">
-                                        <i class="fas fa-comment shadow-sm position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary opacity-25"></i>
-                                        <input type="text" class="form-control glass-input text-light py-2 ps-5 pe-3 small" 
-                                               name="notes_<%= student.student_pk %>" 
-                                               value="<%= student.notes || '' %>" 
-                                               placeholder="Student feedback..." 
-                                               style="font-size: 0.85rem; border-radius: 12px;">
-                                    </div>
-                                </td>
-                            </tr>
-                            <% }); %>
-                        </tbody>
-                    </table>
+                <!-- Configuration Section -->
+                <div class="grade-card p-4 mb-4">
+                    <div class="row g-4 align-items-end">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary small fw-800 text-uppercase mb-2"
+                                style="letter-spacing: 1px;">Assessment / Term Title</label>
+                            <div class="position-relative">
+                                <i
+                                    class="fas fa-edit position-absolute top-50 start-0 translate-middle-y ms-3 text-primary opacity-50"></i>
+                                <input type="text" class="form-control premium-input py-3 ps-5 pe-3"
+                                    id="assessmentTitle" value="Semester Final Results"
+                                    placeholder="e.g. 2024 Semester 1 Final">
+                            </div>
+                            <input type="hidden" id="assessmentType" value="final-exam">
+                            <input type="hidden" id="maxPoints" value="100">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-secondary small fw-800 text-uppercase mb-2"
+                                style="letter-spacing: 1px;">Grading Date</label>
+                            <div class="position-relative">
+                                <i
+                                    class="fas fa-calendar-alt position-absolute top-50 start-0 translate-middle-y ms-3 text-primary opacity-50"></i>
+                                <input type="date" class="form-control premium-input py-3 ps-5 pe-3" id="gradeDate"
+                                    value="<%= new Date().toISOString().split('T')[0] %>">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div
+                                class="p-3 bg-primary bg-opacity-10 rounded-3 border border-primary border-opacity-10 text-center">
+                                <div class="small fw-bold text-primary text-uppercase mb-1" style="font-size: 0.65rem;">
+                                    Class Reference</div>
+                                <div class="fw-800 text-dark">ID: #<%= classId %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </main>
+
+                <!-- Results Table -->
+                <div class="grade-card p-0 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr class="bg-light text-secondary small fw-800"
+                                    style="text-transform: uppercase; letter-spacing: 1px;">
+                                    <th class="px-4 py-3 border-0">Student Information</th>
+                                    <th class="py-3 border-0 text-center" style="width: 80px;">Mid (30)</th>
+                                    <th class="py-3 border-0 text-center" style="width: 80px;">Test (10)</th>
+                                    <th class="py-3 border-0 text-center" style="width: 80px;">Att (10)</th>
+                                    <th class="py-3 border-0 text-center" style="width: 80px;">Final (50)</th>
+                                    <th class="py-3 border-0 text-center" style="width: 100px;">Total (%)</th>
+                                    <th class="py-3 border-0 text-center" style="width: 80px;">Rank</th>
+                                    <th class="py-3 border-0 text-center" style="width: 100px;">Status</th>
+                                    <th class="px-4 py-3 border-0">Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% grades.forEach(student=> { %>
+                                    <tr class="transition grade-row" data-student-id="<%= student.student_pk %>">
+                                        <td class="px-4 py-3 border-0">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="avatar-initials bg-primary text-white"
+                                                    style="width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+                                                    <%= (student.first_name ? student.first_name.charAt(0).toUpperCase()
+                                                        : '?' ) %>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold text-dark">
+                                                        <%= student.first_name || 'Unknown' %>
+                                                            <%= student.last_name || '' %>
+                                                    </div>
+                                                    <div class="text-secondary smaller fw-bold">Reg: <%=
+                                                            student.student_id %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 border-0 text-center">
+                                            <input type="number" step="0.01" max="30" min="0"
+                                                class="form-control premium-input text-center py-2 px-1 mx-auto grade-component"
+                                                name="mid_<%= student.student_pk %>"
+                                                value="<%= student.mid_score || 0 %>"
+                                                style="width: 65px; border-radius: 8px;">
+                                        </td>
+                                        <td class="py-3 border-0 text-center">
+                                            <input type="number" step="0.01" max="10" min="0"
+                                                class="form-control premium-input text-center py-2 px-1 mx-auto grade-component"
+                                                name="test_<%= student.student_pk %>"
+                                                value="<%= student.test_score || 0 %>"
+                                                style="width: 65px; border-radius: 8px;">
+                                        </td>
+                                        <td class="py-3 border-0 text-center">
+                                            <input type="number" step="0.01" max="10" min="0"
+                                                class="form-control premium-input text-center py-2 px-1 mx-auto grade-component"
+                                                name="att_<%= student.student_pk %>"
+                                                value="<%= student.attendance_score || 0 %>"
+                                                style="width: 65px; border-radius: 8px;">
+                                        </td>
+                                        <td class="py-3 border-0 text-center">
+                                            <input type="number" step="0.01" max="50" min="0"
+                                                class="form-control premium-input text-center py-2 px-1 mx-auto grade-component"
+                                                name="final_<%= student.student_pk %>"
+                                                value="<%= student.final_score || 0 %>"
+                                                style="width: 65px; border-radius: 8px;">
+                                        </td>
+                                        <td class="py-3 border-0 text-center">
+                                            <div class="fw-800 text-primary total-display" style="font-size: 1.1rem;">
+                                                <%= student.score || 0 %>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 border-0 text-center">
+                                            <div class="rank-badge bg-light text-dark mx-auto border"
+                                                id="rank_<%= student.student_pk %>">
+                                                <%= student.academic_rank || '-' %>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 border-0 text-center">
+                                            <span
+                                                class="status-pill <%= (student.score || 0) >= 50 ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger' %>"
+                                                id="status_<%= student.student_pk %>">
+                                                <%= student.academic_status || ((student.score || 0)>= 50 ? 'PASS' :
+                                                    'FAIL') %>
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 border-0">
+                                            <input type="text" class="form-control premium-input py-2 small w-100"
+                                                name="notes_<%= student.student_pk %>"
+                                                value="<%= student.notes || '' %>" placeholder="Remarks..."
+                                                style="font-size: 0.8rem; border-radius: 8px;">
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
     </div>
 
     <!-- Scripts -->
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
     <script>
+        function calculateRanks() {
+            const rows = Array.from(document.querySelectorAll('tbody .grade-row'));
+            const scores = rows.map(row => {
+                const studentId = row.dataset.studentId;
+                const mid = parseFloat(row.querySelector(`input[name="mid_${studentId}"]`).value) || 0;
+                const test = parseFloat(row.querySelector(`input[name="test_${studentId}"]`).value) || 0;
+                const att = parseFloat(row.querySelector(`input[name="att_${studentId}"]`).value) || 0;
+                const finalSc = parseFloat(row.querySelector(`input[name="final_${studentId}"]`).value) || 0;
+                return { id: studentId, total: mid + test + att + finalSc };
+            });
+
+            // Sort by total descending
+            scores.sort((a, b) => b.total - a.total);
+
+            // Assign ranks
+            scores.forEach((item, index) => {
+                const rankDisplay = document.getElementById(`rank_${item.id}`);
+                rankDisplay.innerText = index + 1;
+                rankDisplay.classList.remove('bg-light', 'text-dark', 'bg-warning', 'text-white');
+                if (index === 0) {
+                    rankDisplay.style.background = 'gold';
+                    rankDisplay.style.color = '#000';
+                } else if (index === 1) {
+                    rankDisplay.style.background = 'silver';
+                    rankDisplay.style.color = '#000';
+                } else if (index === 2) {
+                    rankDisplay.style.background = '#cd7f32'; // Bronze
+                    rankDisplay.style.color = '#fff';
+                } else {
+                    rankDisplay.classList.add('bg-light', 'text-dark');
+                    rankDisplay.style.background = '';
+                    rankDisplay.style.color = '';
+                }
+
+                // Update Status
+                const statusPill = document.getElementById(`status_${item.id}`);
+                const isPass = item.total >= 50;
+                statusPill.innerText = isPass ? 'PASS' : 'FAIL';
+                statusPill.className = `status-pill ${isPass ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`;
+            });
+        }
+
         document.getElementById('saveGrades').addEventListener('click', async () => {
             const classId = '<%= classId %>';
             const assessmentType = document.getElementById('assessmentType').value;
             const title = document.getElementById('assessmentTitle').value;
             const maxPoints = document.getElementById('maxPoints').value;
             const gradeDate = document.getElementById('gradeDate').value;
-            
+
             if (!title) return alert('Please enter assessment title');
+
+            // Recalculate ranks before saving to ensure consistency
+            calculateRanks();
 
             const studentGrades = {};
             const rows = document.querySelectorAll('tbody .grade-row');
@@ -172,7 +308,9 @@
                 const att = parseFloat(row.querySelector(`input[name="att_${studentId}"]`).value) || 0;
                 const final_score = parseFloat(row.querySelector(`input[name="final_${studentId}"]`).value) || 0;
                 const score = mid + test + att + final_score;
-                
+                const rank = parseInt(document.getElementById(`rank_${studentId}`).innerText) || null;
+                const status = document.getElementById(`status_${studentId}`).innerText;
+
                 const notesInput = row.querySelector(`input[name="notes_${studentId}"]`);
                 studentGrades[studentId] = {
                     mid_score: mid,
@@ -180,7 +318,9 @@
                     attendance_score: att,
                     final_score: final_score,
                     score: score,
-                    notes: notesInput.value
+                    notes: notesInput.value,
+                    academic_rank: rank,
+                    academic_status: status
                 };
             });
 
@@ -196,10 +336,10 @@
                     body: JSON.stringify({ classId, assessmentType, title, maxPoints, gradeWeight: 1.0, gradeDate, grades: studentGrades })
                 });
                 const result = await response.json();
-                
+
                 if (response.ok) {
                     submitBtn.classList.replace('btn-primary', 'btn-success');
-                    submitBtn.innerHTML = '<i class="fas fa-check me-2"></i> Grades Submitted';
+                    submitBtn.innerHTML = '<i class="fas fa-check me-2"></i> Results Published';
                     setTimeout(() => {
                         submitBtn.classList.replace('btn-success', 'btn-primary');
                         submitBtn.innerHTML = originalHtml;
@@ -211,7 +351,7 @@
                     submitBtn.disabled = false;
                 }
             } catch (err) {
-                alert('Connection error while saving grades');
+                alert('Connection error while saving results');
                 submitBtn.innerHTML = originalHtml;
                 submitBtn.disabled = false;
             }
@@ -226,16 +366,18 @@
                 const test = parseFloat(row.querySelector(`input[name="test_${studentId}"]`).value) || 0;
                 const att = parseFloat(row.querySelector(`input[name="att_${studentId}"]`).value) || 0;
                 const finalSc = parseFloat(row.querySelector(`input[name="final_${studentId}"]`).value) || 0;
-                
+
                 let sum = mid + test + att + finalSc;
-                // color scaling
-                const totalSpan = row.querySelector('.total-display');
-                totalSpan.innerText = sum.toFixed(2) + ' / 100';
-                if(sum >= 80) totalSpan.style.color = '#00b894';
-                else if(sum >= 60) totalSpan.style.color = '#fdcb6e';
-                else totalSpan.style.color = '#d63031';
+                const totalDisplay = row.querySelector('.total-display');
+                totalDisplay.innerText = sum.toFixed(1);
+
+                const statusPill = document.getElementById(`status_${studentId}`);
+                const isPass = sum >= 50;
+                statusPill.innerText = isPass ? 'PASS' : 'FAIL';
+                statusPill.className = `status-pill ${isPass ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger'}`;
             });
         });
     </script>
 </body>
+
 </html>

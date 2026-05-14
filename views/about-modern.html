@@ -1,244 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>About Us - Student Registration System</title>
 
-    <!-- Bootstrap CSS -->
-    <link href="/css/bootstrap.min.css" rel="stylesheet" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Us - Student Registration System</title>
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="/css/all.min.css" />
+  <!-- Bootstrap CSS -->
+  <link href="/css/bootstrap.min.css" rel="stylesheet" />
 
-    <!-- Google Fonts -->
-    <link href="/css/inter-font.css" rel="stylesheet" />
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="/css/all.min.css" />
 
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="/css/brocode-style.css" />
+  <!-- Google Fonts -->
+  <link href="/css/inter-font.css" rel="stylesheet" />
 
-    <style>
-      body {
-        font-family: "Inter", sans-serif;
-      }
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/brocode-style.css" />
 
-      .timeline {
-        position: relative;
-        padding: 2rem 0;
-      }
+  <style>
+    body {
+      font-family: "Inter", sans-serif;
+    }
 
+    .timeline {
+      position: relative;
+      padding: 2rem 0;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--primary-color);
+      transform: translateX(-50%);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 3rem;
+    }
+
+    .timeline-item:nth-child(odd) .timeline-content {
+      margin-right: 50%;
+      padding-right: 2rem;
+      text-align: right;
+    }
+
+    .timeline-item:nth-child(even) .timeline-content {
+      margin-left: 50%;
+      padding-left: 2rem;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 20px;
+      height: 20px;
+      background: var(--primary-color);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      border: 4px solid var(--dark-bg);
+      z-index: 1;
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .team-card {
+      background: var(--dark-secondary);
+      border-radius: 20px;
+      padding: 2rem;
+      text-align: center;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      transition: var(--transition);
+    }
+
+    .team-card:hover {
+      transform: translateY(-10px);
+      box-shadow: var(--shadow-xl);
+      border-color: var(--primary-color);
+    }
+
+    .team-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+      background: var(--gradient-1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 3rem;
+    }
+
+    .mission-card {
+      background: var(--dark-secondary);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
       .timeline::before {
-        content: "";
-        position: absolute;
-        left: 50%;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: var(--primary-color);
-        transform: translateX(-50%);
+        left: 20px;
       }
 
-      .timeline-item {
-        position: relative;
-        margin-bottom: 3rem;
-      }
-
-      .timeline-item:nth-child(odd) .timeline-content {
-        margin-right: 50%;
-        padding-right: 2rem;
-        text-align: right;
-      }
-
-      .timeline-item:nth-child(even) .timeline-content {
-        margin-left: 50%;
-        padding-left: 2rem;
+      .timeline-item .timeline-content {
+        margin-left: 50px !important;
+        margin-right: 0 !important;
+        padding-left: 1rem !important;
+        padding-right: 0 !important;
+        text-align: left !important;
       }
 
       .timeline-dot {
-        position: absolute;
-        left: 50%;
-        top: 0;
-        width: 20px;
-        height: 20px;
-        background: var(--primary-color);
-        border-radius: 50%;
-        transform: translateX(-50%);
-        border: 4px solid var(--dark-bg);
-        z-index: 1;
+        left: 20px;
       }
+    }
 
-      .team-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 2rem;
-        margin-top: 3rem;
-      }
+    .hero-title {
+      font-size: clamp(2rem, 8vw, 4.5rem);
+      font-weight: 800;
+      color: #ffffff !important;
+      text-shadow: 0 2px 15px rgba(0, 0, 0, 0.4);
+      margin-bottom: 1rem;
+    }
 
-      .team-card {
-        background: var(--dark-secondary);
-        border-radius: 20px;
-        padding: 2rem;
-        text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: var(--transition);
-      }
+    .hero-subtitle {
+      font-size: clamp(1rem, 3vw, 1.6rem);
+      color: rgba(255, 255, 255, 0.95) !important;
+      font-weight: 500;
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
+    }
 
-      .team-card:hover {
-        transform: translateY(-10px);
-        box-shadow: var(--shadow-xl);
-        border-color: var(--primary-color);
-      }
+    .hero {
+      min-height: 65vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
+        url('/images/about-hero.jpg') center/cover no-repeat !important;
+      padding: clamp(6rem, 15vw, 16rem) 0 clamp(4rem, 10vw, 12rem);
+      overflow: hidden;
+    }
+  </style>
+</head>
 
-      .team-avatar {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        margin: 0 auto 1rem;
-        background: var(--gradient-1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 3rem;
-      }
-
-      .mission-card {
-        background: var(--dark-secondary);
-        border-radius: 20px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        border-left: 4px solid var(--primary-color);
-      }
-
-      @media (max-width: 768px) {
-        .timeline::before {
-          left: 20px;
-        }
-
-        .timeline-item .timeline-content {
-          margin-left: 50px !important;
-          margin-right: 0 !important;
-          padding-left: 1rem !important;
-          padding-right: 0 !important;
-          text-align: left !important;
-        }
-
-        .timeline-dot {
-          left: 20px;
-        }
-      }
-
-      /* Dark Theme Navbar Override */
-      .navbar {
-        background: rgba(15, 15, 35, 0.95) !important;
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 1rem 0;
-      }
-
-      .navbar-brand {
-        color: var(--primary-color) !important;
-        font-weight: 700;
-        font-size: 1.5rem;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .navbar-brand:hover {
-        color: var(--secondary-color) !important;
-        transform: translateY(-2px);
-      }
-
-      .nav-link {
-        color: var(--gray-text) !important;
-        margin: 0 0.5rem;
-        padding: 0.5rem 1rem !important;
-        border-radius: 25px;
-        transition: var(--transition);
-        position: relative;
-        overflow: hidden;
-      }
-
-      .nav-link::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: var(--gradient-1);
-        transition: var(--transition);
-        z-index: -1;
-      }
-
-      .nav-link:hover::before {
-        left: 0;
-      }
-
-      .nav-link:hover {
-        color: var(--light-text) !important;
-        transform: translateY(-2px);
-      }
-
-      .nav-link.active {
-        color: var(--light-text) !important;
-        background: var(--gradient-1);
-      }
-
-      .navbar-toggler {
-        border-color: var(--primary-color) !important;
-      }
-
-      .navbar-toggler-icon {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%236c5ce7' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container">
-        <a href="/" class="navbar-brand">
-          <i class="fas fa-graduation-cap"></i>
-          SRSL
-        </a>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-              <a href="/" class="nav-link">Home</a>
-            </li>
-            <li class="nav-item">
-              <a href="/about" class="nav-link active">About</a>
-            </li>
-            <li class="nav-item">
-              <a href="/gallery" class="nav-link">Gallery</a>
-            </li>
-            <li class="nav-item">
-              <a href="/contact" class="nav-link">Contact</a>
-            </li>
-            <li class="nav-item">
-              <a href="/auth/login" class="nav-link">Login</a>
-            </li>
-          </ul>
-        </div>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-transparent navbar-dark-mode">
+    <div class="container">
+      <a href="/" class="navbar-brand">
+        <i class="fas fa-graduation-cap"></i>
+        Abdigudina
+      </a>
+      <button class="navbar-toggler" type="button" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a href="/" class="nav-link" data-i18n="nav_home">Home</a>
+          </li>
+          <li class="nav-item">
+            <a href="/about" class="nav-link active" data-i18n="nav_about">About</a>
+          </li>
+          <li class="nav-item">
+            <a href="/gallery" class="nav-link" data-i18n="nav_gallery">Gallery</a>
+          </li>
+          <li class="nav-item">
+            <a href="/contact" class="nav-link" data-i18n="nav_contact">Contact</a>
+          </li>
+          <li class="nav-item">
+            <a href="/auth/login" class="nav-link" data-i18n="nav_login">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="themeToggle" title="Toggle Theme">
+              <i class="fas fa-moon"></i>
+            </a>
+          </li>
+          <li class="nav-item dropdown language-selector">
+            <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
+              <i class="fas fa-globe"></i> EN
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end glass-dropdown" aria-labelledby="languageDropdown">
+              <li><a class="dropdown-item" href="?lang=en">English</a></li>
+              <li><a class="dropdown-item" href="?lang=am">Amharic (አማርኛ)</a></li>
+              <li><a class="dropdown-item" href="?lang=om">Afan Oromo</a></li>
+            </ul>
+          </li>
+        </ul>
       </div>
-    </nav>
+    </div>
+  </nav>
 
+  <div class="page-transition-wrapper">
     <!-- Hero Section -->
-    <section class="hero" style="min-height: 60vh">
+
+    <section class="about-hero">
+      <div class="hero-particles">
+        <div class="floating-element floating-1"></div>
+        <div class="floating-element floating-2"></div>
+        <div class="floating-element floating-3"></div>
+      </div>
       <div class="container">
         <div class="hero-content">
-          <h1 class="hero-title" data-typing>About SRSL</h1>
+          <h1 class="hero-title" data-typing data-i18n="nav_about">About Abdigudina</h1>
           <p class="hero-subtitle">
             Pioneering the Future of Educational Technology
           </p>
@@ -258,7 +240,7 @@
                 </h2>
                 <p class="lead mb-4" style="color: var(--gray-text)">
                   We are dedicated to transforming education through innovative
-                  technology solutions. Our Student Registration System (SRSL)
+                  technology solutions. Our Student Registration System (Abdigudina)
                   empowers educational institutions with comprehensive
                   management tools that streamline operations, enhance
                   communication, and improve learning outcomes.
@@ -319,17 +301,13 @@
               <h4 class="h5 mb-2" style="color: var(--primary-color)">2020</h4>
               <h5 class="h6 mb-2">Foundation</h5>
               <p class="text-gray-300">
-                SRSL was founded with a mission to revolutionize educational
+                Abdigudina was founded with a mission to revolutionize educational
                 management systems.
               </p>
             </div>
           </div>
 
-          <div
-            class="timeline-item animate-on-scroll"
-            data-reveal="bottom"
-            data-distance="40px"
-          >
+          <div class="timeline-item animate-on-scroll" data-reveal="bottom" data-distance="40px">
             <div class="timeline-dot"></div>
             <div class="timeline-content">
               <h4 class="h5 mb-2" style="color: var(--primary-color)">2021</h4>
@@ -341,11 +319,7 @@
             </div>
           </div>
 
-          <div
-            class="timeline-item animate-on-scroll"
-            data-reveal="bottom"
-            data-distance="60px"
-          >
+          <div class="timeline-item animate-on-scroll" data-reveal="bottom" data-distance="60px">
             <div class="timeline-dot"></div>
             <div class="timeline-content">
               <h4 class="h5 mb-2" style="color: var(--primary-color)">2022</h4>
@@ -357,11 +331,7 @@
             </div>
           </div>
 
-          <div
-            class="timeline-item animate-on-scroll"
-            data-reveal="bottom"
-            data-distance="80px"
-          >
+          <div class="timeline-item animate-on-scroll" data-reveal="bottom" data-distance="80px">
             <div class="timeline-dot"></div>
             <div class="timeline-content">
               <h4 class="h5 mb-2" style="color: var(--primary-color)">2023</h4>
@@ -413,16 +383,12 @@
               Visionary leader with 15+ years in educational technology.
             </p>
             <div class="d-flex justify-content-center gap-2 mt-3">
-              <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
-              <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+              <a href="#" style="color: var(--gray-text);"><i class="fab fa-linkedin"></i></a>
+              <a href="#" style="color: var(--gray-text);"><i class="fab fa-twitter"></i></a>
             </div>
           </div>
 
-          <div
-            class="team-card animate-on-scroll"
-            data-reveal="bottom"
-            data-distance="40px"
-          >
+          <div class="team-card animate-on-scroll" data-reveal="bottom" data-distance="40px">
             <div class="team-avatar">
               <i class="fas fa-user-cog"></i>
             </div>
@@ -434,16 +400,12 @@
               Tech expert driving innovation and system architecture.
             </p>
             <div class="d-flex justify-content-center gap-2 mt-3">
-              <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
-              <a href="#" class="text-white"><i class="fab fa-github"></i></a>
+              <a href="#" style="color: var(--gray-text);"><i class="fab fa-linkedin"></i></a>
+              <a href="#" style="color: var(--gray-text);"><i class="fab fa-github"></i></a>
             </div>
           </div>
 
-          <div
-            class="team-card animate-on-scroll"
-            data-reveal="bottom"
-            data-distance="60px"
-          >
+          <div class="team-card animate-on-scroll" data-reveal="bottom" data-distance="60px">
             <div class="team-avatar">
               <i class="fas fa-user-graduate"></i>
             </div>
@@ -455,8 +417,8 @@
               Education specialist ensuring pedagogical excellence.
             </p>
             <div class="d-flex justify-content-center gap-2 mt-3">
-              <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
-              <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+              <a href="#" style="color: var(--gray-text);"><i class="fab fa-linkedin"></i></a>
+              <a href="#" style="color: var(--gray-text);"><i class="fab fa-twitter"></i></a>
             </div>
           </div>
 
@@ -472,8 +434,8 @@
               Ensuring data protection and system security.
             </p>
             <div class="d-flex justify-content-center gap-2 mt-3">
-              <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
-              <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
+              <a href="#" style="color: var(--gray-text);"><i class="fab fa-linkedin"></i></a>
+              <a href="#" style="color: var(--gray-text);"><i class="fab fa-twitter"></i></a>
             </div>
           </div>
         </div>
@@ -494,173 +456,111 @@
 
         <div class="stats-grid">
           <div class="stat-card animate-on-scroll" data-reveal="bottom">
-            <div
-              class="stat-number"
-              data-counter="<%= typeof stats !== 'undefined' ? stats.parents : 500 %>"
-            >
-              0
+            <div class="stat-number">
+              <%= typeof stats !=='undefined' ? stats.parents : 0 %>
             </div>
-            <div class="stat-label">Parents</div>
+            <div class="stat-label">Registered Parents</div>
           </div>
 
-          <div
-            class="stat-card animate-on-scroll"
-            data-reveal="bottom"
-            data-distance="40px"
-          >
-            <div
-              class="stat-number"
-              data-counter="<%= typeof stats !== 'undefined' ? stats.students : 50000 %>"
-            >
-              0
+          <div class="stat-card animate-on-scroll" data-reveal="bottom" data-distance="40px">
+            <div class="stat-number">
+              <%= typeof stats !=='undefined' ? stats.students : 0 %>
             </div>
             <div class="stat-label">Active Students</div>
           </div>
 
-          <div
-            class="stat-card animate-on-scroll"
-            data-reveal="bottom"
-            data-distance="60px"
-          >
-            <div
-              class="stat-number"
-              data-counter="<%= typeof stats !== 'undefined' ? stats.teachers : 2000 %>"
-            >
-              0
+          <div class="stat-card animate-on-scroll" data-reveal="bottom" data-distance="60px">
+            <div class="stat-number">
+              <%= typeof stats !=='undefined' ? stats.teachers : 0 %>
             </div>
-            <div class="stat-label">Teachers</div>
+            <div class="stat-label">Active Faculty</div>
           </div>
 
-          <div
-            class="stat-card animate-on-scroll"
-            data-reveal="bottom"
-            data-distance="80px"
-          >
-            <div
-              class="stat-number"
-              data-counter="<%= typeof stats !== 'undefined' ? stats.countries : 1 %>"
-            >
-              0
+          <div class="stat-card animate-on-scroll" data-reveal="bottom" data-distance="80px">
+            <div class="stat-number">
+              <%= typeof stats !=='undefined' ? stats.courses : 0 %>
             </div>
-            <div class="stat-label">Countries</div>
+            <div class="stat-label">Active Courses</div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Footer -->
-    <footer
-      class="footer"
-      style="
-        background: var(--dark-secondary);
-        padding: 3rem 0 1rem;
-        margin-top: 0;
-      "
-    >
+    <footer class="footer"
+      style="background: #f8fafc; padding: 4rem 0 2rem; margin-top: 0; border-top: 1px solid rgba(0,0,0,0.05);">
       <div class="container">
         <div class="row">
           <div class="col-lg-4 col-md-6 mb-4">
-            <h5 class="text-white mb-3">
-              <i class="fas fa-graduation-cap me-2"></i>abdigudina school
+            <h5 class="mb-3 fw-bold fs-4" style="color: var(--dark-text)">
+              <i class="fas fa-graduation-cap me-2" style="color: var(--primary-color);"></i>abdigudina school
             </h5>
-            <p class="text-gray-300">
+            <p style="color: var(--gray-text);" data-i18n="footer_desc">
               Modern educational management platform for schools and
               institutions. Empowering education through technology.
             </p>
             <div class="d-flex gap-3 mt-3">
-              <a href="#" class="text-white fs-5"
-                ><i class="fab fa-facebook"></i
-              ></a>
-              <a href="#" class="text-white fs-5"
-                ><i class="fab fa-twitter"></i
-              ></a>
-              <a href="#" class="text-white fs-5"
-                ><i class="fab fa-instagram"></i
-              ></a>
-              <a href="#" class="text-white fs-5"
-                ><i class="fab fa-linkedin"></i
-              ></a>
+              <a href="#" style="color: var(--gray-text);" class="fs-5"><i class="fab fa-facebook"></i></a>
+              <a href="#" style="color: var(--gray-text);" class="fs-5"><i class="fab fa-twitter"></i></a>
+              <a href="#" style="color: var(--gray-text);" class="fs-5"><i class="fab fa-instagram"></i></a>
+              <a href="#" style="color: var(--gray-text);" class="fs-5"><i class="fab fa-linkedin"></i></a>
             </div>
           </div>
 
           <div class="col-lg-2 col-md-6 mb-4">
-            <h5 class="text-white mb-3">Quick Links</h5>
+            <h5 class="mb-3" style="color: var(--dark-text)" data-i18n="footer_quick_links">Quick Links</h5>
             <ul class="list-unstyled">
-              <li class="mb-2">
-                <a href="/" class="text-gray-300 text-decoration-none">Home</a>
+              <li class="mb-2"><a href="/" style="color: var(--gray-text); text-decoration: none;">Home</a></li>
+              <li class="mb-2"><a href="/about" style="color: var(--gray-text); text-decoration: none;">About</a></li>
+              <li class="mb-2"><a href="/gallery" style="color: var(--gray-text); text-decoration: none;">Gallery</a>
               </li>
-              <li class="mb-2">
-                <a href="/about" class="text-gray-300 text-decoration-none"
-                  >About</a
-                >
-              </li>
-              <li class="mb-2">
-                <a href="/gallery" class="text-gray-300 text-decoration-none"
-                  >Gallery</a
-                >
-              </li>
-              <li class="mb-2">
-                <a href="/contact" class="text-gray-300 text-decoration-none"
-                  >Contact</a
-                >
+              <li class="mb-2"><a href="/contact" style="color: var(--gray-text); text-decoration: none;">Contact</a>
               </li>
             </ul>
           </div>
 
           <div class="col-lg-3 col-md-6 mb-4">
-            <h5 class="text-white mb-3">Services</h5>
+            <h5 class="mb-3" style="color: var(--dark-text)" data-i18n="footer_services">Services</h5>
             <ul class="list-unstyled">
-              <li class="mb-2">
-                <a href="#" class="text-gray-300 text-decoration-none"
-                  >Student Management</a
-                >
+              <li class="mb-2"><a href="#" style="color: var(--gray-text); text-decoration: none;">Student
+                  Management</a></li>
+              <li class="mb-2"><a href="#" style="color: var(--gray-text); text-decoration: none;">Teacher Portal</a>
               </li>
-              <li class="mb-2">
-                <a href="#" class="text-gray-300 text-decoration-none"
-                  >Teacher Portal</a
-                >
+              <li class="mb-2"><a href="#" style="color: var(--gray-text); text-decoration: none;">Parent Access</a>
               </li>
-              <li class="mb-2">
-                <a href="#" class="text-gray-300 text-decoration-none"
-                  >Parent Access</a
-                >
-              </li>
-              <li class="mb-2">
-                <a href="#" class="text-gray-300 text-decoration-none"
-                  >Analytics</a
-                >
-              </li>
+              <li class="mb-2"><a href="#" style="color: var(--gray-text); text-decoration: none;">Analytics</a></li>
             </ul>
           </div>
 
           <div class="col-lg-3 col-md-6 mb-4">
-            <h5 class="text-white mb-3">Contact Info</h5>
-            <div class="text-gray-300">
-              <p class="mb-2">
-                <i class="fas fa-map-marker-alt me-2"></i>123 Education Street
-              </p>
+            <h5 class="mb-3" style="color: var(--dark-text)" data-i18n="footer_contact_info">Contact Info</h5>
+            <div style="color: var(--gray-text);">
+              <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>Jimma Institute of Technology (JiT), Jimma University, Jimma, Ethiopia</p>
               <p class="mb-2"><i class="fas fa-phone me-2"></i>+251954497337</p>
-              <p class="mb-2">
-                <i class="fas fa-envelope me-2"></i>abdigudina@gmail.com
-              </p>
+              <p class="mb-2"><i class="fas fa-envelope me-2"></i>abdigudina@gmail.com</p>
             </div>
           </div>
         </div>
 
-        <hr class="border-secondary my-4" />
+        <hr style="border-color: rgba(0,0,0,0.1);" class="my-4" />
 
         <div class="text-center">
-          <p class="text-gray-400 mb-0">
-            &copy; 2026 abdigudina school. All rights reserved.
+          <p style="color: var(--gray-text);" class="mb-0">
+            &copy; 2026 abdigudina school. <span data-i18n="footer_rights">All rights reserved.</span>
           </p>
         </div>
       </div>
     </footer>
 
-    <!-- Bootstrap JS -->
-    <script src="/js/bootstrap.bundle.min.js"></script>
+  </div>
 
-    <!-- Custom JS -->
-    <script src="/js/brocode-script.js"></script>
-  </body>
+  <!-- Bootstrap JS -->
+
+  <script src="/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Custom JS -->
+  <script src="/js/translations.js"></script>
+  <script src="/js/brocode-script.js"></script>
+</body>
+
 </html>

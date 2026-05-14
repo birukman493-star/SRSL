@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - SRSL Faculty</title>
-    
+    <title>
+        <%= title %> - Abdigudina Faculty
+    </title>
+
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -14,192 +17,346 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
 </head>
+
 <body class="dashboard-body">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
-        <main class="main-panel w-100 p-4">
-            <!-- Header -->
-            <div class="dashboard-header mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="dashboard-title">Welcome back, <%= user.first_name %>!</h1>
-                        <p class="text-secondary m-0">Faculty Portal • Academic Management Suite</p>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill border border-primary border-opacity-10">
-                            <i class="fas fa-id-badge me-1"></i> Faculty Access
-                        </span>
-                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill border border-success border-opacity-10">
-                            <i class="fas fa-check-circle me-1"></i> System Active
-                        </span>
+            <!-- Main Content -->
+            <main class="main-panel w-100 p-4">
+                <!-- Header -->
+                <div class="dashboard-header mb-4 shadow-sm"
+                    style="background: var(--panel-bg); border-radius: 24px; border: 1px solid var(--panel-border); padding: 2.5rem;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="dashboard-title"
+                                style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                                Welcome back, <%= user.first_name %>!
+                            </h1>
+                            <p class="text-secondary m-0" style="font-weight: 500;">Faculty Portal • Empowering
+                                Educators, Inspiring Students</p>
+                        </div>
+                        <div class="d-flex gap-3 align-items-center">
+                            <div class="text-end d-none d-md-block me-3">
+                                <div class="fw-bold" style="color: var(--dark-text); font-size: 1.1rem;">
+                                    <%= new Date().toLocaleDateString('en-US', { weekday: 'long' , year: 'numeric' ,
+                                        month: 'long' , day: 'numeric' }) %>
+                                </div>
+                                <small class="text-secondary fw-bold text-uppercase"
+                                    style="letter-spacing: 1px; font-size: 0.75rem;">Faculty ID: <span
+                                        class="text-primary">FAC-<%= user.id %></span></small>
+                            </div>
+                            <div class="d-flex gap-2 align-items-center">
+                                <button class="btn btn-icon-glass shadow-sm" id="themeToggle" title="Toggle Theme"
+                                    style="width: 50px; height: 50px; border-radius: 15px; display: flex; align-items: center; justify-content: center; background: var(--panel-bg); border: 1px solid var(--panel-border); color: var(--primary-color);">
+                                    <i class="fas fa-moon"></i>
+                                </button>
+                                <div class="avatar-initials shadow-sm"
+                                    style="width: 60px; height: 60px; background: var(--gradient-1); color: white; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800;">
+                                    <%= user.first_name[0] %>
+                                        <%= user.last_name[0] %>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Stats Grid -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-3">
-                    <div class="glass-panel text-center h-100 p-4">
-                        <div class="sidebar-user-avatar mb-3 mx-auto bg-primary bg-opacity-10 text-primary" style="width: 60px; height: 60px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; border-radius: 16px;">
-                            <i class="fas fa-university"></i>
+                <!-- Stats Grid -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <div class="h-100 p-4 shadow-sm transition hover-up"
+                            style="background: var(--panel-bg); border-radius: 24px; border: 1px solid var(--panel-border);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="stat-icon-wrap shadow-sm"
+                                    style="width: 65px; height: 65px; background: rgba(37, 99, 235, 0.08); color: var(--primary-color); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
+                                    <i class="fas fa-university"></i>
+                                </div>
+                                <div>
+                                    <div class="text-secondary small fw-bold text-uppercase"
+                                        style="letter-spacing: 1px; font-size: 0.7rem;">My Classes</div>
+                                    <div class="h2 fw-800 mb-0" style="color: var(--dark-text); line-height: 1;">
+                                        <%= stats.classes %>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="h2 fw-bold mb-1 text-light"><%= stats.classes %></div>
-                        <div class="text-secondary small">Active Classes</div>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="glass-panel text-center h-100 p-4">
-                        <div class="sidebar-user-avatar mb-3 mx-auto bg-success bg-opacity-10 text-success" style="width: 60px; height: 60px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; border-radius: 16px;">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                        <div class="h2 fw-bold mb-1 text-light"><%= stats.students %></div>
-                        <div class="text-secondary small">Total Students</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="glass-panel text-center h-100 p-4">
-                        <div class="sidebar-user-avatar mb-3 mx-auto bg-warning bg-opacity-10 text-warning" style="width: 60px; height: 60px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; border-radius: 16px;">
-                            <i class="fas fa-file-invoice"></i>
-                        </div>
-                        <div class="h2 fw-bold mb-1 text-light"><%= stats.pendingGrades %></div>
-                        <div class="text-secondary small">Pending Grades</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="glass-panel text-center h-100 p-4">
-                        <div class="sidebar-user-avatar mb-3 mx-auto bg-info bg-opacity-10 text-info" style="width: 60px; height: 60px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; border-radius: 16px;">
-                            <i class="fas fa-clipboard-check"></i>
-                        </div>
-                        <div class="h2 fw-bold mb-1 text-light"><%= stats.attendanceRate %>%</div>
-                        <div class="text-secondary small">Daily Attendance</div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="row g-4">
-                <!-- My Classes Section -->
-                <div class="col-lg-8">
-                    <div class="glass-panel h-100">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="h5 fw-bold m-0 text-light"><i class="fas fa-chalkboard me-2 text-primary"></i>My Assigned Classes</h3>
-                            <a href="/teacher/classes" class="btn btn-sm btn-link text-decoration-none text-primary">View All Classes →</a>
+                    <div class="col-md-3">
+                        <div class="h-100 p-4 shadow-sm transition hover-up"
+                            style="background: var(--panel-bg); border-radius: 24px; border: 1px solid var(--panel-border);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="stat-icon-wrap shadow-sm"
+                                    style="width: 65px; height: 65px; background: rgba(16, 185, 129, 0.08); color: #10b981; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <div>
+                                    <div class="text-secondary small fw-bold text-uppercase"
+                                        style="letter-spacing: 1px; font-size: 0.7rem;">Total Students</div>
+                                    <div class="h2 fw-800 mb-0" style="color: var(--dark-text); line-height: 1;">
+                                        <%= stats.students %>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="row g-3">
-                            <% if (classes && classes.length > 0) { %>
-                                <% classes.forEach(classItem => { %>
-                                <div class="col-md-6">
-                                    <div class="glass-card p-4 h-100 hover-lift transition">
-                                        <div class="d-flex align-items-center mb-3">
-                                            <div class="course-badge me-3" style="background: var(--gradient-1); width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem;">
-                                                <i class="fas fa-school"></i>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="h-100 p-4 shadow-sm transition hover-up"
+                            style="background: var(--panel-bg); border-radius: 24px; border: 1px solid var(--panel-border);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="stat-icon-wrap shadow-sm"
+                                    style="width: 65px; height: 65px; background: rgba(249, 115, 22, 0.08); color: #f97316; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                                <div>
+                                    <div class="text-secondary small fw-bold text-uppercase"
+                                        style="letter-spacing: 1px; font-size: 0.7rem;">Assignments</div>
+                                    <div class="h2 fw-800 mb-0" style="color: var(--dark-text); line-height: 1;">
+                                        <%= stats.pendingGrades %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="h-100 p-4 shadow-sm transition hover-up"
+                            style="background: var(--panel-bg); border-radius: 24px; border: 1px solid var(--panel-border);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="stat-icon-wrap shadow-sm"
+                                    style="width: 65px; height: 65px; background: rgba(6, 182, 212, 0.08); color: #06b6d4; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
+                                    <i class="fas fa-clipboard-check"></i>
+                                </div>
+                                <div>
+                                    <div class="text-secondary small fw-bold text-uppercase"
+                                        style="letter-spacing: 1px; font-size: 0.7rem;">Daily Att.</div>
+                                    <div class="h2 fw-800 mb-0" style="color: var(--dark-text); line-height: 1;">
+                                        <%= stats.attendanceRate %>%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Main Activity Area -->
+                    <div class="col-lg-8">
+                        <div class="h-100 p-4 shadow-sm"
+                            style="background: var(--panel-bg); border-radius: 24px; border: 1px solid var(--panel-border);">
+                            <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+                                <h3 class="h5 fw-900 m-0" style="color: var(--dark-text)"><i
+                                        class="fas fa-chalkboard-teacher me-2 text-primary opacity-75"></i>Classroom
+                                    Insights</h3>
+                                <a href="/teacher/classes"
+                                    class="btn btn-sm btn-link text-decoration-none fw-bold text-primary">Explore All <i
+                                        class="fas fa-arrow-right ms-1 small"></i></a>
+                            </div>
+                            <div class="row g-4">
+                                <% if (classes && classes.length> 0) { %>
+                                    <% classes.forEach(classItem=> { %>
+                                        <div class="col-md-6">
+                                            <div class="p-4 h-100 shadow-sm transition hover-up-premium"
+                                                style="background: #f8fafc; border-radius: 24px; border: 1px solid rgba(0,0,0,0.03);">
+                                                <div class="d-flex align-items-center justify-content-between mb-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="stat-icon-wrap me-3 shadow-sm"
+                                                            style="width: 50px; height: 50px; background: white; color: var(--primary-color); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                                            <i class="fas fa-graduation-cap"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="m-0 fw-800"
+                                                                style="color: var(--dark-text); font-size: 1.1rem;">
+                                                                <%= classItem.name %>
+                                                            </h6>
+                                                            <small class="text-secondary fw-800 text-uppercase"
+                                                                style="font-size: 0.65rem; letter-spacing: 0.5px;">Grade
+                                                                <%= classItem.grade %> • <%= classItem.section %>
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-primary fw-900" style="font-size: 0.8rem;">ID: #<%=
+                                                            classItem.id %>
+                                                    </div>
+                                                </div>
+                                                <div class="row g-3 mb-4">
+                                                    <div class="col-6">
+                                                        <div
+                                                            class="bg-white rounded-3 p-3 text-center border shadow-xs">
+                                                            <div class="h3 fw-bold m-0" style="color: var(--dark-text)">
+                                                                <%= classItem.student_count || 0 %>
+                                                            </div>
+                                                            <div class="text-secondary small fw-bold text-uppercase"
+                                                                style="font-size: 0.6rem;">Enrollment</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div
+                                                            class="bg-white rounded-3 p-3 text-center border shadow-xs">
+                                                            <div class="h3 fw-bold text-success m-0">Live</div>
+                                                            <div class="text-secondary small fw-bold text-uppercase"
+                                                                style="font-size: 0.6rem;">Academic Status</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="d-grid gap-2">
+                                                    <a href="/teacher/attendance/<%= classItem.id %>/<%= new Date().toISOString().split('T')[0] %>"
+                                                        class="btn btn-primary py-2 px-4 rounded-pill fw-bold shadow-sm"
+                                                        style="font-size: 0.85rem;">
+                                                        <i class="fas fa-user-check me-2"></i> Attendance
+                                                    </a>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h6 class="m-0 text-light fw-bold"><%= classItem.name %></h6>
-                                                <small class="text-secondary"><%= classItem.grade %> - <%= classItem.section %></small>
+                                        </div>
+                                        <% }); %>
+                                            <% } else { %>
+                                                <div class="col-12 text-center py-5">
+                                                    <div class="text-secondary opacity-10 mb-4"><i
+                                                            class="fas fa-folder-open fa-6x"></i></div>
+                                                    <h4 class="text-dark fw-900">No classes assigned yet</h4>
+                                                    <p class="text-secondary fw-medium px-5">Once the administrator
+                                                        assigns your academic courses, they will appear here with
+                                                        student insights.</p>
+                                                    <a href="/teacher/schedule"
+                                                        class="btn btn-primary px-5 mt-2 rounded-pill fw-bold shadow">Check
+                                                        Schedule</a>
+                                                </div>
+                                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar Activity Area -->
+                    <div class="col-lg-4">
+                        <!-- Quick Actions Premium -->
+                        <div class="mb-4 p-4 shadow-sm"
+                            style="background: var(--panel-bg); border-radius: 24px; border: 1px solid var(--panel-border);">
+                            <h3 class="h5 fw-900 mb-4" style="color: var(--dark-text)"><i
+                                    class="fas fa-bolt me-2 text-warning opacity-75"></i>Quick Launch</h3>
+                            <div class="d-grid gap-3">
+                                <a href="/teacher/attendance"
+                                    class="btn btn-primary w-100 py-3 rounded-4 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-3 transition hover-scale">
+                                    <i class="fas fa-user-check"></i> Record Attendance
+                                </a>
+                                <a href="/teacher/grades"
+                                    class="btn btn-dark w-100 py-3 rounded-4 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-3 transition hover-scale">
+                                    <i class="fas fa-award"></i> Result Management
+                                </a>
+                                <a href="/teacher/assignments"
+                                    class="btn btn-light w-100 py-3 rounded-4 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-3 border transition hover-scale"
+                                    style="color: var(--dark-text); background: #f8fafc;">
+                                    <i class="fas fa-book"></i> Post Assignments
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- System Pulse - Faculty Style -->
+                        <div class="p-4 shadow-lg mb-4"
+                            style="border-radius: 24px; background: var(--gradient-1) !important; color: white !important; border: none !important; box-shadow: 0 15px 35px rgba(37,99,235,0.2);">
+                            <h3 class="h5 fw-900 mb-4" style="color: white"><i
+                                    class="fas fa-chart-line me-2"></i>Performance Pulse</h3>
+                            <div class="p-3 mb-3 d-flex justify-content-between align-items-center transition hover-lift"
+                                style="background: rgba(255,255,255,0.15); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                                <div>
+                                    <div class="small opacity-75 fw-800 text-uppercase"
+                                        style="letter-spacing: 0.5px; font-size: 0.65rem;">Course Coverage</div>
+                                    <div class="fw-900">Academic Progress</div>
+                                </div>
+                                <div class="h2 fw-900 m-0">85%</div>
+                            </div>
+                            <div class="p-3 d-flex justify-content-between align-items-center transition hover-lift"
+                                style="background: rgba(255,255,255,0.15); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                                <div>
+                                    <div class="small opacity-75 fw-800 text-uppercase"
+                                        style="letter-spacing: 0.5px; font-size: 0.65rem;">Student Success</div>
+                                    <div class="fw-900">Passing Grade Avg.</div>
+                                </div>
+                                <div class="h2 fw-900 m-0">92%</div>
+                            </div>
+                        </div>
+
+                        <!-- Today's Classes -->
+                        <div class="p-4 shadow-sm"
+                            style="background: var(--panel-bg); border-radius: 24px; border: 1px solid var(--panel-border);">
+                            <h3 class="h5 fw-900 mb-4" style="color: var(--dark-text)"><i
+                                    class="fas fa-calendar-alt me-2 text-info opacity-75"></i>Today's Agenda</h3>
+                            <div class="schedule-list">
+                                <% if (typeof todaySchedule !=='undefined' && todaySchedule.length> 0) { %>
+                                    <% todaySchedule.forEach(period=> { %>
+                                        <div class="p-3 mb-3 hover-lift transition shadow-xs"
+                                            style="background: #f8fafc; border-radius: 18px; border-left: 5px solid var(--primary-color);">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span
+                                                    class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill fw-800"
+                                                    style="font-size: 0.65rem;">
+                                                    <%= period.period %>
+                                                </span>
+                                                <span class="text-secondary small fw-900">
+                                                    <%= period.start_time.substring(0, 5) %>
+                                                </span>
+                                            </div>
+                                            <div class="fw-900 mb-1" style="color: var(--dark-text); font-size: 1rem;">
+                                                <%= period.course_name %>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center text-secondary smaller fw-800 text-uppercase"
+                                                style="letter-spacing: 0.5px; font-size: 0.6rem;">
+                                                <span>
+                                                    <%= period.class_name %>
+                                                </span>
+                                                <span><i class="fas fa-door-open me-1 opacity-50"></i>ROOM <%=
+                                                        period.room || 'TBD' %></span>
                                             </div>
                                         </div>
-                                        <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white border-opacity-5">
-                                            <div class="d-flex align-items-center text-secondary small">
-                                                <i class="fas fa-users me-2"></i> <%= classItem.student_count || 0 %> Students
-                                            </div>
-                                            <a href="/teacher/attendance/<%= classItem.id %>/<%= new Date().toISOString().split('T')[0] %>" class="btn btn-sm btn-hero btn-primary py-1 px-3" style="font-size: 0.75rem;">Take Attendance</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <% }); %>
-                            <% } else { %>
-                                <div class="col-12 text-center py-5">
-                                    <div class="opacity-25 mb-3">
-                                        <i class="fas fa-folder-open fa-4x text-secondary"></i>
-                                    </div>
-                                    <p class="text-secondary">No classes assigned to you yet.</p>
-                                    <a href="/teacher/schedule" class="btn btn-hero btn-secondary px-4 mt-2">Check Schedule</a>
-                                </div>
-                            <% } %>
+                                        <% }); %>
+                                            <% } else { %>
+                                                <div class="text-center py-5 text-secondary opacity-30">
+                                                    <i class="fas fa-mug-hot fa-3x mb-3"></i>
+                                                    <p class="fw-800 small m-0">Academic break. No classes today.</p>
+                                                </div>
+                                                <% } %>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Sidebar Content -->
-                <div class="col-lg-4">
-                    <!-- Today's Schedule -->
-                    <div class="glass-panel mb-4">
-                        <h3 class="h5 fw-bold mb-4 text-light"><i class="fas fa-calendar-day me-2 text-primary"></i>Today's Schedule</h3>
-                        <div class="schedule-mini-list">
-                            <% if (typeof todaySchedule !== 'undefined' && todaySchedule.length > 0) { %>
-                                <% todaySchedule.forEach(period => { %>
-                                    <div class="glass-card p-3 mb-2 border-0 bg-white bg-opacity-5">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <span class="text-primary small fw-bold"><%= period.period %></span>
-                                            <span class="text-secondary smaller"><%= period.start_time.substring(0, 5) %></span>
-                                        </div>
-                                        <div class="text-light small fw-bold"><%= period.course_name %></div>
-                                        <div class="d-flex justify-content-between align-items-center mt-1">
-                                            <span class="text-secondary smaller"><%= period.class_name %></span>
-                                            <span class="text-secondary smaller"><i class="fas fa-map-marker-alt me-1"></i><%= period.room || 'TBD' %></span>
-                                        </div>
-                                    </div>
-                                <% }); %>
-                            <% } else { %>
-                                <div class="text-center py-4 opacity-50">
-                                    <p class="text-secondary small m-0">No classes today.</p>
-                                </div>
-                            <% } %>
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="glass-panel mb-4">
-                        <h3 class="h5 fw-bold mb-4 text-light"><i class="fas fa-bolt me-2 text-warning"></i>Quick Actions</h3>
-                        <div class="d-grid gap-3">
-                            <a href="/teacher/attendance" class="btn-hero btn-primary w-100 py-3">
-                                <i class="fas fa-user-check me-2"></i>Record Attendance
-                            </a>
-                            <a href="/teacher/grades" class="btn-hero btn-secondary w-100 py-3">
-                                <i class="fas fa-award me-2"></i>Post Student Grades
-                            </a>
-                            <a href="/teacher/assignments" class="btn-hero btn-primary bg-gradient-2 w-100 py-3" style="border: none;">
-                                <i class="fas fa-book me-2"></i>Manage Assignments
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Recent Activities (Unified with Admin/Student style) -->
-                    <div class="glass-panel">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="h5 fw-bold m-0 text-light"><i class="fas fa-history me-2 text-info"></i>Recent Activity</h3>
-                        </div>
-                        <div class="activity-timeline">
-                            <% if (activities && activities.length > 0) { %>
-                                <% activities.forEach(activity => { %>
-                                <div class="glass-card p-3 mb-3 hover-lift transition">
-                                    <div class="d-flex gap-3">
-                                        <div class="activity-icon bg-<%= activity.type === 'attendance' ? 'success' : (activity.type === 'grade' ? 'info' : 'warning') %> bg-opacity-10 text-<%= activity.type === 'attendance' ? 'success' : (activity.type === 'grade' ? 'info' : 'warning') %>" style="width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <i class="fas fa-<%= activity.type === 'attendance' ? 'check' : (activity.type === 'grade' ? 'award' : 'file-alt') %>"></i>
-                                        </div>
-                                        <div>
-                                            <div class="text-light small fw-bold"><%= activity.description %></div>
-                                            <div class="text-secondary mt-1" style="font-size: 0.7rem;"><%= new Date(activity.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %> • Today</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <% }); %>
-                            <% } else { %>
-                                <div class="text-center py-5 opacity-50">
-                                    <i class="fas fa-stream fa-2x text-secondary mb-2"></i>
-                                    <p class="text-secondary small">No recent activity logged.</p>
-                                </div>
-                            <% } %>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+            </main>
     </div>
 
     <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
+    <style>
+        .fw-900 {
+            font-weight: 900 !important;
+        }
+
+        .hover-up {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hover-up:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .hover-up-premium {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hover-up-premium:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 20px 40px rgba(37, 99, 235, 0.05) !important;
+        }
+
+        .hover-scale:hover {
+            transform: scale(1.02);
+        }
+
+        .shadow-xs {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+    </style>
 </body>
+
 </html>

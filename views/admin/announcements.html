@@ -20,14 +20,16 @@
         <!-- Main Content -->
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4">
+            <div class="dashboard-header mb-4" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title">Campus Announcements</h1>
-                        <p class="text-secondary m-0">Broadcast important news and academic updates to the campus community</p>
+                        <h1 class="dashboard-title" style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            Campus Announcements
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Broadcast important news and academic updates to the campus community</p>
                     </div>
-                    <button class="btn-hero btn-primary px-4" onclick="toggleForm()">
-                        <i class="fas fa-plus me-2"></i> Post New Announcement
+                    <button class="btn btn-hero btn-primary px-4 py-2 border-0 d-flex align-items-center gap-2" onclick="toggleForm()" style="border-radius: 12px; font-weight: 600;">
+                        <i class="fas fa-plus"></i> Post New Announcement
                     </button>
                 </div>
             </div>
@@ -47,32 +49,41 @@
             <% } %>
 
             <!-- New Announcement Form -->
-            <div id="announcement-form" class="glass-panel mb-4" style="display: none;">
+            <div id="announcement-form" class="glass-panel mb-4" style="display: none; background: white !important; border-radius: 24px;">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="h5 fw-bold m-0"><i class="fas fa-edit me-2 text-primary"></i>Create Announcement</h3>
+                    <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i class="fas fa-edit me-2 text-primary"></i>Create Announcement</h3>
                     <button class="btn btn-sm btn-link text-secondary text-decoration-none" onclick="toggleForm()">Close <i class="fas fa-times ms-1"></i></button>
                 </div>
                 <form action="/admin/announcements/add" method="POST">
                     <div class="row g-4">
-                        <div class="col-md-8">
-                            <label class="text-secondary small mb-1">Subject / Title</label>
-                            <input type="text" name="title" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3" placeholder="Brief descriptive title" required>
+                        <div class="col-md-6">
+                            <label class="text-secondary small mb-1 fw-bold">Subject / Title</label>
+                            <input type="text" name="title" class="form-control bg-light border-0 rounded-3 px-3 py-2" placeholder="Brief descriptive title" required>
                         </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1">Target Audience</label>
-                            <select name="audience" class="form-select bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-3">
+                        <div class="col-md-3">
+                            <label class="text-secondary small mb-1 fw-bold">Target Audience</label>
+                            <select name="audience" class="form-select bg-light border-0 rounded-3 px-3 py-2">
                                 <option value="all">Everyone (Global)</option>
                                 <option value="students">Students Only</option>
                                 <option value="teachers">Teachers Only</option>
                             </select>
                         </div>
+                        <div class="col-md-3">
+                            <label class="text-secondary small mb-1 fw-bold">Category</label>
+                            <select name="category" class="form-select bg-light border-0 rounded-3 px-3 py-2">
+                                <option value="general">General Info</option>
+                                <option value="academic">Academic Update</option>
+                                <option value="urgent">Urgent / Alert</option>
+                                <option value="event">Campus Event</option>
+                            </select>
+                        </div>
                         <div class="col-12">
-                            <label class="text-secondary small mb-1">Message Content</label>
-                            <textarea name="message" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-4 px-3" rows="5" placeholder="Write your announcement here..." required></textarea>
+                            <label class="text-secondary small mb-1 fw-bold">Message Content</label>
+                            <textarea name="message" class="form-control bg-light border-0 rounded-3 px-3 py-2" rows="5" placeholder="Write your announcement here..." required></textarea>
                         </div>
                         <div class="col-12 mt-4 text-end">
-                            <button type="button" class="btn-hero btn-secondary py-2 px-4 me-2 bg-opacity-10 border-0" onclick="toggleForm()">Cancel</button>
-                            <button type="submit" class="btn-hero btn-primary py-2 px-4">Publish Announcement</button>
+                            <button type="button" class="btn btn-light py-2 px-4 me-2 rounded-3 fw-bold" onclick="toggleForm()">Cancel</button>
+                            <button type="submit" class="btn btn-primary py-2 px-4 rounded-3 fw-bold">Publish Announcement</button>
                         </div>
                     </div>
                 </form>
@@ -83,30 +94,40 @@
                 <% if (typeof announcements !== "undefined" && announcements && announcements.length > 0) { %>
                     <% for (let ann of announcements) { %>
                     <div class="col-12">
-                        <div class="glass-panel border-start border-primary border-4">
+                        <% 
+                            let borderCol = 'var(--primary-color)'; let catBg = 'rgba(37,99,235,0.08)'; let catCol = 'var(--primary-color)'; let catIcon = 'fa-info-circle';
+                            if (ann.category === 'urgent') { borderCol = '#ef4444'; catBg = 'rgba(239,68,68,0.08)'; catCol = '#ef4444'; catIcon = 'fa-exclamation-triangle'; }
+                            else if (ann.category === 'academic') { borderCol = '#10b981'; catBg = 'rgba(16,185,129,0.08)'; catCol = '#10b981'; catIcon = 'fa-graduation-cap'; }
+                            else if (ann.category === 'event') { borderCol = '#8b5cf6'; catBg = 'rgba(139,92,246,0.08)'; catCol = '#8b5cf6'; catIcon = 'fa-calendar-star'; }
+                        %>
+                        <div class="glass-panel border-start border-4" style="background: white !important; border-radius: 16px; padding: 1.5rem; border-color: <%= borderCol %> !important;">
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div>
-                                    <h4 class="h5 fw-bold text-light mb-1"><%= ann.title %></h4>
-                                    <div class="d-flex align-items-center gap-2 text-secondary small">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        <span>Posted on <%= new Date(ann.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
-                                        <span class="mx-1">â€¢</span>
-                                        <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-uppercase" style="font-size: 0.65rem;">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="badge rounded-pill px-2 py-1 fw-bold text-uppercase" style="background: <%= catBg %>; color: <%= catCol %>; font-size: 0.6rem; border: 1px solid <%= catCol %>20;">
+                                            <i class="fas <%= catIcon %> me-1"></i> <%= ann.category || 'General' %>
+                                        </span>
+                                        <span class="badge rounded-pill px-2 py-1 fw-bold text-uppercase" style="background: #f1f5f9; color: #64748b; font-size: 0.6rem;">
                                             To: <%= ann.audience %>
                                         </span>
                                     </div>
+                                    <h4 class="h5 fw-bold mb-1" style="color: var(--dark-text);"><%= ann.title %></h4>
+                                    <div class="d-flex align-items-center gap-2 text-secondary small fw-medium">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <span><%= new Date(ann.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                                    </div>
                                 </div>
                                 <div class="dropdown">
-                                    <button class="btn btn-link text-secondary p-0" data-bs-toggle="dropdown">
-                                        <i class="fas fa-ellipsis-v"></i>
+                                    <button class="btn btn-light border-0 rounded-circle" style="width: 32px; height: 32px; padding: 0;" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v text-secondary" style="font-size: 0.8rem;"></i>
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end bg-dark border-secondary border-opacity-25">
-                                        <li><a class="dropdown-item text-light small" href="#"><i class="fas fa-edit me-2"></i> Edit</a></li>
-                                        <li><a class="dropdown-item text-danger small" href="#"><i class="fas fa-trash me-2"></i> Delete</a></li>
+                                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2" style="border-radius: 12px;">
+                                        <li><a class="dropdown-item rounded-3 small py-2 fw-medium" href="#"><i class="fas fa-edit me-2 text-primary"></i> Edit</a></li>
+                                        <li><a class="dropdown-item rounded-3 small py-2 fw-medium text-danger" href="#"><i class="fas fa-trash me-2"></i> Delete</a></li>
                                     </ul>
                                 </div>
                             </div>
-                            <div class="text-secondary" style="line-height: 1.6;">
+                            <div class="text-secondary fw-medium" style="line-height: 1.8; font-size: 0.95rem;">
                                 <%= ann.message %>
                             </div>
                         </div>
@@ -114,14 +135,17 @@
                     <% } %>
                 <% } else { %>
                     <div class="col-12 text-center py-5">
-                        <div class="glass-panel py-5">
-                            <i class="fas fa-bullhorn fa-4x text-secondary mb-4 opacity-25"></i>
-                            <h3 class="h4 text-light">No Recent Announcements</h3>
-                            <p class="text-secondary max-width-500 mx-auto">There are no broadcast messages at the moment. Use the button above to post the first campus-wide update.</p>
+                        <div class="glass-panel py-5" style="background: white !important; border-radius: 24px;">
+                            <div class="text-secondary opacity-30 mb-4">
+                                <i class="fas fa-bullhorn fa-5x"></i>
+                            </div>
+                            <h3 class="h4 fw-bold mb-2" style="color: var(--dark-text);">No Recent Announcements</h3>
+                            <p class="text-secondary max-width-500 mx-auto fw-medium">There are no broadcast messages at the moment. Use the button above to post the first campus-wide update.</p>
                         </div>
                     </div>
                 <% } %>
             </div>
+
         </main>
     </div>
 

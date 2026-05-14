@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - SRSL</title>
-    
+    <title>
+        <%= title %> - Abdigudina
+    </title>
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -13,91 +15,142 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        body {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .main-panel {
+            background: #f8fafc;
+        }
+
+        .premium-panel {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .announcement-card {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .announcement-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
 </head>
+
 <body class="dashboard-body">
-    <div class="admin-container dashboard-wrapper">
+    <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
-        <main class="main-panel">
-            <!-- Top Header -->
-            <header class="dashboard-header-modern mb-4">
-                <div class="header-content">
-                    <div class="header-title-block">
-                        <h1 class="header-title">Announcements</h1>
-                        <p class="header-subtitle"><i class="fas fa-bullhorn me-2"></i>Stay updated with school news and events</p>
-                    </div>
+            <main class="main-panel w-100 p-4">
+                <!-- Header -->
+                <div class="premium-panel mb-4">
+                    <h1 class="fw-800 mb-1"
+                        style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        Announcements</h1>
+                    <p class="text-secondary m-0 fw-medium"><i class="fas fa-bullhorn me-2"></i>Stay updated with school
+                        news and events</p>
                 </div>
-            </header>
 
-            <!-- Announcements Content -->
-            <div class="row g-4">
-                <% if (announcements && announcements.length > 0) { %>
-                    <% announcements.forEach(announcement => { %>
-                    <div class="col-12">
-                        <div class="glass-panel hover-lift transition">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div>
-                                    <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-1 mb-2">
-                                        <i class="fas fa-info-circle me-1"></i> <%= announcement.type || 'Academic' %>
-                                    </span>
-                                    <h3 class="h4 text-light m-0 fw-bold"><%= announcement.title %></h3>
-                                </div>
-                                <div class="text-end">
-                                    <div class="text-secondary small">
-                                        <i class="far fa-calendar-alt me-1"></i> <%= new Date(announcement.created_at).toLocaleDateString() %>
+                <!-- Announcements Content -->
+                <div class="row g-4">
+                    <% if (announcements && announcements.length> 0) { %>
+                        <% announcements.forEach(announcement=> { %>
+                            <div class="col-12">
+                                <div class="announcement-card">
+                                    <div class="d-flex justify-content-between align-items-start mb-4">
+                                        <div>
+                                            <span
+                                                class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 mb-3 fw-bold text-uppercase"
+                                                style="font-size: 0.65rem;">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                <%= announcement.type || 'Academic' %>
+                                            </span>
+                                            <h3 class="h4 text-dark m-0 fw-bold">
+                                                <%= announcement.title %>
+                                            </h3>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="text-secondary small fw-bold">
+                                                <i class="far fa-calendar-alt me-1 text-primary"></i>
+                                                <%= new Date(announcement.created_at).toLocaleDateString() %>
+                                            </div>
+                                            <div class="text-secondary small fw-bold">
+                                                <i class="far fa-clock me-1 text-primary"></i>
+                                                <%= new Date(announcement.created_at).toLocaleTimeString([], {
+                                                    hour: '2-digit' , minute: '2-digit' }) %>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="text-secondary small">
-                                        <i class="far fa-clock me-1"></i> <%= new Date(announcement.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
+
+                                    <div class="announcement-body text-secondary mb-4"
+                                        style="line-height: 1.8; font-weight: 500;">
+                                        <% if (announcement.message==='registration' ) { %>
+                                            <div
+                                                class="p-4 text-center bg-light border border-primary border-opacity-10 rounded-4">
+                                                <i class="fas fa-file-signature fa-3x text-primary mb-3"></i>
+                                                <h4 class="text-dark fw-bold">Semester Registration is Now Open</h4>
+                                                <p class="text-secondary small mb-4">Please click the button below to
+                                                    select your courses and complete your registration for the upcoming
+                                                    semester.</p>
+                                                <a href="/student/registration"
+                                                    class="btn btn-primary px-5 py-3 rounded-pill fw-bold">
+                                                    <i class="fas fa-arrow-right me-2"></i> Register Now
+                                                </a>
+                                            </div>
+                                            <% } else { %>
+                                                <%= announcement.message %>
+                                                    <% } %>
+                                    </div>
+
+                                    <div class="pt-4 border-top d-flex align-items-center">
+                                        <div class="creator-avatar-mini me-2"
+                                            style="width: 40px; height: 40px; background: var(--gradient-1); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; font-weight: bold; transform: rotate(-5deg);">
+                                            <span style="transform: rotate(5deg);">
+                                                <%= announcement.creator_fname ? announcement.creator_fname.charAt(0)
+                                                    : 'A' %>
+                                            </span>
+                                        </div>
+                                        <div class="creator-info">
+                                            <small class="text-secondary fw-bold text-uppercase"
+                                                style="font-size: 0.6rem; letter-spacing: 1px;">Posted by</small>
+                                            <div class="text-dark small fw-bold" style="margin-top: -3px;">
+                                                <%= announcement.creator_fname %>
+                                                    <%= announcement.creator_lname %>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div class="announcement-body text-secondary mb-4" style="line-height: 1.6;">
-                                <% if (announcement.message === 'registration') { %>
-                                    <div class="glass-card p-4 text-center bg-primary bg-opacity-10 border-primary border-opacity-25 rounded-4">
-                                        <i class="fas fa-file-signature fa-3x text-primary mb-3"></i>
-                                        <h4 class="text-light fw-bold">Semester Registration is Now Open</h4>
-                                        <p class="text-secondary small mb-4">Please click the button below to select your courses and complete your registration for the upcoming semester.</p>
-                                        <a href="/student/registration" class="btn btn-hero btn-primary px-5">
-                                            <i class="fas fa-arrow-right me-2"></i> Register Now
-                                        </a>
-                                    </div>
+                            <% }); %>
                                 <% } else { %>
-                                    <%= announcement.message %>
-                                <% } %>
-                            </div>
-
-                            <div class="panel-footer border-top border-white border-opacity-10 pt-3 d-flex align-items-center">
-                                <div class="creator-avatar-mini me-2" style="width: 30px; height: 30px; background: var(--gradient-1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: bold;">
-                                    <%= announcement.creator_fname ? announcement.creator_fname.charAt(0) : 'A' %>
-                                </div>
-                                <div class="creator-info">
-                                    <small class="text-secondary">Posted by</small>
-                                    <div class="text-light small fw-bold" style="margin-top: -3px;">
-                                        <%= announcement.creator_fname %> <%= announcement.creator_lname %>
+                                    <div class="col-12">
+                                        <div class="premium-panel text-center py-5">
+                                            <div class="mb-4">
+                                                <i class="fas fa-bullhorn fa-4x text-secondary opacity-30"></i>
+                                            </div>
+                                            <h4 class="text-dark fw-bold">No announcements yet</h4>
+                                            <p class="text-secondary fw-medium">Check back later for updates from school
+                                                staff.</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <% }); %>
-                <% } else { %>
-                    <div class="col-12">
-                        <div class="glass-panel text-center py-5">
-                            <div class="mb-4">
-                                <i class="fas fa-bullhorn fa-4x text-secondary opacity-25"></i>
-                            </div>
-                            <h4 class="text-light">No announcements yet</h4>
-                            <p class="text-secondary">Check back later for updates from school staff.</p>
-                        </div>
-                    </div>
-                <% } %>
-            </div>
-        </main>
+                                    <% } %>
+                </div>
+            </main>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/brocode-script.js"></script>
 </body>
+
 </html>

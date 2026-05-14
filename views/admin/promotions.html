@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | Abdigudina Admin</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel p-4">
+            <!-- Header Area -->
+            <div class="premium-panel mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">End-of-Year Promotion</h1>
+                        <p class="text-secondary m-0 fw-medium">Review and process student transitions to the next academic level.</p>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>Export Report
+                        </button>
+                        <form action="/admin/promotions/process" method="POST" onsubmit="return confirm('Are you sure you want to process ALL promotions? This action is permanent and updates all student records.')">
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                                <i class="fas fa-sync-alt me-2"></i>Execute Global Promotion
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success mt-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3 alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i> <%= success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <% } %>
+            <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger mt-4 rounded-4 border-0 bg-danger bg-opacity-10 text-danger p-3 alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i> <%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <% } %>
+
+            <!-- Promotion Logic Summary -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="premium-panel bg-success bg-opacity-10 border-success border-opacity-10">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-sm bg-success text-white rounded-pill d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div>
+                                <div class="h3 fw-800 mb-0"><%= students.filter(s => s.decision === 'Promoted' || s.decision === 'Graduated').length %></div>
+                                <div class="text-success small fw-bold">Ready for Promotion</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="premium-panel bg-danger bg-opacity-10 border-danger border-opacity-10">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-sm bg-danger text-white rounded-pill d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="fas fa-redo"></i>
+                            </div>
+                            <div>
+                                <div class="h3 fw-800 mb-0"><%= students.filter(s => s.decision === 'Retained').length %></div>
+                                <div class="text-danger small fw-bold">Academic Retentions</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="premium-panel bg-secondary bg-opacity-10 border-secondary border-opacity-10">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-sm bg-secondary text-white rounded-pill d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="fas fa-user-slash"></i>
+                            </div>
+                            <div>
+                                <div class="h3 fw-800 mb-0"><%= students.filter(s => s.decision === 'Excluded').length %></div>
+                                <div class="text-secondary small fw-bold">Withdrawn (Excluded)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview List -->
+            <div class="premium-panel border-0 shadow-sm overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr class="bg-light">
+                                <th class="py-3 px-4 border-0 text-secondary small fw-bold text-uppercase">Student</th>
+                                <th class="py-3 border-0 text-secondary small fw-bold text-uppercase text-center">Avg Score</th>
+                                <th class="py-3 border-0 text-secondary small fw-bold text-uppercase text-center">Current Grade</th>
+                                <th class="py-3 border-0 text-secondary small fw-bold text-uppercase text-center">Action</th>
+                                <th class="py-3 border-0 text-secondary small fw-bold text-uppercase text-center">Target Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (students && students.length > 0) { %>
+                                <% students.forEach(student => { %>
+                                    <tr>
+                                        <td class="py-3 px-4 border-0">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm me-3 bg-light text-dark rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                                                    <%= student.first_name.charAt(0) %>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold text-dark"><%= student.first_name %> <%= student.last_name %></div>
+                                                    <div class="small text-secondary fw-medium"><%= student.student_id %></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 border-0 text-center">
+                                            <span class="fw-800 <%= student.average_score >= 50 ? 'text-success' : 'text-danger' %>">
+                                                <%= student.average_score ? parseFloat(student.average_score).toFixed(1) + '%' : 'N/A' %>
+                                            </span>
+                                        </td>
+                                        <td class="py-3 border-0 text-center">
+                                            <span class="badge bg-light text-dark px-3 py-2 rounded-pill fw-bold border">Grade <%= student.grade_level %></span>
+                                        </td>
+                                        <td class="py-3 border-0 text-center">
+                                            <% if (student.decision === 'Promoted') { %>
+                                                <i class="fas fa-long-arrow-alt-right text-success mx-2"></i>
+                                            <% } else if (student.decision === 'Graduated') { %>
+                                                <i class="fas fa-graduation-cap text-primary mx-2"></i>
+                                            <% } else if (student.decision === 'Retained') { %>
+                                                <i class="fas fa-undo text-danger mx-2"></i>
+                                            <% } else { %>
+                                                <i class="fas fa-ban text-secondary mx-2"></i>
+                                            <% } %>
+                                        </td>
+                                        <td class="py-3 border-0 text-center">
+                                            <% if (student.decision === 'Promoted') { %>
+                                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold border border-success border-opacity-10">Grade <%= student.grade_level + 1 %></span>
+                                            <% } else if (student.decision === 'Graduated') { %>
+                                                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold border border-primary border-opacity-10">GRADUATED</span>
+                                            <% } else if (student.decision === 'Retained') { %>
+                                                <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-bold border border-danger border-opacity-10">RETAINED (G<%= student.grade_level %>)</span>
+                                            <% } else { %>
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill fw-bold border border-secondary border-opacity-10">EXCLUDED</span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="py-4">
+                                            <i class="fas fa-users-slash fa-3x text-light mb-3"></i>
+                                            <h4 class="text-secondary fw-bold">No students eligible for promotion</h4>
+                                            <p class="text-muted">Ensure students have approved grades for the current academic year.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

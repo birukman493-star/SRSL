@@ -1,51 +1,116 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
+    <title><%= title %> - Abdigudina Parent</title>
+    
+    <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .announcement-card {
+            background: white;
+            border-radius: 28px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .announcement-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+        .announcement-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: var(--gradient-1);
+        }
+        .date-badge {
+            background: #f8fafc;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 800;
+            color: var(--primary-color);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
 </head>
-<body>
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-        
+
         <main class="main-panel w-100 p-4">
-            <div class="dashboard-header">
-                <h1 class="dashboard-title">School Announcements</h1>
-                <p class="text-secondary">Stay updated with the latest school news and events</p>
+            <!-- Header -->
+            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="dashboard-title" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px;">
+                            School Broadcasts
+                        </h1>
+                        <p class="text-secondary m-0" style="font-weight: 500; font-size: 1.1rem;">Official news, events, and academic updates for parents</p>
+                    </div>
+                </div>
             </div>
 
-            <div class="announcements-container">
+            <div class="row g-4">
                 <% if (announcements && announcements.length > 0) { %>
-                    <% announcements.forEach(announcement => { %>
-                        <div class="glass-panel mb-4">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <h3 class="h4 text-primary m-0"><%= announcement.title %></h3>
-                                <span class="badge bg-primary rounded-pill">
-                                    <%= new Date(announcement.created_at).toLocaleDateString() %>
+                    <% announcements.forEach(a => { %>
+                    <div class="col-12">
+                        <div class="announcement-card p-4 p-md-5">
+                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                <div class="date-badge shadow-xs">
+                                    <i class="far fa-calendar-alt me-2"></i> <%= new Date(a.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) %>
+                                </div>
+                                <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase" style="background: rgba(37,99,235,0.08); color: var(--primary-color); font-size: 0.65rem;">
+                                    Public Notice
                                 </span>
                             </div>
-                            <div class="text-light-50 mb-3" style="font-size: 1.1rem; line-height: 1.6;">
-                                <%- announcement.message %>
+                            <h3 class="fw-900 mb-3" style="color: var(--dark-text); font-size: 1.8rem;"><%= a.title %></h3>
+                            <div class="text-secondary fw-medium fs-5" style="line-height: 1.7; opacity: 0.85;">
+                                <%= a.content %>
                             </div>
-                            <div class="d-flex align-items-center gap-2 text-secondary" style="font-size: 0.9rem;">
-                                <i class="fas fa-user-circle"></i>
-                                <span>Posted by: <%= announcement.author_name || 'School Admin' %></span>
+                            <div class="mt-4 pt-4 border-top d-flex align-items-center gap-3">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
+                                <div class="small fw-bold text-secondary">Authorized by <span class="text-dark"><%= a.author_name || 'Administration' %></span></div>
                             </div>
                         </div>
+                    </div>
                     <% }); %>
                 <% } else { %>
-                    <div class="glass-panel text-center py-5">
-                        <i class="fas fa-bullhorn fa-3x text-secondary mb-3"></i>
-                        <p class="text-secondary h5">No announcements at this time.</p>
+                    <div class="col-12 text-center py-5">
+                        <div class="announcement-card py-5">
+                            <div class="text-secondary opacity-10 mb-4">
+                                <i class="fas fa-bell-slash fa-6x"></i>
+                            </div>
+                            <h3 class="fw-900" style="color: var(--dark-text);">No Active Broadcasts</h3>
+                            <p class="text-secondary fw-medium">There are currently no new school-wide announcements for guardians.</p>
+                        </div>
                     </div>
                 <% } %>
             </div>
         </main>
     </div>
+    
     <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <style>
+        .fw-900 { font-weight: 900; }
+        .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    </style>
 </body>
 </html>

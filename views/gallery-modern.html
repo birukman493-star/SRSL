@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gallery - Student Registration System</title>
@@ -18,1027 +19,1069 @@
     <link rel="stylesheet" href="/css/brocode-style.css" />
 
     <style>
-      body {
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-          Roboto, sans-serif;
-      }
+        body {
+            font-family: "Inter", sans-serif;
+        }
 
-      .gallery-hero {
-        min-height: 50vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(
-          135deg,
-          var(--dark-bg) 0%,
-          var(--dark-secondary) 100%
-        );
-        position: relative;
-        overflow: hidden;
-      }
+        .gallery-hero {
+            min-height: 65vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(249, 115, 22, 0.05) 100%), #f8fafc;
+            position: relative;
+            padding: 14rem 0 10rem;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
 
-      .filter-section {
-        padding: 3rem 0;
-        background: var(--dark-secondary);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      .filter-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-      }
-
-      .filter-btn {
-        padding: 0.8rem 1.5rem;
-        background: var(--dark-tertiary);
-        border: 2px solid rgba(255, 255, 255, 0.1);
-        border-radius: 25px;
-        color: var(--gray-text);
-        text-decoration: none;
-        transition: var(--transition);
-        cursor: pointer;
-        font-weight: 500;
-      }
-
-      .filter-btn:hover {
-        border-color: var(--primary-color);
-        color: var(--light-text);
-        transform: translateY(-2px);
-      }
-
-      .filter-btn.active {
-        background: var(--gradient-1);
-        border-color: var(--primary-color);
-        color: var(--light-text);
-      }
-
-      .gallery-section {
-        padding: 5rem 0;
-        background: var(--dark-bg);
-      }
-
-      .gallery-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 2rem;
-        max-width: 1400px;
-        margin: 0 auto;
-      }
-
-      .gallery-item {
-        background: var(--dark-secondary);
-        border-radius: 20px;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: var(--transition);
-        cursor: pointer;
-        position: relative;
-      }
-
-      .gallery-item:hover {
-        transform: translateY(-10px);
-        box-shadow: var(--shadow-xl);
-        border-color: var(--primary-color);
-      }
-
-      .gallery-image-container {
-        position: relative;
-        height: 250px;
-        overflow: hidden;
-      }
-
-      .gallery-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: var(--transition);
-      }
-
-      .gallery-item:hover .gallery-image {
-        transform: scale(1.1);
-      }
-
-      .gallery-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(
-          to bottom,
-          transparent 0%,
-          rgba(0, 0, 0, 0.7) 100%
-        );
-        opacity: 0;
-        transition: var(--transition);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-      }
-
-      .gallery-item:hover .gallery-overlay {
-        opacity: 1;
-      }
-
-      .gallery-content {
-        padding: 1.5rem;
-      }
-
-      .gallery-category {
-        display: inline-block;
-        padding: 0.3rem 0.8rem;
-        background: var(--gradient-1);
-        border-radius: 15px;
-        color: var(--light-text);
-        font-size: 0.8rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-      }
-
-      .gallery-title {
-        font-size: 1.3rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        color: var(--light-text);
-      }
-
-      .gallery-description {
-        color: var(--gray-text);
-        line-height: 1.6;
-        margin-bottom: 1rem;
-      }
-
-      .gallery-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: var(--gray-text);
-        font-size: 0.9rem;
-      }
-
-      .gallery-date {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .gallery-stats {
-        display: flex;
-        gap: 1rem;
-      }
-
-      .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-      }
-
-      /* Modal Styles */
-      .gallery-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.9);
-        z-index: 2000;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-
-      .gallery-modal.show {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 1;
-      }
-
-      .modal-content-custom {
-        background: var(--dark-secondary);
-        border-radius: 20px;
-        max-width: 90%;
-        max-height: 90%;
-        overflow: hidden;
-        position: relative;
-        transform: scale(0.8);
-        transition: transform 0.3s ease;
-      }
-
-      .gallery-modal.show .modal-content-custom {
-        transform: scale(1);
-      }
-
-      .modal-close {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: none;
-        border: none;
-        color: var(--light-text);
-        font-size: 2rem;
-        cursor: pointer;
-        z-index: 1;
-        transition: var(--transition);
-      }
-
-      .modal-close:hover {
-        color: var(--primary-color);
-        transform: rotate(90deg);
-      }
-
-      .modal-image-custom {
-        width: 100%;
-        height: auto;
-        max-height: 60vh;
-        object-fit: contain;
-      }
-
-      .modal-info {
-        padding: 2rem;
-      }
-
-      .modal-title-custom {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        color: var(--light-text);
-      }
-
-      .modal-description-custom {
-        color: var(--gray-text);
-        line-height: 1.6;
-        margin-bottom: 1.5rem;
-      }
-
-      .modal-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      @media (max-width: 768px) {
-        .gallery-grid {
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 1.5rem;
+        .filter-section {
+            padding: 3.5rem 0;
+            background: #ffffff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 10;
         }
 
         .filter-buttons {
-          gap: 0.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .filter-btn {
-          padding: 0.6rem 1rem;
-          font-size: 0.9rem;
+            padding: 0.8rem 2rem;
+            background: #f8fafc;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 30px;
+            color: var(--gray-text);
+            text-decoration: none;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
         }
-      }
 
-      /* Dark Theme Navbar Override */
-      .navbar {
-        background: rgba(15, 15, 35, 0.95) !important;
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 1rem 0;
-      }
+        .filter-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-1);
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.4s ease;
+        }
 
-      .navbar-brand {
-        color: var(--primary-color) !important;
-        font-weight: 700;
-        font-size: 1.5rem;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
+        .filter-btn:hover {
+            color: var(--primary-color);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 25px rgba(37, 99, 235, 0.15);
+            border-color: rgba(37, 99, 235, 0.2);
+            background: #ffffff;
+        }
 
-      .navbar-brand:hover {
-        color: var(--secondary-color) !important;
-        transform: translateY(-2px);
-      }
+        .filter-btn.active {
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 15px 35px rgba(37, 99, 235, 0.35);
+            transform: translateY(-4px);
+        }
 
-      .nav-link {
-        color: var(--gray-text) !important;
-        margin: 0 0.5rem;
-        padding: 0.5rem 1rem !important;
-        border-radius: 25px;
-        transition: var(--transition);
-        position: relative;
-        overflow: hidden;
-      }
+        .filter-btn.active::before {
+            opacity: 1;
+        }
 
-      .nav-link::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: var(--gradient-1);
-        transition: var(--transition);
-        z-index: -1;
-      }
+        .gallery-section {
+            padding: 7rem 0;
+            background: #f8fafc;
+            position: relative;
+            overflow: hidden;
+        }
 
-      .nav-link:hover::before {
-        left: 0;
-      }
-      .nav-link:hover {
-        color: var(--light-text) !important;
-        transform: translateY(-2px);
-      }
-      .nav-link.active {
-        color: var(--light-text) !important;
-        background: var(--gradient-1);
-      }
+        /* Premium Ambient Background Mesh */
+        .gallery-section::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: -10%;
+            width: 70%;
+            height: 70%;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 70%);
+            filter: blur(80px);
+            z-index: 0;
+            pointer-events: none;
+        }
 
-      .navbar-toggler {
-        border-color: var(--primary-color) !important;
-      }
-      .navbar-toggler-icon {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%236c5ce7' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
-      }
+        .gallery-section::after {
+            content: '';
+            position: absolute;
+            bottom: -20%;
+            right: -10%;
+            width: 70%;
+            height: 70%;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.04) 0%, rgba(255, 255, 255, 0) 70%);
+            filter: blur(80px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-auto-rows: 480px;
+            gap: 2.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .gallery-item {
+            background: #000000;
+            border-radius: 36px;
+            overflow: hidden;
+            transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+            cursor: pointer;
+            position: relative;
+            height: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
+            transform: translateZ(0);
+            /* Hardware acceleration */
+        }
+
+        .gallery-item:nth-child(1),
+        .gallery-item:nth-child(6),
+        .gallery-item:nth-child(8) {
+            grid-column: span 2;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-12px) scale(1.02);
+            /* Massive, ultra-premium colorful glow on hover */
+            box-shadow: 0 40px 80px rgba(37, 99, 235, 0.2), 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            z-index: 5;
+        }
+
+        .gallery-image-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .gallery-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+            will-change: transform;
+        }
+
+        .gallery-item:hover .gallery-image {
+            transform: scale(1.08);
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.1) 60%, transparent 100%);
+            transition: all 0.6s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.1) 100%);
+        }
+
+        .gallery-overlay i {
+            opacity: 0;
+            transform: scale(0.3) translateY(20px);
+            transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+            color: rgba(255, 255, 255, 0.9);
+            z-index: 3;
+            text-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            font-size: 3rem;
+        }
+
+        .gallery-item:hover .gallery-overlay i {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        .gallery-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 2.5rem;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .gallery-item:hover .gallery-content {
+            transform: translateY(-8px);
+        }
+
+        .gallery-category {
+            display: inline-block;
+            align-self: flex-start;
+            padding: 0.5rem 1.2rem;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 30px;
+            color: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .gallery-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+            text-shadow: 0 2px 15px rgba(0, 0, 0, 0.4);
+            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .content-reveal {
+            max-height: 0;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+            overflow: hidden;
+        }
+
+        .gallery-item:hover .content-reveal {
+            max-height: 200px;
+            opacity: 1;
+            transform: translateY(0);
+            margin-top: 1rem;
+        }
+
+        .gallery-description {
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.6;
+            margin-bottom: 1.2rem;
+            font-size: 1.05rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .gallery-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 1.2rem;
+        }
+
+        .gallery-date {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .gallery-stats {
+            display: flex;
+            gap: 1.2rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Modal Styles */
+        .gallery-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .gallery-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+        }
+
+        .modal-content-custom {
+            background: #ffffff;
+            border-radius: 20px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: hidden;
+            position: relative;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-modal.show .modal-content-custom {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            color: #000000;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 10;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--primary-color);
+            transform: rotate(90deg);
+        }
+
+        .modal-image-custom {
+            width: 100%;
+            height: auto;
+            max-height: 60vh;
+            object-fit: contain;
+        }
+
+        .modal-info {
+            padding: 2rem;
+        }
+
+        .modal-title-custom {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--light-text);
+        }
+
+        .modal-description-custom {
+            color: var(--gray-text);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                grid-auto-rows: auto;
+                gap: 1.5rem;
+            }
+
+            /* Disable col-spanning on mobile */
+            .gallery-item:nth-child(1),
+            .gallery-item:nth-child(6),
+            .gallery-item:nth-child(8) {
+                grid-column: span 1;
+            }
+
+            .gallery-item {
+                height: 300px !important;
+            }
+
+            .gallery-hero {
+                padding: clamp(6rem, 15vw, 14rem) 0 clamp(3rem, 8vw, 10rem);
+            }
+
+            .filter-buttons {
+                gap: 0.5rem;
+            }
+
+            .filter-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
     </style>
-  </head>
-  <body>
+</head>
+
+<body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container">
-        <a href="/" class="navbar-brand">
-          <i class="fas fa-graduation-cap"></i> SRSL
-        </a>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
-            <li class="nav-item">
-              <a href="/about" class="nav-link">About</a>
-            </li>
-            <li class="nav-item">
-              <a href="/gallery" class="nav-link active">Gallery</a>
-            </li>
-            <li class="nav-item">
-              <a href="/contact" class="nav-link">Contact</a>
-            </li>
-            <li class="nav-item">
-              <a href="/auth/login" class="nav-link">Login</a>
-            </li>
-          </ul>
+    <nav class="navbar navbar-expand-lg navbar-transparent navbar-dark-mode">
+        <div class="container">
+            <a href="/" class="navbar-brand">
+                <i class="fas fa-graduation-cap"></i> Abdigudina
+            </a>
+            <button class="navbar-toggler" type="button" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a href="/" class="nav-link" data-i18n="nav_home">Home</a></li>
+                    <li class="nav-item">
+                        <a href="/about" class="nav-link" data-i18n="nav_about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/gallery" class="nav-link active" data-i18n="nav_gallery">Gallery</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/contact" class="nav-link" data-i18n="nav_contact">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/auth/login" class="nav-link" data-i18n="nav_login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="themeToggle" title="Toggle Theme">
+                            <i class="fas fa-moon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown language-selector">
+                        <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-globe"></i> EN
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end glass-dropdown" aria-labelledby="languageDropdown">
+                            <li><a class="dropdown-item" href="?lang=en">English</a></li>
+                            <li><a class="dropdown-item" href="?lang=am">Amharic (አማርኛ)</a></li>
+                            <li><a class="dropdown-item" href="?lang=om">Afan Oromo</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
-      </div>
     </nav>
 
-    <!-- Gallery Hero -->
-    <section class="gallery-hero">
-      <div class="container">
-        <div class="hero-content">
-          <h1 class="hero-title" data-typing>Gallery</h1>
-          <p class="hero-subtitle">
-            Explore our campus life and educational journey
-          </p>
+    <div class="page-transition-wrapper">
+        <!-- Gallery Hero -->
+
+        <section class="gallery-hero">
+            <div class="hero-particles">
+                <div class="floating-element floating-1"></div>
+                <div class="floating-element floating-2"></div>
+                <div class="floating-element floating-3"></div>
+            </div>
+            <div class="container">
+                <div class="hero-content">
+                    <h1 class="hero-title" data-typing data-i18n="nav_gallery">Gallery</h1>
+                    <p class="hero-subtitle">
+                        Explore our campus life and educational journey
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter Section -->
+        <section class="filter-section">
+            <div class="container">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" onclick="filterGallery('all', this)">
+                        All
+                    </button>
+                    <button class="filter-btn" onclick="filterGallery('campus', this)">
+                        Campus
+                    </button>
+                    <button class="filter-btn" onclick="filterGallery('classroom', this)">
+                        Classroom
+                    </button>
+                    <button class="filter-btn" onclick="filterGallery('events', this)">
+                        Events
+                    </button>
+                    <button class="filter-btn" onclick="filterGallery('sports', this)">
+                        Sports
+                    </button>
+                    <button class="filter-btn" onclick="filterGallery('technology', this)">
+                        Technology
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gallery Section -->
+        <section class="gallery-section">
+            <div class="container">
+                <div class="gallery-grid" id="galleryGrid">
+                    <!-- Gallery Item 1 -->
+                    <div class="gallery-item animate-on-scroll" data-category="campus" onclick="openModal(this)">
+                        <div class="gallery-image-container">
+                            <img src="/image/gallery-1.jpg"
+                                alt="Modern Campus Building" class="gallery-image" />
+                            <div class="gallery-overlay">
+                                <i class="fas fa-search-plus fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="gallery-content">
+                            <span class="gallery-category">Campus</span>
+                            <h3 class="gallery-title">Modern Campus Building</h3>
+                            <div class="content-reveal">
+                                <p class="gallery-description">
+                                    State-of-the-art facilities designed for optimal learning
+                                    environment with modern architecture and technology integration.
+                                </p>
+                                <div class="gallery-meta">
+                                    <div class="gallery-date">
+                                        <i class="fas fa-calendar"></i> March 15, 2026
+                                    </div>
+                                    <div class="gallery-stats">
+                                        <div class="stat-item"><i class="fas fa-eye"></i> 1.2k</div>
+                                        <div class="stat-item"><i class="fas fa-heart"></i> 89</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 2 -->
+                    <div class="gallery-item animate-on-scroll" data-category="classroom" onclick="openModal(this)">
+                        <div class="gallery-image-container">
+                            <img src="/image/hero-bg.jpg"
+                                alt="Interactive Classroom" class="gallery-image" />
+                            <div class="gallery-overlay">
+                                <i class="fas fa-search-plus fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="gallery-content">
+                            <span class="gallery-category">Classroom</span>
+                            <h3 class="gallery-title">Interactive Learning Space</h3>
+                            <div class="content-reveal">
+                                <p class="gallery-description">
+                                    Smart classrooms equipped with interactive whiteboards, digital
+                                    displays, and collaborative learning tools.
+                                </p>
+                                <div class="gallery-meta">
+                                    <div class="gallery-date">
+                                        <i class="fas fa-calendar"></i> March 10, 2026
+                                    </div>
+                                    <div class="gallery-stats">
+                                        <div class="stat-item"><i class="fas fa-eye"></i> 956</div>
+                                        <div class="stat-item"><i class="fas fa-heart"></i> 67</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 3 -->
+                    <div class="gallery-item animate-on-scroll" data-category="events" onclick="openModal(this)">
+                        <div class="gallery-image-container">
+                            <img src="/image/gallery-2.jpg"
+                                alt="Science Fair Exhibition" class="gallery-image" />
+                            <div class="gallery-overlay">
+                                <i class="fas fa-search-plus fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="gallery-content">
+                            <span class="gallery-category">Events</span>
+                            <h3 class="gallery-title">Science Fair Exhibition</h3>
+                            <div class="content-reveal">
+                                <p class="gallery-description">
+                                    Annual science fair showcasing innovative student projects and
+                                    experiments in various STEM fields.
+                                </p>
+                                <div class="gallery-meta">
+                                    <div class="gallery-date">
+                                        <i class="fas fa-calendar"></i> March 8, 2026
+                                    </div>
+                                    <div class="gallery-stats">
+                                        <div class="stat-item"><i class="fas fa-eye"></i> 2.1k</div>
+                                        <div class="stat-item"><i class="fas fa-heart"></i> 124</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 4 -->
+                    <div class="gallery-item animate-on-scroll" data-category="sports" onclick="openModal(this)">
+                        <div class="gallery-image-container">
+                            <img src="/image/gallery-3.jpg"
+                                alt="Sports Competition" class="gallery-image" />
+                            <div class="gallery-overlay">
+                                <i class="fas fa-search-plus fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="gallery-content">
+                            <span class="gallery-category">Sports</span>
+                            <h3 class="gallery-title">Inter-School Sports Meet</h3>
+                            <div class="content-reveal">
+                                <p class="gallery-description">
+                                    Annual sports competition bringing together students from
+                                    various schools for friendly matches and tournaments.
+                                </p>
+                                <div class="gallery-meta">
+                                    <div class="gallery-date">
+                                        <i class="fas fa-calendar"></i> March 5, 2026
+                                    </div>
+                                    <div class="gallery-stats">
+                                        <div class="stat-item"><i class="fas fa-eye"></i> 1.8k</div>
+                                        <div class="stat-item"><i class="fas fa-heart"></i> 102</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 5 -->
+                    <div class="gallery-item animate-on-scroll" data-category="technology" onclick="openModal(this)">
+                        <div class="gallery-image-container">
+                            <img src="/image/gallery-4.jpg"
+                                alt="Computer Lab" class="gallery-image" />
+                            <div class="gallery-overlay">
+                                <i class="fas fa-search-plus fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="gallery-content">
+                            <span class="gallery-category">Technology</span>
+                            <h3 class="gallery-title">Advanced Computer Lab</h3>
+                            <div class="content-reveal">
+                                <p class="gallery-description">
+                                    Modern computer laboratory with high-performance workstations
+                                    and specialized educational software.
+                                </p>
+                                <div class="gallery-meta">
+                                    <div class="gallery-date">
+                                        <i class="fas fa-calendar"></i> March 1, 2026
+                                    </div>
+                                    <div class="gallery-stats">
+                                        <div class="stat-item"><i class="fas fa-eye"></i> 1.5k</div>
+                                        <div class="stat-item"><i class="fas fa-heart"></i> 78</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 6 -->
+                    <div class="gallery-item animate-on-scroll" data-category="campus" onclick="openModal(this)">
+                        <div class="gallery-image-container">
+                            <img src="/image/gallery-5.jpg"
+                                alt="Digital Library" class="gallery-image" />
+                            <div class="gallery-overlay">
+                                <i class="fas fa-search-plus fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="gallery-content">
+                            <span class="gallery-category">Campus</span>
+                            <h3 class="gallery-title">Digital Library</h3>
+                            <div class="content-reveal">
+                                <p class="gallery-description">
+                                    Extensive digital library with thousands of e-books, journals,
+                                    and research databases for students and faculty.
+                                </p>
+                                <div class="gallery-meta">
+                                    <div class="gallery-date">
+                                        <i class="fas fa-calendar"></i> February 28, 2026
+                                    </div>
+                                    <div class="gallery-stats">
+                                        <div class="stat-item"><i class="fas fa-eye"></i> 1.3k</div>
+                                        <div class="stat-item"><i class="fas fa-heart"></i> 91</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 7 -->
+                    <div class="gallery-item animate-on-scroll" data-category="classroom" onclick="openModal(this)">
+                        <div class="gallery-image-container">
+                            <img src="/image/gallery-6.jpg"
+                                alt="Art Studio" class="gallery-image" />
+                            <div class="gallery-overlay">
+                                <i class="fas fa-search-plus fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="gallery-content">
+                            <span class="gallery-category">Classroom</span>
+                            <h3 class="gallery-title">Art Studio</h3>
+                            <div class="content-reveal">
+                                <p class="gallery-description">
+                                    Creative space for artistic expression, design thinking, and
+                                    hands-on learning activities for all grades.
+                                </p>
+                                <div class="gallery-meta">
+                                    <div class="gallery-date">
+                                        <i class="fas fa-calendar"></i> February 20, 2026
+                                    </div>
+                                    <div class="gallery-stats">
+                                        <div class="stat-item"><i class="fas fa-eye"></i> 870</div>
+                                        <div class="stat-item"><i class="fas fa-heart"></i> 55</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 8 -->
+                    <div class="gallery-item animate-on-scroll" data-category="events" onclick="openModal(this)">
+                        <div class="gallery-image-container">
+                            <img src="/image/gallery-7.jpg"
+                                alt="Cultural Festival" class="gallery-image" />
+                            <div class="gallery-overlay">
+                                <i class="fas fa-search-plus fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="gallery-content">
+                            <span class="gallery-category">Events</span>
+                            <h3 class="gallery-title">Cultural Festival</h3>
+                            <div class="content-reveal">
+                                <p class="gallery-description">
+                                    Annual celebration of diversity and cultural heritage featuring
+                                    performances, exhibitions and student showcases.
+                                </p>
+                                <div class="gallery-meta">
+                                    <div class="gallery-date">
+                                        <i class="fas fa-calendar"></i> February 15, 2026
+                                    </div>
+                                    <div class="gallery-stats">
+                                        <div class="stat-item"><i class="fas fa-eye"></i> 2.5k</div>
+                                        <div class="stat-item"><i class="fas fa-heart"></i> 145</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 9 -->
+                    <div class="gallery-item animate-on-scroll" data-category="technology" onclick="openModal(this)">
+                        <div class="gallery-image-container">
+                            <img src="/image/gallery-8.jpg"
+                                alt="Robotics Lab" class="gallery-image" />
+                            <div class="gallery-overlay">
+                                <i class="fas fa-search-plus fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="gallery-content">
+                            <span class="gallery-category">Technology</span>
+                            <h3 class="gallery-title">Robotics Lab</h3>
+                            <div class="content-reveal">
+                                <p class="gallery-description">
+                                    Advanced robotics laboratory for STEM education, innovation, and
+                                    hands-on engineering projects.
+                                </p>
+                                <div class="gallery-meta">
+                                    <div class="gallery-date">
+                                        <i class="fas fa-calendar"></i> February 10, 2026
+                                    </div>
+                                    <div class="gallery-stats">
+                                        <div class="stat-item"><i class="fas fa-eye"></i> 1.9k</div>
+                                        <div class="stat-item"><i class="fas fa-heart"></i> 113</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 10 -->
+                    <div class="gallery-item animate-on-scroll" data-category="sports" onclick="openModal(this)">
+                        <div class="gallery-image-container">
+                            <img src="/image/gallery-9.jpg"
+                                alt="Athletics Track" class="gallery-image" />
+                            <div class="gallery-overlay">
+                                <i class="fas fa-search-plus fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="gallery-content">
+                            <span class="gallery-category">Sports</span>
+                            <h3 class="gallery-title">Athletics Track & Field</h3>
+                            <div class="content-reveal">
+                                <p class="gallery-description">
+                                    Professional athletics track for training, competitions, and
+                                    promoting a healthy and active student lifestyle.
+                                </p>
+                                <div class="gallery-meta">
+                                    <div class="gallery-date">
+                                        <i class="fas fa-calendar"></i> February 5, 2026
+                                    </div>
+                                    <div class="gallery-stats">
+                                        <div class="stat-item"><i class="fas fa-eye"></i> 1.4k</div>
+                                        <div class="stat-item"><i class="fas fa-heart"></i> 79</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gallery Item 11 -->
+                    <div class="gallery-item animate-on-scroll" data-category="campus" onclick="openModal(this)">
+                        <div class="gallery-image-container">
+                            <img src="/image/gallery-10.jpg"
+                                alt="Student Lounge" class="gallery-image" />
+                            <div class="gallery-overlay">
+                                <i class="fas fa-search-plus fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="gallery-content">
+                            <span class="gallery-category">Campus</span>
+                            <h3 class="gallery-title">Student Lounge & Cafeteria</h3>
+                            <div class="content-reveal">
+                                <p class="gallery-description">
+                                    Modern student lounge where students can relax, collaborate, and
+                                    enjoy healthy meals in a comfortable environment.
+                                </p>
+                                <div class="gallery-meta">
+                                    <div class="gallery-date">
+                                        <i class="fas fa-calendar"></i> January 30, 2026
+                                    </div>
+                                    <div class="gallery-stats">
+                                        <div class="stat-item"><i class="fas fa-eye"></i> 1.1k</div>
+                                        <div class="stat-item"><i class="fas fa-heart"></i> 68</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gallery Modal -->
+        <div class="gallery-modal" id="galleryModal">
+            <div class="modal-content-custom">
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <img src="" alt="" class="modal-image-custom" id="modalImage" />
+                <div class="modal-info">
+                    <h2 class="modal-title-custom" id="modalTitle"></h2>
+                    <p class="modal-description-custom" id="modalDescription"></p>
+                    <div class="modal-meta">
+                        <div class="gallery-date">
+                            <i class="fas fa-calendar me-2"></i>
+                            <span id="modalDate"></span>
+                        </div>
+                        <div class="gallery-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-eye me-1"></i><span id="modalViews"></span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-heart me-1"></i><span id="modalLikes"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </section>
-
-    <!-- Filter Section -->
-    <section class="filter-section">
-      <div class="container">
-        <div class="filter-buttons">
-          <button
-            class="filter-btn active"
-            onclick="filterGallery('all', this)"
-          >
-            All
-          </button>
-          <button class="filter-btn" onclick="filterGallery('campus', this)">
-            Campus
-          </button>
-          <button class="filter-btn" onclick="filterGallery('classroom', this)">
-            Classroom
-          </button>
-          <button class="filter-btn" onclick="filterGallery('events', this)">
-            Events
-          </button>
-          <button class="filter-btn" onclick="filterGallery('sports', this)">
-            Sports
-          </button>
-          <button
-            class="filter-btn"
-            onclick="filterGallery('technology', this)"
-          >
-            Technology
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Gallery Section -->
-    <section class="gallery-section">
-      <div class="container">
-        <div class="gallery-grid" id="galleryGrid">
-          <!-- Gallery Item 1 -->
-          <div
-            class="gallery-item animate-on-scroll"
-            data-category="campus"
-            onclick="openModal(this)"
-          >
-            <div class="gallery-image-container">
-              <img
-                src="/images/download.jpg"
-                alt="Modern Campus Building"
-                class="gallery-image"
-              />
-              <div class="gallery-overlay">
-                <i class="fas fa-search-plus fa-2x"></i>
-              </div>
-            </div>
-            <div class="gallery-content">
-              <span class="gallery-category">Campus</span>
-              <h3 class="gallery-title">Modern Campus Building</h3>
-              <p class="gallery-description">
-                State-of-the-art facilities designed for optimal learning
-                environment with modern architecture and technology integration.
-              </p>
-              <div class="gallery-meta">
-                <div class="gallery-date">
-                  <i class="fas fa-calendar"></i> March 15, 2026
-                </div>
-                <div class="gallery-stats">
-                  <div class="stat-item"><i class="fas fa-eye"></i> 1.2k</div>
-                  <div class="stat-item"><i class="fas fa-heart"></i> 89</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Gallery Item 2 -->
-          <div
-            class="gallery-item animate-on-scroll"
-            data-category="classroom"
-            onclick="openModal(this)"
-          >
-            <div class="gallery-image-container">
-              <img
-                src="/images/download (1).jpg"
-                alt="Interactive Classroom"
-                class="gallery-image"
-              />
-              <div class="gallery-overlay">
-                <i class="fas fa-search-plus fa-2x"></i>
-              </div>
-            </div>
-            <div class="gallery-content">
-              <span class="gallery-category">Classroom</span>
-              <h3 class="gallery-title">Interactive Learning Space</h3>
-              <p class="gallery-description">
-                Smart classrooms equipped with interactive whiteboards, digital
-                displays, and collaborative learning tools.
-              </p>
-              <div class="gallery-meta">
-                <div class="gallery-date">
-                  <i class="fas fa-calendar"></i> March 10, 2026
-                </div>
-                <div class="gallery-stats">
-                  <div class="stat-item"><i class="fas fa-eye"></i> 956</div>
-                  <div class="stat-item"><i class="fas fa-heart"></i> 67</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Gallery Item 3 -->
-          <div
-            class="gallery-item animate-on-scroll"
-            data-category="events"
-            onclick="openModal(this)"
-          >
-            <div class="gallery-image-container">
-              <img
-                src="/images/download (2).jpg"
-                alt="Science Fair Exhibition"
-                class="gallery-image"
-              />
-              <div class="gallery-overlay">
-                <i class="fas fa-search-plus fa-2x"></i>
-              </div>
-            </div>
-            <div class="gallery-content">
-              <span class="gallery-category">Events</span>
-              <h3 class="gallery-title">Science Fair Exhibition</h3>
-              <p class="gallery-description">
-                Annual science fair showcasing innovative student projects and
-                experiments in various STEM fields.
-              </p>
-              <div class="gallery-meta">
-                <div class="gallery-date">
-                  <i class="fas fa-calendar"></i> March 8, 2026
-                </div>
-                <div class="gallery-stats">
-                  <div class="stat-item"><i class="fas fa-eye"></i> 2.1k</div>
-                  <div class="stat-item"><i class="fas fa-heart"></i> 124</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Gallery Item 4 -->
-          <div
-            class="gallery-item animate-on-scroll"
-            data-category="sports"
-            onclick="openModal(this)"
-          >
-            <div class="gallery-image-container">
-              <img
-                src="/images/download (3).jpg"
-                alt="Sports Competition"
-                class="gallery-image"
-              />
-              <div class="gallery-overlay">
-                <i class="fas fa-search-plus fa-2x"></i>
-              </div>
-            </div>
-            <div class="gallery-content">
-              <span class="gallery-category">Sports</span>
-              <h3 class="gallery-title">Inter-School Sports Meet</h3>
-              <p class="gallery-description">
-                Annual sports competition bringing together students from
-                various schools for friendly matches and tournaments.
-              </p>
-              <div class="gallery-meta">
-                <div class="gallery-date">
-                  <i class="fas fa-calendar"></i> March 5, 2026
-                </div>
-                <div class="gallery-stats">
-                  <div class="stat-item"><i class="fas fa-eye"></i> 1.8k</div>
-                  <div class="stat-item"><i class="fas fa-heart"></i> 102</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Gallery Item 5 -->
-          <div
-            class="gallery-item animate-on-scroll"
-            data-category="technology"
-            onclick="openModal(this)"
-          >
-            <div class="gallery-image-container">
-              <img
-                src="/images/download (4).jpg"
-                alt="Computer Lab"
-                class="gallery-image"
-              />
-              <div class="gallery-overlay">
-                <i class="fas fa-search-plus fa-2x"></i>
-              </div>
-            </div>
-            <div class="gallery-content">
-              <span class="gallery-category">Technology</span>
-              <h3 class="gallery-title">Advanced Computer Lab</h3>
-              <p class="gallery-description">
-                Modern computer laboratory with high-performance workstations
-                and specialized educational software.
-              </p>
-              <div class="gallery-meta">
-                <div class="gallery-date">
-                  <i class="fas fa-calendar"></i> March 1, 2026
-                </div>
-                <div class="gallery-stats">
-                  <div class="stat-item"><i class="fas fa-eye"></i> 1.5k</div>
-                  <div class="stat-item"><i class="fas fa-heart"></i> 78</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Gallery Item 6 -->
-          <div
-            class="gallery-item animate-on-scroll"
-            data-category="campus"
-            onclick="openModal(this)"
-          >
-            <div class="gallery-image-container">
-              <img
-                src="/images/images.jpg"
-                alt="Digital Library"
-                class="gallery-image"
-              />
-              <div class="gallery-overlay">
-                <i class="fas fa-search-plus fa-2x"></i>
-              </div>
-            </div>
-            <div class="gallery-content">
-              <span class="gallery-category">Campus</span>
-              <h3 class="gallery-title">Digital Library</h3>
-              <p class="gallery-description">
-                Extensive digital library with thousands of e-books, journals,
-                and research databases for students and faculty.
-              </p>
-              <div class="gallery-meta">
-                <div class="gallery-date">
-                  <i class="fas fa-calendar"></i> February 28, 2026
-                </div>
-                <div class="gallery-stats">
-                  <div class="stat-item"><i class="fas fa-eye"></i> 1.3k</div>
-                  <div class="stat-item"><i class="fas fa-heart"></i> 91</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Gallery Item 7 -->
-          <div
-            class="gallery-item animate-on-scroll"
-            data-category="classroom"
-            onclick="openModal(this)"
-          >
-            <div class="gallery-image-container">
-              <img
-                src="/images/images (1).jpg"
-                alt="Art Studio"
-                class="gallery-image"
-              />
-              <div class="gallery-overlay">
-                <i class="fas fa-search-plus fa-2x"></i>
-              </div>
-            </div>
-            <div class="gallery-content">
-              <span class="gallery-category">Classroom</span>
-              <h3 class="gallery-title">Art Studio</h3>
-              <p class="gallery-description">
-                Creative space for artistic expression, design thinking, and
-                hands-on learning activities for all grades.
-              </p>
-              <div class="gallery-meta">
-                <div class="gallery-date">
-                  <i class="fas fa-calendar"></i> February 20, 2026
-                </div>
-                <div class="gallery-stats">
-                  <div class="stat-item"><i class="fas fa-eye"></i> 870</div>
-                  <div class="stat-item"><i class="fas fa-heart"></i> 55</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Gallery Item 8 -->
-          <div
-            class="gallery-item animate-on-scroll"
-            data-category="events"
-            onclick="openModal(this)"
-          >
-            <div class="gallery-image-container">
-              <img
-                src="/images/images (2).jpg"
-                alt="Cultural Festival"
-                class="gallery-image"
-              />
-              <div class="gallery-overlay">
-                <i class="fas fa-search-plus fa-2x"></i>
-              </div>
-            </div>
-            <div class="gallery-content">
-              <span class="gallery-category">Events</span>
-              <h3 class="gallery-title">Cultural Festival</h3>
-              <p class="gallery-description">
-                Annual celebration of diversity and cultural heritage featuring
-                performances, exhibitions and student showcases.
-              </p>
-              <div class="gallery-meta">
-                <div class="gallery-date">
-                  <i class="fas fa-calendar"></i> February 15, 2026
-                </div>
-                <div class="gallery-stats">
-                  <div class="stat-item"><i class="fas fa-eye"></i> 2.5k</div>
-                  <div class="stat-item"><i class="fas fa-heart"></i> 145</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Gallery Item 9 -->
-          <div
-            class="gallery-item animate-on-scroll"
-            data-category="technology"
-            onclick="openModal(this)"
-          >
-            <div class="gallery-image-container">
-              <img
-                src="/images/images (3).jpg"
-                alt="Robotics Lab"
-                class="gallery-image"
-              />
-              <div class="gallery-overlay">
-                <i class="fas fa-search-plus fa-2x"></i>
-              </div>
-            </div>
-            <div class="gallery-content">
-              <span class="gallery-category">Technology</span>
-              <h3 class="gallery-title">Robotics Lab</h3>
-              <p class="gallery-description">
-                Advanced robotics laboratory for STEM education, innovation, and
-                hands-on engineering projects.
-              </p>
-              <div class="gallery-meta">
-                <div class="gallery-date">
-                  <i class="fas fa-calendar"></i> February 10, 2026
-                </div>
-                <div class="gallery-stats">
-                  <div class="stat-item"><i class="fas fa-eye"></i> 1.9k</div>
-                  <div class="stat-item"><i class="fas fa-heart"></i> 113</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Gallery Item 10 -->
-          <div
-            class="gallery-item animate-on-scroll"
-            data-category="sports"
-            onclick="openModal(this)"
-          >
-            <div class="gallery-image-container">
-              <img
-                src="/images/images (4).jpg"
-                alt="Athletics Track"
-                class="gallery-image"
-              />
-              <div class="gallery-overlay">
-                <i class="fas fa-search-plus fa-2x"></i>
-              </div>
-            </div>
-            <div class="gallery-content">
-              <span class="gallery-category">Sports</span>
-              <h3 class="gallery-title">Athletics Track & Field</h3>
-              <p class="gallery-description">
-                Professional athletics track for training, competitions, and
-                promoting a healthy and active student lifestyle.
-              </p>
-              <div class="gallery-meta">
-                <div class="gallery-date">
-                  <i class="fas fa-calendar"></i> February 5, 2026
-                </div>
-                <div class="gallery-stats">
-                  <div class="stat-item"><i class="fas fa-eye"></i> 1.4k</div>
-                  <div class="stat-item"><i class="fas fa-heart"></i> 79</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Gallery Item 11 -->
-          <div
-            class="gallery-item animate-on-scroll"
-            data-category="campus"
-            onclick="openModal(this)"
-          >
-            <div class="gallery-image-container">
-              <img
-                src="/images/images (5).jpg"
-                alt="Student Lounge"
-                class="gallery-image"
-              />
-              <div class="gallery-overlay">
-                <i class="fas fa-search-plus fa-2x"></i>
-              </div>
-            </div>
-            <div class="gallery-content">
-              <span class="gallery-category">Campus</span>
-              <h3 class="gallery-title">Student Lounge & Cafeteria</h3>
-              <p class="gallery-description">
-                Modern student lounge where students can relax, collaborate, and
-                enjoy healthy meals in a comfortable environment.
-              </p>
-              <div class="gallery-meta">
-                <div class="gallery-date">
-                  <i class="fas fa-calendar"></i> January 30, 2026
-                </div>
-                <div class="gallery-stats">
-                  <div class="stat-item"><i class="fas fa-eye"></i> 1.1k</div>
-                  <div class="stat-item"><i class="fas fa-heart"></i> 68</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Gallery Modal -->
-    <div class="gallery-modal" id="galleryModal">
-      <div class="modal-content-custom">
-        <button class="modal-close" onclick="closeModal()">&times;</button>
-        <img src="" alt="" class="modal-image-custom" id="modalImage" />
-        <div class="modal-info">
-          <h2 class="modal-title-custom" id="modalTitle"></h2>
-          <p class="modal-description-custom" id="modalDescription"></p>
-          <div class="modal-meta">
-            <div class="gallery-date">
-              <i class="fas fa-calendar me-2"></i>
-              <span id="modalDate"></span>
-            </div>
-            <div class="gallery-stats">
-              <div class="stat-item">
-                <i class="fas fa-eye me-1"></i><span id="modalViews"></span>
-              </div>
-              <div class="stat-item">
-                <i class="fas fa-heart me-1"></i><span id="modalLikes"></span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Footer -->
-    <footer
-      class="footer"
-      style="
-        background: var(--dark-secondary);
-        padding: 3rem 0 1rem;
-        margin-top: 0;
-      "
-    >
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-4 col-md-6 mb-4">
-            <h5 class="text-white mb-3">
-              <i class="fas fa-graduation-cap me-2"></i>abdigudina school
-            </h5>
-            <p class="text-gray-300">
-              Modern educational management platform for schools and
-              institutions. Empowering education through technology.
-            </p>
-            <div class="d-flex gap-3 mt-3">
-              <a href="#" class="text-white fs-5"
-                ><i class="fab fa-facebook"></i
-              ></a>
-              <a href="#" class="text-white fs-5"
-                ><i class="fab fa-twitter"></i
-              ></a>
-              <a href="#" class="text-white fs-5"
-                ><i class="fab fa-instagram"></i
-              ></a>
-              <a href="#" class="text-white fs-5"
-                ><i class="fab fa-linkedin"></i
-              ></a>
+    <footer class="footer"
+        style="background: #f8fafc; padding: 4rem 0 2rem; margin-top: 0; border-top: 1px solid rgba(0,0,0,0.05);">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <h5 class="mb-3 fw-bold fs-4" style="color: var(--dark-text)">
+                        <i class="fas fa-graduation-cap me-2" style="color: var(--primary-color);"></i>abdigudina
+                        school
+                    </h5>
+                    <p style="color: var(--gray-text);">
+                        Modern educational management platform for schools and
+                        institutions. Empowering education through technology.
+                    </p>
+                    <div class="d-flex gap-3 mt-3">
+                        <a href="#" style="color: var(--gray-text); transition: color 0.3s;"
+                            onmouseover="this.style.color='var(--primary-color)'"
+                            onmouseout="this.style.color='var(--gray-text)'" class="fs-5"><i
+                                class="fab fa-facebook"></i></a>
+                        <a href="#" style="color: var(--gray-text); transition: color 0.3s;"
+                            onmouseover="this.style.color='var(--primary-color)'"
+                            onmouseout="this.style.color='var(--gray-text)'" class="fs-5"><i
+                                class="fab fa-twitter"></i></a>
+                        <a href="#" style="color: var(--gray-text); transition: color 0.3s;"
+                            onmouseover="this.style.color='var(--primary-color)'"
+                            onmouseout="this.style.color='var(--gray-text)'" class="fs-5"><i
+                                class="fab fa-instagram"></i></a>
+                        <a href="#" style="color: var(--gray-text); transition: color 0.3s;"
+                            onmouseover="this.style.color='var(--primary-color)'"
+                            onmouseout="this.style.color='var(--gray-text)'" class="fs-5"><i
+                                class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5 class="mb-3" style="color: var(--dark-text)">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="/" style="color: var(--gray-text); text-decoration: none;">Home</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/about" style="color: var(--gray-text); text-decoration: none;">About</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/gallery" style="color: var(--gray-text); text-decoration: none;">Gallery</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/contact" style="color: var(--gray-text); text-decoration: none;">Contact</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="mb-3" style="color: var(--dark-text)">Services</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="#" style="color: var(--gray-text); text-decoration: none;">Student
+                                Management</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" style="color: var(--gray-text); text-decoration: none;">Teacher Portal</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" style="color: var(--gray-text); text-decoration: none;">Parent Access</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" style="color: var(--gray-text); text-decoration: none;">Analytics</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="mb-3" style="color: var(--dark-text)">Contact Info</h5>
+                    <div style="color: var(--gray-text);">
+                        <p class="mb-2">
+                            <i class="fas fa-map-marker-alt me-2"></i>Jimma Institute of Technology (JiT), Jimma University, Jimma, Ethiopia
+                        </p>
+                        <p class="mb-2"><i class="fas fa-phone me-2"></i>+251954497337</p>
+                        <p class="mb-2">
+                            <i class="fas fa-envelope me-2"></i>abdigudina@gmail.com
+                        </p>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="col-lg-2 col-md-6 mb-4">
-            <h5 class="text-white mb-3">Quick Links</h5>
-            <ul class="list-unstyled">
-              <li class="mb-2">
-                <a href="/" class="text-gray-300 text-decoration-none">Home</a>
-              </li>
-              <li class="mb-2">
-                <a href="/about" class="text-gray-300 text-decoration-none"
-                  >About</a
-                >
-              </li>
-              <li class="mb-2">
-                <a href="/gallery" class="text-gray-300 text-decoration-none"
-                  >Gallery</a
-                >
-              </li>
-              <li class="mb-2">
-                <a href="/contact" class="text-gray-300 text-decoration-none"
-                  >Contact</a
-                >
-              </li>
-            </ul>
-          </div>
-          <div class="col-lg-3 col-md-6 mb-4">
-            <h5 class="text-white mb-3">Services</h5>
-            <ul class="list-unstyled">
-              <li class="mb-2">
-                <a href="#" class="text-gray-300 text-decoration-none"
-                  >Student Management</a
-                >
-              </li>
-              <li class="mb-2">
-                <a href="#" class="text-gray-300 text-decoration-none"
-                  >Teacher Portal</a
-                >
-              </li>
-              <li class="mb-2">
-                <a href="#" class="text-gray-300 text-decoration-none"
-                  >Parent Access</a
-                >
-              </li>
-              <li class="mb-2">
-                <a href="#" class="text-gray-300 text-decoration-none"
-                  >Analytics</a
-                >
-              </li>
-            </ul>
-          </div>
-          <div class="col-lg-3 col-md-6 mb-4">
-            <h5 class="text-white mb-3">Contact Info</h5>
-            <div class="text-gray-300">
-              <p class="mb-2">
-                <i class="fas fa-map-marker-alt me-2"></i>123 Education Street
-              </p>
-              <p class="mb-2"><i class="fas fa-phone me-2"></i>+251954497337</p>
-              <p class="mb-2">
-                <i class="fas fa-envelope me-2"></i>abdigudina@gmail.com
-              </p>
+
+            <hr style="border-color: rgba(0,0,0,0.1);" class="my-4" />
+
+            <div class="text-center">
+                <p style="color: var(--gray-text);" class="mb-0">
+                    &copy; 2026 abdigudina school. All rights reserved.
+                </p>
             </div>
-          </div>
         </div>
-        <hr class="border-secondary my-4" />
-        <div class="text-center">
-          <p class="text-gray-400 mb-0">
-            &copy; 2026 abdigudina school. All rights reserved.
-          </p>
-        </div>
-      </div>
     </footer>
 
+    </div>
+
     <!-- Bootstrap JS (local) -->
+
     <script src="/js/bootstrap.bundle.min.js"></script>
 
     <!-- Custom JS -->
+    <script src="/js/translations.js"></script>
     <script src="/js/brocode-script.js"></script>
 
     <!-- Gallery Script -->
     <script>
-      function filterGallery(category, btnEl) {
-        // Update active button
-        document.querySelectorAll(".filter-btn").forEach((btn) => {
-          btn.classList.remove("active");
+        function filterGallery(category, btnEl) {
+            // Update active button
+            document.querySelectorAll(".filter-btn").forEach((btn) => {
+                btn.classList.remove("active");
+            });
+            btnEl.classList.add("active");
+
+            // Filter gallery items
+            const items = document.querySelectorAll(".gallery-item");
+            items.forEach((item) => {
+                if (category === "all" || item.dataset.category === category) {
+                    item.style.display = "block";
+                    setTimeout(() => {
+                        item.style.opacity = "1";
+                        item.style.transform = "translateY(0)";
+                    }, 100);
+                } else {
+                    item.style.opacity = "0";
+                    item.style.transform = "translateY(20px)";
+                    setTimeout(() => {
+                        item.style.display = "none";
+                    }, 300);
+                }
+            });
+        }
+
+        function openModal(element) {
+            const modal = document.getElementById("galleryModal");
+            const img = element.querySelector(".gallery-image");
+            const title = element.querySelector(".gallery-title").textContent;
+            const description = element.querySelector(
+                ".gallery-description"
+            ).textContent;
+            const date = element.querySelector(".gallery-date").textContent.trim();
+            const views = element
+                .querySelector(".gallery-stats .stat-item:first-child")
+                .textContent.trim();
+            const likes = element
+                .querySelector(".gallery-stats .stat-item:last-child")
+                .textContent.trim();
+
+            document.getElementById("modalImage").src = img.src;
+            document.getElementById("modalImage").alt = img.alt;
+            document.getElementById("modalTitle").textContent = title;
+            document.getElementById("modalDescription").textContent = description;
+            document.getElementById("modalDate").textContent = date;
+            document.getElementById("modalViews").textContent = views;
+            document.getElementById("modalLikes").textContent = likes;
+
+            modal.classList.add("show");
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeModal() {
+            document.getElementById("galleryModal").classList.remove("show");
+            document.body.style.overflow = "auto";
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closeModal();
         });
-        btnEl.classList.add("active");
 
-        // Filter gallery items
-        const items = document.querySelectorAll(".gallery-item");
-        items.forEach((item) => {
-          if (category === "all" || item.dataset.category === category) {
-            item.style.display = "block";
-            setTimeout(() => {
-              item.style.opacity = "1";
-              item.style.transform = "translateY(0)";
-            }, 100);
-          } else {
-            item.style.opacity = "0";
-            item.style.transform = "translateY(20px)";
-            setTimeout(() => {
-              item.style.display = "none";
-            }, 300);
-          }
-        });
-      }
-
-      function openModal(element) {
-        const modal = document.getElementById("galleryModal");
-        const img = element.querySelector(".gallery-image");
-        const title = element.querySelector(".gallery-title").textContent;
-        const description = element.querySelector(
-          ".gallery-description"
-        ).textContent;
-        const date = element.querySelector(".gallery-date").textContent.trim();
-        const views = element
-          .querySelector(".gallery-stats .stat-item:first-child")
-          .textContent.trim();
-        const likes = element
-          .querySelector(".gallery-stats .stat-item:last-child")
-          .textContent.trim();
-
-        document.getElementById("modalImage").src = img.src;
-        document.getElementById("modalImage").alt = img.alt;
-        document.getElementById("modalTitle").textContent = title;
-        document.getElementById("modalDescription").textContent = description;
-        document.getElementById("modalDate").textContent = date;
-        document.getElementById("modalViews").textContent = views;
-        document.getElementById("modalLikes").textContent = likes;
-
-        modal.classList.add("show");
-        document.body.style.overflow = "hidden";
-      }
-
-      function closeModal() {
-        document.getElementById("galleryModal").classList.remove("show");
-        document.body.style.overflow = "auto";
-      }
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeModal();
-      });
-
-      document
-        .getElementById("galleryModal")
-        .addEventListener("click", function (e) {
-          if (e.target === this) closeModal();
-        });
+        document
+            .getElementById("galleryModal")
+            .addEventListener("click", function (e) {
+                if (e.target === this) closeModal();
+            });
     </script>
-  </body>
+</body>
+
 </html>

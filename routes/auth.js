@@ -11,7 +11,7 @@ const router = express.Router();
 
 // GET /auth/login - Show login form
 router.get('/login', (req, res) => {
-  res.render('login-modern', { 
+  res.render('login-modern', {
     title: 'Login - Student Registration System',
     error: null
   });
@@ -22,60 +22,60 @@ router.post('/login', async (req, res) => {
   const logFile = path.join(__dirname, '../tmp/auth_access.log');
   const log = (msg) => {
     const timestamp = new Date().toISOString();
-    try { fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`); } catch(e) {}
+    try { fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`); } catch (e) { }
     console.log(msg);
   };
 
   try {
     log('Login attempt: ' + JSON.stringify({ username: req.body.username, role: req.body.role }));
-    
+
     const { username, password } = req.body;
-    
+
     // Validate input
     if (!username || !password) {
       log('Missing fields: ' + JSON.stringify({ username: !!username, password: !!password }));
-      return res.render('login-modern', { 
+      return res.render('login-modern', {
         title: 'Login - Student Registration System',
         error: 'Username and password are required'
       });
     }
-    
+
     // Find user by username or email
     const [users] = await pool.execute(
       'SELECT * FROM users WHERE username = ? OR email = ?',
       [username, username]
     );
-    
+
     if (users.length === 0) {
       log('No user found for ' + username);
-      return res.render('login-modern', { 
+      return res.render('login-modern', {
         title: 'Login - Student Registration System',
         error: 'Invalid username or password'
       });
     }
-    
+
     const user = users[0];
     log('User found: ' + JSON.stringify({ id: user.id, username: user.username, role: user.role }));
-    
+
     // Check if user is active
     if (!user.is_active) {
       log('User is inactive: ' + username);
-      return res.render('login-modern', { 
+      return res.render('login-modern', {
         title: 'Login - Student Registration System',
         error: 'Your account has been deactivated. Please contact administrator.'
       });
     }
-    
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       log('Invalid password for ' + username);
-      return res.render('login-modern', { 
+      return res.render('login-modern', {
         title: 'Login - Student Registration System',
         error: 'Invalid username or password'
       });
     }
-    
+
 
     // Create session
     req.session.user = {
@@ -87,11 +87,11 @@ router.post('/login', async (req, res) => {
       role: user.role,
       profile_picture: user.profile_picture
     };
-    
+
     log('Session created for ' + user.username + '. Redirecting based on role: ' + user.role);
-    
+
     // Redirect based on role
-    switch(user.role) {
+    switch (user.role) {
       case 'admin':
         res.redirect('/admin/dashboard');
         break;
@@ -108,10 +108,10 @@ router.post('/login', async (req, res) => {
       default:
         res.redirect('/dashboard');
     }
-    
+
   } catch (error) {
     log('Login error: ' + error.message);
-    res.render('login-modern', { 
+    res.render('login-modern', {
       title: 'Login - Student Registration System',
       error: 'An error occurred during login. Please try again.'
     });
@@ -122,13 +122,13 @@ router.post('/login', async (req, res) => {
 router.get('/register', (req, res) => {
   const settings = getSettings();
   if (!settings.publicRegistrationEnabled) {
-    return res.render('login-modern', { 
+    return res.render('login-modern', {
       title: 'Login - Student Registration System',
       error: 'Public registration is currently closed. Please contact the administrator.'
     });
   }
 
-  res.render('register-modern', { 
+  res.render('register-modern', {
     title: 'Register - Student Registration System',
     error: null
   });
@@ -138,86 +138,98 @@ router.get('/register', (req, res) => {
 router.post('/register', async (req, res) => {
   const settings = getSettings();
   if (!settings.publicRegistrationEnabled) {
-      return res.status(403).send('Public registration is currently closed.');
+    return res.status(403).send('Public registration is currently closed.');
   }
 
   try {
     console.log('=== REGISTRATION START ===');
     console.log('Request body:', req.body);
-    
-    const { 
-      userType, firstName, lastName, email, phone, username, 
+
+    const {
+      userType, firstName, lastName, email, phone, username,
       studentId, employeeId, grade, department, occupation, relationship,
-      password, confirmPassword, terms 
+      password, confirmPassword, terms
     } = req.body;
-    
-    console.log('Extracted data:', { 
-      userType, 
-      firstName, 
-      lastName, 
-      email, 
-      username, 
+
+    console.log('Extracted data:', {
+      userType,
+      firstName,
+      lastName,
+      email,
+      username,
       hasPassword: !!password,
-      termsAccepted: !!terms 
+      termsAccepted: !!terms
     });
-    
+
     // Validate required fields
     if (!userType || !firstName || !lastName || !email || !username || !password || !confirmPassword) {
       console.log('❌ Missing required fields');
-      return res.render('register-modern', { 
+      return res.render('register-modern', {
         title: 'Register - Student Registration System',
         error: 'All required fields must be filled'
       });
     }
-    
+
     // Validate terms acceptance
     if (!terms) {
       console.log('❌ Terms not accepted');
-      return res.render('register-modern', { 
+      return res.render('register-modern', {
         title: 'Register - Student Registration System',
         error: 'You must accept terms and conditions'
       });
     }
-    
+
     // Validate password match
     if (password !== confirmPassword) {
       console.log('❌ Passwords do not match');
-      return res.render('register-modern', { 
+      return res.render('register-modern', {
         title: 'Register - Student Registration System',
         error: 'Passwords do not match'
       });
     }
-    
+
     // Validate password strength
     if (password.length < 8) {
       console.log('❌ Password too short');
-      return res.render('register-modern', { 
+      return res.render('register-modern', {
         title: 'Register - Student Registration System',
         error: 'Password must be at least 8 characters long'
       });
     }
-    
+
+    // Validate grade level for students
+    if (userType === 'student') {
+      const gradeLevel = parseInt(grade);
+      if (!gradeLevel || gradeLevel < 1 || gradeLevel > 8) {
+        console.log('❌ Invalid grade level:', grade);
+        return res.render('register-modern', {
+          title: 'Register - Student Registration System',
+          error: 'Student grade level must be between 1 and 8'
+        });
+      }
+    }
+
     console.log('✅ Basic validation passed');
-    
+
     // Test database connection
     try {
       const [testResult] = await pool.execute('SELECT 1 as test');
       console.log('✅ Database connection OK:', testResult);
     } catch (dbError) {
       console.error('❌ Database connection failed:', dbError);
-      return res.render('register-modern', { 
+      return res.render('register-modern', {
         title: 'Register - Student Registration System',
         error: 'Database connection failed: ' + dbError.message
       });
     }
-    
+
     // Check if username or email already exists
     console.log('🔍 Checking for existing users...');
     const [existingUsers] = await pool.execute(
       'SELECT id FROM users WHERE username = ? OR email = ?',
       [username, email]
     );
-    
+
     if (existingUsers.length > 0) {
       console.log('❌ User already exists');
       let errorMessage = 'Username or email already exists';
@@ -226,19 +238,19 @@ router.post('/register', async (req, res) => {
       } else if (existingUsers[0].email === email) {
         errorMessage = `Email '${email}' is already registered. Please use a different email.`;
       }
-      return res.render('register-modern', { 
+      return res.render('register-modern', {
         title: 'Register - Student Registration System',
         error: errorMessage
       });
     }
-    
+
     console.log('✅ No existing users found');
-    
+
     // Hash password
     console.log('🔐 Hashing password...');
     const hashedPassword = await bcrypt.hash(password, 12);
     console.log('✅ Password hashed');
-    
+
     // Insert user without transaction first (simpler)
     console.log('💾 Inserting user into database...');
     try {
@@ -247,14 +259,14 @@ router.post('/register', async (req, res) => {
          VALUES (?, ?, ?, ?, ?, ?, ?, 1, NOW())`,
         [username, email, hashedPassword, firstName, lastName, userType, phone || null]
       );
-      
+
       console.log('✅ User inserted successfully:', userResult);
       const userId = userResult.insertId;
-      
+
       // Insert role-specific data (without transaction for now)
       console.log(`💾 Inserting ${userType} specific data...`);
-      
-      switch(userType) {
+
+      switch (userType) {
         case 'student':
           try {
             await pool.execute(
@@ -267,7 +279,7 @@ router.post('/register', async (req, res) => {
             console.warn('⚠️ Student table might not exist:', studentError.message);
           }
           break;
-          
+
         case 'teacher':
           try {
             await pool.execute(
@@ -280,7 +292,7 @@ router.post('/register', async (req, res) => {
             console.warn('⚠️ Teacher table might not exist:', teacherError.message);
           }
           break;
-          
+
         case 'parent':
           try {
             await pool.execute(
@@ -293,12 +305,12 @@ router.post('/register', async (req, res) => {
             console.warn('⚠️ Parent table might not exist:', parentError.message);
           }
           break;
-          
+
         case 'admin':
           console.log('✅ Admin user created - no additional data needed');
           break;
       }
-      
+
       // Auto-login after registration
       console.log('🔓 Auto-login user...');
       req.session.user = {
@@ -309,12 +321,12 @@ router.post('/register', async (req, res) => {
         last_name: lastName,
         role: userType
       };
-      
+
       console.log('✅ Session created');
-      
+
       // Redirect based on role
       console.log(`🔄 Redirecting to ${userType} dashboard...`);
-      switch(userType) {
+      switch (userType) {
         case 'admin':
           res.redirect('/admin/dashboard');
           break;
@@ -330,20 +342,20 @@ router.post('/register', async (req, res) => {
         default:
           res.redirect('/dashboard');
       }
-      
+
       console.log('=== REGISTRATION SUCCESS ===');
-      
+
     } catch (insertError) {
       console.error('❌ Database insertion failed:', insertError);
-      return res.render('register-modern', { 
+      return res.render('register-modern', {
         title: 'Register - Student Registration System',
         error: 'Failed to save user data: ' + insertError.message
       });
     }
-    
+
   } catch (error) {
     console.error('❌ Registration error:', error);
-    res.render('register-modern', { 
+    res.render('register-modern', {
       title: 'Register - Student Registration System',
       error: 'Registration failed: ' + error.message
     });
@@ -362,7 +374,7 @@ router.get('/admin', (req, res) => {
 router.post('/admin', async (req, res) => {
   try {
     const { secretCode } = req.body;
-    const ADMIN_SECRET   = process.env.ADMIN_SECRET   || 'SRSL-ADMIN-2024';
+    const ADMIN_SECRET = process.env.ADMIN_SECRET || 'ABDIGUDINA-ADMIN-2024';
     const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 
     if (!secretCode || secretCode.trim() !== ADMIN_SECRET) {
@@ -415,7 +427,7 @@ const crypto = require('crypto');
 // GET /auth/forgot-password - Show forgot password form
 router.get('/forgot-password', (req, res) => {
   res.render('auth/forgot-password', {
-    title: 'Forgot Password - SRSL',
+    title: 'Forgot Password - Abdigudina',
     error: req.query.error || null,
     success: req.query.success || null,
     token: req.query.token || null
@@ -448,7 +460,7 @@ router.post('/forgot-password', async (req, res) => {
 
     // SIMULATION: Log the reset link
     console.log(`>>> PASSWORD RESET REQUEST for ${user.username} (${email})`);
-    console.log(`>>> RESET LINK: http://localhost:${process.env.PORT || 3000}/auth/reset-password/${token}`);
+    console.log(`>>> RESET LINK: http://localhost:${process.env.PORT || 3001}/auth/reset-password/${token}`);
 
     res.redirect(`/auth/forgot-password?success=Password reset link has been generated!&token=${token}`);
   } catch (error) {
@@ -471,7 +483,7 @@ router.get('/reset-password/:token', async (req, res) => {
     }
 
     res.render('auth/reset-password', {
-      title: 'Reset Password - SRSL',
+      title: 'Reset Password - Abdigudina',
       token: token,
       error: null,
       success: null
@@ -490,7 +502,7 @@ router.post('/reset-password/:token', async (req, res) => {
 
     if (password !== confirmPassword) {
       return res.render('auth/reset-password', {
-        title: 'Reset Password - SRSL',
+        title: 'Reset Password - Abdigudina',
         token: token,
         error: 'Passwords do not match',
         success: null
@@ -527,7 +539,7 @@ router.post('/reset-password/:token', async (req, res) => {
     console.log(`>>> PASSWORD RESET SUCCESS: ${user.username} (Logged in)`);
 
     res.render('auth/reset-password', {
-      title: 'Reset Password - SRSL',
+      title: 'Reset Password - Abdigudina',
       token: null,
       error: null,
       success: 'Password reset successful! You have been automatically logged in.',
@@ -552,7 +564,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
   fileFilter: (req, file, cb) => {
@@ -567,7 +579,7 @@ const upload = multer({
 // POST /auth/profile/upload-picture
 router.post('/profile/upload-picture', upload.single('profile_picture'), async (req, res) => {
   if (!req.session.user) return res.redirect('/auth/login');
-  
+
   try {
     if (!req.file) {
       return res.redirect('back');
@@ -577,7 +589,7 @@ router.post('/profile/upload-picture', upload.single('profile_picture'), async (
     const filePath = '/uploads/profile-pics/' + req.file.filename;
 
     await pool.execute('UPDATE users SET profile_picture = ? WHERE id = ?', [filePath, userId]);
-    
+
     // Update session user object
     req.session.user.profile_picture = filePath;
 
