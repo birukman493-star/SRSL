@@ -42,6 +42,135 @@ function initializeApp() {
     initCounters();
     initScrollReveal();
     initDashboardSidebar();
+    
+    // Initialize Socket.io client safely for real-time attendance updates
+    if (typeof io !== 'undefined') {
+        const socket = io({
+            query: {
+                userId: window.currentUser?.id,
+                role: window.currentUser?.role
+            }
+        });
+
+        // Debug check (MANDATORY) - Add temporary global event logger
+        socket.onAny((event, data) => {
+            console.log("SOCKET EVENT:", event, data);
+        });
+
+        // Initialize role-based Socket.io listeners for real-time attendance updates
+        socket.on('attendanceHistoryUpdated', (data) => {
+            console.log("RECEIVED HISTORY UPDATE:", data);
+            if (typeof updateTeacherAttendance === 'function') {
+                updateTeacherAttendance(data);
+            }
+            if (typeof updateAdminDashboard === 'function') {
+                updateAdminDashboard(data);
+            }
+        });
+
+        socket.on('studentAttendanceUpdated', (data) => {
+            console.log("RECEIVED ATTENDANCE UPDATE:", data);
+            
+            // Search for premium card by primary key, registration ID, or studentUserId
+            let card = document.querySelector(`.premium-card[data-student-id="${data.studentId}"]`) || 
+                       document.querySelector(`.premium-card[data-student-id="${data.studentRegId}"]`);
+            
+            if (card) {
+                updateAttendanceCard(card, data);
+            } else {
+                updateAttendanceCard(data);
+            }
+            
+            // Admin dashboard: globally show a quick toast
+            if (window.currentUser?.role === 'admin') {
+                showAdminAttendanceToast(data);
+            }
+        });
+
+        // Helper for Admin Dashboard Global Analytics Stream
+        function showAdminAttendanceToast(data) {
+            if (!document.querySelector('.dashboard-title')) return; // Ensure we are on a dashboard
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '9999';
+                document.body.appendChild(toastContainer);
+            }
+            const toast = document.createElement('div');
+            toast.className = 'toast show align-items-center text-white bg-dark border-0 mb-2 shadow-lg';
+            toast.style.borderRadius = '12px';
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body d-flex align-items-center gap-2">
+                        <span class="badge ${data.status === 'present' ? 'bg-success' : (data.status === 'absent' ? 'bg-danger' : 'bg-warning')} shadow-xs">${data.status.toUpperCase()}</span>
+                        <span><strong>Student ID ${data.studentRegId || data.studentId}</strong> recorded in ${data.subject}</span>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+    }
+
+    // Helper to update a student's attendance card dynamically using single socket payload
+    function updateAttendanceCard(card, data) {
+        // Support both (card, data) and (data) signatures
+        if (!data && card) {
+            data = card;
+            card = null;
+        }
+        if (!data) return;
+
+        const { studentId, studentRegId, totalPresent, totalAbsent, subject, status } = data;
+        
+        if (!card) {
+            card = document.querySelector(`.premium-card[data-student-id="${studentId}"]`) ||
+                   document.querySelector(`.premium-card[data-student-id="${studentRegId}"]`);
+        }
+        if (!card) return;
+        
+        let attendanceRate = '100';
+        const total = totalPresent + totalAbsent;
+        if (total > 0) {
+            attendanceRate = ((totalPresent / total) * 100).toFixed(1);
+        }
+
+        // Find the percentage element and update it
+        const rateEls = card.querySelectorAll('.text-primary, .global-attendance-rate');
+        rateEls.forEach(el => {
+            if (el.textContent.includes('%') || el.classList.contains('h3')) {
+                if (el.textContent.trim().endsWith('%') || el.nextElementSibling?.textContent.includes('Attendance') || el.classList.contains('global-attendance-rate')) {
+                    el.textContent = `${attendanceRate}%`;
+                }
+            }
+        });
+
+        // Add/update specific teacher attendance entry
+        const container = card.querySelector('.teacher-attendance-container');
+        if (container && subject) {
+            let subjectRow = container.querySelector(`[data-subject="${subject}"]`);
+            if (!subjectRow) {
+                subjectRow = document.createElement('div');
+                subjectRow.dataset.subject = subject;
+                subjectRow.className = 'd-flex justify-content-between align-items-center bg-white p-2 rounded shadow-sm border border-opacity-10 transition hover-scale';
+                container.appendChild(subjectRow);
+            }
+            
+            let badgeClass = 'bg-secondary';
+            if (status === 'present') badgeClass = 'bg-success bg-opacity-10 text-success border border-success border-opacity-25';
+            else if (status === 'absent') badgeClass = 'bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25';
+            else if (status === 'late') badgeClass = 'bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25';
+            else if (status === 'excused') badgeClass = 'bg-info bg-opacity-10 text-info border border-info border-opacity-25';
+            
+            subjectRow.innerHTML = `
+                <span class="small fw-800 text-dark"><i class="fas fa-book me-2 opacity-50"></i>${subject}</span>
+                <span class="badge ${badgeClass} text-uppercase shadow-xs" style="font-size: 0.65rem; letter-spacing: 0.5px;">${status}</span>
+            `;
+        }
+    }
     // initPageTransitions(); // Disabled for blazing fast native performance
 }
 
@@ -1331,3 +1460,62 @@ function initDashboardSidebar() {
         if (e.changedTouches[0].clientX - touchStartX < -60) closeSidebar();
     }, { passive: true });
 }
+
+// ===================================================================
+// STANDALONE DARK MODE ENGINE
+// Runs independently — does NOT rely on any other function in this file
+// ===================================================================
+(function () {
+    var html = document.documentElement;
+
+    // Apply theme instantly on every page load (no flash)
+    function applyTheme(theme) {
+        html.setAttribute('data-theme', theme);
+        if (theme === 'dark') {
+            html.classList.add('dark');
+            document.body && document.body.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+            document.body && document.body.classList.remove('dark');
+        }
+        updateIcons(theme);
+    }
+
+    function updateIcons(theme) {
+        var icons = document.querySelectorAll('#themeToggle i, .theme-toggle-btn i');
+        for (var i = 0; i < icons.length; i++) {
+            icons[i].className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+    }
+
+    // Apply saved theme immediately (before DOM ready to prevent flash)
+    applyTheme(localStorage.getItem('theme') || 'light');
+
+    // Wire up toggle click using capture-phase delegation
+    // Runs BEFORE Bootstrap or any other handler
+    document.addEventListener('click', function (e) {
+        // Walk up to find the toggle button
+        var el = e.target;
+        for (var i = 0; i < 4; i++) {
+            if (!el) break;
+            if (el.id === 'themeToggle' || (el.classList && el.classList.contains('theme-toggle-btn'))) {
+                e.preventDefault();
+                var current = html.getAttribute('data-theme') || 'light';
+                var next = current === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('theme', next);
+                applyTheme(next);
+                return;
+            }
+            el = el.parentElement;
+        }
+    }, true); // capture phase — fires before Bootstrap
+
+    // Re-apply icons once DOM is fully ready (in case icons weren't in DOM yet)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            applyTheme(localStorage.getItem('theme') || 'light');
+        });
+    } else {
+        applyTheme(localStorage.getItem('theme') || 'light');
+    }
+})();

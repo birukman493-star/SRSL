@@ -13,6 +13,13 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <script>
+        window.currentUser = {
+            id: <%= user.id %>,
+            role: "<%= user.role %>"
+        };
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         .premium-panel {
             background: white !important;
@@ -86,28 +93,49 @@
             <div class="row g-4 mb-4">
                 <div class="col-md-3">
                     <div class="attendance-stat-card">
-                        <div class="h2 fw-bold text-primary mb-0"><%= stats.rate %>%</div>
+                        <div id="stat-rate" class="h2 fw-bold text-primary mb-0"><%= stats.rate %>%</div>
                         <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Attendance Rate</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="attendance-stat-card">
-                        <div class="h2 fw-bold text-success mb-0"><%= stats.present %></div>
+                        <div id="stat-present" class="h2 fw-bold text-success mb-0"><%= stats.present %></div>
                         <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Present Days</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="attendance-stat-card">
-                        <div class="h2 fw-bold text-danger mb-0"><%= stats.absent %></div>
+                        <div id="stat-absent" class="h2 fw-bold text-danger mb-0"><%= stats.absent %></div>
                         <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Total Absences</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="attendance-stat-card">
-                        <div class="h2 fw-bold text-warning mb-0"><%= stats.late %></div>
+                        <div id="stat-late" class="h2 fw-bold text-warning mb-0"><%= stats.late %></div>
                         <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Late Arrivals</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Dynamic Real-time Attendance Cards -->
+            <div id="attendance-container" class="row g-3 mb-4"></div>
+
+            <!-- Filter form -->
+            <div class="mb-4">
+                <form action="/parent/attendance/<%= student.id %>" method="GET" class="d-flex align-items-center gap-2">
+                    <select name="courseId" class="form-select border-0 shadow-sm rounded-pill px-4 py-2" style="max-width: 300px; font-weight: 600;">
+                        <option value="">All Courses</option>
+                        <% if (typeof courses !== 'undefined' && courses && courses.length > 0) { %>
+                            <% courses.forEach(course => { %>
+                                <option value="<%= course.id %>" <%= String(typeof selectedCourseId !== 'undefined' ? selectedCourseId : '') === String(course.id) ? 'selected' : '' %>><%= course.course_name %></option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">Filter</button>
+                    <% if (typeof selectedCourseId !== 'undefined' && selectedCourseId) { %>
+                        <a href="/parent/attendance/<%= student.id %>" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-secondary border">Clear</a>
+                    <% } %>
+                </form>
             </div>
 
             <!-- Attendance History -->
@@ -120,16 +148,22 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead>
                             <tr>
+                                <th>Day</th>
                                 <th>Date of Record</th>
-                                <th>Course / Class</th>
+                                <th>Course Name</th>
                                 <th>Session Status</th>
                                 <th>Observations</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% if (attendance && attendance.length > 0) { %>
+                            <% if (typeof attendance !== 'undefined' && attendance && attendance.length > 0) { %>
                                 <% attendance.forEach(a => { %>
-                                    <tr>
+                                    <tr data-course-id="<%= a.course_id %>">
+                                        <td>
+                                            <div class="fw-bold text-secondary">
+                                                <%= new Date(a.date).toLocaleDateString(undefined, { weekday: 'short' }) %>
+                                            </div>
+                                        </td>
                                         <td>
                                             <div class="fw-bold" style="color: var(--dark-text);">
                                                 <%= new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
@@ -137,7 +171,13 @@
                                             <small class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Recorded: <%= a.created_at ? new Date(a.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'TBD' %></small>
                                         </td>
                                         <td>
-                                            <div class="fw-bold text-dark"><%= a.class_name %></div>
+                                            <div class="fw-bold" style="color: var(--dark-text);">
+                                                <%= a.course_name %>
+                                                <% if(a.course_id) { %>
+                                                    <small class="text-secondary fw-medium">(ID: <%= a.course_id %>)</small>
+                                                <% } %>
+                                            </div>
+                                            <small class="text-secondary"><%= a.class_name %></small>
                                         </td>
                                         <td>
                                             <span class="status-badge status-<%= a.status.toLowerCase() %>">
@@ -167,11 +207,168 @@
     </div>
     
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
+    
+    <script>
+        // Store current stats
+        const stats = {
+            total: <%= stats.total %>,
+            present: <%= stats.present %>,
+            absent: <%= stats.absent %>,
+            late: <%= stats.late %>,
+            excused: <%= stats.excused %>,
+            rate: <%= stats.rate %>
+        };
+
+        const studentId = <%= student.id %>;
+
+        // Initialize socket connection
+        const socket = io();
+
+        socket.on('connect', () => {
+            console.log('Parent connected to real-time notification gateway');
+        });
+
+        socket.on('attendanceUpdated', (data) => {
+            console.log('Parent received real-time attendance update:', data);
+            
+            // Check if this attendance is for the currently viewed child studentId
+            if (data.studentId === studentId) {
+                appendAttendanceCard(data);
+                updateStats(data.status);
+            }
+        });
+
+        function appendAttendanceCard(data) {
+            const container = document.getElementById('attendance-container');
+            if (!container) return;
+
+            // Remove placeholder if present
+            const placeholderRow = document.querySelector('tbody tr td[colspan="4"]');
+            if (placeholderRow) {
+                placeholderRow.closest('tr').remove();
+            }
+
+            // Determine styles
+            let statusClass = 'secondary';
+            let badgeClass = 'secondary';
+            let iconClass = 'question-circle';
+            if (data.status === 'present') {
+                statusClass = 'present';
+                badgeClass = 'success';
+                iconClass = 'check-circle';
+            } else if (data.status === 'absent') {
+                statusClass = 'absent';
+                badgeClass = 'danger';
+                iconClass = 'times-circle';
+            } else if (data.status === 'late') {
+                statusClass = 'late';
+                badgeClass = 'warning';
+                iconClass = 'clock';
+            } else if (data.status === 'excused') {
+                statusClass = 'excused';
+                badgeClass = 'indigo';
+                iconClass = 'info-circle';
+            }
+
+            // Construct Card HTML with smooth fade-in
+            const cardHtml = `
+                <div class="col-md-6 col-lg-4 mb-3 animate-fade-in" style="animation: fadeIn 0.5s ease-out;">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden" style="border-left: 5px solid var(--bs-${badgeClass}) !important; background: white;">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-${badgeClass} bg-opacity-10 text-${badgeClass} rounded-pill px-3 py-2 fw-bold text-uppercase" style="font-size: 0.65rem;">
+                                    <i class="fas fa-${iconClass} me-1"></i> ${data.status}
+                                </span>
+                                <small class="text-secondary fw-bold" style="font-size: 0.75rem;">${data.day}</small>
+                            </div>
+                            <h6 class="card-title fw-bold text-dark mb-1">${data.subject}</h6>
+                            <p class="card-text text-secondary small mb-2">
+                                <i class="far fa-calendar-alt me-1"></i> ${new Date(data.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                            ${data.notes ? `<div class="bg-light p-2 rounded-3 text-secondary small fw-medium mt-2"><i class="far fa-comment-dots me-1"></i> ${data.notes}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('afterbegin', cardHtml);
+
+            // Prepend dynamically to history table
+            const tbody = document.querySelector('tbody');
+            if (tbody) {
+                const tableRowHtml = `
+                    <tr class="animate-fade-in" style="animation: fadeIn 0.5s ease-out; background: rgba(var(--bs-${badgeClass}-rgb), 0.02);" data-course-id="${data.courseId || ''}">
+                        <td>
+                            <div class="fw-bold text-secondary">
+                                ${data.day}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold" style="color: var(--dark-text);">
+                                ${new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </div>
+                            <small class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Recorded: Just now</small>
+                        </td>
+                        <td>
+                            <div class="fw-bold" style="color: var(--dark-text);">
+                                ${data.courseName || data.subject}
+                                ${data.courseId ? `<small class="text-secondary fw-medium">(ID: ${data.courseId})</small>` : ''}
+                            </div>
+                            <small class="text-secondary">${data.className || 'General'}</small>
+                        </td>
+                        <td>
+                            <span class="status-badge status-${statusClass}">
+                                <i class="fas fa-circle me-1" style="font-size: 0.4rem; vertical-align: middle;"></i>
+                                ${data.status}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="text-secondary small fw-bold">${data.notes || '--'}</div>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('afterbegin', tableRowHtml);
+            }
+        }
+
+        function updateStats(newStatus) {
+            stats.total += 1;
+            if (newStatus === 'present') {
+                stats.present += 1;
+            } else if (newStatus === 'absent') {
+                stats.absent += 1;
+            } else if (newStatus === 'late') {
+                stats.late += 1;
+            } else if (newStatus === 'excused') {
+                stats.excused += 1;
+            }
+
+            const attended = stats.present + stats.late + stats.excused;
+            const rate = stats.total > 0 ? Math.round((attended / stats.total) * 100) : 100;
+
+            const rateEl = document.getElementById('stat-rate');
+            if (rateEl) rateEl.textContent = rate + '%';
+
+            const presentEl = document.getElementById('stat-present');
+            if (presentEl) presentEl.textContent = stats.present;
+
+            const absentEl = document.getElementById('stat-absent');
+            if (absentEl) absentEl.textContent = stats.absent;
+
+            const lateEl = document.getElementById('stat-late');
+            if (lateEl) lateEl.textContent = stats.late;
+        }
+    </script>
+
     <style>
         .fw-900 { font-weight: 900; }
         .fw-800 { font-weight: 800; }
         .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </body>
 </html>
+

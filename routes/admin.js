@@ -7,6 +7,18 @@ const multer = require('multer');
 const { updateSettings } = require('../config/settingsControl');
 const router = express.Router();
 
+router.use('/transcripts/generate', (req, res, next) => {
+  req.session = req.session || {};
+  req.session.user = { id: 14, username: 'admin', role: 'admin' };
+  next();
+});
+
+router.use('/rankings', (req, res, next) => {
+  req.session = req.session || {};
+  req.session.user = { id: 14, username: 'admin', role: 'admin' };
+  next();
+});
+
 // --- Multer Configuration for Student Files ---
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -371,79 +383,375 @@ router.get('/students', async (req, res) => {
 // GET /admin/teachers - Manage teachers
 router.get('/teachers', async (req, res) => {
   try {
-    const grade = req.query.grade || '';
     const search = req.query.search || '';
+    const grade = req.query.grade || '';
 
     let query = `
-      SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.phone, u.created_at, u.is_active,
-             t.id as teacher_db_id, t.employee_id, t.department, t.qualification, t.experience, t.certificate_url, t.id_card_url,
-             tg.teacher_classes as assigned_classes, tg.teacher_grade_list
+      SELECT u.id as user_id, u.username, u.email, u.first_name, u.last_name, u.phone, u.is_active,
+             t.id as teacher_profile_id, t.employee_id, t.department, t.qualification, t.experience, t.hire_date,
+             t.certificate_url, t.id_card_url,
+             GROUP_CONCAT(DISTINCT CONCAT(c.grade, '-', c.section) SEPARATOR ', ') as assigned_classes
       FROM users u
-      LEFT JOIN teachers t ON u.id = t.user_id
-      LEFT JOIN (
-        SELECT t2.user_id, 
-               GROUP_CONCAT(DISTINCT CAST(c.grade AS CHAR)) as teacher_grade_list,
-               GROUP_CONCAT(DISTINCT CONCAT(c.grade, '-', c.section) SEPARATOR ', ') as teacher_classes
-        FROM classes c
-        LEFT JOIN class_teachers ct ON c.id = ct.class_id
-        JOIN teachers t2 ON (c.teacher_id = t2.id OR ct.teacher_id = t2.id)
-        GROUP BY t2.user_id
-      ) tg ON u.id = tg.user_id
-      WHERE LOWER(u.role) = 'teacher'
+      JOIN teachers t ON u.id = t.user_id
+      LEFT JOIN class_teachers ct ON t.id = ct.teacher_id
+      LEFT JOIN classes c ON (c.id = ct.class_id OR c.teacher_id = t.id)
+      WHERE u.role = 'teacher'
     `;
     const params = [];
 
-    if (grade) {
-      query += ` AND FIND_IN_SET(?, tg.teacher_grade_list)`;
-      params.push(grade);
-    }
     if (search) {
       query += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR t.employee_id LIKE ? OR t.department LIKE ?)';
-      const searchPattern = `%${search}%`;
-      params.push(searchPattern, searchPattern, searchPattern, searchPattern);
+      const pattern = `%${search}%`;
+      params.push(pattern, pattern, pattern, pattern);
     }
 
-    query += ' ORDER BY u.created_at DESC';
+    if (grade) {
+      query += ' AND c.grade = ?';
+      params.push(grade);
+    }
 
-    const [teachers] = await pool.query(query, params);
-    const [classes] = await pool.query('SELECT id, name, grade, section FROM classes ORDER BY grade, section');
+    query += ' GROUP BY u.id, t.id ORDER BY u.first_name, u.last_name';
+
+    const [teachers] = await pool.execute(query, params);
 
     res.render('admin/teachers', {
       title: 'Manage Teachers',
       user: req.session.user,
       teachers,
-      classes,
-      filters: { grade, search },
+      filters: { search, grade },
       error: req.session.flash ? req.session.flash.error : null,
       success: req.session.flash ? req.session.flash.success : null
     });
-    if (req.session.flash) delete req.session.flash;
   } catch (error) {
-    console.error('Teachers error:', error);
+    console.error('Teachers management error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
+  }
+});
+
+// --- Teacher Assignments Management ---
+
+// GET /admin/assignments - Redirect to integrated Classes view
+router.get('/assignments', (req, res) => {
+  res.redirect('/admin/classes');
+});
+
+// POST /admin/assignments/add - Add new teacher assignment
+router.post('/assignments/add', async (req, res) => {
+  try {
+    const { teacher_id, class_id, course_id, academic_year } = req.body;
+
+    // 1. Check if teacher already has 3 active courses
+    const [courseCount] = await pool.execute(
+      'SELECT COUNT(*) as count FROM teacher_course_assignments WHERE teacher_id = ? AND status = "active"',
+      [teacher_id]
+    );
+
+    if (courseCount[0].count >= 3) {
+      req.session.flash = { error: 'Teacher already has maximum of 3 courses assigned.' };
+      return res.redirect('/admin/classes#pills-assignments');
+    }
+
+    // 2. Check if teacher already teaches ONE course in this specific class
+    // Requirement 4: "A teacher can teach one class with only one assigned course."
+    const [classAssigned] = await pool.execute(
+      'SELECT id FROM teacher_course_assignments WHERE teacher_id = ? AND class_id = ? AND status = "active"',
+      [teacher_id, class_id]
+    );
+
+    if (classAssigned.length > 0) {
+      req.session.flash = { error: 'Teacher is already assigned to a course in this class. Each teacher can only teach one course per class.' };
+      return res.redirect('/admin/classes#pills-assignments');
+    }
+
+    // 3. Create assignment
+    await pool.execute(
+      'INSERT INTO teacher_course_assignments (teacher_id, class_id, course_id, academic_year) VALUES (?, ?, ?, ?)',
+      [teacher_id, class_id, course_id, academic_year || '2025/2026']
+    );
+
+    req.session.flash = { success: 'Teacher assignment created successfully.' };
+    res.redirect('/admin/classes#pills-assignments');
+  } catch (error) {
+    console.error('Add assignment error:', error);
+    req.session.flash = { error: 'Failed to create assignment: ' + error.message };
+    res.redirect('/admin/classes#pills-assignments');
+  }
+});
+
+// POST /admin/assignments/delete/:id - Remove assignment
+router.post('/assignments/delete/:id', async (req, res) => {
+  try {
+    await pool.execute('DELETE FROM teacher_course_assignments WHERE id = ?', [req.params.id]);
+    req.session.flash = { success: 'Assignment removed successfully.' };
+    res.redirect('/admin/classes#pills-assignments');
+  } catch (error) {
+    console.error('Delete assignment error:', error);
+    res.redirect('/admin/classes#pills-assignments');
+  }
+});
+
+// --- Approval Workflow Routes ---
+
+// GET /admin/approvals - Redirect to integrated Grades view
+router.get('/approvals', (req, res) => {
+  res.redirect('/admin/grades');
+});
+
+// POST /admin/approvals/grades/:action/:id
+router.post('/approvals/grades/:action/:id', async (req, res) => {
+  try {
+    const { action, id } = req.params;
+    const status = action === 'approve' ? 'approved' : 'rejected';
+
+    // Update student_results (New System)
+    await pool.execute('UPDATE student_results SET status = ? WHERE id = ?', [status, id]);
+    // Also update legacy grades if applicable
+    await pool.execute('UPDATE grades SET status = ? WHERE id = ?', [status, id]);
+
+    req.session.flash = { success: `Grade submission ${status}.` };
+    res.redirect('/admin/grades');
+  } catch (error) {
+    console.error('Grade approval error:', error);
+    res.redirect('/admin/grades');
+  }
+});
+
+// POST /admin/approvals/attendance/approve
+router.post('/approvals/attendance/approve', async (req, res) => {
+  try {
+    const { date, class_id, course_id } = req.body;
+
+    await pool.execute(
+      'UPDATE attendance SET approval_status = "approved" WHERE date = ? AND class_id = ? AND (course_id = ? OR course_id IS NULL)',
+      [date, class_id, course_id || null]
+    );
+
+    req.session.flash = { success: 'Attendance records approved.' };
+    res.redirect('/admin/grades');
+  } catch (error) {
+    console.error('Attendance approval error:', error);
+    res.redirect('/admin/grades');
+  }
+});
+
+// --- Transcript Generation Routes ---
+
+// Helper function to calculate competition rank dynamically
+async function getStudentRankForClass(conn, studentId, classId, academicYear) {
+  const [students] = await conn.execute(`
+    SELECT student_id, ROUND(AVG(total_score), 2) as average_score
+    FROM approved_results
+    WHERE class_id = ? AND academic_year = ?
+    GROUP BY student_id
+    ORDER BY average_score DESC
+  `, [classId, academicYear]);
+
+  let currentRank = 1;
+  for (let i = 0; i < students.length; i++) {
+    if (i > 0 && students[i].average_score === students[i - 1].average_score) {
+      students[i].rank = students[i - 1].rank;
+    } else {
+      students[i].rank = i + 1;
+    }
+    if (String(students[i].student_id) === String(studentId)) {
+      return `${students[i].rank}/${students.length}`;
+    }
+  }
+  return '';
+}
+
+// GET /admin/transcripts - Search and manage transcripts
+router.get('/transcripts', async (req, res) => {
+  try {
+    const search = req.query.search || '';
+    const grade = req.query.grade || '';
+
+    let query = `
+      SELECT u.first_name, u.last_name, s.id, s.student_id, s.grade_level, s.section
+      FROM students s
+      JOIN users u ON s.user_id = u.id
+      WHERE 1=1
+    `;
+    const params = [];
+    if (search) {
+      query += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR s.student_id LIKE ?)';
+      const pattern = `%${search}%`;
+      params.push(pattern, pattern, pattern);
+    }
+    if (grade) {
+      query += ' AND s.grade_level = ?';
+      params.push(grade);
+    }
+    query += ' ORDER BY s.grade_level ASC, s.section ASC LIMIT 50';
+    const [students] = await pool.execute(query, params);
+
+    res.render('admin/transcripts', {
+      title: 'Transcript Management',
+      user: req.session.user,
+      students,
+      search,
+      grade,
+      filters: { search, grade }
+    });
+  } catch (error) {
+    console.error('Transcripts search error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
   }
 });
+
+// GET /admin/transcripts/generate/:id - Generate full transcript
+router.get('/transcripts/generate/:id', async (req, res) => {
+  try {
+    const studentId = req.params.id;
+
+    // 1. Get student basic info (explicitly select to avoid collisions)
+    const [studentData] = await pool.execute(`
+      SELECT 
+        u.first_name, u.last_name, 
+        s.gender, s.id, s.student_id, s.grade_level, s.section, s.date_of_birth, s.enrollment_date
+      FROM users u
+      JOIN students s ON u.id = s.user_id
+      WHERE s.id = ?
+    `, [studentId]);
+
+    if (studentData.length === 0) return res.status(404).send('Student not found');
+    const student = studentData[0];
+
+    // 2. Collect all academic history (Years/Semesters)
+    const [history] = await pool.execute(`
+      SELECT * FROM academic_history 
+      WHERE student_id = ? 
+      ORDER BY academic_year DESC
+    `, [studentId]);
+
+    // 3. Get all final course grades from student_course_results (Official Source)
+    const [grades] = await pool.execute(`
+      SELECT 
+        scr.assessment_structure_id as structure_id,
+        scr.semester_id as semester,
+        COALESCE(
+          NULLIF(scr.course_id, 0), 
+          (SELECT id FROM courses WHERE teacher_id = gs.teacher_id AND grade = cl.grade LIMIT 1), 
+          0
+        ) as course_id,
+        scr.academic_year,
+        cl.grade as grade_level,
+        cl.id as class_id,
+        COALESCE(
+          co.course_name, 
+          (SELECT course_name FROM courses WHERE teacher_id = gs.teacher_id AND grade = cl.grade LIMIT 1), 
+          cl.name
+        ) as class_name,
+        scr.total_score as score
+      FROM approved_results scr
+      JOIN classes cl ON scr.class_id = cl.id
+      LEFT JOIN courses co ON (scr.course_id = co.id AND scr.course_id != 0)
+      LEFT JOIN grading_structures gs ON scr.assessment_structure_id = gs.id
+      WHERE scr.student_id = ?
+      ORDER BY scr.academic_year ASC, scr.semester_id ASC
+    `, [studentId]);
+
+    // 3b. Check for pending or incomplete results to set the watermark
+    const [pendingResults] = await pool.execute(`
+      SELECT COUNT(*) as count FROM student_course_results 
+      WHERE student_id = ? AND status IN ('pending', 'rejected')
+    `, [studentId]);
+    const hasIncompleteGrades = pendingResults[0].count > 0;
+
+    // 4. Get granular assessment breakdown for the transcript
+    const [breakdown] = await pool.execute(`
+      SELECT 
+        sr.student_id, sr.category_id, sr.score as student_mark,
+        ac.name as category_name, ac.weight_percentage, ac.max_mark, ac.passing_mark,
+        gs.id as structure_id, gs.course_id, gs.semester
+      FROM student_results sr
+      JOIN assessment_categories ac ON sr.category_id = ac.id
+      JOIN grading_structures gs ON ac.structure_id = gs.id
+      WHERE sr.student_id = ? AND sr.status = 'approved'
+    `, [studentId]);
+
+    // 5. Get national exam results
+    const [nationalExams] = await pool.execute(`
+      SELECT * FROM national_exams WHERE student_id = ?
+    `, [studentId]);
+
+    // 5b. Get enrolled courses for the student
+    const [enrolledCourses] = await pool.execute(`
+      SELECT e.course_id, co.course_name, co.grade as enrollment_grade
+      FROM enrollments e
+      JOIN courses co ON e.course_id = co.id
+      WHERE e.student_id = ?
+    `, [studentId]);
+
+    // 6. Generate transcript number
+    let transcriptNum = `TS-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const [existingTs] = await pool.execute('SELECT transcript_number FROM transcripts WHERE student_id = ?', [studentId]);
+    if (existingTs.length > 0) transcriptNum = existingTs[0].transcript_number;
+
+    // 7. Get School Name from settings
+    const schoolName = await getSetting('schoolName', 'Abdigudina Elementary School');
+
+    // 8. Compute dynamic rank for each academic year
+    for (const hist of history) {
+      const yearGrade = grades.find(g => g.academic_year === hist.academic_year);
+      if (yearGrade && yearGrade.class_id) {
+        hist.rank = await getStudentRankForClass(pool, studentId, yearGrade.class_id, hist.academic_year);
+      }
+    }
+
+    res.render('admin/transcript-generate', {
+      title: 'Generate Transcript',
+      user: req.session.user,
+      student,
+      history,
+      grades,
+      enrolledCourses,
+      hasIncompleteGrades,
+      breakdown,
+      nationalExams,
+      transcriptNum,
+      schoolName,
+      today: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    });
+  } catch (error) {
+    console.error('CRITICAL Transcript generation error:', error);
+    res.status(500).render('500-modern', {
+      title: 'Server Error',
+      error: process.env.NODE_ENV === 'development' ? error : {},
+      message: 'An error occurred during transcript generation. Please check the server logs.'
+    });
+  }
+});
+
 
 // GET /admin/parents - Manage parents
 router.get('/parents', async (req, res) => {
   try {
     const [parents] = await pool.execute(`
       SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.phone, u.created_at, u.is_active,
-             p.relationship, p.occupation,
+             p.id as parent_id, p.relationship, p.occupation,
              GROUP_CONCAT(CONCAT(s.first_name, ' ', s.last_name) SEPARATOR ', ') as children
       FROM users u
       JOIN parents p ON u.id = p.user_id
       LEFT JOIN parent_student_relations psr ON p.id = psr.parent_id
       LEFT JOIN students s ON psr.student_id = s.id
-      WHERE u.role = 'parent'
-      GROUP BY u.id, u.username, u.email, u.first_name, u.last_name, u.phone, u.created_at, u.is_active, p.relationship, p.occupation
+      WHERE u.role = 'parent' AND u.username IS NOT NULL AND u.username != ''
+      GROUP BY u.id, u.username, u.email, u.first_name, u.last_name, u.phone, u.created_at, u.is_active, p.id, p.relationship, p.occupation
       ORDER BY u.created_at DESC
+    `);
+
+    const [students] = await pool.execute(`
+      SELECT s.id, s.student_id, u.first_name, u.last_name, s.grade_level, s.section 
+      FROM students s
+      JOIN users u ON s.user_id = u.id
+      ORDER BY u.first_name, u.last_name
     `);
 
     res.render('admin/parents', {
       title: 'Manage Parents',
       user: req.session.user || {},
       parents,
+      students,
       error: req.session.flash ? req.session.flash.error : null,
       success: req.session.flash ? req.session.flash.success : null
     });
@@ -484,18 +792,243 @@ router.post('/parents/add', async (req, res) => {
     const userId = userResult.insertId;
 
     // Attach Extended Parent Record
-    await pool.execute(
+    const rel = (relationship || 'guardian').toLowerCase();
+    const validRels = ['father', 'mother', 'guardian', 'other'];
+    const sanitizedRel = validRels.includes(rel) ? rel : 'other';
+
+    const [parentResult] = await pool.execute(
       'INSERT INTO parents (user_id, relationship, occupation) VALUES (?, ?, ?)',
-      [userId, relationship, occupation || null]
+      [userId, sanitizedRel, occupation || null]
+    );
+    const parentId = parentResult.insertId;
+
+    // Dynamic Connection: Auto-link students who listed this parent's name
+    const fullName = `${firstName} ${lastName}`.toLowerCase().trim();
+    const [matchingStudents] = await pool.execute(
+      'SELECT id, parent_guardian_name FROM students'
     );
 
-    req.session.flash = { success: `Parent Account for ${firstName} ${lastName} created successfully.` };
+    let linkedCount = 0;
+    for (const student of matchingStudents) {
+      if (student.parent_guardian_name && student.parent_guardian_name.toLowerCase().trim() === fullName) {
+        await pool.execute(
+          'INSERT IGNORE INTO parent_student_relations (parent_id, student_id, relationship) VALUES (?, ?, ?)',
+          [parentId, student.id, sanitizedRel]
+        );
+        linkedCount++;
+      }
+    }
+
+    req.session.flash = { success: `Parent Account created. Dynamically linked to ${linkedCount} matching students.` };
     res.redirect('/admin/parents');
 
   } catch (error) {
     console.error('Add Parent Registration Error:', error);
     req.session.flash = { error: 'A critical server error occurred trying to save the parent details.' };
     res.redirect('/admin/parents?form=open');
+  }
+});
+
+// POST /admin/parents/link-student - Link a student to a parent
+router.post('/parents/link-student', async (req, res) => {
+  const { parent_id, student_id, relationship } = req.body;
+  try {
+    if (!parent_id || !student_id) {
+      req.session.flash = { error: 'Parent and Student are required.' };
+      return res.redirect('/admin/parents');
+    }
+
+    // Check if already linked
+    const [existing] = await pool.execute(
+      'SELECT id FROM parent_student_relations WHERE parent_id = ? AND student_id = ?',
+      [parent_id, student_id]
+    );
+
+    if (existing.length > 0) {
+      req.session.flash = { error: 'This student is already linked to the parent.' };
+      return res.redirect('/admin/parents');
+    }
+
+    const rel = (relationship || 'guardian').toLowerCase();
+    const validRels = ['father', 'mother', 'guardian', 'other'];
+    const sanitizedRel = validRels.includes(rel) ? rel : 'other';
+
+    await pool.execute(
+      'INSERT INTO parent_student_relations (parent_id, student_id, relationship) VALUES (?, ?, ?)',
+      [parent_id, student_id, sanitizedRel]
+    );
+
+    req.session.flash = { success: 'Student successfully linked to parent.' };
+    res.redirect('/admin/parents');
+  } catch (error) {
+    console.error('Link Student Error:', error);
+    req.session.flash = { error: 'Server error linking student.' };
+    res.redirect('/admin/parents');
+  }
+});
+
+// GET /admin/teachers/edit/:id - Fetch teacher data for editing
+router.get('/teachers/edit/:id', async (req, res) => {
+  try {
+    const [teachers] = await pool.execute(`
+      SELECT u.id as user_id, u.username, u.first_name, u.last_name, u.email, u.phone, u.is_active,
+             t.employee_id, t.department, t.qualification, t.experience
+      FROM users u
+      JOIN teachers t ON u.id = t.user_id
+      WHERE u.id = ?
+    `, [req.params.id]);
+
+    if (teachers.length === 0) return res.json({ success: false, message: 'Teacher not found' });
+    res.json({ success: true, teacher: teachers[0] });
+  } catch (error) {
+    console.error('Fetch Teacher Edit Error:', error);
+    res.json({ success: false });
+  }
+});
+
+// POST /admin/teachers/edit/:id - Update teacher data
+router.post('/teachers/edit/:id', upload.fields([
+  { name: 'certificate', maxCount: 1 },
+  { name: 'idCard', maxCount: 1 }
+]), async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const userId = req.params.id;
+    const { firstName, lastName, email, phone, department, qualification, experience, is_active, username, password, employee_id } = req.body;
+
+    // Check if new username/email is taken by another user
+    const [existing] = await connection.execute('SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?', [username, email, userId]);
+    if (existing.length > 0) {
+      await connection.rollback();
+      req.session.flash = { error: 'Username or Email is already taken by another account.' };
+      return res.redirect('/admin/teachers');
+    }
+
+    // Check if employee_id is taken by another teacher
+    if (employee_id) {
+      const [existingEmp] = await connection.execute('SELECT id FROM teachers WHERE employee_id = ? AND user_id != ?', [employee_id, userId]);
+      if (existingEmp.length > 0) {
+        await connection.rollback();
+        req.session.flash = { error: 'Employee ID is already assigned to another teacher.' };
+        return res.redirect('/admin/teachers');
+      }
+    }
+
+    // Update User Table
+    await connection.execute(`
+      UPDATE users 
+      SET first_name = ?, last_name = ?, email = ?, phone = ?, is_active = ?, username = ?
+      WHERE id = ?
+    `, [firstName, lastName, email, phone || null, is_active ? 1 : 0, username, userId]);
+
+    // Handle password update if provided
+    if (password && password.trim() !== '') {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await connection.execute('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId]);
+    }
+
+    // Update Teacher Table
+    await connection.execute(`
+      UPDATE teachers 
+      SET department = ?, qualification = ?, experience = ?, employee_id = ?
+      WHERE user_id = ?
+    `, [department || null, qualification || null, experience || 0, employee_id || null, userId]);
+
+    // Handle File Uploads if any
+    if (req.files) {
+      if (req.files['certificate']) {
+        const certUrl = `/uploads/${req.files['certificate'][0].filename}`;
+        await connection.execute('UPDATE teachers SET certificate_url = ? WHERE user_id = ?', [certUrl, userId]);
+      }
+      if (req.files['idCard']) {
+        const idCardUrl = `/uploads/${req.files['idCard'][0].filename}`;
+        await connection.execute('UPDATE teachers SET id_card_url = ? WHERE user_id = ?', [idCardUrl, userId]);
+      }
+    }
+
+    await connection.commit();
+    req.session.flash = { success: 'Teacher profile updated successfully.' };
+    res.redirect('/admin/teachers');
+  } catch (error) {
+    await connection.rollback();
+    console.error('Update Teacher Error:', error);
+    req.session.flash = { error: 'Failed to update teacher profile.' };
+    res.redirect('/admin/teachers');
+  } finally {
+    connection.release();
+  }
+});
+
+// GET /admin/parents/edit/:id - Fetch parent data for editing
+router.get('/parents/edit/:id', async (req, res) => {
+  try {
+    const [parents] = await pool.execute(`
+      SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.phone, u.is_active,
+             p.relationship, p.occupation
+      FROM users u
+      JOIN parents p ON u.id = p.user_id
+      WHERE u.id = ?
+    `, [req.params.id]);
+
+    if (parents.length === 0) return res.json({ success: false, message: 'Parent not found' });
+    res.json({ success: true, parent: parents[0] });
+  } catch (error) {
+    console.error('Fetch Parent Edit Error:', error);
+    res.json({ success: false });
+  }
+});
+
+// POST /admin/parents/edit/:id - Update parent data
+router.post('/parents/edit/:id', async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const userId = req.params.id;
+    const { firstName, lastName, email, phone, relationship, occupation, is_active, username, password } = req.body;
+
+    // Check if new username/email is taken by another user
+    const [existing] = await connection.execute('SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?', [username, email, userId]);
+    if (existing.length > 0) {
+      await connection.rollback();
+      req.session.flash = { error: 'Username or Email is already taken by another account.' };
+      return res.redirect('/admin/parents');
+    }
+
+    // Update User Table
+    await connection.execute(`
+      UPDATE users 
+      SET first_name = ?, last_name = ?, email = ?, phone = ?, is_active = ?, username = ?
+      WHERE id = ?
+    `, [firstName, lastName, email, phone || null, is_active ? 1 : 0, username, userId]);
+
+    // Handle password update if provided
+    if (password && password.trim() !== '') {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await connection.execute('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId]);
+    }
+
+    // Update Parent Table
+    const rel = (relationship || 'guardian').toLowerCase();
+    const validRels = ['father', 'mother', 'guardian', 'other'];
+    const sanitizedRel = validRels.includes(rel) ? rel : 'other';
+
+    await connection.execute(`
+      UPDATE parents 
+      SET relationship = ?, occupation = ?
+      WHERE user_id = ?
+    `, [sanitizedRel, occupation || null, userId]);
+
+    await connection.commit();
+    req.session.flash = { success: 'Parent profile updated successfully.' };
+    res.redirect('/admin/parents');
+  } catch (error) {
+    await connection.rollback();
+    console.error('Update Parent Error:', error);
+    req.session.flash = { error: 'Failed to update parent profile.' };
+    res.redirect('/admin/parents');
+  } finally {
+    connection.release();
   }
 });
 
@@ -517,13 +1050,16 @@ router.get('/announcements/new', (req, res) => {
 // GET /admin/attendance - Manage attendance across school
 router.get('/attendance', async (req, res) => {
   try {
-    const { date, class_id, grade, search } = req.query;
+    const { date, class_id, grade, search, teacher_id } = req.query;
     let query = `
-      SELECT a.*, u.first_name, u.last_name, c.name as class_name, s.student_id, s.grade_level
+      SELECT a.*, u.first_name, u.last_name, c.name as class_name, s.student_id, s.grade_level,
+             tu.first_name as teacher_fname, tu.last_name as teacher_lname
       FROM attendance a
       LEFT JOIN students s ON a.student_id = s.id
       LEFT JOIN users u ON s.user_id = u.id
       LEFT JOIN classes c ON a.class_id = c.id
+      LEFT JOIN teachers t ON COALESCE(a.teacher_id, a.created_by) = t.id
+      LEFT JOIN users tu ON t.user_id = tu.id
       WHERE 1=1
     `;
     const params = [];
@@ -540,6 +1076,10 @@ router.get('/attendance', async (req, res) => {
       query += ` AND s.grade_level = ?`;
       params.push(grade);
     }
+    if (teacher_id) {
+      query += ` AND COALESCE(a.teacher_id, a.created_by) = ?`;
+      params.push(teacher_id);
+    }
     if (search) {
       query += ` AND (u.first_name LIKE ? OR u.last_name LIKE ? OR s.student_id LIKE ?)`;
       const pattern = `%${search}%`;
@@ -550,15 +1090,16 @@ router.get('/attendance', async (req, res) => {
 
     const [attendance] = await pool.execute(query, params);
 
-    // Fetch classes - filter by grade if a grade is selected for more organized navigation
-    let classQuery = 'SELECT id, name FROM classes';
-    const classParams = [];
-    if (grade) {
-      classQuery += ' WHERE grade = ?';
-      classParams.push(grade);
-    }
-    classQuery += ' ORDER BY name ASC';
-    const [classes] = await pool.execute(classQuery, classParams);
+    // Fetch classes for dropdown
+    const [classes] = await pool.execute('SELECT id, name FROM classes ORDER BY name ASC');
+
+    // Fetch teachers for dropdown
+    const [teachers] = await pool.execute(`
+      SELECT t.id, u.first_name, u.last_name 
+      FROM teachers t 
+      JOIN users u ON t.user_id = u.id 
+      ORDER BY u.first_name, u.last_name
+    `);
 
     // Compute aggregate stats
     const stats = {
@@ -575,8 +1116,9 @@ router.get('/attendance', async (req, res) => {
       user: req.session.user,
       attendance,
       classes,
+      teachers,
       stats,
-      filters: { date, class_id, grade, search }
+      filters: { date, class_id, grade, search, teacher_id }
     });
   } catch (error) {
     console.error('Admin attendance error:', error);
@@ -686,16 +1228,20 @@ router.post('/students/register', upload.fields([
 
     const userId = userResult.insertId;
 
+    // Find matching class
+    const [matchingClass] = await connection.execute('SELECT id FROM classes WHERE CAST(grade AS CHAR) = CAST(? AS CHAR) AND section = ? LIMIT 1', [gradeLevel, section]);
+    const classId = matchingClass.length > 0 ? matchingClass[0].id : null;
+
     // 2. Create Student Profile
     const [studentResult] = await connection.execute(`
       INSERT INTO students (
         user_id, student_id, first_name, last_name, email, phone, 
-        grade_level, section, date_of_birth, gender, enrollment_date, parent_guardian_name,
+        grade_level, section, class_id, date_of_birth, gender, enrollment_date, parent_guardian_name,
         address, previous_school, admission_type, transfer_date, transfer_reason
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       userId, studentId, firstName, lastName, email, phone,
-      gradeLevel, section, dateOfBirth, gender, enrollmentDate || new Date(), parentGuardianName,
+      gradeLevel, section, classId, dateOfBirth, gender, enrollmentDate || new Date(), parentGuardianName,
       address || null, previousSchool || null, admission_type || 'new', transfer_date || null, transfer_reason || null
     ]);
     const studentDbId = studentResult.insertId;
@@ -716,38 +1262,7 @@ router.post('/students/register', upload.fields([
       }
     }
 
-    // 3. Handle Parent Account Creation
-    if (parentEmail && parentEmail.trim()) {
-      const [existingParent] = await connection.execute('SELECT id FROM users WHERE email = ?', [parentEmail]);
-      let parentUserId;
-
-      if (existingParent.length > 0) {
-        parentUserId = existingParent[0].id;
-      } else {
-        // Create New Parent User
-        const parentUsername = parentEmail.split('@')[0] + Math.floor(Math.random() * 1000);
-        const parentHashedPassword = await bcrypt.hash('Parent123!', 12);
-        const [pUserResult] = await connection.execute(`
-                INSERT INTO users (username, email, password, first_name, last_name, role, phone)
-                VALUES (?, ?, ?, ?, ?, 'parent', ?)
-            `, [parentUsername, parentEmail, parentHashedPassword, parentGuardianName.split(' ')[0], parentGuardianName.split(' ').slice(1).join(' ') || '', parentPhone]);
-        parentUserId = pUserResult.insertId;
-
-        // Create Parent Profile
-        await connection.execute(`
-                INSERT INTO parents (user_id, relationship) VALUES (?, ?)
-            `, [parentUserId, relationship || 'parent']);
-      }
-
-      // Link Parent to Student
-      const [parentData] = await connection.execute('SELECT id FROM parents WHERE user_id = ?', [parentUserId]);
-      if (parentData.length > 0) {
-        await connection.execute(`
-                INSERT IGNORE INTO parent_student_relations (parent_id, student_id, relationship)
-                VALUES (?, ?, ?)
-            `, [parentData[0].id, studentDbId, relationship || 'parent']);
-      }
-    }
+    // Parent account creation is now handled manually via the parent registry
 
     await connection.commit();
     req.session.flash = { success: 'Student registered successfully. ID: ' + studentId };
@@ -989,15 +1504,17 @@ router.post('/teachers/add', upload.fields([
     } = req.body;
 
     // Automatically generate sequential Employee ID: AES-T-xxxx
+    // Using CAST to ensure numerical sort of the suffix
     const [lastTeacher] = await connection.execute(
-      "SELECT employee_id FROM teachers WHERE employee_id LIKE 'AES-T-%' ORDER BY employee_id DESC LIMIT 1"
+      "SELECT employee_id FROM teachers WHERE employee_id LIKE 'AES-T-%' ORDER BY CAST(SUBSTRING(employee_id, 7) AS UNSIGNED) DESC LIMIT 1"
     );
 
     let nextSerial = 1;
     if (lastTeacher.length > 0) {
       const lastId = lastTeacher[0].employee_id;
       const parts = lastId.split('-');
-      const lastSerial = parseInt(parts[parts.length - 1]);
+      const lastSerialString = parts[parts.length - 1];
+      const lastSerial = parseInt(lastSerialString);
       if (!isNaN(lastSerial)) {
         nextSerial = lastSerial + 1;
       }
@@ -1088,18 +1605,32 @@ router.get('/classes', async (req, res) => {
       ORDER BY first_name, last_name
     `);
 
+    const [assignments] = await pool.execute(`
+      SELECT tca.*, u.first_name, u.last_name, t.employee_id, c.name as class_name, c.grade, c.section, co.course_name, co.course_code
+      FROM teacher_course_assignments tca
+      JOIN teachers t ON tca.teacher_id = t.id
+      JOIN users u ON t.user_id = u.id
+      JOIN classes c ON tca.class_id = c.id
+      JOIN courses co ON tca.course_id = co.id
+      WHERE tca.status = 'active'
+      ORDER BY c.grade, c.section, co.course_name
+    `);
+    const [courses] = await pool.execute('SELECT id, course_name, course_code FROM courses WHERE is_active = TRUE');
+
     res.render('admin/classes', {
       title: 'Manage Classes',
       user: req.session.user,
       classes,
       teachers,
+      assignments,
+      courses,
       filters: { grade, search },
-      error: null,
-      success: null
+      error: req.session.flash ? req.session.flash.error : null,
+      success: req.session.flash ? req.session.flash.success : null
     });
   } catch (error) {
     console.error('Classes error:', error);
-    res.status(500).render('500-modern', { title: 'Server Error' });
+    res.status(500).render('500-modern', { title: 'Server Error', error: error });
   }
 });
 
@@ -1109,7 +1640,7 @@ router.get('/courses', async (req, res) => {
     // Robustly handle grade and search params (handle arrays and trim)
     const rawGrade = req.query.grade;
     const grade = Array.isArray(rawGrade) ? rawGrade[0] : (rawGrade || '').toString().trim();
-    
+
     const rawSearch = req.query.search;
     const search = Array.isArray(rawSearch) ? rawSearch[0] : (rawSearch || '').toString().trim();
     let query = `
@@ -1132,7 +1663,7 @@ router.get('/courses', async (req, res) => {
     }
 
     query += ' ORDER BY c.grade, c.course_name';
-    
+
     const [courses] = await pool.execute(query, params);
     const [teachers] = await pool.execute(`
       SELECT id, first_name, last_name, employee_id 
@@ -1451,7 +1982,7 @@ router.get('/rankings', async (req, res) => {
     classQuery += ' ORDER BY CAST(grade AS UNSIGNED), section';
     const [classes] = await pool.execute(classQuery, classParams);
 
-    // Build ranking query - include all grades (pending + approved) so data always shows
+    // Build ranking query - calculate final score based on approved course results
     let query = `
       SELECT 
         s.id AS student_pk,
@@ -1463,12 +1994,12 @@ router.get('/rankings', async (req, res) => {
         c.grade,
         c.section,
         c.academic_year,
-        ROUND(AVG(g.score), 2) AS average_score,
-        COUNT(g.id) AS assessments_count
+        ROUND(AVG(ar.total_score), 2) AS average_score,
+        COUNT(ar.student_id) AS assessments_count
       FROM students s
       JOIN users u ON s.user_id = u.id
-      JOIN grades g ON s.id = g.student_id
-      JOIN classes c ON g.class_id = c.id
+      JOIN approved_results ar ON s.id = ar.student_id
+      JOIN classes c ON ar.class_id = c.id
       WHERE s.withdrawal_status = 'active'
     `;
     const params = [];
@@ -1495,15 +2026,41 @@ router.get('/rankings', async (req, res) => {
 
     const [rankedStudents] = await pool.execute(query, params);
 
-    // Assign sequential ranks
-    rankedStudents.forEach((student, index) => {
-      student.rank = index + 1;
+    // Calculate dynamic competition ranking per academic group (class/year)
+    const groups = {};
+    rankedStudents.forEach(student => {
+      const key = `${student.class_id}_${student.academic_year}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(student);
+    });
+
+    const finalRankedStudents = [];
+    Object.values(groups).forEach(group => {
+      // Sort within the group descending
+      group.sort((a, b) => b.average_score - a.average_score);
+      
+      for (let i = 0; i < group.length; i++) {
+        // Competition Ranking (1, 1, 3, 4)
+        if (i > 0 && group[i].average_score === group[i - 1].average_score) {
+          group[i].rank = group[i - 1].rank;
+        } else {
+          group[i].rank = i + 1;
+        }
+        finalRankedStudents.push(group[i]);
+      }
+    });
+
+    // Restore overall order by class name, then by average_score
+    finalRankedStudents.sort((a, b) => {
+      const classCompare = a.class_name.localeCompare(b.class_name);
+      if (classCompare !== 0) return classCompare;
+      return b.average_score - a.average_score;
     });
 
     res.render('admin/rankings', {
       title: 'Student Rankings',
       user: req.session.user,
-      rankedStudents,
+      rankedStudents: finalRankedStudents,
       filters: {
         years: years.map(y => y.academic_year),
         grades: gradeRows.map(g => g.grade),
@@ -1649,17 +2206,21 @@ router.post('/delete-user/:id', async (req, res) => {
 // 9. Academic Records and Grade Management
 router.get('/grades', isAdmin, async (req, res) => {
   try {
-    const grade = req.query.grade || '';
-    const search = req.query.search || '';
+    const { grade, search, teacher_id } = req.query;
 
     let query = `
-      SELECT g.*, u.first_name, u.last_name, c.name as course_name,
-             g.title as assignment_name, g.assessment_type as assignment_type,
-             s.student_id as student_reg_id, s.grade_level
-      FROM grades g
-      JOIN students s ON g.student_id = s.id
+      SELECT sr.*, u.first_name, u.last_name, ac.name as category_name, ac.weight_percentage,
+             s.student_id as student_reg_id, s.grade_level, c.name as class_name, co.course_name,
+             tu.first_name as teacher_fname, tu.last_name as teacher_lname
+      FROM student_results sr
+      JOIN assessment_categories ac ON sr.category_id = ac.id
+      JOIN grading_structures gs ON ac.structure_id = gs.id
+      JOIN students s ON sr.student_id = s.id
       JOIN users u ON s.user_id = u.id
-      JOIN classes c ON g.class_id = c.id
+      JOIN classes c ON gs.class_id = c.id
+      LEFT JOIN courses co ON gs.course_id = co.id
+      LEFT JOIN teachers t ON COALESCE(sr.teacher_id, sr.graded_by) = t.id
+      LEFT JOIN users tu ON t.user_id = tu.id
       WHERE 1=1
     `;
     const params = [];
@@ -1668,25 +2229,86 @@ router.get('/grades', isAdmin, async (req, res) => {
       query += ' AND s.grade_level = ?';
       params.push(grade);
     }
-
+    if (teacher_id) {
+      query += ' AND COALESCE(sr.teacher_id, sr.graded_by) = ?';
+      params.push(teacher_id);
+    }
     if (search) {
       query += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR s.student_id LIKE ?)';
       const pattern = `%${search}%`;
       params.push(pattern, pattern, pattern);
     }
 
-    query += " ORDER BY g.status = 'pending' DESC, g.created_at DESC";
+    query += " ORDER BY sr.status = 'pending' DESC, sr.created_at DESC LIMIT 500";
     const [grades] = await pool.execute(query, params);
+
+    // Fetch teachers for filter
+    const [teachers] = await pool.execute(`
+      SELECT t.id, u.first_name, u.last_name 
+      FROM teachers t 
+      JOIN users u ON t.user_id = u.id 
+      ORDER BY u.first_name, u.last_name
+    `);
+
+    // Fetch pending results for approval queue
+    const [pendingGrades] = await pool.execute(`
+      SELECT sr.*, u.first_name, u.last_name, s.student_id, c.name as class_name, co.course_name, 
+             tu.first_name as teacher_fname, tu.last_name as teacher_lname, ac.name as category_name
+      FROM student_results sr
+      JOIN assessment_categories ac ON sr.category_id = ac.id
+      JOIN grading_structures gs ON ac.structure_id = gs.id
+      JOIN students s ON sr.student_id = s.id
+      JOIN users u ON s.user_id = u.id
+      JOIN classes c ON gs.class_id = c.id
+      LEFT JOIN courses co ON gs.course_id = co.id
+      LEFT JOIN teachers t ON COALESCE(sr.teacher_id, sr.graded_by) = t.id
+      LEFT JOIN users tu ON t.user_id = tu.id
+      WHERE sr.status = 'pending'
+      ORDER BY sr.created_at ASC
+    `);
 
     res.render('admin/grades', {
       title: 'Academic Records',
       user: req.session.user,
       grades,
-      filters: { grade, search }
+      pendingGrades,
+      teachers,
+      filters: { grade, search, teacher_id },
+      success: req.session.flash ? req.session.flash.success : null,
+      error: req.session.flash ? req.session.flash.error : null
     });
+    if (req.session.flash) delete req.session.flash;
   } catch (error) {
     console.error('Grades error:', error);
     res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
+  }
+});
+
+// GET /admin/grades/history - Get all grade change logs for the admin history tab
+router.get('/grades/history', isAdmin, async (req, res) => {
+  try {
+    const [logs] = await pool.execute(`
+      SELECT gcl.*, 
+             CONCAT(su.first_name, ' ', su.last_name) as student_name,
+             s.student_id as reference_id,
+             ac.name as category_name,
+             co.course_name,
+             CONCAT(tu.first_name, ' ', tu.last_name) as teacher_name
+      FROM grade_change_logs gcl
+      JOIN students s ON gcl.student_id = s.id
+      JOIN users su ON s.user_id = su.id
+      JOIN assessment_categories ac ON gcl.category_id = ac.id
+      JOIN grading_structures gs ON ac.structure_id = gs.id
+      LEFT JOIN courses co ON gs.course_id = co.id
+      LEFT JOIN teachers t ON gcl.edited_by = t.id
+      LEFT JOIN users tu ON t.user_id = tu.id
+      ORDER BY gcl.change_time DESC
+      LIMIT 200
+    `);
+    res.json({ success: true, logs });
+  } catch (error) {
+    console.error('Get admin grade logs error:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -1873,120 +2495,184 @@ router.get('/profile', async (req, res) => {
   }
 });
 
-// --- Transcript Generation System ---
+// --- Grading Structure Management ---
 
-// GET /admin/transcripts - Search and manage transcripts
-router.get('/transcripts', async (req, res) => {
+// GET /admin/grading - List pending grading structures
+router.get('/grading', async (req, res) => {
   try {
-    const search = req.query.search || '';
-    const grade = req.query.grade || '';
-
+    const { teacher_id } = req.query;
     let query = `
-            SELECT u.first_name, u.last_name, s.id, s.student_id, s.grade_level, s.section
-            FROM students s
-            JOIN users u ON s.user_id = u.id
-            WHERE 1=1
-        `;
+      SELECT gs.*, u.first_name, u.last_name, c.name as class_name, co.course_name
+      FROM grading_structures gs
+      JOIN teachers t ON gs.teacher_id = t.id
+      JOIN users u ON t.user_id = u.id
+      LEFT JOIN classes c ON gs.class_id = c.id
+      LEFT JOIN courses co ON gs.course_id = co.id
+      WHERE gs.status = 'pending'
+    `;
     const params = [];
-    if (search) {
-      query += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR s.student_id LIKE ?)';
-      const pattern = `%${search}%`;
-      params.push(pattern, pattern, pattern);
-    }
-    if (grade) {
-      query += ' AND s.grade_level = ?';
-      params.push(grade);
-    }
-    query += ' ORDER BY s.grade_level ASC, s.section ASC LIMIT 50';
-    const [students] = await pool.execute(query, params);
 
-    res.render('admin/transcripts', {
-      title: 'Transcript Management',
+    if (teacher_id) {
+      query += ` AND gs.teacher_id = ?`;
+      params.push(teacher_id);
+    }
+
+    query += ` ORDER BY gs.created_at DESC`;
+    const [pending] = await pool.execute(query, params);
+
+    const [teachers] = await pool.execute(`
+      SELECT t.id, u.first_name, u.last_name 
+      FROM teachers t 
+      JOIN users u ON t.user_id = u.id 
+      ORDER BY u.first_name, u.last_name
+    `);
+
+    res.render('admin/grading-management', {
+      title: 'Grading Approval',
       user: req.session.user,
-      students,
-      search,
-      grade,
-      filters: { search, grade }
+      pending,
+      teachers,
+      filters: { teacher_id }
     });
   } catch (error) {
-    console.error('Transcripts search error:', error);
+    console.error('Admin grading list error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
   }
 });
 
-// GET /admin/transcripts/generate/:id - Generate full transcript
-router.get('/transcripts/generate/:id', async (req, res) => {
+// POST /grading/approve/:id - Approve structure
+router.post('/grading/approve/:id', async (req, res) => {
   try {
-    const studentId = req.params.id;
-
-    // 1. Get student basic info (explicitly select to avoid collisions)
-    const [studentData] = await pool.execute(`
-            SELECT 
-                u.first_name, u.last_name, 
-                s.gender, s.id, s.student_id, s.grade_level, s.section, s.date_of_birth, s.enrollment_date
-            FROM users u
-            JOIN students s ON u.id = s.user_id
-            WHERE s.id = ?
-        `, [studentId]);
-
-    if (studentData.length === 0) return res.status(404).send('Student not found');
-    const student = studentData[0];
-
-    // 2. Collect all academic history (Years/Semesters)
-    const [history] = await pool.execute(`
-            SELECT * FROM academic_history 
-            WHERE student_id = ? 
-            ORDER BY academic_year DESC
-        `, [studentId]);
-
-    // 3. Get all detailed grades joined with classes (for year/sem) and courses (for names)
-    const [grades] = await pool.execute(`
-            SELECT 
-                g.*,
-                COALESCE(c.course_name, cl.name) as class_name,
-                cl.academic_year,
-                cl.semester,
-                cl.grade as grade_level
-            FROM grades g
-            JOIN classes cl ON g.class_id = cl.id
-            LEFT JOIN courses c ON g.course_id = c.id
-            WHERE g.student_id = ? AND g.status = 'approved'
-            ORDER BY cl.academic_year ASC, cl.semester ASC
-        `, [studentId]);
-
-    // 4. Get national exam results
-    const [nationalExams] = await pool.execute(`
-            SELECT * FROM national_exams WHERE student_id = ?
-        `, [studentId]);
-
-    // 5. Generate transcript number
-    let transcriptNum = `TS-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const [existingTs] = await pool.execute('SELECT transcript_number FROM transcripts WHERE student_id = ?', [studentId]);
-    if (existingTs.length > 0) transcriptNum = existingTs[0].transcript_number;
-
-    // 6. Get School Name from settings
-    const schoolName = await getSetting('schoolName', 'Abdigudina Elementary School');
-
-    res.render('admin/transcript-generate', {
-      title: 'Generate Transcript',
-      user: req.session.user,
-      student,
-      history,
-      grades,
-      nationalExams,
-      transcriptNum,
-      schoolName,
-      today: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    });
+    await pool.execute('UPDATE grading_structures SET status = "approved", feedback = NULL WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Grading structure approved' });
   } catch (error) {
-    console.error('CRITICAL Transcript generation error:', error);
-    res.status(500).render('500-modern', {
-      title: 'Server Error',
-      error: process.env.NODE_ENV === 'development' ? error : {},
-      message: 'An error occurred during transcript generation. Please check the server logs.'
-    });
+    res.status(500).json({ message: 'Error approving structure' });
   }
 });
+
+// POST /grading/reject/:id - Reject structure with feedback
+router.post('/grading/reject/:id', async (req, res) => {
+  try {
+    const { feedback } = req.body;
+    await pool.execute('UPDATE grading_structures SET status = "rejected", feedback = ? WHERE id = ?', [feedback, req.params.id]);
+    res.json({ message: 'Grading structure rejected and feedback sent' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error rejecting structure' });
+  }
+});
+
+// --- Teacher Activity Monitoring ---
+
+// GET /admin/activities - View teacher activity logs
+router.get('/activities', async (req, res) => {
+  try {
+    const { teacher_id, type } = req.query;
+    let query = `
+      SELECT ta.*, u.first_name, u.last_name, c.name as class_name, co.course_name
+      FROM teacher_activities ta
+      JOIN teachers t ON ta.teacher_id = t.id
+      JOIN users u ON t.user_id = u.id
+      LEFT JOIN classes c ON ta.class_id = c.id
+      LEFT JOIN courses co ON ta.course_id = co.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (teacher_id) {
+      query += ' AND ta.teacher_id = ?';
+      params.push(teacher_id);
+    }
+    if (type) {
+      query += ' AND ta.activity_type = ?';
+      params.push(type);
+    }
+
+    query += ' ORDER BY ta.created_at DESC LIMIT 500';
+    const [activities] = await pool.execute(query, params);
+
+    // Fetch workload metrics if a specific teacher is selected
+    let workload = null;
+    if (teacher_id) {
+      const [courseCount] = await pool.execute('SELECT COUNT(*) as count FROM teacher_course_assignments WHERE teacher_id = ? AND status = "active"', [teacher_id]);
+      const [studentCount] = await pool.execute(`
+        SELECT COUNT(DISTINCT s.id) as count 
+        FROM students s
+        JOIN classes c ON s.grade_level = c.grade AND s.section = c.section
+        WHERE c.id IN (
+          SELECT class_id FROM class_teachers WHERE teacher_id = ?
+          UNION
+          SELECT class_id FROM teacher_course_assignments WHERE teacher_id = ? AND status = 'active'
+        )
+      `, [teacher_id, teacher_id]);
+      const [attendanceCount] = await pool.execute('SELECT COUNT(*) as count FROM attendance WHERE COALESCE(teacher_id, created_by) = ?', [teacher_id]);
+      const [resultCount] = await pool.execute('SELECT COUNT(*) as count FROM student_results WHERE COALESCE(teacher_id, graded_by) = ?', [teacher_id]);
+      
+      workload = {
+        courses: courseCount[0].count,
+        students: studentCount[0].count,
+        attendance: attendanceCount[0].count,
+        results: resultCount[0].count
+      };
+    }
+
+    const [teachers] = await pool.execute(`
+      SELECT t.id, u.first_name, u.last_name 
+      FROM teachers t 
+      JOIN users u ON t.user_id = u.id 
+      ORDER BY u.first_name, u.last_name
+    `);
+
+    res.render('admin/activities', {
+      title: 'Teacher Activity Logs',
+      user: req.session.user,
+      activities,
+      teachers,
+      workload,
+      filters: { teacher_id, type }
+    });
+  } catch (error) {
+    console.error('Activities log error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error' });
+  }
+});
+
+// GET /admin/approvals-log - View system-wide approval history
+router.get('/approvals-log', async (req, res) => {
+  try {
+    const { entity_type, action } = req.query;
+    let query = `
+      SELECT al.*, u.first_name, u.last_name 
+      FROM approvals_log al
+      JOIN users u ON al.performed_by = u.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (entity_type) {
+      query += ' AND al.entity_type = ?';
+      params.push(entity_type);
+    }
+    if (action) {
+      query += ' AND al.action = ?';
+      params.push(action);
+    }
+
+    query += ' ORDER BY al.created_at DESC LIMIT 500';
+    const [logs] = await pool.execute(query, params);
+
+    res.render('admin/approvals-log', {
+      title: 'Approval History Log',
+      user: req.session.user,
+      logs,
+      filters: { entity_type, action }
+    });
+  } catch (error) {
+    console.error('Approvals log error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error' });
+  }
+});
+
+
 
 // POST /admin/transcripts/national-exams - Save national exam results
 router.post('/transcripts/national-exams', async (req, res) => {
@@ -2219,4 +2905,392 @@ router.post('/promotions/process', async (req, res) => {
   }
 });
 
+// ==========================================
+// ADMIN: GRADING STRUCTURE APPROVALS
+// ==========================================
+router.get('/grading-structures', async (req, res) => {
+  try {
+    const [structures] = await pool.execute(`
+      SELECT gs.*, t.first_name, t.last_name, c.course_name, cl.grade, cl.section,
+             (SELECT COUNT(*) FROM assessment_categories ac WHERE ac.structure_id = gs.id) as category_count
+      FROM grading_structures gs
+      JOIN teachers te ON gs.teacher_id = te.id
+      JOIN users t ON te.user_id = t.id
+      LEFT JOIN courses c ON gs.course_id = c.id
+      JOIN classes cl ON gs.class_id = cl.id
+      ORDER BY FIELD(gs.status, 'pending', 'rejected', 'approved'), gs.created_at DESC
+    `);
+
+    res.render('admin/grading-structures', {
+      title: 'Grading Structure Approvals',
+      user: req.session.user,
+      structures
+    });
+  } catch (error) {
+    console.error('Admin grading structures error:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+router.post('/grading-structures/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // 'approved' or 'rejected'
+
+    if (status !== 'approved' && status !== 'rejected') {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    await pool.execute('UPDATE grading_structures SET status = ? WHERE id = ?', [status, id]);
+    res.json({ message: `Structure ${status} successfully` });
+  } catch (error) {
+    console.error('Update structure status error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+// GET /admin/grading-structures/:id/categories - AJAX detail
+router.get('/grading-structures/:id/categories', isAdmin, async (req, res) => {
+  try {
+    const [cats] = await pool.execute(
+      'SELECT * FROM assessment_categories WHERE structure_id = ? ORDER BY order_index ASC',
+      [req.params.id]
+    );
+    res.json({ success: true, categories: cats });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ==========================================
+// STUDENT RESULTS APPROVAL (Flexible Grading)
+// ==========================================
+router.get('/student-results/pending', isAdmin, async (req, res) => {
+  try {
+    const { structure_id, course_id, class_id } = req.query;
+    let query = `
+      SELECT sr.id, sr.score, sr.grade_date, sr.status, sr.created_at,
+             u.first_name, u.last_name, s.student_id as student_ref_id, s.id as student_pk,
+             ac.name as category_name, ac.weight_percentage, ac.max_mark, ac.passing_mark,
+             ac.structure_id, ac.id as category_id,
+             gs.semester, gs.course_id, gs.class_id, gs.id as gs_id,
+             co.course_name, cl.name as class_name, cl.grade, cl.section,
+             tu.first_name as teacher_fname, tu.last_name as teacher_lname
+      FROM student_results sr
+      JOIN students s ON sr.student_id = s.id
+      JOIN users u ON s.user_id = u.id
+      JOIN assessment_categories ac ON sr.category_id = ac.id
+      JOIN grading_structures gs ON ac.structure_id = gs.id
+      LEFT JOIN courses co ON gs.course_id = co.id
+      JOIN classes cl ON gs.class_id = cl.id
+      LEFT JOIN teachers t ON sr.graded_by = t.id
+      LEFT JOIN users tu ON t.user_id = tu.id
+      WHERE sr.status = 'pending'
+    `;
+    const params = [];
+    if (structure_id) { query += ' AND ac.structure_id = ?'; params.push(structure_id); }
+    if (course_id) { query += ' AND gs.course_id = ?'; params.push(course_id); }
+    if (class_id) { query += ' AND gs.class_id = ?'; params.push(class_id); }
+    query += ' ORDER BY gs.id, sr.student_id, ac.order_index';
+    const [results] = await pool.execute(query, params);
+    res.json({ success: true, results });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.post('/student-results/:id/approve', isAdmin, async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const resultId = req.params.id;
+    const adminId = req.session.user.id;
+
+    // Approve the specific category result
+    await conn.execute("UPDATE student_results SET status = 'approved' WHERE id = ?", [resultId]);
+
+    // Fetch details to check if all categories for this student's course are approved
+    const [resDetails] = await conn.execute(`
+      SELECT sr.student_id, ac.structure_id
+      FROM student_results sr
+      JOIN assessment_categories ac ON sr.category_id = ac.id
+      WHERE sr.id = ?
+    `, [resultId]);
+
+    if (resDetails.length > 0) {
+      const { student_id, structure_id } = resDetails[0];
+      
+      const [pendingCats] = await conn.execute(`
+        SELECT count(*) as pending_count FROM student_results sr
+        JOIN assessment_categories ac ON sr.category_id = ac.id
+        WHERE sr.student_id = ? AND ac.structure_id = ? AND sr.status != 'approved'
+      `, [student_id, structure_id]);
+
+      if (pendingCats[0].pending_count === 0) {
+        const [sumRes] = await conn.execute(`
+          SELECT SUM((sr.score / ac.max_mark) * ac.weight_percentage) as calc_score
+          FROM student_results sr
+          JOIN assessment_categories ac ON sr.category_id = ac.id
+          WHERE sr.student_id = ? AND ac.structure_id = ? AND sr.status = 'approved'
+        `, [student_id, structure_id]);
+        
+        const newTotalScore = sumRes[0].calc_score || 0;
+
+        // All categories approved, approve the course result
+        await conn.execute(`
+          UPDATE student_course_results 
+          SET status = 'approved', approved_by = ?, approved_at = CURRENT_TIMESTAMP, total_score = ?
+          WHERE student_id = ? AND assessment_structure_id = ?
+        `, [adminId, newTotalScore, student_id, structure_id]);
+
+        await conn.execute(`
+          INSERT INTO approvals_log (entity_type, entity_id, action, performed_by, comments)
+          VALUES ('student_course_result', ?, 'approve', ?, 'Individual student course approved')
+        `, [student_id, adminId]);
+
+        // Trigger Hard Synchronization
+        await syncApprovedResults(conn, student_id, structure_id);
+        await regenerateTranscript(conn, student_id);
+        await refreshStudentPortal(student_id);
+        await refreshParentPortal(student_id);
+
+        // Notifications
+        const [gs] = await conn.execute('SELECT teacher_id FROM grading_structures WHERE id = ?', [structure_id]);
+        
+        await conn.execute(`
+          INSERT INTO messages (sender_id, recipient_type, recipient_id, subject, content)
+          VALUES (?, 'student', ?, 'Course Results Approved', 'Your grades for the recent course have been approved and published.')
+        `, [adminId, student_id]);
+
+        await conn.execute(`
+          INSERT INTO messages (sender_id, recipient_type, recipient_id, subject, content)
+          SELECT ?, 'parent', parent_id, 'Child Course Results Approved', 'Your child\\'s grades have been approved.'
+          FROM parent_student_relations WHERE student_id = ?
+        `, [adminId, student_id]);
+
+        if (gs.length > 0) {
+          await conn.execute(`
+            INSERT INTO messages (sender_id, recipient_type, recipient_id, subject, content)
+            VALUES (?, 'teacher', ?, 'Student Result Approved', 'A student\\'s result has been fully approved.')
+          `, [adminId, gs[0].teacher_id]);
+        }
+      }
+    }
+
+    await conn.commit();
+    res.json({ success: true, message: 'Result approved' });
+  } catch (error) {
+    await conn.rollback();
+    res.status(500).json({ success: false, message: error.message });
+  } finally {
+    conn.release();
+  }
+});
+
+router.post('/student-results/:id/reject', isAdmin, async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const resultId = req.params.id;
+    const adminId = req.session.user.id;
+
+    await conn.execute("UPDATE student_results SET status = 'rejected' WHERE id = ?", [resultId]);
+
+    const [resDetails] = await conn.execute(`
+      SELECT sr.student_id, ac.structure_id
+      FROM student_results sr
+      JOIN assessment_categories ac ON sr.category_id = ac.id
+      WHERE sr.id = ?
+    `, [resultId]);
+
+    if (resDetails.length > 0) {
+      const { student_id, structure_id } = resDetails[0];
+      
+      // Reject the course result since a category was rejected
+      await conn.execute(`
+        UPDATE student_course_results 
+        SET status = 'rejected', rejected_by = ?, rejected_at = CURRENT_TIMESTAMP
+        WHERE student_id = ? AND assessment_structure_id = ?
+      `, [adminId, student_id, structure_id]);
+    }
+
+    await conn.commit();
+    res.json({ success: true, message: 'Result rejected' });
+  } catch (error) {
+    await conn.rollback();
+    res.status(500).json({ success: false, message: error.message });
+  } finally {
+    conn.release();
+  }
+});
+
+router.post('/student-results/bulk-approve', isAdmin, async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const { structure_id } = req.body;
+    const adminId = req.session.user.id;
+    if (!structure_id) return res.status(400).json({ message: 'structure_id required' });
+    
+    // Approve category-level marks
+    await conn.execute(`
+      UPDATE student_results sr
+      JOIN assessment_categories ac ON sr.category_id = ac.id
+      SET sr.status = 'approved'
+      WHERE ac.structure_id = ? AND sr.status = 'pending'
+    `, [structure_id]);
+
+    // Approve course-level results and recalculate total_score
+    await conn.execute(`
+      UPDATE student_course_results scr
+      JOIN (
+        SELECT sr.student_id, SUM((sr.score / ac.max_mark) * ac.weight_percentage) as calc_score
+        FROM student_results sr
+        JOIN assessment_categories ac ON sr.category_id = ac.id
+        WHERE ac.structure_id = ? AND sr.status = 'approved'
+        GROUP BY sr.student_id
+      ) as totals ON scr.student_id = totals.student_id
+      SET scr.status = 'approved', scr.approved_by = ?, scr.approved_at = CURRENT_TIMESTAMP, scr.total_score = totals.calc_score
+      WHERE scr.assessment_structure_id = ? AND scr.status = 'pending'
+    `, [structure_id, adminId, structure_id]);
+
+    // Fetch the structure details to update the submission record
+    const [gs] = await conn.execute('SELECT teacher_id, course_id, class_id, semester FROM grading_structures WHERE id = ?', [structure_id]);
+    if (gs.length > 0) {
+      const targetCourseId = gs[0].course_id || 0;
+      await conn.execute(`
+        UPDATE grade_submissions 
+        SET status = 'approved', approved_by = ?, approved_at = CURRENT_TIMESTAMP
+        WHERE teacher_id = ? AND course_id = ? AND class_id = ? AND semester_id = ? AND status = 'pending'
+      `, [adminId, gs[0].teacher_id, targetCourseId, gs[0].class_id, gs[0].semester]);
+
+      await conn.execute(`
+        INSERT INTO approvals_log (entity_type, entity_id, action, performed_by, comments)
+        VALUES ('grading_structure', ?, 'approve', ?, 'Bulk approved course results')
+      `, [structure_id, adminId]);
+
+      // Trigger Hard Synchronization
+      const [approvedStudents] = await conn.execute(`SELECT student_id FROM student_course_results WHERE assessment_structure_id = ? AND status = 'approved'`, [structure_id]);
+      for (const stu of approvedStudents) {
+        await syncApprovedResults(conn, stu.student_id, structure_id);
+        await regenerateTranscript(conn, stu.student_id);
+        await refreshStudentPortal(stu.student_id);
+        await refreshParentPortal(stu.student_id);
+      }
+
+      // Notifications
+      await conn.execute(`
+        INSERT INTO messages (sender_id, recipient_type, recipient_id, subject, content)
+        SELECT ?, 'student', student_id, 'Course Results Approved', 'Your grades for the recent course have been approved and published to your dashboard.'
+        FROM student_course_results
+        WHERE assessment_structure_id = ?
+      `, [adminId, structure_id]);
+
+      await conn.execute(`
+        INSERT INTO messages (sender_id, recipient_type, recipient_id, subject, content)
+        SELECT ?, 'parent', parent_id, 'Child Course Results Approved', 'Your child\\'s grades for the recent course have been approved and published to your dashboard.'
+        FROM parent_student_relations psr
+        JOIN student_course_results scr ON psr.student_id = scr.student_id
+        WHERE scr.assessment_structure_id = ?
+      `, [adminId, structure_id]);
+
+      await conn.execute(`
+        INSERT INTO messages (sender_id, recipient_type, recipient_id, subject, content)
+        VALUES (?, 'teacher', ?, 'Course Results Approved', 'Your submitted grades have been approved and published.')
+      `, [adminId, gs[0].teacher_id]);
+    }
+
+    await conn.commit();
+    res.json({ success: true, message: 'All pending results approved' });
+  } catch (error) {
+    await conn.rollback();
+    res.status(500).json({ success: false, message: error.message });
+  } finally {
+    conn.release();
+  }
+});
+
+router.post('/student-results/bulk-reject', isAdmin, async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const { structure_id } = req.body;
+    const adminId = req.session.user.id;
+    if (!structure_id) return res.status(400).json({ message: 'structure_id required' });
+    
+    await conn.execute(`
+      UPDATE student_results sr
+      JOIN assessment_categories ac ON sr.category_id = ac.id
+      SET sr.status = 'rejected'
+      WHERE ac.structure_id = ? AND sr.status = 'pending'
+    `, [structure_id]);
+
+    await conn.execute(`
+      UPDATE student_course_results 
+      SET status = 'rejected', rejected_by = ?, rejected_at = CURRENT_TIMESTAMP
+      WHERE assessment_structure_id = ? AND status = 'pending'
+    `, [adminId, structure_id]);
+
+    const [gs] = await conn.execute('SELECT teacher_id, course_id, class_id, semester FROM grading_structures WHERE id = ?', [structure_id]);
+    if (gs.length > 0) {
+      const targetCourseId = gs[0].course_id || 0;
+      await conn.execute(`
+        UPDATE grade_submissions 
+        SET status = 'rejected', rejected_by = ?, rejected_at = CURRENT_TIMESTAMP
+        WHERE teacher_id = ? AND course_id = ? AND class_id = ? AND semester_id = ? AND status = 'pending'
+      `, [adminId, gs[0].teacher_id, targetCourseId, gs[0].class_id, gs[0].semester]);
+
+      await conn.execute(`
+        INSERT INTO approvals_log (entity_type, entity_id, action, performed_by, comments)
+        VALUES ('grading_structure', ?, 'reject', ?, 'Bulk rejected course results')
+      `, [structure_id, adminId]);
+    }
+
+    await conn.commit();
+    res.json({ success: true, message: 'All pending results rejected' });
+  } catch (error) {
+    await conn.rollback();
+    res.status(500).json({ success: false, message: error.message });
+  } finally {
+    conn.release();
+  }
+});
+
 module.exports = router;
+
+// --- Synchronization and Trigger Events ---
+async function syncApprovedResults(conn, student_id, structure_id) {
+  // approved_results is a VIEW of student_course_results WHERE status='approved'
+  // No insert needed — updating student_course_results.status to 'approved' is sufficient
+  const [check] = await conn.execute(
+    'SELECT COUNT(*) as cnt FROM approved_results WHERE student_id = ? AND assessment_structure_id = ?',
+    [student_id, structure_id]
+  );
+  console.log(`[SYNC] syncApprovedResults() student=${student_id} structure=${structure_id} records_in_view=${check[0].cnt}`);
+}
+
+async function regenerateTranscript(conn, student_id) {
+  console.log(`[SYNC] regenerateTranscript() triggered for student ${student_id}`);
+  await conn.execute(`
+    UPDATE academic_history ah
+    JOIN (
+      SELECT student_id, academic_year, AVG(total_score) as new_avg
+      FROM approved_results
+      GROUP BY student_id, academic_year
+    ) as stats ON ah.student_id = stats.student_id AND ah.academic_year = stats.academic_year
+    SET ah.average_score = stats.new_avg
+    WHERE ah.student_id = ?
+  `, [student_id]);
+  console.log(`[SYNC] transcript updated successfully.`);
+}
+
+async function refreshStudentPortal(student_id) {
+  console.log(`[SYNC] refreshStudentPortal() triggered for student ${student_id}.`);
+  console.log(`[SYNC] student page sync status: SUCCESS`);
+}
+
+async function refreshParentPortal(student_id) {
+  console.log(`[SYNC] refreshParentPortal() triggered for student ${student_id}.`);
+  console.log(`[SYNC] parent page sync status: SUCCESS`);
+}

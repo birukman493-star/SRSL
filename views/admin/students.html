@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-    
+    <title>
+        <%= title %>
+    </title>
+
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -13,368 +16,512 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/brocode-style.css">
 </head>
+
 <body>
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-        
-        <!-- Main Content -->
-        <main class="main-panel w-100 p-4">
-            <!-- Header -->
-            <div class="dashboard-header mb-4" style="background: white; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05); padding: 1.25rem 2rem; box-shadow: var(--shadow-sm);">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="dashboard-title" style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.25rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                            Student Admissions
-                        </h1>
-                        <p class="text-secondary m-0" style="font-weight: 500;">Manage student enrollments, profiles, and academic lifecycle</p>
-                    </div>
-                    <div class="d-flex gap-3">
-                        <button class="btn btn-outline-primary px-4 py-2 d-flex align-items-center gap-2 fw-bold" onclick="togglePromotionModal()" style="border-radius: 12px; border-width: 2px;">
-                            <i class="fas fa-graduation-cap"></i> Promotion System
-                        </button>
-                        <button class="btn btn-primary px-4 py-2 border-0 d-flex align-items-center gap-2 fw-bold shadow-sm" onclick="toggleForm()" style="border-radius: 12px;">
-                            <i class="fas fa-user-plus"></i> New Admission
-                        </button>
+
+            <!-- Main Content -->
+            <main class="main-panel w-100 p-4">
+                <!-- Header -->
+                <div class="dashboard-header mb-4"
+                    style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="dashboard-title"
+                                style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                Student Admissions
+                            </h1>
+                            <p class="text-secondary m-0" style="font-weight: 500;">Manage student enrollments,
+                                profiles, and academic lifecycle</p>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <button
+                                class="btn btn-outline-primary px-4 py-2 d-flex align-items-center gap-2 fw-bold rounded-3"
+                                onclick="togglePromotionModal()" style="border-width: 2px;">
+                                <i class="fas fa-graduation-cap"></i> Promotion System
+                            </button>
+                            <button
+                                class="btn btn-hero btn-primary px-4 py-2 border-0 d-flex align-items-center gap-2 fw-bold rounded-3 shadow-sm"
+                                onclick="toggleForm()">
+                                <i class="fas fa-user-plus"></i> New Admission
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Pending Registrations Alert -->
-            <% const submittedStudents = (typeof students !== 'undefined' && students) ? students.filter(s => s.registration_status === 'submitted').length : 0; %>
-            <% if (submittedStudents > 0) { %>
-            <div class="glass-panel mb-4 p-4 d-flex align-items-center justify-content-between" style="background: white !important; border-radius: 24px; border: 1px solid rgba(6,182,212,0.1) !important; border-left: 6px solid #06b6d4 !important; box-shadow: var(--shadow-sm);">
-                <div class="d-flex align-items-center">
-                    <div class="bg-cyan-50 text-cyan-600 rounded-circle d-flex align-items-center justify-content-center me-4 shadow-sm" style="width: 54px; height: 54px; background: rgba(6,182,212,0.08); color: #06b6d4;">
-                        <i class="fas fa-clipboard-check fs-4"></i>
-                    </div>
-                    <div>
-                        <h4 class="fw-bold mb-1" style="color: var(--dark-text);"><%= submittedStudents %> Registrations Pending Review</h4>
-                        <p class="mb-0 text-secondary small fw-medium">Students have submitted their semester courses and are waiting for administrative confirmation.</p>
-                    </div>
-                </div>
-                <button onclick="approveAllRegistrations()" class="btn btn-cyan-600 text-white border-0 px-4 py-2 fw-bold shadow-sm" style="background: #06b6d4; border-radius: 10px;">
-                    Confirm All <i class="fas fa-check-double ms-2"></i>
-                </button>
-            </div>
-            <% } %>
-
-            <!-- Registration Form -->
-            <div id="registration-form" class="glass-panel mb-4 shadow-lg" style="display: none; background: white !important; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05);">
-                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                    <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i class="fas fa-user-edit me-2 text-primary"></i>Student Admission Form</h3>
-                    <button class="btn btn-sm btn-light rounded-pill px-3 fw-bold" onclick="toggleForm()" style="color: var(--dark-text);">Cancel <i class="fas fa-times ms-1"></i></button>
-                </div>
-                <form action="/admin/students/register" method="POST" enctype="multipart/form-data">
-                    <div class="row g-4">
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">First Name</label>
-                            <input type="text" name="firstName" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Legal first name" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Last Name</label>
-                            <input type="text" name="lastName" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Family name" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Student ID (Optional)</label>
-                            <input type="text" name="studentId" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-bold" style="color: var(--primary-color);" placeholder="Auto-generated if empty">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Student Photo</label>
-                            <input type="file" name="studentPhoto" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" accept="image/*">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Academic Email</label>
-                            <input type="email" name="email" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="student@school.edu" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Phone Number</label>
-                            <input type="tel" name="phone" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Student phone">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="text-secondary small mb-1 fw-bold">Grade Level</label>
-                            <select name="gradeLevel" class="form-select bg-light border-0 rounded-3 px-3 py-2 fw-bold" required>
-                                <option value="">Select</option>
-                                <% for(let i=1; i<=8; i++) { %>
-                                    <option value="<%= i %>">Grade <%= i %></option>
-                                <% } %>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="text-secondary small mb-1 fw-bold">Section</label>
-                            <select name="section" class="form-select bg-light border-0 rounded-3 px-3 py-2 fw-bold" required>
-                                <option value="">Select</option>
-                                <option value="A">Section A</option>
-                                <option value="B">Section B</option>
-                                <option value="C">Section C</option>
-                                <option value="D">Section D</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Admission Type</label>
-                            <div class="d-flex gap-4 mt-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="admission_type" value="new" id="admissionNew" checked onchange="toggleTransferSection()">
-                                    <label class="form-check-label small fw-bold" for="admissionNew">New Entry</label>
+                <!-- Pending Registrations Alert -->
+                <% const submittedStudents=(typeof students !=='undefined' && students) ? students.filter(s=>
+                    s.registration_status === 'submitted').length : 0; %>
+                    <% if (submittedStudents> 0) { %>
+                        <div class="glass-panel mb-4 p-4 d-flex align-items-center justify-content-between"
+                            style="background: white !important; border-radius: 24px; border: 1px solid rgba(6,182,212,0.1) !important; border-left: 6px solid #06b6d4 !important; box-shadow: var(--shadow-sm);">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-cyan-50 text-cyan-600 rounded-circle d-flex align-items-center justify-content-center me-4 shadow-sm"
+                                    style="width: 54px; height: 54px; background: rgba(6,182,212,0.08); color: #06b6d4;">
+                                    <i class="fas fa-clipboard-check fs-4"></i>
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="admission_type" value="transfer" id="admissionTransfer" onchange="toggleTransferSection()">
-                                    <label class="form-check-label small fw-bold" for="admissionTransfer">Transfer</label>
+                                <div>
+                                    <h4 class="fw-bold mb-1" style="color: var(--dark-text);">
+                                        <%= submittedStudents %> Registrations Pending Review
+                                    </h4>
+                                    <p class="mb-0 text-secondary small fw-medium">Students have submitted their
+                                        semester courses and are waiting for administrative confirmation.</p>
                                 </div>
                             </div>
+                            <button onclick="approveAllRegistrations()"
+                                class="btn btn-cyan-600 text-white border-0 px-4 py-2 fw-bold shadow-sm"
+                                style="background: #06b6d4; border-radius: 10px;">
+                                Confirm All <i class="fas fa-check-double ms-2"></i>
+                            </button>
                         </div>
+                        <% } %>
 
-                        <!-- Transfer Student Details (Hidden by Default) -->
-                        <div class="col-12 mt-3" id="transferSection" style="display: none;">
-                            <div class="p-4 rounded-4" style="background: rgba(37,99,235,0.03); border: 1px dashed rgba(37,99,235,0.2);">
-                                <div class="d-flex align-items-center gap-2 mb-3">
-                                    <div class="bg-primary bg-opacity-10 p-2 rounded-3">
-                                        <i class="fas fa-exchange-alt text-primary"></i>
-                                    </div>
-                                    <h6 class="fw-bold m-0 text-primary small" style="text-transform: uppercase; letter-spacing: 1px;">Transfer History & Documents</h6>
+                            <!-- Registration Form -->
+                            <div id="registration-form" class="glass-panel mb-4 shadow-lg"
+                                style="display: none; background: white !important; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05);">
+                                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                                    <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i
+                                            class="fas fa-user-edit me-2 text-primary"></i>Student Admission Form</h3>
+                                    <button class="btn btn-sm btn-light rounded-pill px-3 fw-bold"
+                                        onclick="toggleForm()" style="color: var(--dark-text);">Cancel <i
+                                            class="fas fa-times ms-1"></i></button>
                                 </div>
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label class="text-secondary small mb-1 fw-bold">Previous School</label>
-                                        <input type="text" name="previousSchool" class="form-control border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Name of last school">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="text-secondary small mb-1 fw-bold">Transfer Date</label>
-                                        <input type="date" name="transfer_date" class="form-control border-0 rounded-3 px-3 py-2 fw-medium">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="text-secondary small mb-1 fw-bold">Previous Transcript / Report Card (Multiple allowed)</label>
-                                        <input type="file" name="previousTranscript" class="form-control border-0 rounded-3 px-3 py-2 fw-medium" accept="image/*,application/pdf" multiple>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="text-secondary small mb-1 fw-bold">Reason for Transfer</label>
-                                        <textarea name="transfer_reason" class="form-control border-0 rounded-3 px-3 py-2 fw-medium" rows="2" placeholder="Brief explanation for changing schools"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Date of Birth</label>
-                            <input type="date" name="dateOfBirth" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Gender</label>
-                            <div class="d-flex gap-4 mt-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="gender" value="male" id="male" required checked>
-                                    <label class="form-check-label small fw-bold" for="male">Male</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="gender" value="female" id="female">
-                                    <label class="form-check-label small fw-bold" for="female">Female</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <label class="text-secondary small mb-1 fw-bold">Permanent Address</label>
-                            <textarea name="address" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" rows="2" placeholder="Full residential address"></textarea>
-                        </div>
-                        
-                        <div class="col-12 mt-4"><h6 class="fw-bold mb-3" style="color: var(--dark-text); opacity: 0.6; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;">Account & Guardianship</h6></div>
-                        
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Portal Username</label>
-                            <input type="text" name="username" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Login ID" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Access Password</label>
-                            <input type="password" name="password" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Secure password" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Guardian Name</label>
-                            <input type="text" name="parentGuardianName" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Parent full name" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Guardian Email</label>
-                            <input type="email" name="parentEmail" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="parent@example.com">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Guardian Phone</label>
-                            <input type="tel" name="parentPhone" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Parent contact number">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Relationship</label>
-                            <select name="relationship" class="form-select bg-light border-0 rounded-3 px-3 py-2 fw-medium">
-                                <option value="father">Father</option>
-                                <option value="mother">Mother</option>
-                                <option value="guardian">Guardian</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-12 mt-4 text-end pt-3 border-top">
-                            <button type="submit" class="btn btn-primary py-2 px-5 rounded-3 fw-bold shadow-sm">Confirm Admission</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            
-            <!-- Quick Grade Badges -->
-            <div class="mb-4 d-flex flex-wrap gap-2">
-                <% for(let i=1; i<=8; i++) { %>
-                    <a href="/admin/students?grade=<%= i %>" 
-                       class="btn btn-light filter-badge <%= (typeof filters !== 'undefined' && filters.grade == i) ? 'active' : '' %> rounded-pill px-3 py-1 fw-bold small shadow-sm border"
-                       style="font-size: 0.75rem;">
-                        Grade <%= i %>
-                    </a>
-                <% } %>
-            </div>
-
-            <!-- Students Table -->
-            <div class="glass-panel" style="background: white !important; border-radius: 24px;">
-                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-10">
-                    <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i class="fas fa-list-ul me-2 text-primary"></i>Student Directory</h3>
-                    <div class="d-flex gap-3 align-items-center">
-                        <form action="/admin/students" method="GET" class="d-flex gap-2 m-0">
-                            <select name="grade" class="form-select form-select-sm border-0 bg-light fw-bold" onchange="this.form.submit()" style="border-radius: 8px; min-width: 120px;">
-                                <option value="">Elementary Grades</option>
-                                <% for(let i=1; i<=8; i++) { %>
-                                    <option value="<%= i %>" <%= (typeof filters !== 'undefined' && filters.grade == i) ? 'selected' : '' %>>Grade <%= i %></option>
-                                <% } %>
-                            </select>
-                            <select name="section" class="form-select form-select-sm border-0 bg-light fw-bold" onchange="this.form.submit()" style="border-radius: 8px; min-width: 100px;">
-                                <option value="">All Sections</option>
-                                <option value="A" <%= (typeof filters !== 'undefined' && filters.section == 'A') ? 'selected' : '' %>>Sec A</option>
-                                <option value="B" <%= (typeof filters !== 'undefined' && filters.section == 'B') ? 'selected' : '' %>>Sec B</option>
-                                <option value="C" <%= (typeof filters !== 'undefined' && filters.section == 'C') ? 'selected' : '' %>>Sec C</option>
-                                <option value="D" <%= (typeof filters !== 'undefined' && filters.section == 'D') ? 'selected' : '' %>>Sec D</option>
-                            </select>
-                            <select name="status" class="form-select form-select-sm border-0 bg-light fw-bold" onchange="this.form.submit()" style="border-radius: 8px; min-width: 140px;">
-                                <option value="">All Statuses</option>
-                                <option value="active" <%= (typeof filters !== 'undefined' && filters.status == 'active') ? 'selected' : '' %>>Active Only</option>
-                                <option value="withdrawn" <%= (typeof filters !== 'undefined' && filters.status == 'withdrawn') ? 'selected' : '' %>>Withdrawn</option>
-                                <option value="transferred" <%= (typeof filters !== 'undefined' && filters.status == 'transferred') ? 'selected' : '' %>>Transferred</option>
-                                <option value="dropped_out" <%= (typeof filters !== 'undefined' && filters.status == 'dropped_out') ? 'selected' : '' %>>Dropped Out</option>
-                            </select>
-                            <div class="search-bar position-relative" style="min-width: 250px;">
-                                <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
-                                <input type="text" name="search" class="form-control form-control-sm ps-5 py-2 border-0 bg-light text-dark fw-bold" style="border-radius: 8px;" placeholder="Search ID or Name..." value="<%= (typeof filters !== 'undefined') ? filters.search : '' %>">
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-sm px-3 rounded-3"><i class="fas fa-filter"></i></button>
-                        </form>
-                    </div>
-                </div>
-                
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" id="studentsTable">
-                        <thead style="background: rgba(0,0,0,0.02)">
-                            <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 0.05em;">
-                                <th class="border-0 py-2">Student Profile</th>
-                                <th class="border-0 py-2 text-center">Reference ID</th>
-                                <th class="border-0 py-2">Classification</th>
-                                <th class="border-0 py-2">Admission</th>
-                                <th class="border-0 py-2 text-center">Reg. Status</th>
-                                <th class="border-0 py-2 text-center">Status</th>
-                                <th class="border-0 py-2 text-end">Management</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (typeof students !== "undefined" && students && students.length > 0) { %>
-                                <% for (let student of students) { %>
-                                <tr>
-                                    <td class="border-0 py-2">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <% if (student.profile_picture) { %>
-                                                <img src="<%= student.profile_picture %>" alt="Photo" class="rounded-circle shadow-sm" style="width: 42px; height: 42px; object-fit: cover; border: 2px solid white;">
-                                            <% } else { %>
-                                                <div class="avatar-initials avatar-blue" style="width: 42px; height: 42px; font-size: 1rem;">
-                                                    <%= (student.first_name || 'U').charAt(0).toUpperCase() %>
+                                <form action="/admin/students/register" method="POST" enctype="multipart/form-data">
+                                    <div class="row g-4">
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">First Name</label>
+                                            <input type="text" name="firstName"
+                                                class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                placeholder="Legal first name" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">Last Name</label>
+                                            <input type="text" name="lastName"
+                                                class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                placeholder="Family name" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">Student ID
+                                                (Optional)</label>
+                                            <input type="text" name="studentId"
+                                                class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-bold"
+                                                style="color: var(--primary-color);"
+                                                placeholder="Auto-generated if empty">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">Student Photo</label>
+                                            <input type="file" name="studentPhoto"
+                                                class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                accept="image/*">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">Academic Email</label>
+                                            <input type="email" name="email"
+                                                class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                placeholder="student@school.edu" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">Phone Number</label>
+                                            <input type="tel" name="phone"
+                                                class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                placeholder="Student phone">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="text-secondary small mb-1 fw-bold">Grade Level</label>
+                                            <select name="gradeLevel"
+                                                class="form-select bg-light border-0 rounded-3 px-3 py-2 fw-bold"
+                                                required>
+                                                <option value="">Select</option>
+                                                <% for(let i=1; i<=8; i++) { %>
+                                                    <option value="<%= i %>">Grade <%= i %>
+                                                    </option>
+                                                    <% } %>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="text-secondary small mb-1 fw-bold">Section</label>
+                                            <select name="section"
+                                                class="form-select bg-light border-0 rounded-3 px-3 py-2 fw-bold"
+                                                required>
+                                                <option value="">Select</option>
+                                                <option value="A">Section A</option>
+                                                <option value="B">Section B</option>
+                                                <option value="C">Section C</option>
+                                                <option value="D">Section D</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">Admission Type</label>
+                                            <div class="d-flex gap-4 mt-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="admission_type"
+                                                        value="new" id="admissionNew" checked
+                                                        onchange="toggleTransferSection()">
+                                                    <label class="form-check-label small fw-bold" for="admissionNew">New
+                                                        Entry</label>
                                                 </div>
-                                            <% } %>
-                                            <div>
-                                                <div class="fw-bold" style="color: var(--dark-text);">
-                                                    <%= student.first_name || 'N/A' %> <%= student.last_name || '' %>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="admission_type"
+                                                        value="transfer" id="admissionTransfer"
+                                                        onchange="toggleTransferSection()">
+                                                    <label class="form-check-label small fw-bold"
+                                                        for="admissionTransfer">Transfer</label>
                                                 </div>
-                                                <div class="text-secondary small fw-medium">@<%= student.username %></div>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td class="border-0 text-center py-2">
-                                        <span class="badge rounded-pill px-3 py-1 fw-bold" style="background: rgba(37,99,235,0.08); color: var(--primary-color); font-size: 0.75rem;">
-                                            <%= student.student_id %>
-                                        </span>
-                                    </td>
-                                    <td class="border-0 py-2">
-                                        <div class="fw-bold small" style="color: var(--dark-text);">Grade <%= student.grade_level %></div>
-                                        <div class="text-secondary small fw-bold">Section <%= student.section %></div>
-                                    </td>
-                                    <td class="border-0 py-2">
-                                        <span class="text-secondary small fw-bold"><%= new Date(student.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
-                                    </td>
-                                    <td class="border-0 text-center py-2">
-                                        <% 
-                                            let regColor = '#64748b'; let regBg = 'rgba(100,116,139,0.1)';
-                                            if(student.registration_status === 'registered') { regColor = '#10b981'; regBg = 'rgba(16,185,129,0.1)'; }
-                                            else if(student.registration_status === 'pending') { regColor = '#f59e0b'; regBg = 'rgba(245,158,11,0.1)'; }
-                                            else if(student.registration_status === 'submitted') { regColor = '#06b6d4'; regBg = 'rgba(6,182,212,0.1)'; }
-                                        %>
-                                        <div class="d-flex align-items-center justify-content-center gap-2">
-                                            <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase" style="background: <%= regBg %>; color: <%= regColor %>; font-size: 0.65rem;">
-                                                <%= (student.registration_status || 'unregistered').replace('_', ' ') %>
-                                            </span>
-                                            <% if (student.registration_status === 'pending' || student.registration_status === 'submitted') { %>
-                                                <button onclick="confirmRegistration(<%= student.student_profile_id %>)" class="btn btn-sm p-0 border-0" title="Confirm Registration" style="color: #06b6d4;">
-                                                    <i class="fas fa-check-circle fa-lg"></i>
-                                                </button>
-                                            <% } %>
-                                        </div>
-                                    </td>
-                                    <td class="border-0 text-center py-2">
-                                        <% 
-                                            let statusColor = '#64748b'; let statusBg = 'rgba(100,116,139,0.08)';
-                                            let statusText = student.withdrawal_status || 'active';
-                                            if(statusText === 'active') { statusColor = '#10b981'; statusBg = 'rgba(16,185,129,0.08)'; }
-                                            else if(statusText === 'withdrawn') { statusColor = '#ef4444'; statusBg = 'rgba(239,68,68,0.08)'; }
-                                            else if(statusText === 'transferred') { statusColor = '#f59e0b'; statusBg = 'rgba(245,158,11,0.08)'; }
-                                            else if(statusText === 'dropped_out') { statusColor = '#6d28d9'; statusBg = 'rgba(109,40,217,0.08)'; }
-                                        %>
-                                        <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase" style="background: <%= statusBg %>; color: <%= statusColor %>; font-size: 0.65rem;">
-                                            <%= statusText.replace('_', ' ') %>
-                                        </span>
-                                    </td>
-                                    <td class="border-0 text-end py-2">
-                                        <div class="d-flex justify-content-end gap-2">
-                                            <button onclick="editStudent(<%= student.id %>)" class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3" title="Edit Profile" style="color: var(--primary-color);">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button onclick="withdrawStudent(<%= student.id %>, '<%= student.withdrawal_status || 'active' %>')" class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3" title="Withdraw/Transfer" style="color: #ef4444;">
-                                                <i class="fas fa-user-minus"></i>
-                                            </button>
-                                            <form action="/admin/toggle-user/<%= student.id %>" method="POST" class="m-0">
-                                                <button type="submit" class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3" title="Toggle Status" style="color: <%= student.is_active ? '#64748b' : '#10b981' %>;">
-                                                    <i class="fas <%= student.is_active ? 'fa-user-slash' : 'fa-user-check' %>"></i>
-                                                </button>
-                                            </form>
-                                            <form action="/admin/delete-user/<%= student.id %>" method="POST" class="m-0" onsubmit="return confirm('Archive this student record permanently?')">
-                                                <button type="submit" class="btn btn-sm rounded-3 fw-bold px-3" title="Archive" style="background: rgba(239,68,68,0.08); color: #ef4444; border: none;">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <% } %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="border-0 text-center py-5">
-                                        <div class="text-secondary opacity-30 mb-3">
-                                            <i class="fas fa-user-slash fa-4x"></i>
-                                        </div>
-                                        <div class="fw-bold text-secondary">No student records found</div>
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
-        </main>
+                                        <!-- Transfer Student Details (Hidden by Default) -->
+                                        <div class="col-12 mt-3" id="transferSection" style="display: none;">
+                                            <div class="p-4 rounded-4"
+                                                style="background: rgba(37,99,235,0.03); border: 1px dashed rgba(37,99,235,0.2);">
+                                                <div class="d-flex align-items-center gap-2 mb-3">
+                                                    <div class="bg-primary bg-opacity-10 p-2 rounded-3">
+                                                        <i class="fas fa-exchange-alt text-primary"></i>
+                                                    </div>
+                                                    <h6 class="fw-bold m-0 text-primary small"
+                                                        style="text-transform: uppercase; letter-spacing: 1px;">Transfer
+                                                        History & Documents</h6>
+                                                </div>
+                                                <div class="row g-3">
+                                                    <div class="col-md-4">
+                                                        <label class="text-secondary small mb-1 fw-bold">Previous
+                                                            School</label>
+                                                        <input type="text" name="previousSchool"
+                                                            class="form-control border-0 rounded-3 px-3 py-2 fw-medium"
+                                                            placeholder="Name of last school">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="text-secondary small mb-1 fw-bold">Transfer
+                                                            Date</label>
+                                                        <input type="date" name="transfer_date"
+                                                            class="form-control border-0 rounded-3 px-3 py-2 fw-medium">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="text-secondary small mb-1 fw-bold">Previous
+                                                            Transcript / Report Card (Multiple allowed)</label>
+                                                        <input type="file" name="previousTranscript"
+                                                            class="form-control border-0 rounded-3 px-3 py-2 fw-medium"
+                                                            accept="image/*,application/pdf" multiple>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="text-secondary small mb-1 fw-bold">Reason for
+                                                            Transfer</label>
+                                                        <textarea name="transfer_reason"
+                                                            class="form-control border-0 rounded-3 px-3 py-2 fw-medium"
+                                                            rows="2"
+                                                            placeholder="Brief explanation for changing schools"></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">Date of Birth</label>
+                                            <input type="date" name="dateOfBirth"
+                                                class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">Gender</label>
+                                            <div class="d-flex gap-4 mt-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="gender"
+                                                        value="male" id="male" required checked>
+                                                    <label class="form-check-label small fw-bold"
+                                                        for="male">Male</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="gender"
+                                                        value="female" id="female">
+                                                    <label class="form-check-label small fw-bold"
+                                                        for="female">Female</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label class="text-secondary small mb-1 fw-bold">Permanent Address</label>
+                                            <textarea name="address"
+                                                class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                rows="2" placeholder="Full residential address"></textarea>
+                                        </div>
+
+                                        <div class="col-12 mt-4">
+                                            <h6 class="fw-bold mb-3"
+                                                style="color: var(--dark-text); opacity: 0.6; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;">
+                                                Account & Guardianship</h6>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">Portal Username</label>
+                                            <input type="text" name="username"
+                                                class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                placeholder="Login ID" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">Access Password</label>
+                                            <input type="password" name="password"
+                                                class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                placeholder="Secure password" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="text-secondary small mb-1 fw-bold">Guardian Name</label>
+                                            <input type="text" name="parentGuardianName"
+                                                class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium"
+                                                placeholder="Parent full name" required>
+                                        </div>
+
+                                        <div class="col-12 mt-4 text-end pt-3 border-top">
+                                            <button type="submit"
+                                                class="btn btn-primary py-2 px-5 rounded-3 fw-bold shadow-sm">Confirm
+                                                Admission</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+
+                            <!-- Quick Grade Badges -->
+                            <div class="mb-4 d-flex flex-wrap gap-2">
+                                <% for(let i=1; i<=8; i++) { %>
+                                    <a href="/admin/students?grade=<%= i %>"
+                                        class="btn btn-light filter-badge <%= (typeof filters !== 'undefined' && filters.grade == i) ? 'active' : '' %> rounded-pill px-3 py-1 fw-bold small shadow-sm border"
+                                        style="font-size: 0.75rem;">
+                                        Grade <%= i %>
+                                    </a>
+                                    <% } %>
+                            </div>
+
+                            <!-- Students Table -->
+                            <div class="glass-panel" style="background: white !important; border-radius: 24px;">
+                                <div
+                                    class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-10">
+                                    <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i
+                                            class="fas fa-list-ul me-2 text-primary"></i>Student Directory</h3>
+                                    <div class="d-flex gap-3 align-items-center">
+                                        <form action="/admin/students" method="GET" class="d-flex gap-2 m-0">
+                                            <select name="grade"
+                                                class="form-select bg-light border-0 rounded-3 py-2 fw-bold"
+                                                onchange="this.form.submit()" style="min-width: 120px;">
+                                                <option value="">Elementary Grades</option>
+                                                <% for(let i=1; i<=8; i++) { %>
+                                                    <option value="<%= i %>" <%=(typeof filters !=='undefined' &&
+                                                        filters.grade==i) ? 'selected' : '' %>>Grade <%= i %>
+                                                    </option>
+                                                    <% } %>
+                                            </select>
+                                            <select name="section"
+                                                class="form-select bg-light border-0 rounded-3 py-2 fw-bold"
+                                                onchange="this.form.submit()" style="min-width: 100px;">
+                                                <option value="">All Sections</option>
+                                                <option value="A" <%=(typeof filters !=='undefined' &&
+                                                    filters.section=='A' ) ? 'selected' : '' %>>Sec A</option>
+                                                <option value="B" <%=(typeof filters !=='undefined' &&
+                                                    filters.section=='B' ) ? 'selected' : '' %>>Sec B</option>
+                                                <option value="C" <%=(typeof filters !=='undefined' &&
+                                                    filters.section=='C' ) ? 'selected' : '' %>>Sec C</option>
+                                                <option value="D" <%=(typeof filters !=='undefined' &&
+                                                    filters.section=='D' ) ? 'selected' : '' %>>Sec D</option>
+                                            </select>
+                                            <select name="status"
+                                                class="form-select bg-light border-0 rounded-3 py-2 fw-bold"
+                                                onchange="this.form.submit()" style="min-width: 140px;">
+                                                <option value="">All Statuses</option>
+                                                <option value="active" <%=(typeof filters !=='undefined' &&
+                                                    filters.status=='active' ) ? 'selected' : '' %>>Active Only</option>
+                                                <option value="withdrawn" <%=(typeof filters !=='undefined' &&
+                                                    filters.status=='withdrawn' ) ? 'selected' : '' %>>Withdrawn
+                                                </option>
+                                                <option value="transferred" <%=(typeof filters !=='undefined' &&
+                                                    filters.status=='transferred' ) ? 'selected' : '' %>>Transferred
+                                                </option>
+                                                <option value="dropped_out" <%=(typeof filters !=='undefined' &&
+                                                    filters.status=='dropped_out' ) ? 'selected' : '' %>>Dropped Out
+                                                </option>
+                                            </select>
+                                            <div class="search-bar position-relative" style="min-width: 250px;">
+                                                <i
+                                                    class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                                                <input type="text" name="search"
+                                                    class="form-control bg-light border-0 rounded-3 ps-5 py-2 fw-bold text-dark"
+                                                    placeholder="Search ID or Name..."
+                                                    value="<%= (typeof filters !== 'undefined') ? filters.search : '' %>">
+                                            </div>
+                                            <button type="submit"
+                                                class="btn btn-primary py-2 px-3 rounded-3 fw-bold shadow-sm"><i
+                                                    class="fas fa-filter"></i></button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0" id="studentsTable">
+                                        <thead style="background: rgba(0,0,0,0.02)">
+                                            <tr class="text-secondary small fw-bold"
+                                                style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                                <th class="border-0 py-2">Student Profile</th>
+                                                <th class="border-0 py-2 text-center">Reference ID</th>
+                                                <th class="border-0 py-2">Classification</th>
+                                                <th class="border-0 py-2">Admission</th>
+                                                <th class="border-0 py-2 text-center">Reg. Status</th>
+                                                <th class="border-0 py-2 text-center">Status</th>
+                                                <th class="border-0 py-2 text-end">Management</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% if (typeof students !=="undefined" && students && students.length> 0) {
+                                                %>
+                                                <% for (let student of students) { %>
+                                                    <tr>
+                                                        <td class="border-0 py-2">
+                                                            <div class="d-flex align-items-center gap-3">
+                                                                <% if (student.profile_picture) { %>
+                                                                    <img src="<%= student.profile_picture %>"
+                                                                        alt="Photo" class="rounded-circle shadow-sm"
+                                                                        style="width: 42px; height: 42px; object-fit: cover; border: 2px solid white;">
+                                                                    <% } else { %>
+                                                                        <div class="avatar-initials avatar-blue"
+                                                                            style="width: 42px; height: 42px; font-size: 1rem;">
+                                                                            <%= (student.first_name || 'U'
+                                                                                ).charAt(0).toUpperCase() %>
+                                                                        </div>
+                                                                        <% } %>
+                                                                            <div>
+                                                                                <div class="fw-bold"
+                                                                                    style="color: var(--dark-text);">
+                                                                                    <%= student.first_name || 'N/A' %>
+                                                                                        <%= student.last_name || '' %>
+                                                                                </div>
+                                                                                <div
+                                                                                    class="text-secondary small fw-medium">
+                                                                                    @<%= student.username %>
+                                                                                </div>
+                                                                            </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="border-0 text-center py-2">
+                                                            <span class="badge rounded-pill px-3 py-1 fw-bold"
+                                                                style="background: rgba(37,99,235,0.08); color: var(--primary-color); font-size: 0.75rem;">
+                                                                <%= student.student_id %>
+                                                            </span>
+                                                        </td>
+                                                        <td class="border-0 py-2">
+                                                            <div class="fw-bold small" style="color: var(--dark-text);">
+                                                                Grade <%= student.grade_level %>
+                                                            </div>
+                                                            <div class="text-secondary small fw-bold">Section <%=
+                                                                    student.section %>
+                                                            </div>
+                                                        </td>
+                                                        <td class="border-0 py-2">
+                                                            <span class="text-secondary small fw-bold">
+                                                                <%= new
+                                                                    Date(student.created_at).toLocaleDateString(undefined,
+                                                                    { month: 'short' , day: 'numeric' , year: 'numeric'
+                                                                    }) %>
+                                                            </span>
+                                                        </td>
+                                                        <td class="border-0 text-center py-2">
+                                                            <% let regColor='#64748b' ; let
+                                                                regBg='rgba(100,116,139,0.1)' ;
+                                                                if(student.registration_status==='registered' ) {
+                                                                regColor='#10b981' ; regBg='rgba(16,185,129,0.1)' ; }
+                                                                else if(student.registration_status==='pending' ) {
+                                                                regColor='#f59e0b' ; regBg='rgba(245,158,11,0.1)' ; }
+                                                                else if(student.registration_status==='submitted' ) {
+                                                                regColor='#06b6d4' ; regBg='rgba(6,182,212,0.1)' ; } %>
+                                                                <div
+                                                                    class="d-flex align-items-center justify-content-center gap-2">
+                                                                    <span
+                                                                        class="badge rounded-pill px-3 py-2 fw-bold text-uppercase"
+                                                                        style="background: <%= regBg %>; color: <%= regColor %>; font-size: 0.65rem;">
+                                                                        <%= (student.registration_status
+                                                                            || 'unregistered' ).replace('_', ' ' ) %>
+                                                                    </span>
+                                                                    <% if (student.registration_status==='pending' ||
+                                                                        student.registration_status==='submitted' ) { %>
+                                                                        <button
+                                                                            onclick="confirmRegistration(<%= student.student_profile_id %>)"
+                                                                            class="btn btn-sm p-0 border-0"
+                                                                            title="Confirm Registration"
+                                                                            style="color: #06b6d4;">
+                                                                            <i class="fas fa-check-circle fa-lg"></i>
+                                                                        </button>
+                                                                        <% } %>
+                                                                </div>
+                                                        </td>
+                                                        <td class="border-0 text-center py-2">
+                                                            <% let statusColor='#64748b' ; let
+                                                                statusBg='rgba(100,116,139,0.08)' ; let
+                                                                statusText=student.withdrawal_status || 'active' ;
+                                                                if(statusText==='active' ) { statusColor='#10b981' ;
+                                                                statusBg='rgba(16,185,129,0.08)' ; } else
+                                                                if(statusText==='withdrawn' ) { statusColor='#ef4444' ;
+                                                                statusBg='rgba(239,68,68,0.08)' ; } else
+                                                                if(statusText==='transferred' ) { statusColor='#f59e0b'
+                                                                ; statusBg='rgba(245,158,11,0.08)' ; } else
+                                                                if(statusText==='dropped_out' ) { statusColor='#6d28d9'
+                                                                ; statusBg='rgba(109,40,217,0.08)' ; } %>
+                                                                <span
+                                                                    class="badge rounded-pill px-3 py-2 fw-bold text-uppercase"
+                                                                    style="background: <%= statusBg %>; color: <%= statusColor %>; font-size: 0.65rem;">
+                                                                    <%= statusText.replace('_', ' ' ) %>
+                                                                </span>
+                                                        </td>
+                                                        <td class="border-0 text-end py-2">
+                                                            <div class="d-flex justify-content-end gap-2">
+                                                                <button onclick="editStudent(<%= student.id %>)"
+                                                                    class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3"
+                                                                    title="Edit Profile"
+                                                                    style="color: var(--primary-color);">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                                <button
+                                                                    onclick="withdrawStudent(<%= student.id %>, '<%= student.withdrawal_status || 'active' %>')"
+                                                                    class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3"
+                                                                    title="Withdraw/Transfer" style="color: #ef4444;">
+                                                                    <i class="fas fa-user-minus"></i>
+                                                                </button>
+                                                                <form action="/admin/toggle-user/<%= student.id %>"
+                                                                    method="POST" class="m-0">
+                                                                    <button type="submit"
+                                                                        class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3"
+                                                                        title="Toggle Status"
+                                                                        style="color: <%= student.is_active ? '#64748b' : '#10b981' %>;">
+                                                                        <i
+                                                                            class="fas <%= student.is_active ? 'fa-user-slash' : 'fa-user-check' %>"></i>
+                                                                    </button>
+                                                                </form>
+                                                                <form action="/admin/delete-user/<%= student.id %>"
+                                                                    method="POST" class="m-0"
+                                                                    onsubmit="return confirm('Archive this student record permanently?')">
+                                                                    <button type="submit"
+                                                                        class="btn btn-sm rounded-3 fw-bold px-3"
+                                                                        title="Archive"
+                                                                        style="background: rgba(239,68,68,0.08); color: #ef4444; border: none;">
+                                                                        <i class="fas fa-trash-alt"></i>
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    <% } %>
+                                                        <% } else { %>
+                                                            <tr>
+                                                                <td colspan="7" class="border-0 text-center py-5">
+                                                                    <div class="text-secondary opacity-30 mb-3">
+                                                                        <i class="fas fa-user-slash fa-4x"></i>
+                                                                    </div>
+                                                                    <div class="fw-bold text-secondary">No student
+                                                                        records found</div>
+                                                                </td>
+                                                            </tr>
+                                                            <% } %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+            </main>
     </div>
 
     <!-- Edit Student Modal -->
@@ -390,11 +537,13 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">First Name</label>
-                                <input type="text" name="firstName" id="editFirstName" class="form-control rounded-3" required>
+                                <input type="text" name="firstName" id="editFirstName" class="form-control rounded-3"
+                                    required>
                             </div>
                             <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">Last Name</label>
-                                <input type="text" name="lastName" id="editLastName" class="form-control rounded-3" required>
+                                <input type="text" name="lastName" id="editLastName" class="form-control rounded-3"
+                                    required>
                             </div>
                             <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">Email</label>
@@ -408,8 +557,9 @@
                                 <label class="small fw-bold text-secondary mb-1">Grade</label>
                                 <select name="gradeLevel" id="editGradeLevel" class="form-select rounded-3">
                                     <% for(let i=1; i<=8; i++) { %>
-                                        <option value="<%= i %>">Grade <%= i %></option>
-                                    <% } %>
+                                        <option value="<%= i %>">Grade <%= i %>
+                                        </option>
+                                        <% } %>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -430,15 +580,18 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">Date of Birth</label>
-                                <input type="date" name="dateOfBirth" id="editDateOfBirth" class="form-control rounded-3">
+                                <input type="date" name="dateOfBirth" id="editDateOfBirth"
+                                    class="form-control rounded-3">
                             </div>
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">Parent/Guardian Name</label>
-                                <input type="text" name="parentGuardianName" id="editParentGuardianName" class="form-control rounded-3">
+                                <input type="text" name="parentGuardianName" id="editParentGuardianName"
+                                    class="form-control rounded-3">
                             </div>
                             <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">Previous School</label>
-                                <input type="text" name="previousSchool" id="editPreviousSchool" class="form-control rounded-3">
+                                <input type="text" name="previousSchool" id="editPreviousSchool"
+                                    class="form-control rounded-3">
                             </div>
                             <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">Admission Type</label>
@@ -449,11 +602,13 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">Transfer Date</label>
-                                <input type="date" name="transfer_date" id="editTransferDate" class="form-control rounded-3">
+                                <input type="date" name="transfer_date" id="editTransferDate"
+                                    class="form-control rounded-3">
                             </div>
                             <div class="col-md-12">
                                 <label class="small fw-bold text-secondary mb-1">Transfer Reason</label>
-                                <textarea name="transfer_reason" id="editTransferReason" class="form-control rounded-3" rows="2"></textarea>
+                                <textarea name="transfer_reason" id="editTransferReason" class="form-control rounded-3"
+                                    rows="2"></textarea>
                             </div>
                             <div class="col-md-12 mt-2" id="editTranscriptContainer" style="display: none;">
                                 <label class="small fw-bold text-secondary mb-1">Captured Academic Records</label>
@@ -462,12 +617,15 @@
                                 </div>
                             </div>
                             <div class="col-md-12 mt-2">
-                                <label class="small fw-bold text-secondary mb-1">Upload Additional Documents (Optional, Multiple allowed)</label>
-                                <input type="file" name="previousTranscript" class="form-control rounded-3" accept="image/*,application/pdf" multiple>
+                                <label class="small fw-bold text-secondary mb-1">Upload Additional Documents (Optional,
+                                    Multiple allowed)</label>
+                                <input type="file" name="previousTranscript" class="form-control rounded-3"
+                                    accept="image/*,application/pdf" multiple>
                             </div>
                             <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">Address</label>
-                                <textarea name="address" id="editAddress" class="form-control rounded-3" rows="1"></textarea>
+                                <textarea name="address" id="editAddress" class="form-control rounded-3"
+                                    rows="1"></textarea>
                             </div>
                             <div class="col-md-12">
                                 <label class="small fw-bold text-secondary mb-1">New Photo (Optional)</label>
@@ -481,7 +639,8 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">Withdrawal Status</label>
-                                <select name="withdrawal_status" id="editWithdrawalStatus" class="form-select rounded-3">
+                                <select name="withdrawal_status" id="editWithdrawalStatus"
+                                    class="form-select rounded-3">
                                     <option value="active">Active</option>
                                     <option value="withdrawn">Withdrawn</option>
                                     <option value="transferred">Transferred</option>
@@ -490,16 +649,20 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">Withdrawal Date</label>
-                                <input type="date" name="withdrawal_date" id="editWithdrawalDate" class="form-control rounded-3">
+                                <input type="date" name="withdrawal_date" id="editWithdrawalDate"
+                                    class="form-control rounded-3">
                             </div>
                             <div class="col-md-12">
                                 <label class="small fw-bold text-secondary mb-1">Withdrawal Reason</label>
-                                <textarea name="withdrawal_reason" id="editWithdrawalReason" class="form-control rounded-3" rows="2"></textarea>
+                                <textarea name="withdrawal_reason" id="editWithdrawalReason"
+                                    class="form-control rounded-3" rows="2"></textarea>
                             </div>
                         </div>
                         <div class="text-end mt-4">
-                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Save Changes</button>
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold"
+                                data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Save
+                                Changes</button>
                         </div>
                     </form>
                 </div>
@@ -528,18 +691,23 @@
                         </div>
                         <div class="mb-3">
                             <label class="small fw-bold text-secondary mb-1">Reason</label>
-                            <textarea name="reason" id="withdrawReason" class="form-control rounded-3" rows="3" placeholder="Enter reason for withdrawal or transfer..."></textarea>
+                            <textarea name="reason" id="withdrawReason" class="form-control rounded-3" rows="3"
+                                placeholder="Enter reason for withdrawal or transfer..."></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="small fw-bold text-secondary mb-1">Effective Date</label>
                             <input type="date" name="date" id="withdrawDate" class="form-control rounded-3" required>
                         </div>
-                        <div class="alert alert-info border-0 small fw-bold" style="background: rgba(6,182,212,0.1); color: #0891b2; border-radius: 12px;">
-                            <i class="fas fa-info-circle me-2"></i> Students marked as non-active will be hidden from class lists and attendance.
+                        <div class="alert alert-info border-0 small fw-bold"
+                            style="background: rgba(6,182,212,0.1); color: #0891b2; border-radius: 12px;">
+                            <i class="fas fa-info-circle me-2"></i> Students marked as non-active will be hidden from
+                            class lists and attendance.
                         </div>
                         <div class="text-end mt-4">
-                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Update Status</button>
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold"
+                                data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Update
+                                Status</button>
                         </div>
                     </form>
                 </div>
@@ -556,38 +724,46 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <p class="text-secondary small fw-medium mb-4">This process will automatically promote passing students to the next grade level and archive their current records.</p>
+                    <p class="text-secondary small fw-medium mb-4">This process will automatically promote passing
+                        students to the next grade level and archive their current records.</p>
                     <form action="/admin/promotion/process" method="POST">
                         <div class="mb-3">
                             <label class="small fw-bold text-secondary mb-1">Academic Year</label>
-                            <input type="text" name="academicYear" class="form-control rounded-3" placeholder="e.g., 2024-2025" required>
+                            <input type="text" name="academicYear" class="form-control rounded-3"
+                                placeholder="e.g., 2024-2025" required>
                         </div>
                         <div class="mb-3">
                             <label class="small fw-bold text-secondary mb-1">Passing Grade Threshold (%)</label>
-                            <input type="number" name="passingGrade" class="form-control rounded-3" value="50" min="0" max="100" required>
+                            <input type="number" name="passingGrade" class="form-control rounded-3" value="50" min="0"
+                                max="100" required>
                         </div>
-                        <div class="alert alert-warning border-0 small fw-bold" style="background: rgba(245,158,11,0.1); color: #b45309; border-radius: 12px;">
-                            <i class="fas fa-exclamation-triangle me-2"></i> This action is permanent and affects all active students.
+                        <div class="alert alert-warning border-0 small fw-bold"
+                            style="background: rgba(245,158,11,0.1); color: #b45309; border-radius: 12px;">
+                            <i class="fas fa-exclamation-triangle me-2"></i> This action is permanent and affects all
+                            active students.
                         </div>
                         <div class="text-end mt-4">
-                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Execute Promotion</button>
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold"
+                                data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Execute
+                                Promotion</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/translations.js"></script>
     <script src="/js/brocode-script.js"></script>
-    
+
     <script>
         function toggleForm() {
             const form = document.getElementById('registration-form');
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
-            if(form.style.display === 'block') form.scrollIntoView({ behavior: 'smooth' });
+            if (form.style.display === 'block') form.scrollIntoView({ behavior: 'smooth' });
         }
 
         function togglePromotionModal() {
@@ -611,13 +787,13 @@
                         document.getElementById('editAddress').value = s.address || '';
                         document.getElementById('editParentGuardianName').value = s.parent_guardian_name || '';
                         document.getElementById('editPreviousSchool').value = s.previous_school || '';
-                        
+
                         if (s.date_of_birth) {
                             document.getElementById('editDateOfBirth').value = new Date(s.date_of_birth).toISOString().split('T')[0];
                         } else {
                             document.getElementById('editDateOfBirth').value = '';
                         }
-                        
+
                         document.getElementById('editIsActive').checked = s.is_active;
                         document.getElementById('editWithdrawalStatus').value = s.withdrawal_status || 'active';
                         document.getElementById('editWithdrawalReason').value = s.withdrawal_reason || '';
@@ -635,7 +811,7 @@
                         } else {
                             document.getElementById('editTransferDate').value = '';
                         }
-                        
+
                         const transcriptContainer = document.getElementById('editTranscriptContainer');
                         const documentList = document.getElementById('editDocumentList');
                         documentList.innerHTML = ''; // Clear previous
@@ -672,9 +848,9 @@
                         } else {
                             transcriptContainer.style.display = 'none';
                         }
-                        
+
                         document.getElementById('editStudentForm').action = `/admin/students/update/${userId}`;
-                        
+
                         const modal = new bootstrap.Modal(document.getElementById('editStudentModal'));
                         modal.show();
                     } else {
@@ -688,7 +864,7 @@
             document.getElementById('withdrawStudentForm').action = `/admin/students/withdraw/${userId}`;
             document.getElementById('withdrawStatus').value = currentStatus || 'withdrawn';
             document.getElementById('withdrawDate').value = new Date().toISOString().split('T')[0];
-            
+
             fetch(`/admin/students/edit/${userId}`)
                 .then(res => res.json())
                 .then(data => {
@@ -703,7 +879,7 @@
                 });
         }
 
-        window.onload = function() {
+        window.onload = function () {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('form') === 'open') {
                 toggleForm();
@@ -719,7 +895,7 @@
             for (let i = 1; i < tr.length; i++) {
                 let found = false;
                 let tds = tr[i].getElementsByTagName('td');
-                for(let j = 0; j < tds.length - 1; j++) {
+                for (let j = 0; j < tds.length - 1; j++) {
                     if (tds[j].textContent.toUpperCase().indexOf(filter) > -1) {
                         found = true;
                         break;
@@ -730,44 +906,44 @@
         }
         function confirmRegistration(studentId) {
             if (!confirm('Mark this student as registered for the semester?')) return;
-            
+
             fetch(`/admin/students/confirm-registration/${studentId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('An error occurred');
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('An error occurred');
+                });
         }
 
         function approveAllRegistrations() {
             if (!confirm('Are you sure you want to approve ALL currently submitted registrations?')) return;
-            
+
             fetch(`/admin/students/approve-all`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('An error occurred');
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('An error occurred');
+                });
         }
 
         function toggleTransferSection() {
@@ -777,4 +953,5 @@
         }
     </script>
 </body>
+
 </html>

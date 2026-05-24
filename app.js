@@ -55,14 +55,20 @@ initDatabase().catch((err) =>
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const studentRoutes = require("./routes/student");
-const teacherRoutes = require("./routes/teacher");
+const http = require('http');
+const { Server } = require('socket.io');
+// Server and Socket.io will be created inside startServer to allow port retries without reusing the same server instance.
+
 const parentRoutes = require("./routes/parent");
+const teacherRoutes = require("./routes/teacher");
+// const coursesRoutes = require("./routes/courses");
 
 app.use("/auth", authRoutes);
 app.use("/admin", adminRoutes);
 app.use("/student", studentRoutes);
 app.use("/teacher", teacherRoutes);
 app.use("/parent", parentRoutes);
+// app.use("/courses", coursesRoutes);
 
 // Main routes - Updated to use modern templates
 app.get("/", async (req, res) => {
@@ -247,15 +253,38 @@ app.get("/register-modern.html", (req, res) => {
 
 let port = Number.parseInt(process.env.PORT) || 3001;
 
+// Updated startServer to use HTTP server with Socket.io
 function startServer(port) {
-  const server = app.listen(port, () => {
+  const server = http.createServer(app);
+  const io = new Server(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
+  // Make io accessible in routes for this server instance
+  app.set('io', io);
+
+    // Socket.io connection handling – join role‑based rooms
+    io.on('connection', (socket) => {
+      const { userId, role } = socket.handshake.query || {};
+
+      if (!userId || !role) return;
+
+      if (role === "teacher") socket.join(`teacher_${userId}`);
+      if (role === "student") socket.join(`student_${userId}`);
+      if (role === "parent") socket.join(`parent_${userId}`);
+      if (role === "admin") socket.join(`admin_dashboard`);
+    });
+
+  server.listen(port, () => {
     console.log(`>>> SERVER START: Listening on port ${port}`);
   });
 
-  server.on("error", (err) => {
-    if (err.code === "EADDRINUSE") {
+  server.once('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
       console.log(`Port ${port} is in use, trying port ${port + 1}...`);
-      startServer(port + 1); // try next port
+      server.close(() => startServer(port + 1));
     } else {
       console.error(err);
     }

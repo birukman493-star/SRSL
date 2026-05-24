@@ -57,21 +57,23 @@
             </div>
 
             <div class="row g-4">
-                <% if (classes && classes.length > 0) { %>
-                    <% classes.forEach(c => { %>
+                <% if (assignments && assignments.length > 0) { %>
+                    <% assignments.forEach(asg => { %>
                     <div class="col-md-6 col-lg-4">
                         <div class="premium-card text-center p-5 selection-card" 
-                            data-class-id="<%= c.id %>" 
+                            data-class-id="<%= asg.class_id %>" 
+                            data-course-id="<%= asg.course_id %>"
                             data-date="<%= new Date().toISOString().split('T')[0] %>">
                             <div class="icon-box bg-success bg-opacity-10 text-success">
                                 <i class="fas fa-calendar-check"></i>
                             </div>
-                            <h3 class="fw-900 mb-1" style="color: var(--dark-text);"><%= c.name %></h3>
-                            <p class="text-secondary fw-bold text-uppercase mb-4" style="font-size: 0.75rem; letter-spacing: 1px;">Grade <%= c.grade %> • Section <%= c.section %></p>
+                            <h3 class="fw-900 mb-1" style="color: var(--dark-text);"><%= asg.course_name %></h3>
+                            <p class="text-secondary fw-bold text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 1px;"><%= asg.class_name %></p>
+                            <p class="text-primary fw-bold text-uppercase mb-4" style="font-size: 0.7rem; letter-spacing: 1px;">Grade <%= asg.grade %> — Section <%= asg.section %></p>
                             
                             <div class="d-grid">
                                 <button class="btn btn-primary py-3 rounded-pill fw-bold shadow-sm">
-                                    <i class="fas fa-clipboard-list me-2"></i> Open Attendance
+                                    <i class="fas fa-clipboard-list me-2"></i> Take Attendance
                                 </button>
                             </div>
                         </div>
@@ -83,8 +85,8 @@
                             <div class="text-secondary opacity-20 mb-4">
                                 <i class="fas fa-folder-open fa-6x"></i>
                             </div>
-                            <h3 class="fw-900" style="color: var(--dark-text);">No Classes Assigned</h3>
-                            <p class="text-secondary fw-medium px-5">You don't have any classes assigned to your faculty profile at the moment.</p>
+                            <h3 class="fw-900" style="color: var(--dark-text);">No Courses Assigned</h3>
+                            <p class="text-secondary fw-medium px-5">You don't have any specific courses assigned for class attendance at the moment.</p>
                             <a href="/teacher/dashboard" class="btn btn-primary px-5 mt-3 rounded-pill fw-bold shadow">Return to Home</a>
                         </div>
                     </div>
@@ -94,15 +96,18 @@
     </div>
     
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
     <script>
         document.querySelectorAll('.selection-card').forEach(card => {
             card.addEventListener('click', function() {
                 const classId = this.dataset.classId;
+                const courseId = this.dataset.courseId;
                 const date = this.dataset.date;
-                window.location.href = `/teacher/attendance/${classId}/${date}`;
+                window.location.href = `/teacher/attendance/${classId}/${courseId}/${date}`;
             });
         });
     </script>
 </body>
 </html>
+
+

@@ -23,83 +23,84 @@
             <div class="dashboard-header mb-4" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="dashboard-title" style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        <h1 class="dashboard-title" data-i18n="parent_directory_title" style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                             Parent/Guardian Directory
                         </h1>
-                        <p class="text-secondary m-0" style="font-weight: 500;">Monitor parent accounts and student linkages</p>
+                        <p class="text-secondary m-0" data-i18n="parent_directory_subtitle" style="font-weight: 500;">Monitor parent accounts and student linkages</p>
                     </div>
-                    <button class="btn btn-hero btn-primary px-4 py-2 border-0 d-flex align-items-center gap-2" onclick="toggleForm()" style="border-radius: 12px; font-weight: 600;">
-                        <i class="fas fa-plus"></i> Add Parent
+                    <button class="btn btn-hero btn-primary px-4 py-2 border-0 d-flex align-items-center gap-2 fw-bold rounded-3 shadow-sm" onclick="toggleForm()">
+                        <i class="fas fa-plus"></i> <span data-i18n="add_parent_btn">Add Parent</span>
                     </button>
                 </div>
             </div>
 
             <!-- Alerts -->
             <% if (typeof error !== "undefined" && error) { %>
-            <div class="alert alert-danger mb-4 rounded-4 border-0 bg-danger bg-opacity-10 text-danger p-3">
+            <div class="alert alert-danger mb-4 rounded-4 border-0 bg-danger bg-opacity-10 text-danger p-3 shadow-sm">
                 <i class="fas fa-exclamation-circle me-2"></i> <%= error %>
             </div>
             <% } %>
             <% if (typeof success !== "undefined" && success) { %>
-            <div class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3">
+            <div class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-3 shadow-sm">
                 <i class="fas fa-check-circle me-2"></i> <%= success %>
             </div>
             <% } %>
 
             <!-- Parent Form -->
-            <div id="parent-form" class="glass-panel mb-4" style="display: none; background: white !important; border-radius: 24px;">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i class="fas fa-user-plus me-2 text-primary"></i>Register Parent/Guardian</h3>
-                    <button class="btn btn-sm btn-link text-secondary text-decoration-none" onclick="toggleForm()">Close <i class="fas fa-times ms-1"></i></button>
+            <div id="parent-form" class="glass-panel mb-4 shadow-lg" style="display: none; background: white !important; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05);">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                    <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i class="fas fa-user-plus me-2 text-primary"></i><span data-i18n="register_parent_title">Register Parent/Guardian</span></h3>
+                    <button class="btn btn-sm btn-light rounded-pill px-3 fw-bold" onclick="toggleForm()" style="color: var(--dark-text);"><span data-i18n="cancel_btn">Cancel</span> <i class="fas fa-times ms-1"></i></button>
                 </div>
                 <form action="/admin/parents/add" method="POST">
                     <div class="row g-4">
                         <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">First Name</label>
-                            <input type="text" name="firstName" class="form-control bg-light border-0 rounded-3 px-3 py-2" required>
+                            <label class="text-secondary small mb-1 fw-bold" data-i18n="first_name_label">First Name</label>
+                            <input type="text" name="firstName" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Legal first name" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Last Name</label>
-                            <input type="text" name="lastName" class="form-control bg-light border-0 rounded-3 px-3 py-2" required>
+                            <label class="text-secondary small mb-1 fw-bold" data-i18n="last_name_label">Last Name</label>
+                            <input type="text" name="lastName" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Family name" required>
                         </div>
                          <div class="col-md-4">
-                            <label class="text-secondary small mb-1 fw-bold">Relationship to Student</label>
-                            <select name="relationship" class="form-select bg-light border-0 rounded-3 px-3 py-2" required>
-                                <option value="">Select Relationship</option>
-                                <option value="Father">Father</option>
-                                <option value="Mother">Mother</option>
-                                <option value="Guardian">Guardian</option>
-                                <option value="Sibling">Sibling</option>
-                                <option value="Other">Other</option>
+                            <label class="text-secondary small mb-1 fw-bold" data-i18n="relationship_label">Relationship to Student</label>
+                            <select name="relationship" class="form-select bg-light border-0 rounded-3 px-3 py-2 fw-bold" required>
+                                <option value="" data-i18n="select_relationship">Select Relationship</option>
+                                <option value="Father" data-i18n="rel_father">Father</option>
+                                <option value="Mother" data-i18n="rel_mother">Mother</option>
+                                <option value="Guardian" data-i18n="rel_guardian">Guardian</option>
+                                <option value="Sibling" data-i18n="rel_sibling">Sibling</option>
+                                <option value="Other" data-i18n="rel_other">Other</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="text-secondary small mb-1 fw-bold">Email Address</label>
-                            <input type="email" name="email" class="form-control bg-light border-0 rounded-3 px-3 py-2" required>
+                            <label class="text-secondary small mb-1 fw-bold" data-i18n="email_address_label">Email Address</label>
+                            <input type="email" name="email" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="parent@example.com" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="text-secondary small mb-1 fw-bold">Phone Number</label>
-                            <input type="tel" name="phone" class="form-control bg-light border-0 rounded-3 px-3 py-2" required>
+                            <label class="text-secondary small mb-1 fw-bold" data-i18n="phone_number_label">Phone Number</label>
+                            <input type="tel" name="phone" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="+251..." required>
                         </div>
                         <div class="col-md-12">
-                            <label class="text-secondary small mb-1 fw-bold">Occupation (Optional)</label>
-                            <input type="text" name="occupation" class="form-control bg-light border-0 rounded-3 px-3 py-2">
+                            <label class="text-secondary small mb-1 fw-bold" data-i18n="occupation_label">Occupation (Optional)</label>
+                            <input type="text" name="occupation" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="e.g. Engineer, Teacher">
                         </div>
 
-                        <div class="col-12"><hr class="border-secondary border-opacity-10 my-2"></div>
+                        <div class="col-12 mt-4">
+                            <h6 class="fw-bold mb-3" style="color: var(--dark-text); opacity: 0.6; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;" data-i18n="access_credentials_title">Access Credentials</h6>
+                        </div>
 
                         <div class="col-md-6">
-                            <label class="text-secondary small mb-1 fw-bold">Login Username</label>
-                            <input type="text" name="username" class="form-control bg-light border-0 rounded-3 px-3 py-2" placeholder="Username" required>
+                            <label class="text-secondary small mb-1 fw-bold" data-i18n="portal_username_label">Portal Username</label>
+                            <input type="text" name="username" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Username" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="text-secondary small mb-1 fw-bold">Temporary Password</label>
-                            <input type="password" name="password" class="form-control bg-light border-0 rounded-3 px-3 py-2" placeholder="Initial password" required>
+                            <label class="text-secondary small mb-1 fw-bold" data-i18n="access_password_label">Access Password</label>
+                            <input type="password" name="password" class="form-control bg-light border-0 rounded-3 px-3 py-2 fw-medium" placeholder="Temporary password" required>
                         </div>
                         
-                        <div class="col-12 mt-4 text-end">
-                            <button type="button" class="btn btn-light py-2 px-4 me-2 rounded-3 fw-bold" onclick="toggleForm()">Cancel</button>
-                            <button type="submit" class="btn btn-primary py-2 px-4 rounded-3 fw-bold">Create Parent Account</button>
+                        <div class="col-12 mt-4 text-end pt-3 border-top">
+                            <button type="submit" class="btn btn-primary py-2 px-5 rounded-3 fw-bold shadow-sm" data-i18n="create_parent_btn">Create Parent Account</button>
                         </div>
                     </div>
                 </form>
@@ -108,7 +109,7 @@
             <!-- Parents Table -->
             <div class="glass-panel" style="background: white !important; border-radius: 24px;">
                 <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-10">
-                    <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i class="fas fa-user-friends me-2 text-primary"></i>Parent Registry</h3>
+                    <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i class="fas fa-user-friends me-2 text-primary"></i><span data-i18n="parent_registry_title">Parent Registry</span></h3>
                     <div class="search-bar position-relative" style="min-width: 350px;">
                         <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
                         <input type="text" id="parentSearch" class="form-control ps-5 py-2 border-0 bg-light text-dark fw-medium" style="border-radius: 12px;" placeholder="Search parents or children..." onkeyup="searchParents()">
@@ -119,12 +120,12 @@
                     <table class="table table-hover align-middle mb-0" id="parentsTable">
                         <thead style="background: rgba(0,0,0,0.02)">
                             <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 0.05em;">
-                                <th class="border-0 py-3">Parent/Guardian</th>
-                                <th class="border-0 py-3">Linked Children</th>
-                                <th class="border-0 py-3">Relationship</th>
-                                <th class="border-0 py-3">Contact Info</th>
-                                <th class="border-0 py-3 text-center">Status</th>
-                                <th class="border-0 py-3 text-end">Actions</th>
+                                <th class="border-0 py-3" data-i18n="parent_guardian_col">Parent/Guardian</th>
+                                <th class="border-0 py-3" data-i18n="linked_children_col">Linked Children</th>
+                                <th class="border-0 py-3" data-i18n="relationship_col">Relationship</th>
+                                <th class="border-0 py-3" data-i18n="contact_info_col">Contact Info</th>
+                                <th class="border-0 py-3 text-center" data-i18n="status_col">Status</th>
+                                <th class="border-0 py-3 text-end" data-i18n="actions_col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -133,14 +134,14 @@
                                 <tr>
                                     <td class="border-0 py-3">
                                         <div class="d-flex align-items-center gap-3">
-                                            <div class="avatar-initials avatar-blue" style="width: 42px; height: 42px; font-size: 0.95rem;">
+                                            <div class="avatar-initials avatar-blue" style="width: 42px; height: 42px; font-size: 1rem;">
                                                 <%= (parent.first_name || 'P').charAt(0).toUpperCase() %>
                                             </div>
                                             <div>
                                                 <div class="fw-bold" style="color: var(--dark-text);">
                                                     <%= parent.first_name || 'N/A' %> <%= parent.last_name || '' %>
                                                 </div>
-                                                <div class="text-secondary small"><%= parent.occupation || 'N/A' %></div>
+                                                <div class="text-secondary small fw-medium"><%= parent.occupation || 'N/A' %></div>
                                             </div>
                                         </div>
                                     </td>
@@ -154,26 +155,32 @@
                                                     </span>
                                                 <% } %>
                                             <% } else { %>
-                                                <span class="text-secondary small italic">No linked children</span>
+                                                <span class="text-secondary small fst-italic opacity-50" data-i18n="no_linked_children">No linked children</span>
                                             <% } %>
                                         </div>
                                     </td>
                                     <td class="border-0 py-3">
-                                        <span class="fw-bold px-3 py-1 rounded-3" style="background: #f1f5f9; color: var(--dark-text); font-size: 0.85rem;">
+                                        <div class="fw-bold small" style="color: var(--dark-text);">
                                             <%= parent.relationship || 'N/A' %>
-                                        </span>
+                                        </div>
                                     </td>
                                     <td class="border-0 py-3">
-                                        <div class="small fw-medium" style="color: var(--dark-text);"><i class="fas fa-envelope me-1 text-secondary"></i> <%= parent.email %></div>
-                                        <div class="text-secondary extra-small"><i class="fas fa-phone-alt me-1"></i> <%= parent.phone || 'N/A' %></div>
+                                        <div class="small fw-medium" style="color: var(--dark-text);"><i class="fas fa-envelope me-1 text-secondary opacity-50"></i> <%= parent.email %></div>
+                                        <div class="text-secondary smaller fw-bold"><i class="fas fa-phone-alt me-1 opacity-50"></i> <%= parent.phone || 'N/A' %></div>
                                     </td>
                                     <td class="border-0 text-center py-3">
-                                        <span class="badge rounded-pill px-3 py-2 fw-bold" style="background: <%= parent.is_active ? 'rgba(16,185,129,0.1)' : 'rgba(100,116,139,0.1)' %>; color: <%= parent.is_active ? '#10b981' : '#64748b' %>;">
+                                        <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase" style="background: <%= parent.is_active ? 'rgba(16,185,129,0.08)' : 'rgba(100,116,139,0.08)' %>; color: <%= parent.is_active ? '#10b981' : '#64748b' %>; font-size: 0.65rem;">
                                             <%= parent.is_active ? 'Active' : 'Inactive' %>
                                         </span>
                                     </td>
                                     <td class="border-0 text-end py-3">
                                         <div class="d-flex justify-content-end gap-2">
+                                            <button onclick="editParent(<%= parent.id %>)" class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3" title="Edit Profile" style="color: var(--primary-color);">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3 link-child-btn" title="Link Child" style="color: #10b981;" data-parent-id="<%= parent.parent_id %>" data-parent-name="<%= parent.first_name %> <%= parent.last_name %>" data-bs-toggle="modal" data-bs-target="#linkChildModal">
+                                                <i class="fas fa-link"></i> Link
+                                            </button>
                                             <form action="/admin/toggle-user/<%= parent.id %>" method="POST" class="m-0">
                                                 <button type="submit" class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3" title="Toggle Status" style="color: var(--primary-color);">
                                                     <i class="fas fa-sync-alt"></i>
@@ -192,9 +199,9 @@
                                 <tr>
                                     <td colspan="6" class="border-0 text-center py-5">
                                         <div class="text-secondary opacity-30 mb-3">
-                                            <i class="fas fa-user-friends fa-3x"></i>
+                                            <i class="fas fa-user-friends fa-4x"></i>
                                         </div>
-                                        <div class="fw-bold text-secondary">No parent records found</div>
+                                        <div class="fw-bold text-secondary" data-i18n="no_parent_records">No parent records found in system</div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -205,10 +212,116 @@
 
         </main>
     </div>
+
+    <!-- Link Child Modal -->
+    <div class="modal fade" id="linkChildModal" tabindex="-1" aria-labelledby="linkChildModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 24px;">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <h5 class="modal-title fw-bold" id="linkChildModalLabel" style="color: var(--dark-text);">Link Student to <span id="linkParentName" class="text-primary">Parent</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/admin/parents/link-student" method="POST">
+                    <div class="modal-body p-4">
+                        <input type="hidden" name="parent_id" id="modalParentId">
+                        <div class="mb-3">
+                            <label class="text-secondary small mb-1 fw-bold">Select Student</label>
+                            <select name="student_id" class="form-select bg-light border-0 rounded-3 px-3 py-2 fw-medium" required>
+                                <option value="">Choose a student...</option>
+                                <% if (typeof students !== "undefined" && students) { %>
+                                    <% for (let s of students) { %>
+                                        <option value="<%= s.id %>"><%= s.first_name %> <%= s.last_name %> (<%= s.student_id %>) - Grade <%= s.grade_level %>-<%= s.section %></option>
+                                    <% } %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="mb-0">
+                            <label class="text-secondary small mb-1 fw-bold">Relationship (Optional)</label>
+                            <select name="relationship" class="form-select bg-light border-0 rounded-3 px-3 py-2 fw-medium">
+                                <option value="father">Father</option>
+                                <option value="mother">Mother</option>
+                                <option value="guardian" selected>Guardian</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light rounded-3 px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary rounded-3 px-4 fw-bold shadow-sm">Link Student</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Parent Modal -->
+    <div class="modal fade" id="editParentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 24px;">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <h5 class="modal-title fw-bold" style="color: var(--dark-text)">Edit Parent Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="editParentForm" action="" method="POST">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-secondary mb-1">First Name</label>
+                                <input type="text" name="firstName" id="editParentFirstName" class="form-control rounded-3" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-secondary mb-1">Last Name</label>
+                                <input type="text" name="lastName" id="editParentLastName" class="form-control rounded-3" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-secondary mb-1">Email</label>
+                                <input type="email" name="email" id="editParentEmail" class="form-control rounded-3" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-secondary mb-1">Phone</label>
+                                <input type="tel" name="phone" id="editParentPhone" class="form-control rounded-3">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-secondary mb-1">Portal Username</label>
+                                <input type="text" name="username" id="editParentUsername" class="form-control rounded-3" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-secondary mb-1">New Password (Leave blank to keep current)</label>
+                                <input type="password" name="password" id="editParentPassword" class="form-control rounded-3" placeholder="********">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-secondary mb-1">Occupation</label>
+                                <input type="text" name="occupation" id="editParentOccupation" class="form-control rounded-3">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-secondary mb-1">Relationship</label>
+                                <select name="relationship" id="editParentRelationship" class="form-select rounded-3">
+                                    <option value="father">Father</option>
+                                    <option value="mother">Mother</option>
+                                    <option value="guardian">Guardian</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" name="is_active" id="editParentIsActive">
+                                    <label class="form-check-label fw-bold small">Account Active Status</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end mt-4">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
     
     <script>
         function toggleForm() {
@@ -222,6 +335,44 @@
                 toggleForm();
             }
         };
+
+        function editParent(userId) {
+            console.log('Fetching parent data for ID:', userId);
+            fetch(`/admin/parents/edit/${userId}`)
+                .then(res => {
+                    if (!res.ok) throw new Error('Network response was not ok');
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        const p = data.parent;
+                        document.getElementById('editParentFirstName').value = p.first_name || '';
+                        document.getElementById('editParentLastName').value = p.last_name || '';
+                        document.getElementById('editParentEmail').value = p.email || '';
+                        document.getElementById('editParentPhone').value = p.phone || '';
+                        document.getElementById('editParentUsername').value = p.username || '';
+                        document.getElementById('editParentPassword').value = ''; // Always clear password field
+                        document.getElementById('editParentOccupation').value = p.occupation || '';
+                        document.getElementById('editParentRelationship').value = (p.relationship || 'guardian').toLowerCase();
+                        document.getElementById('editParentIsActive').checked = p.is_active ? true : false;
+                        
+                        document.getElementById('editParentForm').action = `/admin/parents/edit/${userId}`;
+                        const modalEl = document.getElementById('editParentModal');
+                        if (window.bootstrap) {
+                            const modal = new bootstrap.Modal(modalEl);
+                            modal.show();
+                        } else {
+                            console.error('Bootstrap is not loaded');
+                        }
+                    } else {
+                        alert('Failed to fetch parent data: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Fetch error:', err);
+                    alert('Error fetching parent data. Please check console.');
+                });
+        }
         function searchParents() {
             let input = document.getElementById('parentSearch');
             let filter = input.value.toUpperCase();
@@ -240,6 +391,19 @@
                 tr[i].style.display = found ? "" : "none";
             }
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const linkBtns = document.querySelectorAll('.link-child-btn');
+            const parentNameSpan = document.getElementById('linkParentName');
+            const parentIdInput = document.getElementById('modalParentId');
+            
+            linkBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    parentNameSpan.textContent = btn.getAttribute('data-parent-name');
+                    parentIdInput.value = btn.getAttribute('data-parent-id');
+                });
+            });
+        });
     </script>
 </body>
 </html>

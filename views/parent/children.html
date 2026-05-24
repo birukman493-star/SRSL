@@ -71,31 +71,49 @@
                 <% if (children && children.length > 0) { %>
                     <% children.forEach(child => { %>
                         <div class="col-lg-4 col-md-6">
-                            <div class="premium-card h-100">
+                            <div class="premium-card h-100" data-student-id="<%= child.id %>">
                                 <div class="child-header">
                                     <div class="child-avatar-wrap">
                                         <%= child.first_name[0] %><%= child.last_name[0] %>
                                     </div>
                                     <h2 class="fw-bold mb-1" style="color: var(--dark-text); font-size: 1.5rem;"><%= child.first_name %> <%= child.last_name %></h2>
                                     <div class="text-primary fw-800 text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">
-                                        <%= child.student_id %> • Grade <%= child.grade_level %>-<%= child.section %>
+                                        <%= child.student_id %> â€¢ Grade <%= child.grade_level %>-<%= child.section %>
                                     </div>
                                 </div>
                                 <div class="p-4 p-xl-5">
                                     <div class="row g-3 mb-5">
-                                        <div class="col-6">
-                                            <div class="p-3 rounded-4 bg-light text-center border">
-                                                <div class="h3 fw-bold text-dark mb-0"><%= child.grade_count || 0 %></div>
-                                                <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Graded Subjects</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="p-3 rounded-4 bg-light text-center border">
-                                                <div class="h3 fw-bold text-primary mb-0"><%= child.average_grade ? Math.round(child.average_grade) + '%' : '0%' %></div>
-                                                <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Avg. Achievement</div>
-                                            </div>
-                                        </div>
-                                    </div>
+    <div class="col-4">
+        <div class="p-3 rounded-4 bg-light text-center border">
+            <div class="h3 fw-bold text-dark mb-0"><%= child.grade_count || 0 %></div>
+            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Graded Subjects</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="p-3 rounded-4 bg-light text-center border">
+            <div class="h3 fw-bold text-primary mb-0"><%= child.average_grade ? Math.round(child.average_grade) + '%' : '0%' %></div>
+            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Avg. Achievement</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="p-3 rounded-4 bg-light text-center border">
+            <div class="h3 fw-bold text-success mb-0"><%= child.present %></div>
+            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Present Days</div>
+        </div>
+        <div class="p-3 rounded-4 bg-light text-center border mt-2">
+            <div class="h3 fw-bold text-danger mb-0"><%= child.absent %></div>
+            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Absent Days</div>
+        </div>
+        <div class="p-3 rounded-4 bg-light text-center border mt-2">
+            <div class="h3 fw-bold text-warning mb-0"><%= child.late %></div>
+            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Late Count</div>
+        </div>
+        <div class="p-3 rounded-4 bg-light text-center border mt-2">
+            <div class="h3 fw-bold text-primary mb-0"><%= child.attendance_rate %>%</div>
+            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Attendance %</div>
+        </div>
+    </div>
+</div>
                                     
                                     <div class="d-grid gap-3">
                                         <a href="/parent/grades/<%= child.id %>" class="btn btn-primary py-3 rounded-pill fw-bold shadow-sm">
@@ -123,7 +141,8 @@
     </div>
     
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script><script src="/socket.io/socket.io.js"></script>
+<script src="/js/brocode-script.js"></script>
     <style>
         .fw-900 { font-weight: 900; }
         .fw-800 { font-weight: 800; }
@@ -131,3 +150,4 @@
     </style>
 </body>
 </html>
+

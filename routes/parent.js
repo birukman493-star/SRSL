@@ -13,6 +13,16 @@ function isParent(req, res, next) {
 // Apply parent middleware to all routes
 router.use(isParent);
 
+// Helper to get system settings dynamically
+async function getSetting(key, defaultValue = '') {
+  try {
+    const [rows] = await pool.execute('SELECT setting_value FROM system_settings WHERE setting_key = ?', [key]);
+    return rows.length > 0 ? rows[0].setting_value : defaultValue;
+  } catch (e) {
+    return defaultValue;
+  }
+}
+
 // GET /parent/dashboard - Parent dashboard
 router.get('/dashboard', async (req, res) => {
   try {
@@ -41,78 +51,105 @@ router.get('/dashboard', async (req, res) => {
       ORDER BY s.last_name, s.first_name
     `, [parent.id]);
     
-    // Get child-specific stats
+    // Get child-specific stats using ONLY approved_results view (Single Source of Truth)
     for (let child of children) {
       const [childStats] = await pool.execute(`
         SELECT 
-          AVG(score/max_score * 4.0) as gpa,
-          SUM(score) as total_score,
-          SUM(max_score) as total_max
-        FROM grades
-        WHERE student_id = ? AND status = 'approved'
+          AVG(scr.total_score) as average_score,
+          SUM(scr.total_score) as total_score
+        FROM approved_results scr
+        WHERE scr.student_id = ?
       `, [child.id]);
       
       // Fetch semester stats for this child
       const [childSemesterStats] = await pool.execute(`
         SELECT 
-          c.academic_year, 
-          c.semester, 
-          AVG(g.score/g.max_score * 4.0) as semester_gpa
-        FROM grades g
-        JOIN classes c ON g.class_id = c.id
-        WHERE g.student_id = ? AND g.status = 'approved'
-        GROUP BY c.academic_year, c.semester
-        ORDER BY c.academic_year DESC, c.semester DESC
+          scr.academic_year, 
+          scr.semester_id as semester, 
+          AVG(scr.total_score) as semester_avg
+        FROM approved_results scr
+        WHERE scr.student_id = ?
+        GROUP BY scr.academic_year, scr.semester_id
+        ORDER BY scr.academic_year DESC, scr.semester_id DESC
       `, [child.id]);
       
-      // Calculate Class Rank
-      const [rankData] = await pool.execute(`
-        SELECT COUNT(*) + 1 as rank
-        FROM (
-          SELECT s.id, AVG(g.score/g.max_score) as avg_score
-          FROM students s
-          JOIN grades g ON s.id = g.student_id
-          WHERE s.grade_level = ? AND s.section = ? AND g.status = 'approved'
-          GROUP BY s.id
-        ) as class_ranks
-        WHERE avg_score > (
-          SELECT AVG(score/max_score)
-          FROM grades
-          WHERE student_id = ? AND status = 'approved'
-        )
-      `, [child.grade_level, child.section, child.id]);
+      // Calculate Class Rank per class_id + academic_year (competition ranking)
+      // Resolve class_id for this child
+      let childClassId = child.class_id || null;
+      if (!childClassId && child.grade_level && child.section) {
+        const [childCls] = await pool.execute(
+          'SELECT id FROM classes WHERE CAST(grade AS CHAR) = CAST(? AS CHAR) AND section = ? LIMIT 1',
+          [child.grade_level, child.section]
+        );
+        if (childCls.length > 0) childClassId = childCls[0].id;
+      }
+      const activeYearForChild = await getSetting('academicYear', '');
+      let childRankData = [{ rank: 'N/A' }];
+      if (childClassId) {
+        const childAvg = childStats[0].average_score ? parseFloat(childStats[0].average_score) : 0;
+        const [childRankRows] = await pool.execute(`
+          SELECT COUNT(*) + 1 as rank
+          FROM (
+            SELECT scr2.student_id, AVG(scr2.total_score) as avg_score
+            FROM approved_results scr2
+            WHERE scr2.class_id = ?
+              AND (? = '' OR scr2.academic_year = ?)
+            GROUP BY scr2.student_id
+          ) as class_ranks
+          WHERE avg_score > ?
+        `, [childClassId, activeYearForChild, activeYearForChild, childAvg]);
+        childRankData = childRankRows;
+      }
 
       const [totalInClass] = await pool.execute(`
         SELECT COUNT(*) as total 
         FROM students 
         WHERE grade_level = ? AND section = ?
       `, [child.grade_level, child.section]);
+
+      // Compute attendance rate for the parent dashboard child card
+      const [childAttendance] = await pool.execute(`
+        SELECT 
+          SUM(CASE WHEN status IN ('present', 'late', 'excused') THEN 1 ELSE 0 END) as attended,
+          COUNT(*) as total
+        FROM attendance
+        WHERE student_id = ? AND approval_status = 'approved'
+      `, [child.id]);
+      const attTotal = childAttendance[0].total || 0;
+      const attAttended = childAttendance[0].attended || 0;
+      child.attendance_rate = attTotal > 0 ? ((attAttended / attTotal) * 100).toFixed(1) : '100.0';
       
-      child.gpa = childStats[0].gpa ? parseFloat(childStats[0].gpa).toFixed(2) : '0.00';
+      child.gpa = childStats[0].average_score ? (parseFloat(childStats[0].average_score) / 25).toFixed(2) : '0.00'; 
+      child.average_score = childStats[0].average_score ? parseFloat(childStats[0].average_score).toFixed(1) : '0.0';
       child.total_score = childStats[0].total_score || 0;
-      child.total_max = childStats[0].total_max || 0;
       child.semester_stats = childSemesterStats;
-      child.rank = rankData[0].rank;
+      child.rank = (childRankData[0] && childRankData[0].rank) || 'N/A';
       child.total_in_class = totalInClass[0].total;
     }
+
     const [statsData] = await pool.execute(`
       SELECT 
-        AVG(score/max_score * 100) as avg_grade,
-        AVG(score/max_score * 4.0) as cgpa,
-        SUM(score) as total_score,
-        SUM(max_score) as max_total,
-        COUNT(DISTINCT CASE WHEN g.score/g.max_score >= 0.9 THEN g.id END) as achievements
-      FROM grades g
-      JOIN parent_student_relations psr ON g.student_id = psr.student_id
-      WHERE psr.parent_id = ? AND g.status = 'approved'
+        AVG(scr.total_score) as avg_grade,
+        SUM(scr.total_score) as total_score,
+        COUNT(*) as approved_count
+      FROM approved_results scr
+      JOIN parent_student_relations psr ON scr.student_id = psr.student_id
+      WHERE psr.parent_id = ?
+    `, [parent.id]);
+
+    const [achievementsData] = await pool.execute(`
+      SELECT COUNT(*) as count
+      FROM approved_results scr
+      JOIN parent_student_relations psr ON scr.student_id = psr.student_id
+      WHERE psr.parent_id = ? AND scr.total_score >= 90
     `, [parent.id]);
 
     const stats = {
-      averageGrade: statsData[0].avg_grade ? Math.round(statsData[0].avg_grade) + '%' : 'N/A',
-      cgpa: statsData[0].cgpa ? parseFloat(statsData[0].cgpa).toFixed(2) : '0.00',
+      averageGrade: statsData[0].avg_grade ? Math.round(parseFloat(statsData[0].avg_grade)) + '%' : 'N/A',
+      cgpa: statsData[0].avg_grade ? (parseFloat(statsData[0].avg_grade) / 25).toFixed(2) : '0.00',
       totalScore: statsData[0].total_score || 0,
-      maxTotal: statsData[0].max_total || 0,
-      achievements: statsData[0].achievements || 0
+      maxTotal: (statsData[0].approved_count || 0) * 100,
+      achievements: achievementsData[0].count || 0
     };
     
     // Get recent activities
@@ -122,12 +159,13 @@ router.get('/dashboard', async (req, res) => {
       FROM announcements
       WHERE audience IN ('all', 'students')
       UNION ALL
-      SELECT 'grade' as type, CONCAT(s.first_name, ' ', s.last_name, ' - New grade: ', g.title) as title,
-             DATE_FORMAT(g.grade_date, '%Y-%m-%d') as date
-      FROM grades g
-      JOIN students s ON g.student_id = s.id
+      SELECT 'grade' as type, CONCAT(s.first_name, ' ', s.last_name, ' - New grade: ', ac.name) as title,
+             DATE_FORMAT(sr.grade_date, '%Y-%m-%d') as date
+      FROM student_results sr
+      JOIN assessment_categories ac ON sr.category_id = ac.id
+      JOIN students s ON sr.student_id = s.id
       JOIN parent_student_relations psr ON s.id = psr.student_id
-      WHERE psr.parent_id = ? AND g.status = 'approved'
+      WHERE psr.parent_id = ? AND sr.status = 'approved'
       ORDER BY date DESC
       LIMIT 5
     `, [parent.id]);
@@ -157,10 +195,10 @@ router.get('/children', async (req, res) => {
 
     const [children] = await pool.execute(`
       SELECT s.*, u.email as student_email,
-             (SELECT COUNT(*) FROM grades WHERE student_id = s.id AND status = 'approved') as grade_count,
-             (SELECT AVG(g.score/g.max_score * 100) 
-              FROM grades g 
-              WHERE g.student_id = s.id AND g.status = 'approved') as average_grade
+             (SELECT COUNT(*) FROM student_course_results WHERE student_id = s.id AND status = 'approved') as grade_count,
+             (SELECT ROUND(AVG(scr.total_score), 1) 
+              FROM student_course_results scr 
+              WHERE scr.student_id = s.id AND scr.status = 'approved') as average_grade
       FROM students s
       JOIN users u ON s.user_id = u.id
       JOIN parent_student_relations psr ON s.id = psr.student_id
@@ -168,6 +206,24 @@ router.get('/children', async (req, res) => {
       ORDER BY s.last_name, s.first_name
     `, [parentData[0].id]);
     
+    for (let child of children) {
+      const [attendance] = await pool.execute(`
+        SELECT 
+               SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present,
+               SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent,
+               SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late,
+               COUNT(*) as total
+        FROM attendance 
+        WHERE student_id = ? AND approval_status = 'approved'
+      `, [child.id]);
+      
+      const total = attendance[0].total || 0;
+      child.present = attendance[0].present || 0;
+      child.absent = attendance[0].absent || 0;
+      child.late = attendance[0].late || 0;
+      child.attendance_rate = total > 0 ? (((child.present + child.late) / total) * 100).toFixed(1) : '100.0';
+    }
+
     res.render('parent/children', {
       title: 'My Children',
       user: req.session.user,
@@ -205,28 +261,117 @@ router.get('/grades/:studentId', async (req, res) => {
       return res.status(403).render('404-modern', { title: 'Access Denied' });
     }
     
-    // Get student's grades
-    const [grades] = await pool.execute(`
-      SELECT g.*, g.title as assignment_name, c.name as class_name, c.grade, c.section
-      FROM grades g
-      JOIN classes c ON g.class_id = c.id
-      WHERE g.student_id = ? AND g.status = 'approved'
-      ORDER BY g.grade_date DESC, c.name
+    // Fetch approved courses from approved_results (course_rank removed — rank is now per final average)
+    const [courseResults] = await pool.execute(`
+      SELECT scr.*, 
+             COALESCE(co.course_name, (SELECT course_name FROM courses WHERE teacher_id = scr.teacher_id AND grade = cl.grade LIMIT 1)) as course_name, 
+             COALESCE(co.course_code, (SELECT course_code FROM courses WHERE teacher_id = scr.teacher_id AND grade = cl.grade LIMIT 1)) as course_code, 
+             cl.name as class_name,
+             t.first_name as teacher_fname, t.last_name as teacher_lname
+      FROM approved_results scr
+      LEFT JOIN courses co ON (scr.course_id = co.id AND scr.course_id != 0)
+      JOIN classes cl ON scr.class_id = cl.id
+      LEFT JOIN teachers t ON scr.teacher_id = t.id
+      WHERE scr.student_id = ?
+      ORDER BY scr.academic_year DESC, scr.semester_id ASC, co.course_name ASC
     `, [studentId]);
-    
-    // Calculate GPA
-    const [gpaData] = await pool.execute(`
-      SELECT AVG(g.score/g.max_score * 4.0) as gpa
-      FROM grades g
-      WHERE g.student_id = ? AND g.status = 'approved'
+
+    const activeYear = await getSetting('academicYear', '2023-2024');
+    let activeSemSetting = await getSetting('semester', '1');
+    if (!activeSemSetting.startsWith('Semester')) {
+      activeSemSetting = 'Semester ' + activeSemSetting;
+    }
+
+    const courseList = courseResults.map(cr => ({
+      course_name: cr.course_name || 'General Grade',
+      course_code: cr.course_code || '',
+      class_name: cr.class_name,
+      semester: cr.semester_id,
+      academic_year: cr.academic_year,
+      class_id: cr.class_id,
+      teacher_name: (cr.teacher_fname && cr.teacher_lname) ? `${cr.teacher_fname} ${cr.teacher_lname}` : 'Assigned Teacher',
+      categories: [],
+      total_weighted: parseFloat(cr.total_score),
+      structure_id: cr.assessment_structure_id
+    }));
+
+    // Fetch individual category details
+    const [details] = await pool.execute(`
+      SELECT sr.score, ac.name as category_name, ac.weight_percentage, ac.max_mark, gs.id as structure_id
+      FROM student_results sr
+      JOIN assessment_categories ac ON sr.category_id = ac.id
+      JOIN grading_structures gs ON ac.structure_id = gs.id
+      WHERE sr.student_id = ? AND sr.status = 'approved'
+      ORDER BY ac.order_index ASC
     `, [studentId]);
+
+    details.forEach(d => {
+      const ws = d.max_mark > 0 ? (parseFloat(d.score) / parseFloat(d.max_mark)) * parseFloat(d.weight_percentage) : 0;
+      const targetCourse = courseList.find(c => c.structure_id === d.structure_id);
+      if (targetCourse) {
+        targetCourse.categories.push({
+          category_name: d.category_name,
+          score: d.score,
+          max_mark: d.max_mark,
+          weight_percentage: d.weight_percentage,
+          weighted_score: ws
+        });
+      }
+    });
     
+    // Group into Current Semester vs Previous Semester
+    const currentSemesterResults = [];
+    const previousSemesterResults = [];
+    
+    courseList.forEach(c => {
+      if (c.academic_year === activeYear && c.semester === activeSemSetting) {
+        currentSemesterResults.push(c);
+      } else {
+        previousSemesterResults.push(c);
+      }
+    });
+
+    let currentSum = 0;
+    currentSemesterResults.forEach(c => { currentSum += c.total_weighted; });
+    const currentAvg = currentSemesterResults.length > 0 ? (currentSum / currentSemesterResults.length) : 0;
+
+    let previousSum = 0;
+    previousSemesterResults.forEach(c => { previousSum += c.total_weighted; });
+    const previousAvg = previousSemesterResults.length > 0 ? (previousSum / previousSemesterResults.length) : 0;
+
+    let overallSum = 0;
+    courseList.forEach(c => { overallSum += c.total_weighted; });
+    const overallAvg = courseList.length > 0 ? (overallSum / courseList.length) : 0;
+
+    // Attendance rate
+    const [attendance] = await pool.execute(`
+       SELECT 
+         SUM(CASE WHEN status IN ('present', 'late', 'excused') THEN 1 ELSE 0 END) as present_count,
+         COUNT(*) as total_count
+       FROM attendance
+       WHERE student_id = ? AND approval_status = 'approved'
+    `, [studentId]);
+
+    let attendance_rate = '100';
+    if (attendance[0].total_count > 0) {
+      attendance_rate = ((attendance[0].present_count / attendance[0].total_count) * 100).toFixed(1);
+    }
+
     res.render('parent/student-grades', {
-      title: `${relation[0].first_name} ${relation[0].last_name}'s Grades`,
+      title: relation[0].first_name + ' ' + relation[0].last_name + "'s Grades",
       user: req.session.user,
       student: relation[0],
-      grades: grades,
-      gpa: parseFloat(gpaData[0].gpa || 0)
+      currentSemesterResults,
+      previousSemesterResults,
+      currentAvg: currentAvg.toFixed(1),
+      currentSum: currentSum.toFixed(1),
+      previousAvg: previousAvg.toFixed(1),
+      previousSum: previousSum.toFixed(1),
+      overallAvg: overallAvg.toFixed(1),
+      overallSum: overallSum.toFixed(1),
+      attendance_rate,
+      courseResults: courseList,
+      hasResults: courseList.length > 0
     });
     
   } catch (error) {
@@ -256,15 +401,34 @@ router.get('/attendance/:studentId', async (req, res) => {
       return res.status(403).render('404-modern', { title: 'Access Denied' });
     }
     
-    // Get attendance records with class name
-    const [attendance] = await pool.execute(`
-      SELECT a.*, c.name as class_name
+    const courseIdFilter = req.query.courseId;
+    let query = `
+      SELECT a.*, c.name as class_name, COALESCE(co.course_name, 'Daily Attendance') as course_name
       FROM attendance a
       JOIN classes c ON a.class_id = c.id
+      LEFT JOIN courses co ON a.course_id = co.id
       WHERE a.student_id = ?
-      ORDER BY a.date DESC
-      LIMIT 50
+    `;
+    const params = [studentId];
+    
+    if (courseIdFilter) {
+      query += ` AND a.course_id = ?`;
+      params.push(courseIdFilter);
+    }
+    
+    query += ` ORDER BY a.date DESC LIMIT 50`;
+    
+    // Get attendance records with class name
+    const [attendance] = await pool.execute(query, params);
+
+    // Fetch enrolled courses for the filter dropdown
+    const [courses] = await pool.execute(`
+      SELECT DISTINCT co.id, co.course_name 
+      FROM enrollments e 
+      JOIN courses co ON e.course_id = co.id 
+      WHERE e.student_id = ? AND e.status = 'enrolled'
     `, [studentId]);
+
     
     // Compute attendance stats (present, late, and excused all count as attended)
     const stats = {
@@ -282,7 +446,9 @@ router.get('/attendance/:studentId', async (req, res) => {
       user: req.session.user,
       student: relation[0],
       attendance: attendance,
-      stats
+      stats,
+      courses,
+      selectedCourseId: courseIdFilter || ''
     });
     
   } catch (error) {

@@ -12,6 +12,13 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <script>
+        window.currentUser = {
+            id: <%= user.id %>,
+            role: "<%= user.role %>"
+        };
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         body { background: #f8fafc; color: #0f172a; }
         .main-panel { background: #f8fafc; }
@@ -61,7 +68,7 @@
                             <i class="fas fa-layer-group"></i>
                         </div>
                         <div class="text-secondary small fw-800 text-uppercase mb-1" style="letter-spacing: 1px;">Total Sessions</div>
-                        <div class="h3 fw-bold text-dark m-0"><%= stats.total %></div>
+                        <div id="stat-total" class="h3 fw-bold text-dark m-0"><%= stats.total %></div>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -70,7 +77,7 @@
                             <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="text-secondary small fw-800 text-uppercase mb-1" style="letter-spacing: 1px;">Present Days</div>
-                        <div class="h3 fw-bold text-success m-0"><%= stats.present %></div>
+                        <div id="stat-present" class="h3 fw-bold text-success m-0"><%= stats.present %></div>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -79,7 +86,7 @@
                             <i class="fas fa-percentage"></i>
                         </div>
                         <div class="text-secondary small fw-800 text-uppercase mb-1" style="letter-spacing: 1px;">Attendance Rate</div>
-                        <div class="h3 fw-bold text-warning m-0"><%= stats.percentage %>%</div>
+                        <div id="stat-rate" class="h3 fw-bold text-warning m-0"><%= stats.percentage %>%</div>
                     </div>
                 </div>
             </div>
@@ -91,12 +98,34 @@
                     <h5 class="m-0 text-dark fw-bold">Detailed Presence History</h5>
                 </div>
                 
+                <!-- Dynamic Real-time Attendance Cards -->
+                <div id="attendance-container" class="row g-3 mb-4"></div>
+                
+                <!-- Filter form -->
+                <div class="mb-4">
+                    <form action="/student/attendance" method="GET" class="d-flex align-items-center gap-2">
+                        <select name="courseId" class="form-select border-0 shadow-sm rounded-pill px-4 py-2" style="max-width: 300px; font-weight: 600;">
+                            <option value="">All Courses</option>
+                            <% if (typeof courses !== 'undefined' && courses && courses.length > 0) { %>
+                                <% courses.forEach(course => { %>
+                                    <option value="<%= course.id %>" <%= String(typeof selectedCourseId !== 'undefined' ? selectedCourseId : '') === String(course.id) ? 'selected' : '' %>><%= course.course_name %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">Filter</button>
+                        <% if (typeof selectedCourseId !== 'undefined' && selectedCourseId) { %>
+                            <a href="/student/attendance" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-secondary border">Clear</a>
+                        <% } %>
+                    </form>
+                </div>
+
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead style="background: #f8fafc">
                             <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 1px;">
+                                <th class="border-0 py-3">Day</th>
                                 <th class="border-0 py-3">Session Date</th>
-                                <th class="border-0 py-3">Class / Course Name</th>
+                                <th class="border-0 py-3">Course Name</th>
                                 <th class="border-0 py-3 text-center">Status</th>
                                 <th class="border-0 py-3 text-end">Remarks</th>
                             </tr>
@@ -104,14 +133,20 @@
                         <tbody>
                             <% if (typeof attendance !== "undefined" && attendance && attendance.length > 0) { %>
                                 <% attendance.forEach(record => { %>
-                                <tr>
+                                <tr data-course-id="<%= record.course_id %>">
+                                    <td class="border-0 py-3 fw-bold text-secondary">
+                                        <%= new Date(record.date).toLocaleDateString(undefined, { weekday: 'short' }) %>
+                                    </td>
                                     <td class="border-0 py-3 fw-bold text-dark">
                                         <%= new Date(record.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) %>
                                     </td>
                                     <td class="border-0 py-3">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="fas fa-book-open text-primary small opacity-50"></i>
-                                            <span class="text-dark fw-bold small"><%= record.class_name %></span>
+                                        <div class="d-flex flex-column gap-1">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="fas fa-book-open text-primary small opacity-50"></i>
+                                                <span class="text-dark fw-bold small"><%= record.course_name %></span>
+                                            </div>
+                                            <small class="text-secondary fw-semibold ps-4" style="font-size: 0.7rem;"><%= record.class_name %></small>
                                         </div>
                                     </td>
                                     <td class="border-0 py-3 text-center">
@@ -144,6 +179,154 @@
     </div>
 
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
+    
+    <script>
+        // Store current stats
+        const stats = {
+            total: <%= stats.total %>,
+            present: <%= stats.present %>,
+            absent: <%= stats.absent %>,
+            late: <%= stats.late %>,
+            excused: <%= stats.excused %>
+        };
+
+        // Initialize socket connection
+        const socket = io();
+
+        socket.on('connect', () => {
+            console.log('Connected to real-time notification gateway');
+        });
+
+        socket.on('attendanceUpdated', (data) => {
+            console.log('Real-time attendance record received:', data);
+            
+            // Verify if the update belongs to the current logged-in student
+            if (data.studentUserId === window.currentUser.id) {
+                appendAttendanceCard(data);
+                updateStats(data.status);
+            }
+        });
+
+        function appendAttendanceCard(data) {
+            const container = document.getElementById('attendance-container');
+            if (!container) return;
+
+            // Remove placeholder if present
+            const placeholderRow = document.querySelector('tbody tr td[colspan="4"]');
+            if (placeholderRow) {
+                placeholderRow.closest('tr').remove();
+            }
+
+            // Determine styles
+            let badgeClass = 'secondary';
+            let iconClass = 'question-circle';
+            if (data.status === 'present') {
+                badgeClass = 'success';
+                iconClass = 'check-circle';
+            } else if (data.status === 'absent') {
+                badgeClass = 'danger';
+                iconClass = 'times-circle';
+            } else if (data.status === 'late' || data.status === 'excused') {
+                badgeClass = 'warning';
+                iconClass = 'clock';
+            }
+
+            // Construct Card HTML with smooth fade-in
+            const cardHtml = `
+                <div class="col-md-6 col-lg-4 mb-3 animate-fade-in" style="animation: fadeIn 0.5s ease-out;">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden" style="border-left: 5px solid var(--bs-${badgeClass}) !important; background: white;">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-${badgeClass} bg-opacity-10 text-${badgeClass} rounded-pill px-3 py-2 fw-bold text-uppercase" style="font-size: 0.65rem;">
+                                    <i class="fas fa-${iconClass} me-1"></i> ${data.status}
+                                </span>
+                                <small class="text-secondary fw-bold" style="font-size: 0.75rem;">${data.day}</small>
+                            </div>
+                            <h6 class="card-title fw-bold text-dark mb-1">${data.subject}</h6>
+                            <p class="card-text text-secondary small mb-2">
+                                <i class="far fa-calendar-alt me-1"></i> ${new Date(data.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                            ${data.notes ? `<div class="bg-light p-2 rounded-3 text-secondary small fw-medium mt-2"><i class="far fa-comment-dots me-1"></i> ${data.notes}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('afterbegin', cardHtml);
+
+            // Also prepend to the main history table dynamically
+            const tbody = document.querySelector('tbody');
+            if (tbody) {
+                const tableRowHtml = `
+                    <tr class="animate-fade-in" style="animation: fadeIn 0.5s ease-out; background: rgba(var(--bs-${badgeClass}-rgb), 0.02);" data-course-id="${data.courseId || ''}">
+                        <td class="border-0 py-3 fw-bold text-secondary">
+                            ${data.day}
+                        </td>
+                        <td class="border-0 py-3 fw-bold text-dark">
+                            ${new Date(data.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </td>
+                        <td class="border-0 py-3 fw-bold text-dark">
+                            ${data.courseName || data.subject}
+                            ${data.courseId ? `<small class="text-secondary fw-medium">(ID: ${data.courseId})</small>` : ''}
+                        </td>
+                        <td class="border-0 py-3 fw-bold text-dark">
+                            ${new Date(data.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </td>
+                        <td class="border-0 py-3">
+                            <div class="d-flex flex-column gap-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-book-open text-primary small opacity-50"></i>
+                                    <span class="text-dark fw-bold small">${data.subject}</span>
+                                </div>
+                                <small class="text-secondary fw-semibold ps-4" style="font-size: 0.7rem;">${data.className || 'General'}</small>
+                            </div>
+                        </td>
+                        <td class="border-0 py-3 text-center">
+                            <span class="badge rounded-pill px-3 py-2 text-uppercase bg-${badgeClass} bg-opacity-10 text-${badgeClass} fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                                <i class="fas fa-${iconClass} me-1"></i> ${data.status}
+                            </span>
+                        </td>
+                        <td class="border-0 py-3 text-end text-secondary small fw-medium">
+                            ${data.notes || '—'}
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('afterbegin', tableRowHtml);
+            }
+        }
+
+        function updateStats(newStatus) {
+            stats.total += 1;
+            if (newStatus === 'present') {
+                stats.present += 1;
+            } else if (newStatus === 'absent') {
+                stats.absent += 1;
+            } else if (newStatus === 'late') {
+                stats.late += 1;
+            } else if (newStatus === 'excused') {
+                stats.excused += 1;
+            }
+
+            const attended = stats.present + stats.late + stats.excused;
+            const rate = stats.total > 0 ? ((attended / stats.total) * 100).toFixed(1) : '100.0';
+
+            const totalEl = document.getElementById('stat-total');
+            if (totalEl) totalEl.textContent = stats.total;
+
+            const presentEl = document.getElementById('stat-present');
+            if (presentEl) presentEl.textContent = stats.present;
+
+            const rateEl = document.getElementById('stat-rate');
+            if (rateEl) rateEl.textContent = rate + '%';
+        }
+    </script>
+    
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </body>
 </html>
+

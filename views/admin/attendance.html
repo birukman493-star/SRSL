@@ -91,6 +91,19 @@
                             </select>
                         </div>
                         <div class="col-md-2">
+                            <select name="teacher_id" class="form-select form-select-sm border-0 bg-light fw-bold"
+                                onchange="this.form.submit()" style="border-radius: 8px;">
+                                <option value="">All Teachers</option>
+                                <% if (typeof teachers !== 'undefined') { %>
+                                    <% teachers.forEach(t => { %>
+                                        <option value="<%= t.id %>" <%= (typeof filters !== 'undefined' && filters.teacher_id == t.id) ? 'selected' : '' %>>
+                                            <%= t.first_name %> <%= t.last_name %>
+                                        </option>
+                                    <% }) %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
                             <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold rounded-2">Apply
                                 Filters</button>
                         </div>
@@ -112,6 +125,7 @@
                                     <th class="border-0 py-3">Class / Level</th>
                                     <th class="border-0 py-3 text-center">Status</th>
                                     <th class="border-0 py-3">Date</th>
+                                    <th class="border-0 py-3">Recorded By</th>
                                     <th class="border-0 py-3">Notes</th>
                                     <th class="border-0 py-3 text-end pe-4">Management</th>
                                 </tr>
@@ -163,8 +177,14 @@
                                                 </span>
                                             </td>
                                             <td class="border-0 py-3">
+                                                <div class="fw-bold small" style="color: var(--primary-color);">
+                                                    <%= record.teacher_fname %> <%= record.teacher_lname %>
+                                                </div>
+                                                <div class="text-secondary small opacity-75">Faculty</div>
+                                            </td>
+                                            <td class="border-0 py-3">
                                                 <span class="text-secondary small">
-                                                    <%= record.notes || '—' %>
+                                                    <%= record.notes || 'â€”' %>
                                                 </span>
                                             </td>
                                             <td class="border-0 text-end py-3 pe-4">

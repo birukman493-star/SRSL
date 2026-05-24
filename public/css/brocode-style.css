@@ -2563,6 +2563,11 @@ body::after {
   background-attachment: fixed;
 }
 
+.main-panel {
+  min-width: 0;
+  flex: 1;
+}
+
 /* Glass Sidebar */
 /* ===== DASHBOARD SIDEBAR MOBILE DRAWER ===== */
 .glass-sidebar {
@@ -3442,4 +3447,26 @@ html {
 .search-group-modern:focus-within {
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
   border-color: var(--primary-color);
+}/* ===== APPLE-STYLE RESPONSIVE MOTION ===== */
+.transition-hover {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease !important;
+}
+.transition-hover:hover {
+    transform: translateY(-5px) scale(1.02) !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08) !important;
+}
+.apple-card {
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease;
+}
+.apple-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+}
+/* ===== SMOOTH THEME TRANSITIONS ===== */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *:before,
+html.theme-transition *:after {
+    transition: background-color 0.5s ease-in-out, background 0.5s ease-in-out, color 0.5s ease-in-out, border-color 0.5s ease-in-out, box-shadow 0.5s ease-in-out !important;
+    transition-delay: 0s !important;
 }

@@ -134,7 +134,8 @@
 
             <% 
                 const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-                const periodNames = [...new Set(schedule.map(s => s.period))].sort((a, b) => {
+                const scheduleData = locals.schedule || [];
+                const periodNames = [...new Set(scheduleData.map(s => s.period))].sort((a, b) => {
                     return a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'});
                 });
             %>
@@ -156,7 +157,7 @@
                                     <td class="time-col">
                                         <div class="fw-900" style="font-size: 0.9rem;"><%= period %></div>
                                         <% 
-                                            const firstMatch = schedule.find(s => s.period === period);
+                                            const firstMatch = scheduleData.find(s => s.period === period);
                                             if (firstMatch) {
                                         %>
                                             <div class="text-secondary smaller mt-1">
@@ -167,7 +168,7 @@
                                     <% weekDays.forEach(day => { %>
                                         <td>
                                             <% 
-                                                const slot = schedule.find(s => s.day_of_week === day && s.period === period);
+                                                const slot = scheduleData.find(s => s.day_of_week === day && s.period === period);
                                                 if (slot) {
                                             %>
                                                 <div class="schedule-slot shadow-xs">
@@ -202,6 +203,7 @@
     </div>
     
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
 </body>
 </html>
+

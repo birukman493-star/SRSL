@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Abdigudina Admin</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+
+        <main class="main-panel p-4">
+            <div class="container-fluid mx-auto" style="max-width: 1400px;">
+                <!-- Header -->
+                <div class="dashboard-header mb-4 p-4 shadow-sm" style="background: white; border-radius: 24px;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="fw-900 mb-1" style="font-size: 2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                Teacher Activity Monitor
+                            </h1>
+                            <p class="text-secondary m-0 fw-medium">Independent auditing of faculty workflows and submissions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4 p-3">
+                    <form class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">FILTER BY TEACHER</label>
+                            <select name="teacher_id" class="form-select border-0 bg-light rounded-3">
+                                <option value="">All Teachers</option>
+                                <% teachers.forEach(t => { %>
+                                    <option value="<%= t.id %>" <%= locals.filters && locals.filters.teacher_id == t.id ? 'selected' : '' %>>
+                                        <%= t.first_name %> <%= t.last_name %>
+                                    </option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">ACTIVITY TYPE</label>
+                            <select name="type" class="form-select border-0 bg-light rounded-3">
+                                <option value="">All Activities</option>
+                                <option value="Attendance Submitted" <%= locals.filters && locals.filters.type == 'Attendance Submitted' ? 'selected' : '' %>>Attendance</option>
+                                <option value="Grades Submitted" <%= locals.filters && locals.filters.type == 'Grades Submitted' ? 'selected' : '' %>>Grades</option>
+                                <option value="Material Uploaded" <%= locals.filters && locals.filters.type == 'Material Uploaded' ? 'selected' : '' %>>Materials</option>
+                                <option value="Grading Structure" <%= locals.filters && locals.filters.type == 'Grading Structure' ? 'selected' : '' %>>Grading Structure</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100 rounded-3 fw-bold">Filter</button>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/admin/activities" class="btn btn-light w-100 rounded-3 fw-bold border">Reset</a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Workload Metrics (Only if teacher selected) -->
+                <% if (locals.workload) { %>
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white">
+                            <div class="small fw-bold opacity-75">COURSES</div>
+                            <div class="h3 fw-900 m-0"><%= locals.workload.courses %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-info text-white">
+                            <div class="small fw-bold opacity-75">STUDENTS</div>
+                            <div class="h3 fw-900 m-0"><%= locals.workload.students %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-warning text-white">
+                            <div class="small fw-bold opacity-75">ATTENDANCE LOGS</div>
+                            <div class="h3 fw-900 m-0"><%= locals.workload.attendance %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white">
+                            <div class="small fw-bold opacity-75">GRADE ENTRIES</div>
+                            <div class="h3 fw-900 m-0"><%= locals.workload.results %></div>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- Activity Log Table -->
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="px-4 py-3">Time</th>
+                                    <th class="py-3">Teacher</th>
+                                    <th class="py-3">Activity</th>
+                                    <th class="py-3">Context</th>
+                                    <th class="py-3">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (locals.activities && locals.activities.length > 0) { %>
+                                    <% locals.activities.forEach(a => { %>
+                                        <tr>
+                                            <td class="px-4 py-3 small text-secondary">
+                                                <%= new Date(a.created_at).toLocaleString() %>
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold"><%= a.first_name %> <%= a.last_name %></div>
+                                            </td>
+                                            <td>
+                                                <% 
+                                                    let badgeClass = 'bg-info';
+                                                    if (a.activity_type.includes('Attendance')) badgeClass = 'bg-warning';
+                                                    if (a.activity_type.includes('Grades')) badgeClass = 'bg-success';
+                                                    if (a.activity_type.includes('Structure')) badgeClass = 'bg-primary';
+                                                %>
+                                                <span class="badge <%= badgeClass %> rounded-pill px-3"><%= a.activity_type %></span>
+                                            </td>
+                                            <td>
+                                                <div class="small fw-bold text-primary"><%= a.course_name || 'General' %></div>
+                                                <div class="small text-secondary"><%= a.class_name || 'N/A' %></div>
+                                            </td>
+                                            <td class="small fw-medium">
+                                                <%= a.description %>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr><td colspan="5" class="text-center py-5 text-secondary">No activities recorded yet.</td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

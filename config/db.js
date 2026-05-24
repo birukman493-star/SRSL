@@ -374,28 +374,66 @@ async function initDatabase() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         student_id INT NOT NULL,
         class_id INT NOT NULL,
+        course_id INT,
         date DATE NOT NULL,
         status ENUM('present', 'absent', 'late', 'excused') DEFAULT 'present',
+        approval_status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
         attendance_type ENUM('daily', 'morning', 'afternoon') DEFAULT 'daily',
         notes TEXT,
         created_by INT,
+        teacher_id INT,
+        semester_id VARCHAR(50),
+        academic_year VARCHAR(20),
+        semester VARCHAR(50),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
         FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL,
         FOREIGN KEY (created_by) REFERENCES teachers(id) ON DELETE SET NULL,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
         INDEX idx_student_date (student_id, date),
         INDEX idx_class_date (class_id, date),
         INDEX idx_status (status),
-        UNIQUE KEY unique_attendance (student_id, class_id, date)
+        UNIQUE KEY unique_attendance (student_id, class_id, course_id, date)
       )
     `);
+
+    // Migration for attendance table
+    try {
+      await dbConnection.execute('ALTER TABLE attendance ADD COLUMN course_id INT AFTER class_id');
+      console.log('Added course_id to attendance table');
+    } catch (e) { }
+
+    try {
+      await dbConnection.execute('ALTER TABLE attendance ADD COLUMN approval_status ENUM(\'pending\', \'approved\', \'rejected\') DEFAULT \'pending\' AFTER status');
+      console.log('Added approval_status to attendance table');
+    } catch (e) { }
+
+    try {
+      await dbConnection.execute('ALTER TABLE attendance ADD CONSTRAINT fk_attendance_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL');
+    } catch (e) { }
+
+    try {
+      // Drop old unique key and add new one
+      await dbConnection.execute('ALTER TABLE attendance DROP INDEX unique_attendance');
+      await dbConnection.execute('ALTER TABLE attendance ADD UNIQUE KEY unique_attendance (student_id, class_id, course_id, date)');
+      console.log('Updated unique_attendance key');
+    } catch (e) { }
+
+    try {
+      await dbConnection.execute('ALTER TABLE attendance ADD COLUMN academic_year VARCHAR(20)');
+      await dbConnection.execute('ALTER TABLE attendance ADD COLUMN semester VARCHAR(50)');
+      console.log('Added academic fields to attendance');
+    } catch (e) { }
+
 
     // Create assignments table
     await dbConnection.execute(`
       CREATE TABLE IF NOT EXISTS assignments (
         id INT AUTO_INCREMENT PRIMARY KEY,
         class_id INT NOT NULL,
+        course_id INT,
         assignment_type ENUM('homework', 'project', 'lab', 'reading', 'worksheet') DEFAULT 'homework',
         title VARCHAR(200) NOT NULL,
         description TEXT,
@@ -407,17 +445,27 @@ async function initDatabase() {
         attempts_allowed ENUM('1', '2', '3', 'unlimited') DEFAULT 'unlimited',
         visible_to_students BOOLEAN DEFAULT TRUE,
         created_by INT,
+        teacher_id INT,
+        academic_year VARCHAR(20),
+        semester VARCHAR(50),
+        semester_id VARCHAR(50),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
         FOREIGN KEY (created_by) REFERENCES teachers(id) ON DELETE SET NULL,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL,
         INDEX idx_class_id (class_id),
         INDEX idx_due_date (due_date),
         INDEX idx_created_by (created_by)
       )
     `);
 
-    // Create course_prerequisites table
+    try {
+      await dbConnection.execute('ALTER TABLE assignments ADD COLUMN academic_year VARCHAR(20)');
+      await dbConnection.execute('ALTER TABLE assignments ADD COLUMN semester VARCHAR(50)');
+      console.log('Added academic fields to assignments');
+    } catch (e) { }
     await dbConnection.execute(`
       CREATE TABLE IF NOT EXISTS course_prerequisites (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -436,6 +484,10 @@ async function initDatabase() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         class_id INT NOT NULL,
         course_id INT NOT NULL,
+        teacher_id INT,
+        academic_year VARCHAR(20),
+        semester VARCHAR(50) DEFAULT 'Semester 1',
+        semester_id VARCHAR(50) DEFAULT 'Semester 1',
         day_of_week ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday') NOT NULL,
         start_time TIME NOT NULL,
         end_time TIME NOT NULL,
@@ -443,6 +495,7 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
         INDEX idx_class_day (class_id, day_of_week)
       )
     `);
@@ -530,6 +583,10 @@ async function initDatabase() {
         student_id INT NOT NULL,
         class_id INT NOT NULL,
         course_id INT,
+        teacher_id INT,
+        academic_year VARCHAR(20),
+        semester VARCHAR(50),
+        semester_id VARCHAR(50),
         assessment_type ENUM('quiz', 'attendance', 'mid-exam', 'final-exam', 'homework', 'exam', 'project', 'participation') NOT NULL,
         title VARCHAR(100) NOT NULL,
         score DECIMAL(5,2) NOT NULL,
@@ -548,6 +605,7 @@ async function initDatabase() {
         FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
         FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
         FOREIGN KEY (created_by) REFERENCES teachers(id) ON DELETE SET NULL,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
         INDEX idx_student_class_grade (student_id, class_id),
         INDEX idx_assessment_type (assessment_type),
         INDEX idx_grade_date (grade_date),
@@ -555,7 +613,114 @@ async function initDatabase() {
       )
     `);
 
-    // Create contact_messages table for contact form
+    // Create grading_structures table (Flexible Assessment Templates)
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS grading_structures (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        teacher_id INT NOT NULL,
+        course_id INT NULL,
+        class_id INT NOT NULL,
+        semester VARCHAR(50) NOT NULL DEFAULT 'Semester 1',
+        semester_id VARCHAR(50) NULL,
+        academic_year VARCHAR(20) NULL,
+        status ENUM('draft', 'pending', 'approved', 'rejected') DEFAULT 'draft',
+        feedback TEXT,
+        total_weight DECIMAL(5,2) DEFAULT '0.00',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_structure (teacher_id, course_id, class_id, semester)
+      )
+    `);
+
+    // Create assessment_categories table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS assessment_categories (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        structure_id INT NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        weight_percentage DECIMAL(5,2) NOT NULL,
+        max_mark DECIMAL(5,2) NOT NULL,
+        passing_mark DECIMAL(5,2),
+        description TEXT,
+        order_index INT DEFAULT 0,
+        FOREIGN KEY (structure_id) REFERENCES grading_structures(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create student_results table for dynamic grades
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS student_results (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        category_id INT NOT NULL,
+        score DECIMAL(5,2) NOT NULL,
+        graded_by INT,
+        teacher_id INT,
+        class_id INT,
+        course_id INT,
+        semester VARCHAR(50),
+        semester_id VARCHAR(50),
+        academic_year VARCHAR(20),
+        grade_date DATE,
+        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (category_id) REFERENCES assessment_categories(id) ON DELETE CASCADE,
+        FOREIGN KEY (graded_by) REFERENCES teachers(id) ON DELETE SET NULL,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL,
+        UNIQUE KEY unique_student_category (student_id, category_id)
+      )
+    `);
+
+    try {
+      await dbConnection.execute('ALTER TABLE student_results ADD COLUMN academic_year VARCHAR(20)');
+      await dbConnection.execute('ALTER TABLE student_results ADD COLUMN semester VARCHAR(50)');
+      console.log('Added academic fields to student_results');
+    } catch (e) { }
+
+    // Create materials table if missing
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS materials (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        class_id INT NOT NULL,
+        course_id INT,
+        teacher_id INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        file_url VARCHAR(512),
+        material_type VARCHAR(50) DEFAULT 'reading',
+        academic_year VARCHAR(20),
+        semester VARCHAR(50),
+        semester_id VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        INDEX idx_class (class_id),
+        INDEX idx_teacher (teacher_id)
+      )
+    `);
+
+    // Create teacher_activities table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS teacher_activities (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        teacher_id INT NOT NULL,
+        activity_type VARCHAR(100) NOT NULL,
+        description TEXT,
+        class_id INT,
+        course_id INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        INDEX idx_teacher (teacher_id),
+        INDEX idx_created_at (created_at)
+      )
+    `);
     await dbConnection.execute(`
       CREATE TABLE IF NOT EXISTS contact_messages (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -634,13 +799,159 @@ async function initDatabase() {
       )
     `);
 
+    // Create teacher_course_assignments table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS teacher_course_assignments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        teacher_id INT NOT NULL,
+        class_id INT NOT NULL,
+        course_id INT NOT NULL,
+        academic_year VARCHAR(20),
+        status ENUM('active', 'inactive') DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_assignment (teacher_id, class_id, course_id),
+        INDEX idx_teacher_class (teacher_id, class_id)
+      )
+    `);
+    console.log('Verified teacher_course_assignments table');
+
+    // Create grade_submissions table (Submissions by teacher for approval)
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS grade_submissions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        teacher_id INT NOT NULL,
+        course_id INT NOT NULL,
+        class_id INT NOT NULL,
+        semester_id VARCHAR(50) NOT NULL,
+        academic_year VARCHAR(20) NOT NULL,
+        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        submitted_by INT,
+        submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        approved_by INT NULL,
+        approved_at TIMESTAMP NULL,
+        rejected_by INT NULL,
+        rejected_at TIMESTAMP NULL,
+        comments TEXT NULL,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE SET NULL,
+        FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL,
+        FOREIGN KEY (rejected_by) REFERENCES users(id) ON DELETE SET NULL,
+        UNIQUE KEY unique_grade_submission (teacher_id, course_id, class_id, semester_id, academic_year),
+        INDEX idx_submission_search (teacher_id, course_id, class_id)
+      )
+    `);
+    console.log('Verified grade_submissions table');
+
+    // Create student_course_results table (Final course marks)
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS student_course_results (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        submission_id INT NULL,
+        student_id INT NOT NULL,
+        teacher_id INT NOT NULL,
+        course_id INT NOT NULL,
+        class_id INT NOT NULL,
+        semester_id VARCHAR(50) NOT NULL,
+        academic_year VARCHAR(20) NOT NULL,
+        assessment_structure_id INT NOT NULL,
+        total_score DECIMAL(5,2) NOT NULL,
+        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        submitted_by INT,
+        submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        approved_by INT NULL,
+        approved_at TIMESTAMP NULL,
+        rejected_by INT NULL,
+        rejected_at TIMESTAMP NULL,
+        comments TEXT NULL,
+        FOREIGN KEY (submission_id) REFERENCES grade_submissions(id) ON DELETE CASCADE,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (assessment_structure_id) REFERENCES grading_structures(id) ON DELETE CASCADE,
+        FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE SET NULL,
+        FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL,
+        FOREIGN KEY (rejected_by) REFERENCES users(id) ON DELETE SET NULL,
+        UNIQUE KEY unique_student_course_result (student_id, course_id, semester_id, academic_year, assessment_structure_id),
+        INDEX idx_course_result_search (student_id, course_id, semester_id)
+      )
+    `);
+    console.log('Verified student_course_results table');
+
+    // Create approvals_log table (Centralized audit log)
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS approvals_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        entity_type ENUM('grading_structure', 'student_course_result', 'grade_submission', 'attendance') NOT NULL,
+        entity_id INT NOT NULL,
+        action ENUM('approve', 'reject') NOT NULL,
+        performed_by INT NOT NULL,
+        comments TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (performed_by) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_approval_entity (entity_type, entity_id)
+      )
+    `);
+    console.log('Verified approvals_log table');
+
+    // Create grade_change_logs table (Auditable grade changes)
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS grade_change_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        category_id INT NOT NULL,
+        old_value DECIMAL(5,2) NULL,
+        new_value DECIMAL(5,2) NOT NULL,
+        comment TEXT NULL,
+        edited_by INT NOT NULL,
+        change_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (category_id) REFERENCES assessment_categories(id) ON DELETE CASCADE,
+        FOREIGN KEY (edited_by) REFERENCES teachers(id) ON DELETE CASCADE
+      )
+    `);
+    console.log('Verified grade_change_logs table');
+
+    // Create approved_results view (Strict final transcript data source)
+    await dbConnection.execute(`
+      CREATE OR REPLACE VIEW approved_results AS
+      SELECT * FROM student_course_results WHERE status = 'approved'
+    `);
+    console.log('Verified approved_results view');
+
+    // === SAFE MIGRATIONS ===
+    // Fix: course_id FK in grade_submissions and student_course_results prevents homeroom
+    // grades (course_id = 0). Drop FKs and make column nullable.
+    const migrations = [
+      // grade_submissions: drop FK, make nullable
+      `ALTER TABLE grade_submissions DROP FOREIGN KEY grade_submissions_ibfk_2`,
+      `ALTER TABLE grade_submissions MODIFY COLUMN course_id INT NULL`,
+      // student_course_results: drop FK, make nullable
+      `ALTER TABLE student_course_results DROP FOREIGN KEY student_course_results_ibfk_4`,
+      `ALTER TABLE student_course_results MODIFY COLUMN course_id INT NULL`,
+      // Fix UNIQUE KEY to allow one row per student+structure (not one row per student+course+semester)
+      `ALTER TABLE student_course_results DROP INDEX unique_student_course_result`,
+      `ALTER TABLE student_course_results ADD UNIQUE KEY unique_student_course_result (student_id, course_id, semester_id, academic_year, assessment_structure_id)`,
+      `ALTER TABLE grade_change_logs ADD COLUMN comment TEXT NULL`,
+    ];
+    for (const sql of migrations) {
+      try { await dbConnection.execute(sql); } catch (e) { /* Already applied or constraint name differs — safe to ignore */ }
+    }
+    console.log('Schema migrations applied');
+
     console.log('Database and tables created successfully');
 
     // === SEED DEFAULT ADMIN ===
     const bcrypt = require('bcryptjs');
     const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
     const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@abdigudina.edu';
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin123';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
     const ADMIN_SECRET = process.env.ADMIN_SECRET || 'ABDIGUDINA-ADMIN-2024';
 
     const [existingAdmin] = await dbConnection.execute(

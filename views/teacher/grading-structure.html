@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Abdigudina</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        :root { --cat-colors: #3b82f6,#10b981,#f59e0b,#ef4444,#8b5cf6,#06b6d4,#ec4899,#14b8a6; }
+        .weight-meter { position: relative; height: 14px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
+        .weight-fill { height: 100%; border-radius: 10px; transition: width 0.4s ease, background 0.4s ease; }
+        .cat-card { background: white; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.03); transition: all 0.3s; }
+        .cat-card:hover { border-color: var(--primary-color); transform: translateY(-1px); }
+        .cat-card.dragging { opacity: 0.5; }
+        .preset-btn { background: white; border: 2px solid #e2e8f0; border-radius: 12px; padding: 10px 18px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .preset-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+        .badge-status-pending  { background: rgba(245,158,11,0.12); color: #b45309; }
+        .badge-status-approved { background: rgba(16,185,129,0.12); color: #065f46; }
+        .badge-status-rejected { background: rgba(239,68,68,0.12); color: #991b1b; }
+        .badge-status-draft    { background: rgba(100,116,139,0.12); color: #475569; }
+    </style>
+</head>
+<body class="dashboard-body" style="background:#f8fafc">
+<div class="dashboard-wrapper">
+    <%- include('partials/sidebar.html') %>
+    <main class="main-panel py-4 px-2 px-md-4">
+        <div class="container-fluid mx-auto" style="max-width: 1400px;">
+
+        <!-- Header -->
+        <div class="mb-3" style="background:white;border-radius:24px;padding:1.25rem 2rem;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 style="font-size:2rem;font-weight:900;margin-bottom:4px;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+                        Grading Structure
+                    </h1>
+                    <p class="text-secondary m-0 fw-medium">
+                        <i class="fas fa-book-open me-2 text-primary"></i><%= courseName %>
+                        <span class="mx-2 text-secondary">•</span>
+                        <i class="fas fa-users me-2 text-success"></i>Grade <%= classGrade %> - Section <%= classSection %>
+                    </p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <!-- Semester selector -->
+                    <div class="d-flex gap-1">
+                        <% semesterOptions.forEach(s => { %>
+                            <a href="?semester=<%= encodeURIComponent(s) %>"
+                               class="btn btn-sm fw-bold rounded-3 px-3 <%= semester === s ? 'btn-primary' : 'btn-light border' %>">
+                                <%= s %>
+                            </a>
+                        <% }) %>
+                    </div>
+                    <a href="/teacher/grades" class="btn btn-light fw-bold rounded-3 px-4 border"><i class="fas fa-arrow-left me-2"></i>Back</a>
+                    
+                    <% if (!structure || (structure.status !== 'approved' && structure.status !== 'pending')) { %>
+                        <button id="draftBtn" class="btn btn-light border fw-bold rounded-3 px-4" onclick="saveStructure('draft')">
+                            <i class="fas fa-edit me-2"></i>Save as Draft
+                        </button>
+                        <button id="saveBtn" class="btn btn-primary fw-bold rounded-3 px-4" onclick="saveStructure('pending')">
+                            <i class="fas fa-paper-plane me-2"></i>Submit for Approval
+                        </button>
+                    <% } else { %>
+                        <span class="badge rounded-pill px-4 py-2 fw-bold text-uppercase badge-status-<%= structure.status %>" style="font-size:0.8rem">
+                            <i class="fas <%= structure.status==='approved'?'fa-check-circle':'fa-clock' %> me-1"></i><%= structure.status %>
+                        </span>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status banner -->
+        <% if (structure) { %>
+            <% if (structure.status === 'approved') { %>
+            <div class="alert border-0 rounded-4 mb-4" style="background:rgba(16,185,129,0.1);color:#065f46">
+                <i class="fas fa-check-circle me-2"></i><strong>Approved</strong> — This grading structure is active. Students can see grades entered against it.
+                <span class="ms-2 text-muted small">(Re-saving will reset to Pending for re-approval)</span>
+            </div>
+            <% } else if (structure.status === 'pending') { %>
+            <div class="alert border-0 rounded-4 mb-4" style="background:rgba(245,158,11,0.1);color:#b45309">
+                <i class="fas fa-clock me-2"></i><strong>Pending Admin Approval</strong> — You can still edit until admin approves.
+            </div>
+            <% } else if (structure.status === 'rejected') { %>
+            <div class="alert border-0 rounded-4 mb-4" style="background:rgba(239,68,68,0.1);color:#991b1b">
+                <i class="fas fa-times-circle me-2"></i><strong>Rejected</strong> — Please revise and resubmit.
+                <% if (structure.feedback) { %>
+                <div class="mt-2 p-3 rounded-3" style="background:white; border-left: 4px solid #ef4444;">
+                    <strong class="small text-uppercase">Admin Feedback:</strong>
+                    <p class="m-0 mt-1"><%= structure.feedback %></p>
+                </div>
+                <% } %>
+            </div>
+            <% } %>
+        <% } %>
+
+        <div class="row g-4">
+            <!-- Left: Category builder -->
+            <div class="col-lg-8">
+                <div style="background:white;border-radius:24px;padding:2rem;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold m-0"><i class="fas fa-layer-group text-primary me-2"></i>Assessment Categories</h5>
+                        <button class="btn btn-success fw-bold rounded-3 px-4" onclick="addCategory()">
+                            <i class="fas fa-plus me-2"></i>Add Category
+                        </button>
+                    </div>
+
+                    <!-- Presets -->
+                    <div class="mb-4">
+                        <div class="text-secondary small fw-bold mb-2 text-uppercase" style="letter-spacing:1px">Quick Presets</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="preset-btn" onclick="applyPreset('standard')">Standard (Mid+Final)</button>
+                            <button class="preset-btn" onclick="applyPreset('full')">Full Distribution</button>
+                            <button class="preset-btn" onclick="applyPreset('project')">Project-Based</button>
+                            <button class="preset-btn" onclick="applyPreset('clear')">Clear All</button>
+                        </div>
+                    </div>
+
+                    <!-- Category cards -->
+                    <div id="categoriesContainer">
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <div id="emptyState" class="text-center py-5" style="display:none">
+                        <i class="fas fa-layer-group fa-3x text-secondary opacity-25 mb-3"></i>
+                        <p class="text-secondary fw-medium">No categories yet. Click "Add Category" to begin.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Weight meter + summary -->
+            <div class="col-lg-4">
+                <!-- Weight meter -->
+                <div class="mb-4" style="background:white;border-radius:24px;padding:2rem;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+                    <h6 class="fw-bold mb-3 text-secondary text-uppercase" style="letter-spacing:1px;font-size:0.75rem">Total Weight</h6>
+                    <div class="text-center mb-3">
+                        <div id="totalPct" style="font-size:2.5rem;font-weight:900;line-height:1">0</div>
+                        <div class="text-secondary fw-bold small">/ 100%</div>
+                    </div>
+                    <div class="weight-meter mb-2">
+                        <div class="weight-fill" id="weightFill" style="width:0%;background:#3b82f6"></div>
+                    </div>
+                    <div id="weightMsg" class="text-center small fw-bold mt-2 text-secondary">Add categories to begin</div>
+                </div>
+
+                <!-- Category summary list -->
+                <div style="background:white;border-radius:24px;padding:2rem;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+                    <h6 class="fw-bold mb-3 text-secondary text-uppercase" style="letter-spacing:1px;font-size:0.75rem">Distribution</h6>
+                    <div id="summaryList"></div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </main>
+</div>
+
+<!-- Category row template rendered by JS -->
+<script src="/js/bootstrap.bundle.min.js"></script>
+<script src="/js/brocode-script.js"></script>
+<script>
+const PRESETS = {
+  standard: [
+    { name:'Mid Exam', weight_percentage:30, max_mark:30, passing_mark:15, description:'Mid-term examination' },
+    { name:'Final Exam', weight_percentage:70, max_mark:70, passing_mark:35, description:'Final examination' }
+  ],
+  full: [
+    { name:'Attendance', weight_percentage:5, max_mark:5, passing_mark:'', description:'Class attendance score' },
+    { name:'Quiz', weight_percentage:10, max_mark:10, passing_mark:'', description:'Weekly quizzes' },
+    { name:'Assignment', weight_percentage:15, max_mark:15, passing_mark:'', description:'Homework and classwork' },
+    { name:'Mid Exam', weight_percentage:20, max_mark:20, passing_mark:10, description:'Mid-term examination' },
+    { name:'Final Exam', weight_percentage:50, max_mark:50, passing_mark:25, description:'Final examination' }
+  ],
+  project: [
+    { name:'Participation', weight_percentage:10, max_mark:10, passing_mark:'', description:'Class participation' },
+    { name:'Assignment', weight_percentage:20, max_mark:20, passing_mark:'', description:'Assignments' },
+    { name:'Project', weight_percentage:30, max_mark:30, passing_mark:15, description:'Group/Individual project' },
+    { name:'Final Exam', weight_percentage:40, max_mark:40, passing_mark:20, description:'Final examination' }
+  ],
+  clear: []
+};
+
+const CAT_NAMES = ['Attendance','Quiz','Assignment','Mid Exam','Final Exam','Project','Lab','Participation','Other'];
+const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#14b8a6','#f97316'];
+
+let categories = <%- JSON.stringify(categories || []) %>;
+const semester = '<%= semester %>';
+
+function getColor(i) { return COLORS[i % COLORS.length]; }
+
+function render() {
+    const container = document.getElementById('categoriesContainer');
+    const emptyState = document.getElementById('emptyState');
+    container.innerHTML = '';
+
+    if (categories.length === 0) { emptyState.style.display = ''; updateMeter(); return; }
+    emptyState.style.display = 'none';
+
+    categories.forEach((cat, i) => {
+        const color = getColor(i);
+        const div = document.createElement('div');
+        div.className = 'cat-card p-3 mb-3';
+        div.style.borderLeft = `4px solid ${color}`;
+        div.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge rounded-pill fw-bold px-3 py-2" style="background:${color}20;color:${color};font-size:0.75rem">#${i+1}</span>
+                <select class="form-select form-select-sm fw-bold border-0 bg-light rounded-3" style="width:auto"
+                    onchange="categories[${i}].name=this.value;render()">
+                    ${CAT_NAMES.map(n=>`<option value="${n}" ${cat.name===n?'selected':''}>${n}</option>`).join('')}
+                </select>
+                <input type="text" class="form-control form-control-sm border-0 bg-light rounded-3 fw-medium"
+                    placeholder="Custom name" value="${cat.name && !CAT_NAMES.includes(cat.name)?cat.name:''}"
+                    oninput="categories[${i}].name=this.value||document.querySelectorAll('.cat-card')[${i}].querySelector('select').value;renderMeter()">
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-light border rounded-3 fw-bold" onclick="moveUp(${i})" ${i===0?'disabled':''}><i class="fas fa-arrow-up"></i></button>
+                <button class="btn btn-sm btn-light border rounded-3 fw-bold" onclick="moveDown(${i})" ${i===categories.length-1?'disabled':''}><i class="fas fa-arrow-down"></i></button>
+                <button class="btn btn-sm rounded-3 fw-bold px-3" style="background:rgba(239,68,68,0.1);color:#ef4444;border:none"
+                    onclick="removeCategory(${i})"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+        <div class="row g-2">
+            <div class="col-sm-3">
+                <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="letter-spacing:.5px; font-size: 0.65rem;">Weight %</label>
+                <div class="input-group input-group-sm">
+                    <input type="number" class="form-control fw-bold border-0 bg-light rounded-start-3"
+                        value="${cat.weight_percentage||0}" min="0" max="100" step="0.5"
+                        oninput="categories[${i}].weight_percentage=parseFloat(this.value)||0;render()">
+                    <span class="input-group-text bg-light border-0 fw-bold">%</span>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="letter-spacing:.5px; font-size: 0.65rem;">Max Mark</label>
+                <input type="number" class="form-control form-control-sm fw-bold border-0 bg-light rounded-3"
+                    value="${cat.max_mark||100}" min="1" step="0.5"
+                    oninput="categories[${i}].max_mark=parseFloat(this.value)||100">
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="letter-spacing:.5px; font-size: 0.65rem;">Passing Mark</label>
+                <input type="number" class="form-control form-control-sm fw-bold border-0 bg-light rounded-3"
+                    value="${cat.passing_mark||''}" min="0" step="0.5" placeholder="—"
+                    oninput="categories[${i}].passing_mark=this.value?parseFloat(this.value):null">
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="letter-spacing:.5px; font-size: 0.65rem;">Description</label>
+                <input type="text" class="form-control form-control-sm border-0 bg-light rounded-3"
+                    value="${cat.description||''}" placeholder="Note..."
+                    oninput="categories[${i}].description=this.value">
+            </div>
+        </div>`;
+        container.appendChild(div);
+    });
+
+    updateMeter();
+}
+
+function updateMeter() {
+    let total = 0;
+    categories.forEach(c => total += parseFloat(c.weight_percentage)||0);
+    const pct = Math.min(total, 100);
+    document.getElementById('totalPct').textContent = total.toFixed(1);
+    const fill = document.getElementById('weightFill');
+    const msg = document.getElementById('weightMsg');
+    const saveBtn = document.getElementById('saveBtn');
+    fill.style.width = pct + '%';
+    if(draftBtn) draftBtn.disabled = categories.length === 0;
+
+    if (Math.abs(total - 100) < 0.01) {
+        fill.style.background = '#10b981';
+        msg.style.color = '#065f46';
+        msg.textContent = '✓ Total is exactly 100% — ready to save!';
+        saveBtn.disabled = false;
+    } else if (total > 100) {
+        fill.style.background = '#ef4444';
+        msg.style.color = '#991b1b';
+        msg.textContent = '⚠ Exceeds 100% by ' + (total-100).toFixed(1) + '% — reduce weights';
+        saveBtn.disabled = true;
+    } else {
+        fill.style.background = '#3b82f6';
+        msg.style.color = '#1e40af';
+        msg.textContent = 'Need ' + (100-total).toFixed(1) + '% more to reach 100%';
+        saveBtn.disabled = true;
+    }
+
+    // Summary list
+    const sl = document.getElementById('summaryList');
+    sl.innerHTML = '';
+    categories.forEach((c,i) => {
+        const color = getColor(i);
+        const w = parseFloat(c.weight_percentage)||0;
+        sl.innerHTML += `<div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <div style="width:10px;height:10px;border-radius:50%;background:${color}"></div>
+                <span class="fw-medium small">${c.name||'Category'}</span>
+            </div>
+            <span class="badge rounded-pill fw-bold" style="background:${color}20;color:${color}">${w}%</span>
+        </div>
+        <div style="height:4px;background:#f1f5f9;border-radius:4px;margin-bottom:12px">
+            <div style="height:100%;width:${w}%;background:${color};border-radius:4px"></div>
+        </div>`;
+    });
+}
+
+function renderMeter() { updateMeter(); }
+
+function addCategory() {
+    categories.push({ name: 'Assignment', weight_percentage: 0, max_mark: 100, passing_mark: null, description: '' });
+    render();
+}
+
+function removeCategory(i) {
+    if (!confirm('Remove this category?')) return;
+    categories.splice(i, 1);
+    render();
+}
+
+function moveUp(i) {
+    if (i === 0) return;
+    [categories[i-1], categories[i]] = [categories[i], categories[i-1]];
+    render();
+}
+
+function moveDown(i) {
+    if (i >= categories.length-1) return;
+    [categories[i], categories[i+1]] = [categories[i+1], categories[i]];
+    render();
+}
+
+function applyPreset(key) {
+    if (key !== 'clear' && categories.length > 0) {
+        if (!confirm('This will replace all current categories. Continue?')) return;
+    }
+    categories = (PRESETS[key] || []).map(c => Object.assign({}, c));
+    render();
+}
+
+async function saveStructure(status = 'pending') {
+    const saveBtn = document.getElementById('saveBtn');
+    const draftBtn = document.getElementById('draftBtn');
+    const btn = status === 'pending' ? saveBtn : draftBtn;
+    
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    if(saveBtn) saveBtn.disabled = true;
+    if(draftBtn) draftBtn.disabled = true;
+
+    try {
+        const res = await fetch('/teacher/grading-structures/<%= classId %>/<%= courseId %>', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ semester: semester, categories: categories, status: status })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert(data.message || 'Error saving');
+            btn.innerHTML = originalHtml;
+            if(saveBtn) saveBtn.disabled = false;
+            if(draftBtn) draftBtn.disabled = false;
+        }
+    } catch(e) {
+        alert('Network error');
+        btn.innerHTML = originalHtml;
+        if(saveBtn) saveBtn.disabled = false;
+        if(draftBtn) draftBtn.disabled = false;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (categories.length === 0) {
+        applyPreset('full');
+    } else {
+        render();
+    }
+});
+</script>
+</body>
+</html>

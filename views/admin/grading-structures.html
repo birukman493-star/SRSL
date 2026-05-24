@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Admin</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .status-badge.approved { background:rgba(16,185,129,0.12); color:#065f46; }
+        .status-badge.pending  { background:rgba(245,158,11,0.12);  color:#b45309; }
+        .status-badge.rejected { background:rgba(239,68,68,0.12);   color:#991b1b; }
+        .detail-row { display:none; }
+        .detail-row.open { display:table-row; }
+        .filter-btn.active { background:var(--primary-color)!important; color:white!important; border-color:var(--primary-color)!important; }
+        .cat-pill { display:inline-block; padding:4px 12px; border-radius:20px; font-size:0.72rem; font-weight:700; margin:2px; }
+    </style>
+</head>
+<body class="dashboard-body" style="background:#f8fafc">
+<div class="dashboard-wrapper">
+    <%- include('partials/sidebar.html') %>
+    <main class="main-panel w-100 p-4">
+
+        <!-- Header -->
+        <div class="mb-4" style="background:white;border-radius:24px;padding:2rem;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 style="font-size:2rem;font-weight:900;margin-bottom:4px;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Grading Structures</h1>
+                    <p class="text-secondary fw-medium m-0">Review, approve or reject teacher-submitted grading templates</p>
+                </div>
+                <div class="d-flex gap-3">
+                    <% const totalPending = structures.filter(s=>s.status==='pending').length; %>
+                    <% if (totalPending > 0) { %>
+                    <div class="text-center px-4 py-2 rounded-3" style="background:rgba(245,158,11,0.1)">
+                        <div class="fw-900 text-warning h4 m-0"><%= totalPending %></div>
+                        <div class="text-warning small fw-bold">Pending</div>
+                    </div>
+                    <% } %>
+                    <div class="text-center px-4 py-2 rounded-3" style="background:rgba(16,185,129,0.1)">
+                        <div class="fw-900 text-success h4 m-0"><%= structures.filter(s=>s.status==='approved').length %></div>
+                        <div class="text-success small fw-bold">Approved</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="mb-4 d-flex gap-2 flex-wrap">
+            <button class="btn btn-light border fw-bold rounded-3 px-3 filter-btn active" data-filter="all" onclick="filterTable('all',this)">All</button>
+            <button class="btn btn-light border fw-bold rounded-3 px-3 filter-btn" data-filter="pending" onclick="filterTable('pending',this)">
+                Pending <% if(totalPending>0){%><span class="badge bg-warning text-dark ms-1"><%= totalPending %></span><%}%>
+            </button>
+            <button class="btn btn-light border fw-bold rounded-3 px-3 filter-btn" data-filter="approved" onclick="filterTable('approved',this)">Approved</button>
+            <button class="btn btn-light border fw-bold rounded-3 px-3 filter-btn" data-filter="rejected" onclick="filterTable('rejected',this)">Rejected</button>
+        </div>
+
+        <!-- Table -->
+        <div style="background:white;border-radius:24px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="structuresTable">
+                    <thead style="background:#f8fafc">
+                        <tr class="text-secondary small fw-bold text-uppercase" style="letter-spacing:1px">
+                            <th class="px-4 py-3 border-0">Teacher</th>
+                            <th class="py-3 border-0">Course</th>
+                            <th class="py-3 border-0">Class</th>
+                            <th class="py-3 border-0">Semester</th>
+                            <th class="py-3 border-0 text-center">Categories</th>
+                            <th class="py-3 border-0 text-center">Status</th>
+                            <th class="py-3 border-0 text-end px-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (structures && structures.length > 0) { %>
+                            <% structures.forEach(s => { %>
+                            <tr class="structure-row" data-status="<%= s.status %>" data-id="<%= s.id %>">
+                                <td class="px-4 py-3 border-0">
+                                    <div class="fw-bold"><%= s.first_name %> <%= s.last_name %></div>
+                                    <div class="text-secondary small">Submitted <%= new Date(s.created_at).toLocaleDateString() %></div>
+                                </td>
+                                <td class="py-3 border-0">
+                                    <div class="fw-bold"><%= s.course_name || 'General Grade' %></div>
+                                </td>
+                                <td class="py-3 border-0">
+                                    <div class="fw-medium">Grade <%= s.grade %> — Sec <%= s.section %></div>
+                                </td>
+                                <td class="py-3 border-0">
+                                    <span class="badge bg-light text-dark border rounded-pill px-3"><%= s.semester || 'N/A' %></span>
+                                </td>
+                                <td class="py-3 border-0 text-center">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 fw-bold"><%= s.category_count %> cats</span>
+                                </td>
+                                <td class="py-3 border-0 text-center">
+                                    <span class="badge status-badge rounded-pill px-3 py-2 fw-bold text-uppercase <%= s.status %>" style="font-size:0.7rem">
+                                        <%= s.status %>
+                                    </span>
+                                </td>
+                                <td class="py-3 border-0 text-end px-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button class="btn btn-sm btn-light border rounded-3 fw-bold" onclick="toggleDetail(<%= s.id %>)" title="View categories">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <% if (s.status === 'pending') { %>
+                                        <button class="btn btn-sm fw-bold rounded-3 px-3" style="background:rgba(16,185,129,0.12);color:#065f46;border:none"
+                                            onclick="updateStatus(<%= s.id %>, 'approved')"><i class="fas fa-check me-1"></i>Approve</button>
+                                        <button class="btn btn-sm fw-bold rounded-3 px-3" style="background:rgba(239,68,68,0.12);color:#991b1b;border:none"
+                                            onclick="updateStatus(<%= s.id %>, 'rejected')"><i class="fas fa-times me-1"></i>Reject</button>
+                                        <% } else if (s.status === 'approved') { %>
+                                        <button class="btn btn-sm fw-bold rounded-3 px-3" style="background:rgba(239,68,68,0.08);color:#ef4444;border:none"
+                                            onclick="updateStatus(<%= s.id %>, 'rejected')">Revoke</button>
+                                        <% } else { %>
+                                        <button class="btn btn-sm fw-bold rounded-3 px-3" style="background:rgba(16,185,129,0.1);color:#065f46;border:none"
+                                            onclick="updateStatus(<%= s.id %>, 'approved')">Re-approve</button>
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="detail-row" id="detail-<%= s.id %>">
+                                <td colspan="7" class="px-4 pb-4 border-0 bg-light">
+                                    <div id="cats-<%= s.id %>" class="pt-3 ps-3">
+                                        <span class="text-secondary small"><i class="fas fa-spinner fa-spin me-2"></i>Loading categories...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr><td colspan="7" class="text-center py-5 text-secondary">No grading structures submitted yet.</td></tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="/js/bootstrap.bundle.min.js"></script>
+<script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
+<script>
+const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#14b8a6'];
+
+function filterTable(status, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.structure-row').forEach(row => {
+        const s = row.dataset.status;
+        row.style.display = (status === 'all' || s === status) ? '' : 'none';
+        // Also hide detail row
+        const dr = document.getElementById('detail-' + row.dataset.id);
+        if (dr) dr.style.display = 'none', dr.classList.remove('open');
+    });
+}
+
+async function toggleDetail(id) {
+    const dr = document.getElementById('detail-' + id);
+    const catsDiv = document.getElementById('cats-' + id);
+    if (dr.classList.contains('open')) { dr.classList.remove('open'); return; }
+    dr.classList.add('open');
+
+    if (catsDiv.dataset.loaded) return;
+    catsDiv.dataset.loaded = '1';
+
+    try {
+        const res = await fetch('/admin/grading-structures/' + id + '/categories');
+        const data = await res.json();
+        if (!data.success || data.categories.length === 0) { catsDiv.innerHTML = '<p class="text-secondary small">No categories found.</p>'; return; }
+
+        let html = '<div class="d-flex flex-wrap gap-2 mb-2">';
+        data.categories.forEach((c, i) => {
+            const color = COLORS[i % COLORS.length];
+            html += `<div class="cat-pill" style="background:${color}18;color:${color}">
+                <strong>${c.name}</strong> &nbsp;${c.weight_percentage}% &nbsp;(max ${c.max_mark})
+                ${c.passing_mark ? '<span class="opacity-75">pass:'+c.passing_mark+'</span>' : ''}
+            </div>`;
+        });
+        html += '</div>';
+        const total = data.categories.reduce((s,c) => s+parseFloat(c.weight_percentage), 0);
+        html += `<div class="small fw-bold mt-1 ${Math.abs(total-100)<0.01?'text-success':'text-danger'}">Total weight: ${total.toFixed(1)}%</div>`;
+        catsDiv.innerHTML = html;
+    } catch(e) {
+        catsDiv.innerHTML = '<p class="text-danger small">Error loading categories</p>';
+    }
+}
+
+async function updateStatus(id, status) {
+    const action = status === 'approved' ? 'approve' : status === 'rejected' ? 'reject' : 'revoke';
+    if (!confirm('Are you sure you want to ' + action + ' this grading structure?')) return;
+    try {
+        const res = await fetch('/admin/grading-structures/' + id + '/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        const data = await res.json();
+        if (res.ok) { alert(data.message); window.location.reload(); }
+        else alert(data.message || 'Error');
+    } catch(e) { alert('Network error'); }
+}
+</script>
+</body>
+</html>

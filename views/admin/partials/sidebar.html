@@ -25,69 +25,81 @@
             <li class="sidebar-nav-item">
                 <a href="/admin/dashboard" class="sidebar-nav-link <%= title === 'Admin Dashboard' ? 'active' : '' %>">
                     <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
+                    <span data-key="nav_dashboard">Dashboard</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/users" class="sidebar-nav-link <%= title === 'User Management' ? 'active' : '' %>">
                     <i class="fas fa-users-cog"></i>
-                    <span>Users</span>
+                    <span data-key="nav_users">Users</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/students" class="sidebar-nav-link <%= title === 'Manage Students' ? 'active' : '' %>">
                     <i class="fas fa-user-graduate"></i>
-                    <span>Students</span>
+                    <span data-key="nav_students">Students</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/teachers" class="sidebar-nav-link <%= title === 'Manage Teachers' ? 'active' : '' %>">
                     <i class="fas fa-chalkboard-teacher"></i>
-                    <span>Teachers</span>
+                    <span data-key="nav_teachers">Teachers</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/parents" class="sidebar-nav-link <%= title === 'Manage Parents' ? 'active' : '' %>">
                     <i class="fas fa-user-friends"></i>
-                    <span>Parents</span>
+                    <span data-key="nav_parents">Parents</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/classes" class="sidebar-nav-link <%= title === 'Manage Classes' ? 'active' : '' %>">
                     <i class="fas fa-school"></i>
-                    <span>Classes</span>
+                    <span data-key="nav_classes">Classes</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/activities" class="sidebar-nav-link <%= title === 'Teacher Activity Logs' ? 'active' : '' %>">
+                    <i class="fas fa-history"></i>
+                    <span data-key="nav_activities">Activity Monitor</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/attendance"
                     class="sidebar-nav-link <%= title === 'Attendance Management' ? 'active' : '' %>">
                     <i class="fas fa-calendar-check"></i>
-                    <span>Attendance</span>
+                    <span data-key="nav_attendance">Attendance</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/courses" class="sidebar-nav-link <%= title === 'Manage Courses' ? 'active' : '' %>">
                     <i class="fas fa-book"></i>
-                    <span>Courses</span>
+                    <span data-key="nav_courses">Courses</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
-                <a href="/admin/grades" class="sidebar-nav-link <%= title === 'Academic Records' ? 'active' : '' %>">
+                <a href="/admin/grading-structures" class="sidebar-nav-link <%= title === 'Grading Structure Approvals' || title === 'Grading Approval' ? 'active' : '' %>">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Grading Structures</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/grades" class="sidebar-nav-link <%= title === 'Academic Records' || title === 'Approval Workflow' ? 'active' : '' %>">
                     <i class="fas fa-chart-line"></i>
-                    <span>Grades</span>
+                    <span data-key="nav_grades">Grades & Approvals</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/rankings" class="sidebar-nav-link <%= title === 'Student Rankings' ? 'active' : '' %>">
                     <i class="fas fa-medal"></i>
-                    <span>Rankings</span>
+                    <span data-key="nav_rankings">Rankings</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/transcripts"
                     class="sidebar-nav-link <%= title === 'Transcript Management' ? 'active' : '' %>">
                     <i class="fas fa-file-invoice"></i>
-                    <span>Transcripts</span>
+                    <span data-key="nav_transcripts">Transcripts</span>
                 </a>
             </li>
 
@@ -95,33 +107,33 @@
                 <a href="/admin/promotions"
                     class="sidebar-nav-link <%= title === 'Student Promotions' ? 'active' : '' %>">
                     <i class="fas fa-level-up-alt"></i>
-                    <span>Promotions</span>
+                    <span data-key="nav_promotions">Promotions</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/announcements"
                     class="sidebar-nav-link <%= title === 'Manage Announcements' ? 'active' : '' %>">
                     <i class="fas fa-bullhorn"></i>
-                    <span>Announcements</span>
+                    <span data-key="nav_announcements">Announcements</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/messages" class="sidebar-nav-link <%= title === 'Contact Messages' ? 'active' : '' %>">
                     <i class="fas fa-envelope"></i>
-                    <span>Messages</span>
+                    <span data-key="nav_messages">Messages</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">
                 <a href="/admin/settings" class="sidebar-nav-link <%= title === 'System Settings' ? 'active' : '' %>">
                     <i class="fas fa-cog"></i>
-                    <span>Settings</span>
+                    <span data-key="nav_settings">Settings</span>
                 </a>
             </li>
 
             <li class="sidebar-nav-item mt-4 pt-4 border-top border-secondary border-opacity-25">
                 <a href="/auth/logout" class="sidebar-nav-link text-danger">
                     <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
+                    <span data-key="nav_logout">Logout</span>
                 </a>
             </li>
         </ul>

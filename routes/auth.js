@@ -22,7 +22,13 @@ router.post('/login', async (req, res) => {
   const logFile = path.join(__dirname, '../tmp/auth_access.log');
   const log = (msg) => {
     const timestamp = new Date().toISOString();
-    try { fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`); } catch (e) { }
+    try {
+      const logDir = path.dirname(logFile);
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+      }
+      fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`);
+    } catch (e) { }
     console.log(msg);
   };
 

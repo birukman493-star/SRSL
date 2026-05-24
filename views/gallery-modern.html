@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -464,18 +464,18 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a href="/" class="nav-link" data-i18n="nav_home">Home</a></li>
+                    <li class="nav-item"><a href="/" class="nav-link" data-key="nav_home" data-key="nav_home">Home</a></li>
                     <li class="nav-item">
-                        <a href="/about" class="nav-link" data-i18n="nav_about">About</a>
+                        <a href="/about" class="nav-link" data-key="nav_about" data-key="nav_about">About</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/gallery" class="nav-link active" data-i18n="nav_gallery">Gallery</a>
+                        <a href="/gallery" class="nav-link active" data-key="nav_gallery" data-key="nav_gallery">Gallery</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/contact" class="nav-link" data-i18n="nav_contact">Contact</a>
+                        <a href="/contact" class="nav-link" data-key="nav_contact" data-key="nav_contact">Contact</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/auth/login" class="nav-link" data-i18n="nav_login">Login</a>
+                        <a href="/auth/login" class="nav-link" data-key="nav_login" data-key="nav_login">Login</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#" id="themeToggle" title="Toggle Theme">
@@ -485,12 +485,12 @@
                     <li class="nav-item dropdown language-selector">
                         <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-globe"></i> EN
+                            <i class="fas fa-globe"></i> <span id="currentLangLabel">EN</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end glass-dropdown" aria-labelledby="languageDropdown">
-                            <li><a class="dropdown-item" href="?lang=en">English</a></li>
+                            <li><a class="dropdown-item lang-switch" href="#" data-lang="en">English</a></li>
                             <li><a class="dropdown-item" href="?lang=am">Amharic (አማርኛ)</a></li>
-                            <li><a class="dropdown-item" href="?lang=om">Afan Oromo</a></li>
+                            <li><a class="dropdown-item lang-switch" href="#" data-lang="om">Afan Oromo</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -509,7 +509,7 @@
             </div>
             <div class="container">
                 <div class="hero-content">
-                    <h1 class="hero-title" data-typing data-i18n="nav_gallery">Gallery</h1>
+                    <h1 class="hero-title" data-typing data-key="nav_gallery">Gallery</h1>
                     <p class="hero-subtitle">
                         Explore our campus life and educational journey
                     </p>
@@ -1085,3 +1085,5 @@
 </body>
 
 </html>
+
+

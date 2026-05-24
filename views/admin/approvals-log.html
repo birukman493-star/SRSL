@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Abdigudina Admin</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <link href="/css/inter-font.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/brocode-style.css">
+</head>
+<body class="dashboard-body" style="background:#f8fafc">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        <main class="main-panel p-4 w-100">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                <div>
+                    <h1 style="font-size:2rem;font-weight:900;margin-bottom:4px;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+                        Approval History
+                    </h1>
+                    <p class="text-secondary m-0 fw-medium">Audit log for all administrative grading actions</p>
+                </div>
+            </div>
+
+            <div class="glass-panel mb-4 p-3 shadow-sm" style="background: white !important; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                <form action="/admin/approvals-log" method="GET" class="row g-2 align-items-center">
+                    <div class="col-md-4">
+                        <select name="entity_type" class="form-select border-0 bg-light fw-bold" onchange="this.form.submit()">
+                            <option value="">All Record Types</option>
+                            <option value="grading_structure" <%= filters.entity_type === 'grading_structure' ? 'selected' : '' %>>Grading Structures</option>
+                            <option value="student_course_result" <%= filters.entity_type === 'student_course_result' ? 'selected' : '' %>>Student Course Results</option>
+                            <option value="grade_submission" <%= filters.entity_type === 'grade_submission' ? 'selected' : '' %>>Grade Submissions</option>
+                            <option value="attendance" <%= filters.entity_type === 'attendance' ? 'selected' : '' %>>Attendance</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select name="action" class="form-select border-0 bg-light fw-bold" onchange="this.form.submit()">
+                            <option value="">All Actions</option>
+                            <option value="approve" <%= filters.action === 'approve' ? 'selected' : '' %>>Approvals</option>
+                            <option value="reject" <%= filters.action === 'reject' ? 'selected' : '' %>>Rejections</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="/admin/approvals-log" class="btn btn-light w-100 fw-bold border">Clear Filters</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="glass-panel" style="background: white !important; border-radius: 24px; box-shadow: var(--shadow-sm);">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background: rgba(0,0,0,0.02)">
+                            <tr class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.05em;">
+                                <th class="border-0 py-3 px-4">Date & Time</th>
+                                <th class="border-0 py-3">Action</th>
+                                <th class="border-0 py-3">Record Type</th>
+                                <th class="border-0 py-3">Entity ID</th>
+                                <th class="border-0 py-3">Performed By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (logs && logs.length > 0) { %>
+                                <% logs.forEach(log => { %>
+                                    <tr>
+                                        <td class="border-0 py-3 px-4">
+                                            <div class="fw-bold"><%= new Date(log.created_at).toLocaleDateString() %></div>
+                                            <small class="text-secondary"><%= new Date(log.created_at).toLocaleTimeString() %></small>
+                                        </td>
+                                        <td class="border-0 py-3">
+                                            <% if (log.action === 'approve') { %>
+                                                <span class="badge rounded-pill fw-bold px-3" style="background:rgba(16,185,129,0.12);color:#065f46">
+                                                    <i class="fas fa-check me-1"></i> Approved
+                                                </span>
+                                            <% } else { %>
+                                                <span class="badge rounded-pill fw-bold px-3" style="background:rgba(239,68,68,0.12);color:#991b1b">
+                                                    <i class="fas fa-times me-1"></i> Rejected
+                                                </span>
+                                            <% } %>
+                                        </td>
+                                        <td class="border-0 py-3">
+                                            <div class="fw-medium text-dark" style="text-transform: capitalize;">
+                                                <%= log.entity_type.replace(/_/g, ' ') %>
+                                            </div>
+                                        </td>
+                                        <td class="border-0 py-3">
+                                            <span class="text-secondary fw-bold">#<%= log.entity_id %></span>
+                                        </td>
+                                        <td class="border-0 py-3">
+                                            <div class="fw-bold"><%= log.first_name %> <%= log.last_name %></div>
+                                            <% if (log.comments) { %>
+                                                <small class="text-secondary d-block mt-1">
+                                                    <i class="fas fa-comment-dots me-1"></i><%= log.comments %>
+                                                </small>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-secondary">
+                                        <i class="fas fa-history fa-3x mb-3 opacity-25"></i>
+                                        <p class="fw-medium m-0">No approval history found.</p>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/translations.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>

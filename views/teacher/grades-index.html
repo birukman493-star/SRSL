@@ -4,103 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %> - Abdigudina Faculty</title>
-    
-    <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="/css/inter-font.css" rel="stylesheet">
-    <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
-        .premium-card {
-            background: white;
-            border-radius: 28px;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .premium-card:hover {
-            transform: translateY(-8px);
-            border-color: var(--primary-color);
-        }
-        .icon-box {
-            width: 75px;
-            height: 75px;
-            border-radius: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin: 0 auto 1.5rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
+        .course-card { background:white; border-radius:24px; border:2px solid transparent; box-shadow:0 6px 25px rgba(0,0,0,0.06); transition:all 0.3s; }
+        .course-card:hover { transform:translateY(-6px); box-shadow:0 16px 40px rgba(37,99,235,0.12); border-color:var(--primary-color); }
+        .icon-box { width:72px; height:72px; border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 1.2rem; }
+        .status-approved { background:rgba(16,185,129,0.12); color:#065f46; }
+        .status-pending   { background:rgba(245,158,11,0.12);  color:#b45309; }
+        .status-rejected  { background:rgba(239,68,68,0.12);   color:#991b1b; }
+        .status-none      { background:rgba(100,116,139,0.1);  color:#475569; }
     </style>
 </head>
-<body class="dashboard-body" style="background: #f8fafc;">
-    <div class="dashboard-wrapper">
-        <%- include('partials/sidebar.html') %>
+<body class="dashboard-body" style="background:#f8fafc">
+<div class="dashboard-wrapper">
+    <%- include('partials/sidebar.html') %>
+    <main class="main-panel w-100 p-4">
 
-        <main class="main-panel w-100 p-4">
-            <!-- Header -->
-            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="dashboard-title" style="font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px;">
-                            Academic Grading
-                        </h1>
-                        <p class="text-secondary m-0" style="font-weight: 500; font-size: 1.1rem;">Select a class to manage results, ranks, and performance records</p>
-                    </div>
+        <div class="mb-4" style="background:white;border-radius:24px;padding:2.5rem;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 style="font-size:2.2rem;font-weight:900;margin-bottom:4px;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Academic Grading</h1>
+                    <p class="text-secondary m-0 fw-medium">Select a course to manage grading structure and enter student results</p>
                 </div>
             </div>
+        </div>
 
-            <div class="row g-4">
-                <% if (classes && classes.length > 0) { %>
-                    <% classes.forEach(c => { %>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="premium-card text-center p-5 selection-card" 
-                            data-class-id="<%= c.id %>">
-                            <div class="icon-box bg-primary bg-opacity-10 text-primary">
-                                <i class="fas fa-award"></i>
+        <div class="row g-4">
+            <% if (assignments && assignments.length > 0) { %>
+                <% assignments.forEach(asg => {
+                    const st = asg.structure_status;
+                    let statusClass = 'status-none', statusIcon = 'fa-exclamation-circle', statusLabel = 'No Structure';
+                    if (st === 'approved') { statusClass='status-approved'; statusIcon='fa-check-circle'; statusLabel='Structure Approved'; }
+                    else if (st === 'pending') { statusClass='status-pending'; statusIcon='fa-clock'; statusLabel='Pending Approval'; }
+                    else if (st === 'rejected') { statusClass='status-rejected'; statusIcon='fa-times-circle'; statusLabel='Structure Rejected'; }
+                %>
+                <div class="col-md-6 col-lg-4">
+                    <div class="course-card p-4">
+                        <div class="icon-box bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-award"></i>
+                        </div>
+                        <h3 class="fw-bold text-center mb-1" style="font-size:1.15rem;color:var(--dark-text)"><%= asg.course_name %></h3>
+                        <p class="text-secondary fw-bold text-center text-uppercase mb-1" style="font-size:0.7rem;letter-spacing:1px"><%= asg.class_name %></p>
+                        <p class="text-primary fw-bold text-center text-uppercase mb-3" style="font-size:0.7rem;letter-spacing:1px">Grade <%= asg.grade %> — Section <%= asg.section %></p>
+
+                        <div class="text-center mb-4">
+                            <!-- Structure Status -->
+                            <div class="mb-2">
+                                <span class="badge rounded-pill px-3 py-2 fw-bold <%= statusClass %>" style="font-size:0.75rem">
+                                    <i class="fas <%= statusIcon %> me-1"></i><%= statusLabel %>
+                                </span>
                             </div>
-                            <h3 class="fw-900 mb-1" style="color: var(--dark-text);"><%= c.name %></h3>
-                            <p class="text-secondary fw-bold text-uppercase mb-4" style="font-size: 0.75rem; letter-spacing: 1px;">Grade <%= c.grade %> • Section <%= c.section %></p>
-                            
-                            <div class="d-grid">
-                                <button class="btn btn-primary py-3 rounded-pill fw-bold shadow-sm">
-                                    <i class="fas fa-edit me-2"></i> Manage Results
-                                </button>
+
+                            <!-- Grades Approval Status -->
+                            <% if (st === 'approved') { 
+                                const gst = asg.grades_status;
+                                let gClass = 'status-none', gIcon = 'fa-edit', gLabel = 'Marks Not Submitted';
+                                if (gst === 'approved') { gClass='status-approved'; gIcon='fa-check-circle'; gLabel='Marks Finalized'; }
+                                else if (gst === 'pending') { gClass='status-pending'; gIcon='fa-clock'; gLabel='Marks Pending Approval'; }
+                                else if (gst === 'rejected') { gClass='status-rejected'; gIcon='fa-times-circle'; gLabel='Marks Rejected'; }
+                            %>
+                            <div class="mb-2">
+                                <span class="badge rounded-pill px-3 py-2 fw-bold <%= gClass %>" style="font-size:0.75rem">
+                                    <i class="fas <%= gIcon %> me-1"></i><%= gLabel %>
+                                </span>
                             </div>
+                            <% } %>
+
+                            <% if (asg.structure_semester) { %>
+                            <div class="mt-1">
+                                <span class="badge bg-light text-dark border rounded-pill px-2 py-1" style="font-size:0.7rem"><%= asg.structure_semester %></span>
+                            </div>
+                            <% } %>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a href="/teacher/grading-structures/<%= asg.class_id %>/<%= asg.course_id %>"
+                               class="btn btn-outline-primary py-2 rounded-3 fw-bold">
+                                <i class="fas fa-layer-group me-2"></i><%= asg.structure_id ? 'Edit Structure' : 'Setup Structure' %>
+                            </a>
+                            <a href="/teacher/grades/<%= asg.class_id %>/<%= asg.course_id %>"
+                               class="btn py-2 rounded-3 fw-bold <%= st === 'approved' ? 'btn-primary' : 'btn-light border' %>">
+                                <i class="fas fa-edit me-2"></i>
+                                <% if (st === 'approved') { %>Enter Grades<% } else { %>View Grades<% } %>
+                            </a>
                         </div>
                     </div>
-                    <% }); %>
-                <% } else { %>
-                    <div class="col-12 text-center py-5">
-                        <div class="premium-card py-5">
-                            <div class="text-secondary opacity-20 mb-4">
-                                <i class="fas fa-graduation-cap fa-6x"></i>
-                            </div>
-                            <h3 class="fw-900" style="color: var(--dark-text);">No Classes Found</h3>
-                            <p class="text-secondary fw-medium px-5">You haven't been assigned as a primary instructor for any classes requiring result management.</p>
-                            <a href="/teacher/dashboard" class="btn btn-primary px-5 mt-3 rounded-pill fw-bold shadow">Back to Overview</a>
-                        </div>
+                </div>
+                <% }); %>
+            <% } else { %>
+                <div class="col-12 text-center py-5">
+                    <div style="background:white;border-radius:24px;padding:4rem;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+                        <i class="fas fa-graduation-cap fa-5x text-secondary mb-4" style="opacity:0.2"></i>
+                        <h3 class="fw-bold">No Courses Assigned</h3>
+                        <p class="text-secondary fw-medium">You have not been assigned to any specific courses yet.</p>
+                        <a href="/teacher/dashboard" class="btn btn-primary px-5 mt-2 rounded-pill fw-bold shadow">Back to Dashboard</a>
                     </div>
-                <% } %>
-            </div>
-        </main>
-    </div>
-    
-    <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/brocode-script.js"></script>
-    <script>
-        document.querySelectorAll('.selection-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const classId = this.dataset.classId;
-                window.location.href = `/teacher/grades/${classId}`;
-            });
-        });
-    </script>
+                </div>
+            <% } %>
+        </div>
+    </main>
+</div>
+<script src="/js/bootstrap.bundle.min.js"></script>
+<script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
 </body>
 </html>

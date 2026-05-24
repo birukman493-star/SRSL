@@ -23,7 +23,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Transcript Center</h1>
-                        <p class="text-secondary m-0 fw-medium">Academic Records Management & Official Transcript Generation</p>
+                        <p class="text-secondary m-0 fw-medium">Academic Records Management &amp; Official Transcript Generation</p>
                     </div>
                     <div class="d-none d-md-block">
                         <div class="badge bg-primary bg-opacity-10 text-primary px-4 py-2 rounded-pill fw-bold border border-primary border-opacity-10">
@@ -40,7 +40,10 @@
                         <label class="form-label fw-800 small text-secondary mb-2" style="letter-spacing: 1px;">STUDENT SEARCH</label>
                         <div class="input-group search-group-modern">
                             <span class="input-group-text bg-light border-0 px-3"><i class="fas fa-search text-primary"></i></span>
-                            <input type="text" name="search" class="form-control bg-light border-0 py-3" placeholder="Enter Student Name or Registration ID (e.g. STU-2024...)" value="<%= locals.search || (locals.filters && locals.filters.search) || '' %>" style="border-radius: 0 12px 12px 0;">
+                            <input type="text" name="search" class="form-control bg-light border-0 py-3"
+                                placeholder="Enter Student Name or Registration ID (e.g. STU-2024...)"
+                                value="<%= locals.search || (locals.filters && locals.filters.search) || '' %>"
+                                style="border-radius: 0 12px 12px 0;">
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -79,10 +82,13 @@
                                             <code class="fw-bold text-primary px-2 py-1 bg-primary bg-opacity-10 rounded" style="font-size: 0.85rem;"><%= student.student_id %></code>
                                         </td>
                                         <td class="py-3 border-0">
-                                            <span class="badge bg-light text-dark px-3 py-2 rounded-pill fw-bold border border-secondary border-opacity-10">Grade <%= student.grade_level %> — <%= student.section %></span>
+                                            <span class="badge bg-light text-dark px-3 py-2 rounded-pill fw-bold border border-secondary border-opacity-10">
+                                                Grade <%= student.grade_level %> &ndash; <%= student.section %>
+                                            </span>
                                         </td>
                                         <td class="py-3 border-0 text-end px-4">
-                                            <a href="/admin/transcripts/generate/<%= student.id %>" data-no-transition class="btn btn-sm btn-dark px-4 py-2 rounded-pill fw-bold shadow-sm transition-all hover-up">
+                                            <a href="/admin/transcripts/generate/<%= student.id %>" data-no-transition
+                                               class="btn btn-sm btn-dark px-4 py-2 rounded-pill fw-bold shadow-sm transition-all hover-up">
                                                 <i class="fas fa-file-invoice me-2"></i>Generate Transcript
                                             </a>
                                         </td>
@@ -113,6 +119,7 @@
     </div>
 
     <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/translations.js"></script>
     <script src="/js/brocode-script.js"></script>
     <style>
         .hover-up:hover {

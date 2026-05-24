@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -649,7 +649,7 @@
             <div class="content-card">
                 <div class="card-header">
                     <h3 class="card-title">My Children</h3>
-                    <a href="/parent/children" class="card-link">View All →</a>
+                    <a href="/parent/children" class="card-link">View All â†’</a>
                 </div>
                 <ul class="children-list">
                     <% children.slice(0, 3).forEach(child => { %>
@@ -659,7 +659,7 @@
                         </div>
                         <div class="child-info">
                             <div class="child-name"><%= child.first_name %> <%= child.last_name %></div>
-                            <div class="child-details">Grade <%= child.grade_level %> • ID: <%= child.student_id %></div>
+                            <div class="child-details">Grade <%= child.grade_level %> â€¢ ID: <%= child.student_id %></div>
                         </div>
                         <div class="child-status">
                             Active
@@ -673,7 +673,7 @@
             <div class="content-card">
                 <div class="card-header">
                     <h3 class="card-title">Recent Activities</h3>
-                    <a href="#" class="card-link">View All →</a>
+                    <a href="#" class="card-link">View All â†’</a>
                 </div>
                 <ul class="activity-list">
                     <% recentActivities.slice(0, 3).forEach(activity => { %>
@@ -794,3 +794,4 @@
     </script>
 </body>
 </html>
+

@@ -62,14 +62,14 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                            Daily Attendance
+                            <%= courseName %> Attendance
                         </h1>
                         <p class="text-secondary m-0" style="font-weight: 500;">Recording session for <span class="text-primary fw-bold"><%= new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) %></span></p>
                     </div>
                     <div class="d-flex gap-3 align-items-center">
                         <input type="date" class="form-control premium-input shadow-sm" id="attendanceDate" value="<%= date %>" style="width: auto;">
                         <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" id="saveAttendance">
-                            <i class="fas fa-save me-2"></i> Save Session
+                            <i class="fas fa-save me-2"></i> Submit for Approval
                         </button>
                     </div>
                 </div>
@@ -83,6 +83,7 @@
                                 <th class="px-4 py-3 border-0">Student Profile</th>
                                 <th class="py-3 border-0">Registration ID</th>
                                 <th class="py-3 border-0">Attendance Status</th>
+                                <th class="py-3 border-0">Approval Status</th>
                                 <th class="px-4 py-3 border-0">Internal Notes</th>
                             </tr>
                         </thead>
@@ -112,6 +113,17 @@
                                         <label for="l_<%= student.student_pk %>" class="status-label label-late">Late</label>
                                     </div>
                                 </td>
+                                <td class="py-3 border-0">
+                                    <% if (student.approval_status === 'approved') { %>
+                                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold border border-success border-opacity-10"><i class="fas fa-check-circle me-1"></i>Approved</span>
+                                    <% } else if (student.approval_status === 'rejected') { %>
+                                        <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-bold border border-danger border-opacity-10"><i class="fas fa-times-circle me-1"></i>Rejected</span>
+                                    <% } else if (student.approval_status === 'pending') { %>
+                                        <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill fw-bold border border-warning border-opacity-10"><i class="fas fa-clock me-1"></i>Pending</span>
+                                    <% } else { %>
+                                        <span class="text-secondary small fw-bold">Not Submitted</span>
+                                    <% } %>
+                                </td>
                                 <td class="px-4 py-3 border-0">
                                     <input type="text" class="form-control premium-input py-2 small w-100" 
                                            name="note_<%= student.student_pk %>" 
@@ -130,11 +142,12 @@
     </div>
 
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
     <script>
         document.getElementById('saveAttendance').addEventListener('click', async () => {
             const date = document.getElementById('attendanceDate').value;
             const classId = '<%= classId %>';
+            const courseId = '<%= courseId %>';
             const attendanceData = {};
             
             const rows = document.querySelectorAll('tbody tr');
@@ -154,18 +167,21 @@
             const btn = document.getElementById('saveAttendance');
             const originalHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Saving...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Submitting...';
 
             try {
                 const response = await fetch('/teacher/attendance/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ classId, date, attendanceType: 'daily', attendance: attendanceData })
+                    body: JSON.stringify({ classId, courseId, date, attendanceType: 'daily', attendance: attendanceData })
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    btn.innerHTML = '<i class="fas fa-check me-2"></i> Saved Successfully';
+                    btn.innerHTML = '<i class="fas fa-check me-2"></i> Submitted Successfully';
                     btn.classList.replace('btn-primary', 'btn-success');
+                    
+                    // The socket event attendanceHistoryUpdated will handle DOM updates
+                    // Fallback to revert button state
                     setTimeout(() => {
                         btn.innerHTML = originalHtml;
                         btn.classList.replace('btn-success', 'btn-primary');
@@ -184,8 +200,27 @@
         });
 
         document.getElementById('attendanceDate').addEventListener('change', (e) => {
-            window.location.href = `/teacher/attendance/<%= classId %>/${e.target.value}`;
+            window.location.href = `/teacher/attendance/<%= classId %>/<%= courseId %>/${e.target.value}`;
         });
+
+        // Handle real-time updates for teacher dashboard
+        window.updateTeacherAttendance = function(data) {
+            if (data.classId && parseInt(data.classId) === parseInt('<%= classId %>')) {
+                // Update all status badges to Pending
+                const rows = document.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const statusCell = row.querySelector('td:nth-child(4)');
+                    if (statusCell) {
+                        statusCell.innerHTML = '<span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill fw-bold border border-warning border-opacity-10"><i class="fas fa-clock me-1"></i>Pending</span>';
+                    }
+                });
+                
+                // Show a brief toast or notification if needed
+                console.log("Attendance history visually updated via Socket.IO");
+            }
+        };
     </script>
 </body>
 </html>
+
+

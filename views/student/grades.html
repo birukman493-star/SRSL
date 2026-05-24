@@ -1,58 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <title>Student Grades - Student Portal</title>
+    <meta name="description" content="Explore detailed grade breakdowns, attendance, and academic performance in a premium, responsive interface.">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Abdigudina</title>
-    
-    <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="/css/inter-font.css" rel="stylesheet">
-    <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
-</head>
-<body class="dashboard-body">
-    <div class="admin-container dashboard-wrapper">
-        <%- include('partials/sidebar.html') %>
+    <link rel="stylesheet" href="/css/custom-grade-view.css">
+    <link rel="stylesheet" href="/css/aos.css">
 
-        <main class="main-panel w-100 p-4">
-            <!-- Top Header -->
-            <div class="premium-panel mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">My Academic Progress</h1>
-                        <p class="text-secondary m-0 fw-medium"><i class="fas fa-chart-bar me-2"></i>Detailed breakdown of your grades and assessments</p>
-                    </div>
-                    <div>
-                        <button class="btn btn-primary px-4 py-2 rounded-pill shadow-sm" onclick="window.print()">
-                            <i class="fas fa-print me-2"></i>Print Report
-                        </button>
+    
+
+    <style>
+        .stat-card { background:white; border-radius:24px; padding:1.5rem; box-shadow:0 4px 20px rgba(0,0,0,0.05); }
+        .course-block { background:white; border-radius:24px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.05); margin-bottom:1.5rem; }
+        .course-header { padding:1.5rem 2rem; border-bottom:1px solid #f1f5f9; }
+        .cat-bar { height:8px; background:#f1f5f9; border-radius:8px; overflow:hidden; }
+        .cat-fill { height:100%; border-radius:8px; transition:width 0.8s ease; }
+        .grade-letter { font-size:3rem; font-weight:900; line-height:1; }
+        .pass-dot  { width:10px; height:10px; border-radius:50%; background:#10b981; display:inline-block; }
+        .fail-dot  { width:10px; height:10px; border-radius:50%; background:#ef4444; display:inline-block; }
+        .total-chip { background:linear-gradient(135deg,#667eea,#764ba2); color:white; border-radius:16px; padding:8px 20px; font-weight:900; font-size:1.4rem; }
+    </style>
+</head>
+<body class="dashboard-body" style="background:#f8fafc">
+<div class="dashboard-wrapper">
+    <%- include('partials/sidebar.html') %>
+    <main class="main-panel w-100 p-4">
+<%
+const mapCategory = (name) => {
+    const n = name.toLowerCase();
+    if (n.includes('attendance')) return 'attendance';
+    if (n.includes('quiz')) return 'quiz';
+    if (n.includes('assignment') || n.includes('homework')) return 'assignment';
+    if (n.includes('mid') || n.includes('test')) return 'mid';
+    if ((n.includes('final') || n.includes('exam')) && !n.includes('mid')) return 'final';
+    if (n.includes('project')) return 'project';
+    if (n.includes('lab')) return 'lab';
+    if (n.includes('participation')) return 'participation';
+    return 'other';
+};
+
+const getCategoryDisplay = (categories, type) => {
+    const cats = categories || [];
+    const matched = cats.filter(c => mapCategory(c.category_name) === type);
+    if (matched.length === 0) return '—';
+    
+    let totalObtained = 0;
+    let totalMax = 0;
+    matched.forEach(c => {
+        totalObtained += parseFloat(c.score || 0);
+        totalMax += parseFloat(c.max_mark || 0);
+    });
+
+    if (totalMax === 0) return Math.round(totalObtained);
+    return `${Math.round(totalObtained)}/${Math.round(totalMax)}`;
+};
+
+const calculateTotal = (course) => {
+    if (!course.categories || course.categories.length === 0) {
+        return parseFloat(course.total_weighted || 0);
+    }
+    let total = 0;
+    course.categories.forEach(c => {
+        total += parseFloat(c.weighted_score || 0);
+    });
+    return total;
+};
+
+const getLetterGrade = (score) => {
+    if (score >= 90) return 'A+';
+    if (score >= 85) return 'A';
+    if (score >= 80) return 'A-';
+    if (score >= 75) return 'B+';
+    if (score >= 70) return 'B';
+    if (score >= 65) return 'B-';
+    if (score >= 60) return 'C+';
+    if (score >= 55) return 'C';
+    if (score >= 50) return 'D';
+    return 'F';
+};
+
+const getGradeColor = (score) => {
+    return score >= 70 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
+};
+%>
+        <!-- Header -->
+        <div class="mb-4" style="background:white;border-radius:24px;padding:2rem;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+            <h1 style="font-size:2rem;font-weight:900;margin-bottom:4px;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">My Academic Results</h1>
+            <p class="text-secondary fw-medium m-0">Category-based weighted grade breakdown across all courses</p>
+        </div>
+
+        <% if (hasResults) { %>
+        <!-- Summary stats -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card text-center">
+                    <%
+                        let avg = parseFloat(overallAvg);
+                        let letterGrade = avg >= 90 ? 'A+' : avg >= 85 ? 'A' : avg >= 80 ? 'A-' : avg >= 75 ? 'B+' : avg >= 70 ? 'B' : avg >= 65 ? 'B-' : avg >= 60 ? 'C+' : avg >= 55 ? 'C' : avg >= 50 ? 'D' : 'F';
+                        let gradeColor = avg >= 70 ? '#10b981' : avg >= 50 ? '#f59e0b' : '#ef4444';
+                    %>
+                    <div class="grade-letter mb-1" style="color:<%= gradeColor %>"><%= letterGrade %></div>
+                    <div style="font-size:2rem;font-weight:900;color:#1e293b"><%= overallAvg %>%</div>
+                    <div class="text-secondary fw-medium small">Overall Average</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card text-center">
+                    <div style="font-size:2.5rem;font-weight:900;color:#3b82f6"><%= courseResults.length %></div>
+                    <div class="text-secondary fw-medium small mt-1">Courses with Results</div>
+                    <div class="mt-3">
+                        <div class="cat-bar">
+                            <div class="cat-fill" style="width:<%= Math.min(overallAvg,100) %>%;background:<%= gradeColor %>"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Grades Content -->
-            <div id="grades-container">
-                <%- grades_html %>
+            <div class="col-md-4">
+                <div class="stat-card text-center">
+                    <div style="font-size:2.5rem;font-weight:900;color:#8b5cf6"><%= rank %></div>
+                    <div class="text-secondary fw-medium small mt-1">Class Rank</div>
+                    <div class="text-secondary small mt-2">Based on weighted averages</div>
+                </div>
             </div>
-        </main>
-    </div>
+        </div>
 
-    <!-- Bootstrap JS -->
-    <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/brocode-script.js"></script>
-    <script>
-        document.getElementById('gradeSearch')?.addEventListener('input', function(e) {
-            const term = e.target.value.toLowerCase();
-            const items = document.querySelectorAll('#grades-container .grade-item, #grades-container .grade-card');
-            items.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(term) ? '' : 'none';
-            });
-        });
-    </script>
+        <!-- Current Semester Results Section -->
+        <div class="mb-5" style="background:white; border-radius:24px; padding:2rem; box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+            <h3 class="fw-bold text-dark mb-4" style="font-size:1.4rem; border-left:4px solid #3b82f6; padding-left:12px">
+                Current Semester Results
+            </h3>
+            <% if (currentSemesterResults && currentSemesterResults.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-center grade-table" data-aos="fade-up">
+                    <thead style="background:#f8fafc">
+                        <tr class="text-secondary small fw-bold text-uppercase" style="letter-spacing:.8px">
+                            <th class="px-4 py-3 border-0 text-start">Course</th>
+                            <th class="py-3 border-0">Attendance</th>
+                            <th class="py-3 border-0">Quiz</th>
+                            <th class="py-3 border-0">Assignment</th>
+                            <th class="py-3 border-0">Mid Exam</th>
+                            <th class="py-3 border-0">Final Exam</th>
+                            <th class="py-3 border-0">Project</th>
+                            <th class="py-3 border-0">Lab</th>
+                            <th class="py-3 border-0">Participation</th>
+                            <th class="py-3 border-0">Other</th>
+                            <th class="py-3 border-0">Total</th>
+                            <th class="py-3 border-0 px-4">Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% currentSemesterResults.forEach(course => {
+                            const score = calculateTotal(course);
+                            const grade = getLetterGrade(score);
+                            const gradeColor = getGradeColor(score);
+                        %>
+                        <tr>
+                            <td class="px-4 py-3 border-0 fw-bold text-dark text-start">
+                                <%= course.course_name %>
+                                <% if (course.course_code) { %><small class="text-secondary fw-medium" style="font-size:0.75rem"><br>(<%= course.course_code %>)</small><% } %>
+                            </td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'attendance') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'quiz') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'assignment') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'mid') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'final') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'project') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'lab') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'participation') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'other') %></td>
+                            <td class="py-3 border-0 fw-bold text-primary"><%= Math.round(score) %></td>
+                            <td class="py-3 border-0 px-4 fw-bold" style="color: <%= gradeColor %>"><%= grade %></td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                    <tfoot style="background:#f8fafc">
+                        <tr class="fw-bold text-dark border-0">
+                            <td class="px-4 py-3 border-0 text-start" colspan="10">Total Score / Semester Average</td>
+                            <td class="py-3 text-center border-0 text-primary h6 m-0 fw-bold"><%= parseFloat(currentSum).toFixed(1) %></td>
+                            <td class="py-3 text-center border-0 h6 m-0 fw-bold px-4" style="color:<%= currentAvg >= 70 ? '#10b981' : currentAvg >= 50 ? '#f59e0b' : '#ef4444' %>">
+                                <%= parseFloat(currentAvg).toFixed(1) %>% (<%= currentAvg >= 50 ? 'PASS' : 'FAIL' %>)
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <% } else { %>
+            <div class="text-center py-4 text-secondary">
+                <i class="fas fa-folder-open fa-2x mb-2 opacity-30"></i>
+                <p class="m-0">No approved results available for the current semester.</p>
+            </div>
+            <% } %>
+        </div>
+
+        <!-- Previous Semesters Results Section -->
+        <div class="mb-5" style="background:white; border-radius:24px; padding:2rem; box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+            <h3 class="fw-bold text-dark mb-4" style="font-size:1.4rem; border-left:4px solid #64748b; padding-left:12px">
+                Previous Semesters Results
+            </h3>
+            <% if (previousSemesterResults && previousSemesterResults.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-center">
+                    <thead style="background:#f8fafc">
+                        <tr class="text-secondary small fw-bold text-uppercase" style="letter-spacing:.8px">
+                            <th class="px-4 py-3 border-0 text-start">Course</th>
+                            <th class="py-3 border-0">Attendance</th>
+                            <th class="py-3 border-0">Quiz</th>
+                            <th class="py-3 border-0">Assignment</th>
+                            <th class="py-3 border-0">Mid Exam</th>
+                            <th class="py-3 border-0">Final Exam</th>
+                            <th class="py-3 border-0">Project</th>
+                            <th class="py-3 border-0">Lab</th>
+                            <th class="py-3 border-0">Participation</th>
+                            <th class="py-3 border-0">Other</th>
+                            <th class="py-3 border-0">Total</th>
+                            <th class="py-3 border-0 px-4">Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% previousSemesterResults.forEach(course => {
+                            const score = calculateTotal(course);
+                            const grade = getLetterGrade(score);
+                            const gradeColor = getGradeColor(score);
+                        %>
+                        <tr>
+                            <td class="px-4 py-3 border-0 fw-bold text-dark text-start">
+                                <%= course.course_name %>
+                                <% if (course.course_code) { %><small class="text-secondary fw-medium" style="font-size:0.75rem"><br>(<%= course.course_code %>)</small><% } %>
+                            </td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'attendance') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'quiz') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'assignment') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'mid') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'final') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'project') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'lab') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'participation') %></td>
+                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'other') %></td>
+                            <td class="py-3 border-0 fw-bold text-primary"><%= Math.round(score) %></td>
+                            <td class="py-3 border-0 px-4 fw-bold" style="color: <%= gradeColor %>"><%= grade %></td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                    <tfoot style="background:#f8fafc">
+                        <tr class="fw-bold text-dark border-0">
+                            <td class="px-4 py-3 border-0 text-start" colspan="10">Total Score / Cumulative Average</td>
+                            <td class="py-3 text-center border-0 text-primary h6 m-0 fw-bold"><%= parseFloat(previousSum).toFixed(1) %></td>
+                            <td class="py-3 text-center border-0 h6 m-0 fw-bold px-4" style="color:<%= previousAvg >= 70 ? '#10b981' : previousAvg >= 50 ? '#f59e0b' : '#ef4444' %>">
+                                <%= parseFloat(previousAvg).toFixed(1) %>% (<%= previousAvg >= 50 ? 'PASS' : 'FAIL' %>)
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <% } else { %>
+            <div class="text-center py-4 text-secondary">
+                <i class="fas fa-folder-open fa-2x mb-2 opacity-30"></i>
+                <p class="m-0">No approved results available for previous semesters.</p>
+            </div>
+            <% } %>
+        </div>
+
+        <!-- Summary Section (Bottom of Page) -->
+        <div class="mb-5" style="background:white; border-radius:24px; padding:2rem; box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+            <h3 class="fw-bold text-dark mb-4" style="font-size:1.4rem; border-left:4px solid #64748b; padding-left:12px">
+                Summary Section
+            </h3>
+            <div class="row g-4">
+                <div class="col-md-4 col-sm-6">
+                    <div class="p-3 rounded" style="background:#f8fafc; border-left: 4px solid #3b82f6;">
+                        <span class="d-block text-secondary small fw-bold text-uppercase mb-1">Total Score</span>
+                        <span class="h4 m-0 fw-800 text-dark"><%= parseFloat(overallSum).toFixed(1) %></span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="p-3 rounded" style="background:#f8fafc; border-left: 4px solid #8b5cf6;">
+                        <span class="d-block text-secondary small fw-bold text-uppercase mb-1">Average</span>
+                        <span class="h4 m-0 fw-800 text-dark"><%= parseFloat(overallAvg).toFixed(1) %></span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <% const overallGrade = overallAvg >= 90 ? 'A+' : overallAvg >= 85 ? 'A' : overallAvg >= 80 ? 'A-' : overallAvg >= 75 ? 'B+' : overallAvg >= 70 ? 'B' : overallAvg >= 65 ? 'B-' : overallAvg >= 60 ? 'C+' : overallAvg >= 55 ? 'C' : overallAvg >= 50 ? 'D' : 'F'; %>
+                    <div class="p-3 rounded" style="background:#f8fafc; border-left: 4px solid <%= overallAvg >= 70 ? '#10b981' : overallAvg >= 50 ? '#f59e0b' : '#ef4444' %>;">
+                        <span class="d-block text-secondary small fw-bold text-uppercase mb-1">Overall Grade</span>
+                        <span class="h4 m-0 fw-800" style="color: <%= overallAvg >= 70 ? '#10b981' : overallAvg >= 50 ? '#f59e0b' : '#ef4444' %>"><%= overallGrade %></span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="p-3 rounded" style="background:#f8fafc; border-left: 4px solid #10b981;">
+                        <span class="d-block text-secondary small fw-bold text-uppercase mb-1">Status</span>
+                        <span class="h4 m-0 fw-800 text-success"><i class="fas fa-check-circle me-2"></i>Approved</span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="p-3 rounded" style="background:#f8fafc; border-left: 4px solid #f59e0b;">
+                        <span class="d-block text-secondary small fw-bold text-uppercase mb-1">Attendance Average</span>
+                        <span class="h4 m-0 fw-800 text-dark"><%= attendance_rate %>%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <% } %>
+    </main>
+</div>
+<script src="/js/bootstrap.bundle.min.js"></script>
+<script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    socket.on('gradeUpdated', (data) => {
+        console.log('Real-time grade update received:', data);
+        window.location.reload();
+    });
+</script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+  AOS.init();
+</script>
 </body>
 </html>

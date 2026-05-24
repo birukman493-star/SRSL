@@ -13,6 +13,12 @@
     <link href="/css/inter-font.css" rel="stylesheet">
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <script>
+        window.currentUser = {
+            id: <%= user.id %>,
+            role: "<%= user.role %>"
+        };
+    </script>
 </head>
 <body class="dashboard-body" style="background: var(--dark-bg); color: var(--light-text);">
     <div class="dashboard-wrapper">
@@ -27,7 +33,7 @@
                         <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
                             Welcome, <%= parent.first_name %>!
                         </h1>
-                        <p class="text-secondary m-0" style="font-weight: 500;">Parent Guardian Portal • Overseeing Academic Excellence</p>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Parent Guardian Portal â€¢ Overseeing Academic Excellence</p>
                     </div>
                     <div class="d-flex gap-3 align-items-center">
                         <div class="text-end d-none d-md-block me-3">
@@ -104,14 +110,14 @@
                             <% if (children && children.length > 0) { %>
                                 <% children.forEach(child => { %>
                                     <div class="col-md-6">
-                                        <div class="p-4 h-100 shadow-sm transition hover-up-premium" style="background: var(--bg-soft); border-radius: 24px; border: 1px solid var(--panel-border);">
+                                        <div class="p-4 h-100 shadow-sm transition hover-up-premium premium-card" data-student-id="<%= child.id %>" style="background: var(--bg-soft); border-radius: 24px; border: 1px solid var(--panel-border);">
                                             <div class="d-flex align-items-center gap-3 mb-4">
                                                 <div class="sidebar-user-avatar shadow-sm" style="width: 55px; height: 55px; background: white; color: var(--primary-color); border-radius: 18px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem;">
                                                     <%= child.first_name[0] %><%= child.last_name[0] %>
                                                 </div>
                                                 <div>
                                                     <h6 class="m-0 fw-800 text-dark" style="font-size: 1.1rem;"><%= child.first_name %> <%= child.last_name %></h6>
-                                                    <small class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Grade <%= child.grade_level %> • <%= child.section %></small>
+                                                    <small class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Grade <%= child.grade_level %> â€¢ <%= child.section %></small>
                                                 </div>
                                             </div>
                                             
@@ -128,6 +134,11 @@
                                                         <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.6rem;">Class Rank</div>
                                                     </div>
                                                 </div>
+                                            </div>
+                                            
+                                            <!-- Multi-Teacher Attendance Container -->
+                                            <div class="teacher-attendance-container w-100 mb-4 d-flex flex-column gap-2">
+                                                <!-- Dynamically populated by JS when updates arrive -->
                                             </div>
 
                                             <div class="d-grid gap-2">
@@ -204,9 +215,12 @@
             </div>
         </main>
     </div>
-
+    <script src="/socket.io/socket.io.js"></script>
     <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/translations.js"></script>
     <script src="/js/brocode-script.js"></script>
+
+
     <style>
         .fw-900 { font-weight: 900 !important; }
         .fw-800 { font-weight: 800 !important; }
@@ -219,3 +233,4 @@
     </style>
 </body>
 </html>
+

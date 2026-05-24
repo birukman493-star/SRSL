@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -240,23 +240,23 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
             <li class="nav-item">
-              <a href="/" class="nav-link" data-i18n="nav_home">Home</a>
+              <a href="/" class="nav-link" data-key="nav_home" data-key="nav_home">Home</a>
             </li>
             <li class="nav-item">
-              <a href="/about" class="nav-link" data-i18n="nav_about">About</a>
+              <a href="/about" class="nav-link" data-key="nav_about" data-key="nav_about">About</a>
             </li>
             <li class="nav-item">
-              <a href="/gallery" class="nav-link" data-i18n="nav_gallery"
+              <a href="/gallery" class="nav-link" data-key="nav_gallery"
                 >Gallery</a
               >
             </li>
             <li class="nav-item">
-              <a href="/contact" class="nav-link active" data-i18n="nav_contact"
+              <a href="/contact" class="nav-link active" data-key="nav_contact"
                 >Contact</a
               >
             </li>
             <li class="nav-item">
-              <a href="/auth/login" class="nav-link" data-i18n="nav_login"
+              <a href="/auth/login" class="nav-link" data-key="nav_login"
                 >Login</a
               >
             </li>
@@ -279,17 +279,17 @@
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
-                <i class="fas fa-globe"></i> EN
+                <i class="fas fa-globe"></i> <span id="currentLangLabel">EN</span>
               </a>
               <ul
                 class="dropdown-menu dropdown-menu-end glass-dropdown"
                 aria-labelledby="languageDropdown"
               >
-                <li><a class="dropdown-item" href="?lang=en">English</a></li>
+                <li><a class="dropdown-item lang-switch" href="#" data-lang="en">English</a></li>
                 <li>
                   <a class="dropdown-item" href="?lang=am">Amharic (አማርኛ)</a>
                 </li>
-                <li><a class="dropdown-item" href="?lang=om">Afan Oromo</a></li>
+                <li><a class="dropdown-item lang-switch" href="#" data-lang="om">Afan Oromo</a></li>
               </ul>
             </li>
           </ul>
@@ -304,7 +304,7 @@
           <h1
             class="hero-title animate-on-scroll"
             data-reveal="top"
-            data-i18n="nav_contact"
+            data-key="nav_contact"
           >
             Find Us
           </h1>
@@ -537,7 +537,7 @@
                 ></i
                 >abdigudina school
               </h5>
-              <p style="color: var(--gray-text)" data-i18n="footer_desc">
+              <p style="color: var(--gray-text)" data-key="footer_desc">
                 Modern educational management platform for schools and
                 institutions. Empowering education through technology.
               </p>
@@ -581,7 +581,7 @@
               <h5
                 class="mb-3"
                 style="color: var(--dark-text)"
-                data-i18n="footer_quick_links"
+                data-key="footer_quick_links"
               >
                 Quick Links
               </h5>
@@ -621,7 +621,7 @@
               <h5
                 class="mb-3"
                 style="color: var(--dark-text)"
-                data-i18n="footer_services"
+                data-key="footer_services"
               >
                 Services
               </h5>
@@ -661,7 +661,7 @@
               <h5
                 class="mb-3"
                 style="color: var(--dark-text)"
-                data-i18n="footer_contact_info"
+                data-key="footer_contact_info"
               >
                 Contact Info
               </h5>
@@ -685,7 +685,7 @@
           <div class="text-center">
             <p style="color: var(--gray-text)" class="mb-0">
               &copy; 2026 abdigudina school.
-              <span data-i18n="footer_rights">All rights reserved.</span>
+              <span data-key="footer_rights">All rights reserved.</span>
             </p>
           </div>
         </div>
@@ -726,3 +726,5 @@
     </script>
   </body>
 </html>
+
+

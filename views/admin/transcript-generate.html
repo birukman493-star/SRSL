@@ -3,466 +3,378 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Official Transcript - <%= student.first_name %> <%= student.last_name %></title>
+    <title>Transcript - <%= student.first_name %> <%= student.last_name %></title>
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/all.min.css">
     <style>
-        body {
-            font-family: 'Times New Roman', Times, serif;
-            background: #e2e8f0;
-            color: #000;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            margin: 0;
-            padding: 0;
-        }
+        body { font-family: 'Times New Roman', serif; background: #d1d5db; margin: 0; padding: 0; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-        /* Control Bar */
-        .no-print {
-            background: white;
-            padding: 1rem 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            font-family: 'Inter', sans-serif;
-        }
+        /* Control bar */
+        .no-print { background:#fff; padding:.6rem 2rem; position:sticky; top:0; z-index:1000; display:flex; justify-content:center; align-items:center; gap:1rem; box-shadow:0 2px 8px rgba(0,0,0,.1); font-family:'Inter',sans-serif; }
+        .btn-ctrl { padding:.45rem 1.2rem; border-radius:7px; font-weight:600; border:1px solid #ccc; background:#fff; color:#333; cursor:pointer; text-decoration:none; font-size:.86rem; transition:all .2s; }
+        .btn-ctrl:hover { background:#f1f5f9; }
+        .btn-ctrl.primary { background:#1e3a8a; color:#fff; border-color:#1e3a8a; }
+        .btn-ctrl.primary:hover { background:#1e40af; }
 
-        .btn-modern {
-            padding: 0.6rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            border: 1px solid #ccc;
-            background: white;
-            color: #333;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-        .btn-modern:hover { background: #f8f9fa; }
-        .btn-modern.primary { background: #2563eb; color: white; border-color: #2563eb; }
-        .btn-modern.primary:hover { background: #1d4ed8; }
-
-        /* Transcript Paper */
+        /* A4 Paper */
         .transcript-paper {
             width: 210mm;
             min-height: 297mm;
-            margin: 40px auto;
-            background: white;
-            padding: 15mm 18mm;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin: 32px auto;
+            background: #fff;
+            padding: 14mm 16mm 16mm;
+            box-shadow: 0 8px 28px rgba(0,0,0,.15);
             position: relative;
             page-break-after: always;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
-        /* Header */
-        .header-container {
+        /* Watermark */
+        .watermark {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 68px;
+            font-weight: 900;
+            color: rgba(30, 58, 138, 0.09);
             text-align: center;
-            margin-bottom: 16px;
-            border-bottom: 3px double #000;
-            padding-bottom: 12px;
-        }
-        .header-container h1 {
-            font-size: 20px;
-            font-weight: bold;
-            margin: 0 0 4px 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .header-container h2 {
-            font-size: 15px;
-            font-weight: bold;
-            margin: 4px 0 0 0;
-            text-decoration: underline;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        .header-container p {
-            font-size: 13px;
-            margin: 4px 0 0;
-            color: #555;
+            line-height: 1.1;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 0;
+            letter-spacing: 4px;
+            font-family: 'Arial', sans-serif;
         }
 
-        /* Student Info Grid */
-        .student-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px 20px;
-            margin-bottom: 18px;
-            font-size: 13.5px;
-            border: 1px solid #ccc;
-            padding: 10px 14px;
-            background: #fafafa;
-        }
-        .info-item { display: flex; gap: 6px; }
-        .info-item strong { min-width: 110px; display: inline-block; color: #333; }
+        /* Page content above watermark */
+        .page-content { position: relative; z-index: 1; }
 
-        /* Formal Grade Table */
-        table.formal-grid {
+        /* Title */
+        .title-section { text-align: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2.5px solid #1e3a8a; }
+        .title-section h1 { font-size: 22px; font-weight: 900; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 2px; color: #1e3a8a; font-family: 'Arial', sans-serif; }
+        .title-section h2 { font-size: 13px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 3px; color: #1e3a8a; }
+
+        /* Student Info */
+        .student-info { margin-bottom: 14px; font-size: 13px; }
+        .info-row { display: flex; align-items: baseline; margin-bottom: 3px; }
+        .info-label { font-weight: 700; min-width: 110px; }
+        .info-sep { margin: 0 8px; font-weight: 700; }
+        .info-val { font-weight: 400; }
+
+        /* Transcript Table */
+        table.tr-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 14px;
-            font-size: 13px;
+            font-size: 12.5px;
+            border: 2.5px solid #1e3a8a;
         }
-        table.formal-grid th,
-        table.formal-grid td {
-            border: 1.5px solid #222;
+        table.tr-table th {
+            background: #1e3a8a;
+            color: #fff;
+            text-align: center;
+            padding: 7px 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 11.5px;
+            border: 1.5px solid #fff;
+        }
+        table.tr-table th.subject-h { text-align: center; width: 36%; font-size: 13px; }
+        table.tr-table th.avg-h { width: 16%; }
+        table.tr-table td {
+            border: 1px solid #9ca3af;
             padding: 5px 7px;
             text-align: center;
             vertical-align: middle;
+            font-size: 12.5px;
         }
-        table.formal-grid th {
-            font-weight: bold;
-            text-transform: uppercase;
-            background: #f0f0f0;
-            font-size: 11px;
-            letter-spacing: 0.5px;
-        }
-        table.formal-grid td.subject-name {
-            text-align: left;
-            padding-left: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 12px;
-        }
-        table.formal-grid tr.footer-row td {
-            font-weight: bold;
-            background: #f5f5f5;
-        }
-        table.formal-grid tr.footer-row td:first-child {
-            text-align: left;
-            padding-left: 10px;
-        }
-        .pass-status { color: #16a34a; }
-        .fail-status { color: #dc2626; }
+        table.tr-table td.subject-cell { text-align: left; padding-left: 10px; font-weight: 500; text-transform: uppercase; font-size: 12px; }
+        table.tr-table tbody tr:nth-child(even) { background: #f9fafb; }
+        table.tr-table tbody tr:hover { background: #eff6ff; }
 
-        /* Single Page Print Button */
-        .single-print-btn {
-            position: absolute;
-            top: 12mm;
-            right: 15mm;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: 'Inter', sans-serif;
-            background: rgba(37,99,235,0.06);
-            color: #2563eb;
-            border: 1px solid rgba(37,99,235,0.2);
-            padding: 4px 12px;
-            border-radius: 20px;
-        }
-        .single-print-btn:hover { background: #2563eb; color: white; }
+        /* Summary rows */
+        table.tr-table tr.sum-row td { font-weight: 700; background: #f0f4ff; border-top: 1.5px solid #1e3a8a; }
+        table.tr-table tr.sum-row td.subject-cell { background: #e8edf8; }
+        table.tr-table tr.sum-row:first-of-type td { border-top: 2px solid #1e3a8a; }
 
-        /* Signatures */
-        .signatures {
+        /* Page footer */
+        .page-footer {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin-top: 40px;
-            padding: 0 10px;
+            margin-top: 22px;
+            font-size: 12px;
+            border-top: 1px solid #000;
+            padding-top: 8px;
         }
-        .sig-block { text-align: center; width: 180px; }
-        .sig-line {
-            border-bottom: 1px solid #000;
-            height: 35px;
-            margin-bottom: 5px;
-        }
-        .sig-block .sig-label { font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .footer-sig { min-width: 180px; }
+        .sig-line { display: inline-block; width: 140px; border-bottom: 1px solid #000; margin-left: 4px; }
 
-        /* Stamp circle */
-        .stamp-circle {
-            width: 110px; height: 110px;
-            border: 3px dashed rgba(0,0,0,0.18);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: rgba(0,0,0,0.25);
-            font-weight: bold;
-            transform: rotate(-15deg);
-            font-size: 11px;
-            text-align: center;
-            line-height: 1.3;
+        /* Print btn on paper */
+        .paper-print-btn {
+            position: absolute; top: 10mm; right: 14mm;
+            font-size: 10px; font-weight: 700; cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            background: rgba(30,58,138,.07); color: #1e3a8a;
+            border: 1px solid rgba(30,58,138,.2);
+            padding: 3px 10px; border-radius: 20px; transition: all .2s;
         }
+        .paper-print-btn:hover { background: #1e3a8a; color: #fff; }
 
-        /* Page number */
-        .page-number {
-            position: absolute;
-            bottom: 10mm;
-            right: 15mm;
-            font-size: 11px;
-            font-style: italic;
-            color: #777;
+        /* Incomplete warning */
+        .incomplete-warn {
+            background: #fee2e2; border: 1px solid #ef4444;
+            color: #b91c1c; padding: 6px 14px; border-radius: 6px;
+            font-size: 12px; font-weight: 700; text-align: center;
+            margin-bottom: 10px; font-family: 'Inter', sans-serif;
         }
 
         /* Empty state */
-        .no-grades-notice {
-            text-align: center;
-            padding: 40px 20px;
-            border: 2px dashed #ddd;
-            border-radius: 8px;
-            color: #888;
-            margin: 20px 0;
-        }
-        .no-grades-notice .icon { font-size: 36px; margin-bottom: 12px; }
-        .no-grades-notice p { margin: 0; font-size: 14px; font-family: 'Inter', sans-serif; }
-
-        /* Transcript number watermark */
-        .transcript-ref {
-            position: absolute;
-            bottom: 10mm;
-            left: 15mm;
-            font-size: 11px;
-            color: #999;
-            font-family: 'Inter', sans-serif;
-        }
+        .empty-notice { text-align: center; padding: 40px 20px; border: 2px dashed #ccc; border-radius: 8px; color: #888; margin: 20px 0; }
 
         @media print {
-            body { background: white; }
+            body { background: #fff; }
             .no-print { display: none !important; }
-            .transcript-paper {
-                margin: 0 auto;
-                box-shadow: none;
-                padding: 12mm 15mm;
-                page-break-after: always;
-            }
             .dont-print-me { display: none !important; }
+            .transcript-paper { margin: 0 auto; box-shadow: none; padding: 12mm 14mm 14mm; page-break-after: always; }
         }
     </style>
     <script>
-        function printSinglePage(index) {
-            const papers = document.querySelectorAll('.transcript-paper');
-            papers.forEach((p, i) => {
-                if (i !== index) p.classList.add('dont-print-me');
+        function printSinglePage(idx) {
+            document.querySelectorAll('.transcript-paper').forEach((p, i) => {
+                if (i !== idx) p.classList.add('dont-print-me');
             });
             window.print();
-            setTimeout(() => {
-                papers.forEach(p => p.classList.remove('dont-print-me'));
-            }, 600);
+            setTimeout(() => document.querySelectorAll('.transcript-paper').forEach(p => p.classList.remove('dont-print-me')), 700);
         }
     </script>
 </head>
 <body>
 
-    <!-- Control Bar -->
-    <div class="no-print">
-        <a href="/admin/transcripts" class="btn-modern">← Back to Transcripts</a>
-        <button onclick="window.print()" class="btn-modern primary">
-            <i class="fas fa-print me-1"></i> Print All Pages
-        </button>
-        <span style="font-family: 'Inter', sans-serif; font-size: 0.8rem; color: #64748b;">
-            Ref: <%= transcriptNum %>
-        </span>
+<!-- Control Bar -->
+<div class="no-print">
+    <a href="/admin/transcripts" class="btn-ctrl">&#8592; Back</a>
+    <button onclick="window.print()" class="btn-ctrl primary">
+        <i class="fas fa-print"></i> Print All
+    </button>
+    <span style="font-family:'Inter',sans-serif;font-size:.78rem;color:#64748b;">Ref: <%= transcriptNum %></span>
+</div>
+
+<%
+    /* ===== DATA PROCESSING ===== */
+    let yearsData = [];
+    if (grades && grades.length > 0) {
+        const ym = {};
+        grades.forEach(g => {
+            if (!ym[g.academic_year]) ym[g.academic_year] = g.grade_level || student.grade_level || '?';
+        });
+        yearsData = Object.keys(ym).sort().map(y => ({ year: y, grade: ym[y] }));
+    }
+    const gradesByYear = {};
+    yearsData.forEach(item => { gradesByYear[item.year] = grades.filter(g => g.academic_year === item.year); });
+    const hasGrades = yearsData.length > 0;
+
+    function ordSuffix(n) {
+        const v = parseInt(n);
+        if (isNaN(v)) return n;
+        const s = ['th','st','nd','rd'], r = v % 100;
+        return v + (s[(r - 20) % 10] || s[r] || s[0]);
+    }
+    function getRemark(avg) {
+        if (avg >= 85) return 'Excellent Performance';
+        if (avg >= 75) return 'Good Performance';
+        return 'Needs Improvement';
+    }
+%>
+
+<% if (!hasGrades) { %>
+<!-- Empty Page -->
+<div class="transcript-paper">
+    <button onclick="printSinglePage(0)" class="paper-print-btn no-print">Download</button>
+    <div class="page-content">
+        <div class="title-section">
+            <h1>Student Academic Transcript</h1>
+            <h2><%= schoolName || 'Abdigudina Elementary School' %></h2>
+        </div>
+        <div class="student-info">
+            <div class="info-row"><span class="info-label">Student Name</span><span class="info-sep">:</span><span class="info-val"><%= student.first_name %> <%= student.last_name %></span></div>
+            <div class="info-row"><span class="info-label">Student ID</span><span class="info-sep">:</span><span class="info-val"><%= student.student_id %></span></div>
+            <div class="info-row"><span class="info-label">Grade / Class</span><span class="info-sep">:</span><span class="info-val">Grade <%= student.grade_level || 'N/A' %></span></div>
+            <div class="info-row"><span class="info-label">Section</span><span class="info-sep">:</span><span class="info-val"><%= student.section || 'N/A' %></span></div>
+        </div>
+        <div class="empty-notice">
+            <div style="font-size:32px;margin-bottom:10px;">&#128203;</div>
+            <p><strong>No approved academic records found.</strong></p>
+            <p style="font-size:12px;margin-top:6px;">Grades must be submitted and approved before appearing on the transcript.</p>
+        </div>
+        <div class="page-footer">
+            <div class="footer-sig">Prepared By: <span class="sig-line"></span></div>
+            <div>Date: <span class="sig-line"></span></div>
+            <div>Page 1 of 1</div>
+        </div>
     </div>
+</div>
 
-    <%
-        // ===== DATA PROCESSING =====
-        // Build yearsData from grades (grouped by academic_year)
-        let yearsData = [];
+<% } else { %>
+<% yearsData.forEach((yearObj, pageIndex) => {
+    const yearGrades = gradesByYear[yearObj.year] || [];
 
-        if (grades && grades.length > 0) {
-            const yearMap = {};
-            grades.forEach(g => {
-                if (!yearMap[g.academic_year]) {
-                    // Use grade_level from classes table (cl.grade aliased as grade_level)
-                    yearMap[g.academic_year] = g.grade_level || student.grade_level || '?';
-                }
-            });
-            yearsData = Object.keys(yearMap).sort().map(y => ({ year: y, grade: yearMap[y] }));
+    /* Build courses map from enrollments */
+    const cm = {};
+    if (typeof enrolledCourses !== 'undefined' && enrolledCourses.length > 0) {
+        enrolledCourses.forEach(ec => {
+            if (String(ec.enrollment_grade) === String(yearObj.grade)) {
+                cm[ec.course_id] = { name: ec.course_name, sem1: undefined, sem2: undefined, order: ec.course_name };
+            }
+        });
+    }
+
+    yearGrades.forEach(g => {
+        let cid = g.course_id;
+        let cName = g.class_name || 'General';
+        
+        if (cid && cid !== 0) {
+            if (!cm[cid]) cm[cid] = { name: cName, sem1: undefined, sem2: undefined, order: cName };
+        } else {
+            cid = 'fallback_' + cName;
+            if (!cm[cid]) cm[cid] = { name: cName, sem1: undefined, sem2: undefined, order: cName };
         }
 
-        // Build gradesByYear lookup
-        const gradesByYear = {};
-        yearsData.forEach(item => {
-            gradesByYear[item.year] = grades.filter(g => g.academic_year === item.year);
-        });
+        const sk = String(g.semester).trim();
+        const sc = parseFloat(g.score);
+        if (sk === 'Semester 1' || sk === '1') cm[cid].sem1 = sc;
+        else if (sk === 'Semester 2' || sk === '2') cm[cid].sem2 = sc;
+    });
+    
+    const courses = Object.values(cm).sort((a, b) => String(a.order || '').localeCompare(String(b.order || '')));
 
-        const hasGrades = yearsData.length > 0;
-    %>
+    /* Accumulators */
+    let sumS1 = 0, cntS1 = 0, sumS2 = 0, cntS2 = 0, sumAvg = 0;
+    courses.forEach(c => {
+        let subjAvg = 0, termCnt = 0;
+        if (c.sem1 !== undefined) { sumS1 += c.sem1; cntS1++; subjAvg += c.sem1; termCnt++; }
+        if (c.sem2 !== undefined) { sumS2 += c.sem2; cntS2++; subjAvg += c.sem2; termCnt++; }
+        if (termCnt > 0) { sumAvg += subjAvg / termCnt; }
+    });
 
-    <% if (!hasGrades) { %>
-    <!-- === NO APPROVED GRADES: Show single empty shell with notice === -->
-    <div class="transcript-paper">
-        <button onclick="printSinglePage(0)" class="single-print-btn no-print">
-            <i class="fas fa-download me-1"></i> Download
-        </button>
+    const term1Avg = cntS1 > 0 ? sumS1 / cntS1 : 0;
+    const term2Avg = cntS2 > 0 ? sumS2 / cntS2 : 0;
+    
+    let finalAvg = 0;
+    if (cntS1 > 0 && cntS2 > 0) finalAvg = (term1Avg + term2Avg) / 2;
+    else if (cntS1 > 0) finalAvg = term1Avg;
+    else if (cntS2 > 0) finalAvg = term2Avg;
 
-        <div class="header-container">
-            <h1><%= schoolName || 'Abdigudina Elementary School' %></h1>
-            <h2>Official Transcript of Records</h2>
-            <p>Date of Issue: <%= today %></p>
+    const hist = history && history.find(h => h.academic_year === yearObj.year);
+    const rank = hist && hist.rank ? hist.rank : '';
+    const remark = getRemark(finalAvg);
+    const gradeLabel = ordSuffix(yearObj.grade);
+    const yearShort = yearObj.year.split('/')[0];
+%>
+<div class="transcript-paper">
+    <div class="watermark">OFFICIAL<br>TRANSCRIPT</div>
+    <button onclick="printSinglePage(<%= pageIndex %>)" class="paper-print-btn no-print">
+        <i class="fas fa-download"></i> This Page
+    </button>
+
+    <div class="page-content">
+        <% if (typeof hasIncompleteGrades !== 'undefined' && hasIncompleteGrades) { %>
+        <div class="incomplete-warn no-print">
+            <i class="fas fa-exclamation-triangle"></i>
+            INCOMPLETE — Some grades are pending approval or rejected.
         </div>
-
-        <div class="student-info">
-            <div class="info-item"><strong>Student Name:</strong> <%= student.first_name %> <%= student.last_name %></div>
-            <div class="info-item"><strong>Student ID:</strong> <%= student.student_id %></div>
-            <div class="info-item"><strong>Gender:</strong> <%= student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1) : 'N/A' %></div>
-            <div class="info-item"><strong>Grade Level:</strong> Grade <%= student.grade_level || 'N/A' %></div>
-        </div>
-
-        <div class="no-grades-notice">
-            <div class="icon">📋</div>
-            <p><strong>No approved academic records found for this student.</strong></p>
-            <p style="margin-top: 8px; font-size: 12px;">Grades must be submitted by teachers and <em>approved</em> by an administrator before they appear on the transcript.</p>
-        </div>
-
-        <div class="signatures" style="margin-top: 60px;">
-            <div class="sig-block">
-                <div class="sig-line"></div>
-                <div class="sig-label">Home Room Teacher</div>
-            </div>
-            <div class="stamp-circle">School<br>Stamp</div>
-            <div class="sig-block">
-                <div class="sig-line"></div>
-                <div class="sig-label">Director / Principal</div>
-            </div>
-        </div>
-
-        <div class="transcript-ref">Ref: <%= transcriptNum %></div>
-        <div class="page-number">Page 1 of 1</div>
-    </div>
-
-    <% } else { %>
-    <!-- === HAS GRADES: Render one page per academic year === -->
-    <% yearsData.forEach((item, index) => { %>
-    <div class="transcript-paper">
-        <button onclick="printSinglePage(<%= index %>)" class="single-print-btn no-print">
-            <i class="fas fa-download me-1"></i> This Year
-        </button>
-
-        <!-- Header -->
-        <div class="header-container">
-            <h1><%= schoolName || 'Abdigudina Elementary School' %></h1>
-            <h2>Official Transcript of Records</h2>
-            <p>Date of Issue: <%= today %></p>
-        </div>
-
-        <!-- Student Info -->
-        <div class="student-info">
-            <div class="info-item"><strong>Student Name:</strong> <%= student.first_name %> <%= student.last_name %></div>
-            <div class="info-item"><strong>Student ID:</strong> <%= student.student_id %></div>
-            <div class="info-item"><strong>Gender:</strong> <%= student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1) : 'N/A' %></div>
-            <div class="info-item"><strong>Grade Level:</strong> Grade <%= item.grade %></div>
-            <div class="info-item"><strong>Academic Year:</strong> <%= item.year %></div>
-            <div class="info-item"><strong>Transcript Ref:</strong> <%= transcriptNum %></div>
-        </div>
-
-        <!-- Grade Table -->
-        <%
-            const yearGrades = gradesByYear[item.year] || [];
-            let sumT1 = 0, sumT2 = 0, sumAvg = 0;
-            let cntT1 = 0, cntT2 = 0, cntAvg = 0;
-        %>
-        <table class="formal-grid">
-            <thead>
-                <tr>
-                    <th rowspan="2" style="font-size: 14px; width: 35%;">Subject</th>
-                    <th colspan="3">Grade <%= item.grade %> &mdash; Academic Year <%= item.year %></th>
-                </tr>
-                <tr>
-                    <th style="width: 18%;">1<sup>st</sup> Term</th>
-                    <th style="width: 18%;">2<sup>nd</sup> Term</th>
-                    <th style="width: 18%;">Average</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% yearGrades.forEach(g => {
-                    const t1  = parseFloat(g.mid_score   || 0);
-                    const t2  = parseFloat(g.final_score || 0);
-                    const avg = parseFloat(g.score       || 0);
-                    sumT1  += t1;  if (t1  > 0) cntT1++;
-                    sumT2  += t2;  if (t2  > 0) cntT2++;
-                    sumAvg += avg; if (avg > 0) cntAvg++;
-                %>
-                <tr>
-                    <td class="subject-name"><%= g.class_name || 'N/A' %></td>
-                    <td><%= t1  > 0 ? t1.toFixed(1)  : '—' %></td>
-                    <td><%= t2  > 0 ? t2.toFixed(1)  : '—' %></td>
-                    <td><%= avg > 0 ? avg.toFixed(1) : '—' %></td>
-                </tr>
-                <% }); %>
-
-                <% const finalAvg = cntAvg > 0 ? (sumAvg / cntAvg) : 0; %>
-                <% const isPassed = finalAvg >= 50; %>
-
-                <tr class="footer-row">
-                    <td>Total</td>
-                    <td><%= cntT1 > 0 ? sumT1.toFixed(1)  : '—' %></td>
-                    <td><%= cntT2 > 0 ? sumT2.toFixed(1)  : '—' %></td>
-                    <td><%= cntAvg > 0 ? sumAvg.toFixed(1) : '—' %></td>
-                </tr>
-                <tr class="footer-row">
-                    <td>Average</td>
-                    <td><%= cntT1 > 0 ? (sumT1/cntT1).toFixed(2) : '—' %></td>
-                    <td><%= cntT2 > 0 ? (sumT2/cntT2).toFixed(2) : '—' %></td>
-                    <td><%= cntAvg > 0 ? finalAvg.toFixed(2) : '—' %></td>
-                </tr>
-                <tr class="footer-row">
-                    <td>Rank</td>
-                    <td></td><td></td>
-                    <td><%= (typeof stats !== 'undefined' && stats && stats.rank) ? stats.rank : '—' %></td>
-                </tr>
-                <tr class="footer-row">
-                    <td>Conduct</td>
-                    <td>A</td><td>A</td><td>A</td>
-                </tr>
-                <tr class="footer-row">
-                    <td>Status</td>
-                    <td colspan="3" class="<%= isPassed ? 'pass-status' : (cntAvg > 0 ? 'fail-status' : '') %>">
-                        <%= cntAvg > 0 ? (isPassed ? 'PROMOTED' : 'RETAINED') : '—' %>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <!-- National Exams (if any for this grade level) -->
-        <% const examForGrade = nationalExams ? nationalExams.filter(e => String(e.exam_type).includes(String(item.grade))) : []; %>
-        <% if (examForGrade.length > 0) { %>
-        <table class="formal-grid" style="margin-top: 10px;">
-            <thead>
-                <tr><th colspan="3" style="font-size: 13px;">National Examination Results</th></tr>
-                <tr>
-                    <th>Exam Type</th>
-                    <th>Academic Year</th>
-                    <th>Score / Result</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% examForGrade.forEach(exam => { %>
-                <tr>
-                    <td><%= exam.exam_type %></td>
-                    <td><%= exam.academic_year %></td>
-                    <td><%= exam.total_score || '—' %> (<%= exam.result_status || '—' %>)</td>
-                </tr>
-                <% }); %>
-            </tbody>
-        </table>
         <% } %>
 
-        <!-- Signatures -->
-        <div class="signatures">
-            <div class="sig-block">
-                <div class="sig-line"></div>
-                <div class="sig-label">Home Room Teacher</div>
-            </div>
-            <div class="stamp-circle">School<br>Stamp</div>
-            <div class="sig-block">
-                <div class="sig-line"></div>
-                <div class="sig-label">Director / Principal</div>
-            </div>
+        <!-- TITLE -->
+        <div class="title-section">
+            <h1>Student Academic Transcript</h1>
+            <h2>Academic Year: <%= yearObj.year %></h2>
         </div>
 
-        <div class="transcript-ref">Ref: <%= transcriptNum %></div>
-        <div class="page-number">Page <%= index + 1 %> of <%= yearsData.length %></div>
+        <!-- STUDENT INFO -->
+        <div class="student-info">
+            <div class="info-row"><span class="info-label">Student Name</span><span class="info-sep">:</span><span class="info-val"><%= student.first_name %> <%= student.last_name %></span></div>
+            <div class="info-row"><span class="info-label">Student ID</span><span class="info-sep">:</span><span class="info-val"><%= student.student_id %></span></div>
+            <div class="info-row"><span class="info-label">Grade / Class</span><span class="info-sep">:</span><span class="info-val">Grade <%= yearObj.grade %></span></div>
+            <div class="info-row"><span class="info-label">Section</span><span class="info-sep">:</span><span class="info-val"><%= student.section || 'N/A' %></span></div>
+        </div>
+
+        <!-- GRADE TABLE -->
+        <table class="tr-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" class="subject-h">Subject</th>
+                    <th colspan="2"><%= gradeLabel %> Grade &mdash; <%= yearShort %></th>
+                    <th rowspan="2" class="avg-h">Average</th>
+                </tr>
+                <tr>
+                    <th style="width:16%;">1<sup>st</sup> Term</th>
+                    <th style="width:16%;">2<sup>nd</sup> Term</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% courses.forEach(c => {
+                    let avg = 0, cnt = 0;
+                    if (c.sem1 !== undefined) { avg += c.sem1; cnt++; }
+                    if (c.sem2 !== undefined) { avg += c.sem2; cnt++; }
+                    avg = cnt > 0 ? avg / cnt : 0;
+                %>
+                <tr>
+                    <td class="subject-cell"><%= c.name %></td>
+                    <td><%= c.sem1 !== undefined ? Math.round(c.sem1) : '' %></td>
+                    <td><%= c.sem2 !== undefined ? Math.round(c.sem2) : '' %></td>
+                    <td><strong><%= avg > 0 ? avg.toFixed(2) : '' %></strong></td>
+                </tr>
+                <% }); %>
+
+                <!-- TOTAL -->
+                <tr class="sum-row">
+                    <td class="subject-cell">Total</td>
+                    <td><%= cntS1 > 0 ? Math.round(sumS1) : '' %></td>
+                    <td><%= cntS2 > 0 ? Math.round(sumS2) : '' %></td>
+                    <td><%= (cntS1 > 0 || cntS2 > 0) ? sumAvg.toFixed(2) : '' %></td>
+                </tr>
+                <!-- AVERAGE -->
+                <tr class="sum-row">
+                    <td class="subject-cell">Average</td>
+                    <td><%= cntS1 > 0 ? term1Avg.toFixed(2) : '' %></td>
+                    <td><%= cntS2 > 0 ? term2Avg.toFixed(2) : '' %></td>
+                    <td><%= (cntS1 > 0 || cntS2 > 0) ? finalAvg.toFixed(2) : '' %></td>
+                </tr>
+                <!-- RANK -->
+                <tr class="sum-row">
+                    <td class="subject-cell">Rank</td>
+                    <td><%= rank %></td>
+                    <td></td>
+                    <td>&mdash;</td>
+                </tr>
+                <!-- CONDUCT -->
+                <tr class="sum-row">
+                    <td class="subject-cell">Conduct</td>
+                    <td>A</td>
+                    <td>A</td>
+                    <td>A</td>
+                </tr>
+                <!-- REMARK -->
+                <tr class="sum-row">
+                    <td class="subject-cell">Remark</td>
+                    <td><%= cntS1 > 0 ? getRemark(term1Avg) : '' %></td>
+                    <td><%= cntS2 > 0 ? getRemark(term2Avg) : '' %></td>
+                    <td>&mdash;</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- PAGE FOOTER -->
+        <div class="page-footer">
+            <div class="footer-sig">Prepared By: <span class="sig-line"></span></div>
+            <div>Date: <span class="sig-line"></span></div>
+            <div>Page <%= pageIndex + 1 %> of <%= yearsData.length %></div>
+        </div>
     </div>
-    <% }); %>
-    <% } %>
+</div>
+<% }); %>
+<% } %>
 
 </body>
 </html>
