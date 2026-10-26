@@ -68,6 +68,48 @@ function initializeApp() {
             }
         });
 
+        socket.on('academicContextUpdated', (data) => {
+            if (!data) return;
+            document.querySelectorAll('.academic-year-display').forEach((el) => {
+                if (data.academicYear) el.textContent = data.academicYear;
+            });
+            document.querySelectorAll('.semester-display').forEach((el) => {
+                if (data.semesterLabel) el.textContent = data.semesterLabel;
+            });
+            document.querySelectorAll('.academic-context-banner').forEach((banner) => {
+                if (data.academicYear) banner.dataset.academicYear = data.academicYear;
+                if (data.semester) banner.dataset.semester = data.semester;
+                if (data.semesterLabel) banner.dataset.semesterLabel = data.semesterLabel;
+            });
+        });
+
+        socket.on('semesterChanged', (data) => {
+            console.log("SEMESTER CHANGED GLOBALLY:", data);
+            window.location.reload();
+        });
+
+        socket.on('semesterUpdated', (data) => {
+            if (data?.semesterLabel) {
+                document.querySelectorAll('.semester-display').forEach((el) => {
+                    el.textContent = data.semesterLabel;
+                });
+            }
+        });
+
+        socket.on('academicYearUpdated', (data) => {
+            if (data?.academicYear) {
+                document.querySelectorAll('.academic-year-display').forEach((el) => {
+                    el.textContent = data.academicYear;
+                });
+            }
+        });
+
+        socket.on('gradeUpdated', () => {
+            if (document.querySelector('[data-reload-on-grade-update]')) {
+                window.location.reload();
+            }
+        });
+
         socket.on('studentAttendanceUpdated', (data) => {
             console.log("RECEIVED ATTENDANCE UPDATE:", data);
             
@@ -178,9 +220,26 @@ function initializeApp() {
 // ===== NAVIGATION =====
 function initNavigation() {
     const navbar = $('.navbar');
-    const navLinks = $$('.nav-link');
+    const navLinks = $$('.navbar .navbar-nav .nav-link');
     const toggler = $('.navbar-toggler');
     const collapse = $('.navbar-collapse');
+
+    const normalizePath = (path) => path.replace(/\/+$/, '') || '/';
+    const currentPath = normalizePath(window.location.pathname);
+
+    navLinks.forEach((link) => {
+        link.classList.remove('active');
+        link.removeAttribute('aria-current');
+
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#')) return;
+
+        const target = new URL(href, window.location.origin);
+        if (target.origin === window.location.origin && normalizePath(target.pathname) === currentPath) {
+            link.classList.add('active');
+            link.setAttribute('aria-current', 'page');
+        }
+    });
 
     // Navbar scroll effect
     const handleScroll = () => {
@@ -332,6 +391,7 @@ function initNavigation() {
             }
         }
     }
+}
     // ===== THEME MANAGEMENT =====
     function initTheme() {
         const html = document.documentElement;
@@ -353,20 +413,15 @@ function initNavigation() {
 
         applyTheme(savedTheme);
 
-        // Listen for clicks on any theme toggle element (including dynamic ones)
         document.addEventListener('click', (e) => {
             const toggle = e.target.closest('#themeToggle, .theme-toggle-btn');
-            if (toggle) {
-                e.preventDefault();
-                const currentTheme = html.getAttribute('data-theme') || 'light';
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            if (!toggle) return;
 
-                applyTheme(newTheme);
-                localStorage.setItem('theme', newTheme);
-
-                // Trigger an event for any components that need to react
-                document.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
-            }
+            e.preventDefault();
+            const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+            document.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
         });
     }
 
@@ -421,15 +476,21 @@ function initNavigation() {
         const backToTop = createBackToTopButton();
         document.body.appendChild(backToTop);
 
-        window.addEventListener('scroll', debounce(() => {
-            if (window.scrollY > 300) {
-                backToTop.style.opacity = '1';
-                backToTop.style.pointerEvents = 'auto';
-            } else {
-                backToTop.style.opacity = '0';
-                backToTop.style.pointerEvents = 'none';
-            }
-        }, 10));
+        let scrollUpdatePending = false;
+        window.addEventListener('scroll', () => {
+            if (scrollUpdatePending) return;
+            scrollUpdatePending = true;
+            requestAnimationFrame(() => {
+                scrollUpdatePending = false;
+                if (window.scrollY > 300) {
+                    backToTop.style.opacity = '1';
+                    backToTop.style.pointerEvents = 'auto';
+                } else {
+                    backToTop.style.opacity = '0';
+                    backToTop.style.pointerEvents = 'none';
+                }
+            });
+        }, { passive: true });
     }
 
     function createBackToTopButton() {
@@ -458,7 +519,7 @@ function initNavigation() {
         button.addEventListener('click', () => {
             window.scrollTo({
                 top: 0,
-                behavior: 'smooth'
+                behavior: 'auto'
             });
         });
 
@@ -497,7 +558,7 @@ function initNavigation() {
         $$('.animate-on-scroll').forEach(el => {
             el.style.opacity = '0';
             el.style.transform = 'translateY(30px)';
-            el.style.transition = 'all 0.6s ease-out';
+            el.style.transition = 'opacity 0.35s ease-out, transform 0.35s ease-out';
             observer.observe(el);
         });
     }
@@ -533,7 +594,7 @@ function initNavigation() {
         const teacherFields = $('#teacherFields');
         const parentFields = $('#parentFields');
 
-        if (!roleCards.length || !userTypeInput) return;
+        if (!roleCards.length || !userTypeInput || $('#registerForm')) return;
 
         roleCards.forEach(card => {
             card.addEventListener('click', function () {
@@ -1033,7 +1094,7 @@ function initNavigation() {
             const delay = element.getAttribute('data-delay') || '0s';
 
             element.style.opacity = '0';
-            element.style.transition = `all 1.2s cubic-bezier(0.2, 1, 0.3, 1) ${delay}`;
+            element.style.transition = `opacity 0.35s ease ${delay}, transform 0.35s ease ${delay}`;
 
             let transformValue = '';
             switch (direction) {
@@ -1059,45 +1120,6 @@ function initNavigation() {
         `;
             document.head.appendChild(style);
         }
-    }
-
-    // ===== NOTIFICATIONS =====
-    function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#00b894' : type === 'error' ? '#d63031' : '#00d2d3'};
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        z-index: 3000;
-        opacity: 0;
-        transform: translateX(100%);
-        transition: all 0.3s ease;
-        max-width: 300px;
-    `;
-
-        notification.textContent = message;
-        document.body.appendChild(notification);
-
-        // Animate in
-        setTimeout(() => {
-            notification.style.opacity = '1';
-            notification.style.transform = 'translateX(0)';
-        }, 10);
-
-        // Remove after 3 seconds
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
-        }, 3000);
     }
 
     // ===== UTILITY FUNCTIONS =====
@@ -1206,15 +1228,7 @@ function initNavigation() {
         });
     }
 
-    if (element) {
-        window.scrollTo({
-            top: element.offsetTop - 80,
-            behavior: 'smooth'
-        });
-    }
-}
-
-// Global Anchor Link Smooth Scroll
+// Keep in-page navigation immediate so anchor clicks respond without a long scroll animation.
 document.addEventListener('click', (e) => {
     const anchor = e.target.closest('a');
     if (anchor && anchor.hash && anchor.origin === window.location.origin) {
@@ -1225,6 +1239,50 @@ document.addEventListener('click', (e) => {
         }
     }
 });
+
+function smoothScroll(target) {
+    const element = typeof target === 'string' ? document.querySelector(target) : target;
+    if (!element) return;
+
+    window.scrollTo({
+        top: element.getBoundingClientRect().top + window.scrollY - 80,
+        behavior: 'auto'
+    });
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#00b894' : type === 'error' ? '#d63031' : '#00d2d3'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        z-index: 3000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        max-width: 300px;
+    `;
+
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 10);
+
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
 
 function formatDate(date) {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -1460,62 +1518,3 @@ function initDashboardSidebar() {
         if (e.changedTouches[0].clientX - touchStartX < -60) closeSidebar();
     }, { passive: true });
 }
-
-// ===================================================================
-// STANDALONE DARK MODE ENGINE
-// Runs independently — does NOT rely on any other function in this file
-// ===================================================================
-(function () {
-    var html = document.documentElement;
-
-    // Apply theme instantly on every page load (no flash)
-    function applyTheme(theme) {
-        html.setAttribute('data-theme', theme);
-        if (theme === 'dark') {
-            html.classList.add('dark');
-            document.body && document.body.classList.add('dark');
-        } else {
-            html.classList.remove('dark');
-            document.body && document.body.classList.remove('dark');
-        }
-        updateIcons(theme);
-    }
-
-    function updateIcons(theme) {
-        var icons = document.querySelectorAll('#themeToggle i, .theme-toggle-btn i');
-        for (var i = 0; i < icons.length; i++) {
-            icons[i].className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        }
-    }
-
-    // Apply saved theme immediately (before DOM ready to prevent flash)
-    applyTheme(localStorage.getItem('theme') || 'light');
-
-    // Wire up toggle click using capture-phase delegation
-    // Runs BEFORE Bootstrap or any other handler
-    document.addEventListener('click', function (e) {
-        // Walk up to find the toggle button
-        var el = e.target;
-        for (var i = 0; i < 4; i++) {
-            if (!el) break;
-            if (el.id === 'themeToggle' || (el.classList && el.classList.contains('theme-toggle-btn'))) {
-                e.preventDefault();
-                var current = html.getAttribute('data-theme') || 'light';
-                var next = current === 'dark' ? 'light' : 'dark';
-                localStorage.setItem('theme', next);
-                applyTheme(next);
-                return;
-            }
-            el = el.parentElement;
-        }
-    }, true); // capture phase — fires before Bootstrap
-
-    // Re-apply icons once DOM is fully ready (in case icons weren't in DOM yet)
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-            applyTheme(localStorage.getItem('theme') || 'light');
-        });
-    } else {
-        applyTheme(localStorage.getItem('theme') || 'light');
-    }
-})();

@@ -71,27 +71,33 @@
                             <i class="fas fa-arrow-left me-2"></i> Back
                         </a>
                         <% if (structure && structure.status === 'approved') { %>
-                            <% if (gradesStatus !== 'approved') { %>
-                                <span class="badge <%= gradesStatus === 'approved' ? 'bg-success' : 'bg-warning text-dark' %> px-4 py-3 rounded-pill fw-bold shadow-sm d-flex align-items-center" style="font-size: 0.9rem;">
-                                    <i class="fas <%= gradesStatus === 'approved' ? 'fa-check-circle' : 'fa-clock' %> me-2"></i>
-                                    <%= gradesStatus === 'approved' ? 'Approved & Finalized' : 'Pending Approval' %>
+                            <% if (gradesStatus === 'approved') { %>
+                                <span class="badge bg-success px-4 py-3 rounded-pill fw-bold shadow-sm d-flex align-items-center" style="font-size: 0.9rem;">
+                                    <i class="fas fa-check-circle me-2"></i> Approved & Finalized
                                 </span>
                                 <button class="btn btn-outline-primary px-4 py-2 rounded-pill fw-bold shadow-sm" id="editGradesBtn">
                                     <i class="fas fa-edit me-2"></i> Edit Grades
                                 </button>
-                                <button class="btn btn-secondary px-4 py-2 rounded-pill fw-bold shadow-sm d-none" id="cancelEditBtn">
-                                    <i class="fas fa-times me-2"></i> Cancel
-                                </button>
-                                <button class="btn btn-success px-4 py-2 rounded-pill fw-bold shadow-sm d-none" id="saveEditsBtn">
-                                    <i class="fas fa-save me-2"></i> Save Edits
-                                </button>
+                                 <button class="btn btn-secondary px-4 py-2 rounded-pill fw-bold shadow-sm d-none" id="cancelEditBtn">
+                                     <i class="fas fa-times me-2"></i> Cancel
+                                 </button>
+                                 <button class="btn btn-success px-4 py-2 rounded-pill fw-bold shadow-sm d-none" id="saveEditsBtn">
+                                     <i class="fas fa-save me-2"></i> Save Edits
+                                 </button>
                                 <button class="btn btn-dark px-4 py-2 rounded-pill fw-bold shadow-sm" id="viewChangelogBtn">
                                     <i class="fas fa-history me-2"></i> View Changelog
                                 </button>
+                            <% } else if (gradesStatus === 'pending') { %>
+                                <span class="badge bg-warning text-dark px-4 py-3 rounded-pill fw-bold shadow-sm d-flex align-items-center" style="font-size: 0.9rem;">
+                                    <i class="fas fa-clock me-2"></i> Pending Approval
+                                </span>
                             <% } else { %>
-                                <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" id="saveGrades">
-                                    <i class="fas fa-cloud-upload-alt me-2"></i> <%= gradesStatus === 'rejected' ? 'Resubmit for Approval' : 'Submit for Approval' %>
-                                </button>
+                                 <button class="btn btn-success px-4 py-2 rounded-pill fw-bold shadow-sm" id="saveGradesBtn">
+                                     <i class="fas fa-save me-2"></i> Save Grades
+                                 </button>
+                                 <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" id="submitGradesBtn">
+                                     <i class="fas fa-cloud-upload-alt me-2"></i> <%= gradesStatus === 'rejected' ? 'Resubmit for Approval' : 'Submit for Approval' %>
+                                 </button>
                             <% } %>
                         <% } %>
                     </div>
@@ -127,7 +133,7 @@
                         </div>
                         <div>
                             <strong style="font-size:1.05rem">Finalized & Approved</strong>
-                            <p class="m-0 text-secondary small fw-medium">Student results have been successfully verified and approved by the system administrator. They are now officially recorded.</p>
+                            <p class="m-0 text-secondary small fw-medium">Results are published to student and parent dashboards. Use <strong>Edit Grades</strong> to change scores — edits return status to <strong>Pending Approval</strong> until admin re-approves.</p>
                         </div>
                     </div>
                 <% } else if (gradesStatus === 'rejected') { %>
@@ -298,8 +304,8 @@
                 badge.style.background = bg;
             }
 
-            document.getElementById('saveGrades').addEventListener('click', async () => {
-                const saveBtn = document.getElementById('saveGrades');
+            document.getElementById('saveGradesBtn').addEventListener('click', async () => {
+                const saveBtn = document.getElementById('saveGradesBtn');
                 saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Submitting...';
                 saveBtn.disabled = true;
 
@@ -354,6 +360,44 @@
                     saveBtn.disabled = false;
                 }
             });
+
+            // Submit Grades Implementation
+            const submitGradesBtn = document.getElementById('submitGradesBtn');
+            if (submitGradesBtn) {
+                submitGradesBtn.addEventListener('click', async () => {
+                    const confirmSubmit = confirm("Are you sure you want to submit these grades for approval? Once submitted, they will be locked until approved or rejected by the administrator.");
+                    if (!confirmSubmit) return;
+
+                    submitGradesBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Submitting...';
+                    submitGradesBtn.disabled = true;
+
+                    try {
+                        const response = await fetch('/teacher/grades/submit', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                classId: '<%= classId %>',
+                                courseId: '<%= courseId %>'
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (response.ok) {
+                            alert(data.message || "Grades submitted successfully!");
+                            window.location.reload();
+                        } else {
+                            alert(data.message || "Error submitting grades.");
+                            submitGradesBtn.innerHTML = '<i class="fas fa-cloud-upload-alt me-2"></i> Submit for Approval';
+                            submitGradesBtn.disabled = false;
+                        }
+                    } catch (error) {
+                        console.error('Submit error:', error);
+                        alert("A network error occurred.");
+                        submitGradesBtn.innerHTML = '<i class="fas fa-cloud-upload-alt me-2"></i> Submit for Approval';
+                        submitGradesBtn.disabled = false;
+                    }
+                });
+            }
 
             // Edit Mode Implementation
             const editBtn = document.getElementById('editGradesBtn');
@@ -474,7 +518,7 @@
                         const data = await response.json();
                         
                         if (response.ok) {
-                            alert("Grades successfully updated and audited.");
+                            alert(data.message || "Grades updated — pending admin re-approval.");
                             window.location.reload();
                         } else {
                             alert(data.message || "Error updating grades.");

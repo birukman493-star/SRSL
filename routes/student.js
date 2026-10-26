@@ -1,5 +1,12 @@
 const express = require('express');
 const { pool } = require('../config/db');
+const {
+  getSetting,
+  getAcademicContext,
+  DEFAULT_ACADEMIC_YEAR,
+  formatSemesterLabel,
+  ATTENDANCE_COURSE_NAME_SQL,
+} = require('../config/systemSettings');
 const router = express.Router();
 
 // Middleware to check if user is student
@@ -25,6 +32,14 @@ router.get('/dashboard', async (req, res) => {
       JOIN users u ON s.user_id = u.id
       WHERE s.user_id = ?
     `, [studentId]);
+
+    if (studentInfo.length === 0) {
+      console.error('Student dashboard profile missing for user ID:', studentId);
+      return res.status(403).render('500-modern', {
+        title: 'Student Profile Not Found',
+        message: 'Your student account is active, but its student profile has not been created. Please contact the administrator.'
+      });
+    }
 
     // Get ALL approved course results for table display
     const [approvedCourseResults] = await pool.execute(`
@@ -58,7 +73,7 @@ router.get('/dashboard', async (req, res) => {
       FROM student_results sr
       JOIN assessment_categories ac ON sr.category_id = ac.id
       JOIN grading_structures gs ON ac.structure_id = gs.id
-      WHERE sr.student_id = ? AND sr.status = 'approved'
+      WHERE sr.student_id = ? AND sr.status IN ('approved','saved')
       ORDER BY ac.order_index ASC
     `, [studentInfo[0].id]);
 
@@ -82,7 +97,6 @@ router.get('/dashboard', async (req, res) => {
     const [stats] = await pool.execute(`
       SELECT 
         AVG(scr.total_score) as average_score,
-        SUM(scr.total_score) as total_score,
         COUNT(*) as approved_count
       FROM approved_results scr
       WHERE scr.student_id = ?
@@ -117,12 +131,12 @@ router.get('/dashboard', async (req, res) => {
       if (clsRes2.length > 0) rankClassId = clsRes2[0].id;
     }
     // Step 2: Get the active academic year from settings
-    const activeYearForRank = await getSetting('academicYear', '');
+    const activeYearForRank = (await getAcademicContext()).academicYear;
     // Step 3: Count students with a strictly higher average in the same class & year
-    let rankDataResult = [{ rank: 'N/A' }];
+    let rankDataResult = [{ student_rank: 'N/A' }];
     if (rankClassId) {
       const [rankRows] = await pool.execute(`
-        SELECT COUNT(*) + 1 as rank
+        SELECT COUNT(*) + 1 as student_rank
         FROM (
           SELECT scr2.student_id, AVG(scr2.total_score) as avg_score
           FROM approved_results scr2
@@ -170,7 +184,7 @@ router.get('/dashboard', async (req, res) => {
 
     // Fetch recent attendance history for the student dashboard
     const [attendanceHistory] = await pool.execute(`
-      SELECT a.*, c.name as class_name, co.course_name
+      SELECT a.*, c.name as class_name, ${ATTENDANCE_COURSE_NAME_SQL} as course_name
       FROM attendance a
       JOIN classes c ON a.class_id = c.id
       LEFT JOIN courses co ON a.course_id = co.id
@@ -231,7 +245,7 @@ router.get('/dashboard', async (req, res) => {
       pending_tasks = (assignments[0] && assignments[0].count) || 0;
     } catch (e) { pending_tasks = 0; }
 
-        const [attendance] = await pool.execute(`
+    const [attendance] = await pool.execute(`
           SELECT 
             SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count,
             SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count,
@@ -240,22 +254,22 @@ router.get('/dashboard', async (req, res) => {
           FROM attendance
           WHERE student_id = ? AND approval_status = 'approved'
         `, [studentInfo[0].id]);
-        // Compute stats
-        const present = attendance[0].present_count || 0;
-        const late = attendance[0].late_count || 0;
-        const excused = attendance[0].excused_count || 0;
-        const total = attendance[0].total_count || 0;
-        const absent = total - (present + late + excused);
-        const attendedCount = present + late + excused;
-        const attendance_rate = total > 0 ? ((attendedCount / total) * 100).toFixed(1) : '100';
-        const attendanceData = {
-          percentage: attendance_rate,
-          present,
-          late,
-          excused,
-          absent,
-          sessions: attendedCount
-        };
+    // Compute stats
+    const present = attendance[0].present_count || 0;
+    const late = attendance[0].late_count || 0;
+    const excused = attendance[0].excused_count || 0;
+    const total = attendance[0].total_count || 0;
+    const absent = total - (present + late + excused);
+    const attendedCount = present + late + excused;
+    const attendance_rate = total > 0 ? ((attendedCount / total) * 100).toFixed(1) : '100';
+    const attendanceData = {
+      percentage: attendance_rate,
+      present,
+      late,
+      excused,
+      absent,
+      sessions: attendedCount
+    };
 
     res.render('student/dashboard-new', {
       title: 'Student Dashboard',
@@ -275,7 +289,7 @@ router.get('/dashboard', async (req, res) => {
       overall_progress: overall_progress,
       overall_progress_text: `${overall_progress}% Academic Progress`,
       semester_stats: semesterStats,
-      rank: (rankData[0] && rankData[0].rank) || 'N/A',
+      rank: (rankData[0] && rankData[0].student_rank) || 'N/A',
       total_in_class: totalStudents[0].total,
       pending_tasks: pending_tasks,
       isRegistrationOpen,
@@ -392,14 +406,14 @@ router.get('/attendance', async (req, res) => {
 
     const courseIdFilter = req.query.courseId;
     let query = `
-      SELECT a.*, c.name as class_name, COALESCE(co.course_name, 'Daily Attendance') as course_name
+      SELECT a.*, c.name as class_name, ${ATTENDANCE_COURSE_NAME_SQL} as course_name
       FROM attendance a
       JOIN classes c ON a.class_id = c.id
       LEFT JOIN courses co ON a.course_id = co.id
       WHERE a.student_id = ?
     `;
     const params = [studentInfo[0].id];
-    
+
     if (courseIdFilter) {
       query += ` AND a.course_id = ?`;
       params.push(courseIdFilter);
@@ -417,17 +431,17 @@ router.get('/attendance', async (req, res) => {
     `, [studentInfo[0].id]);
 
     // Calculate stats
-      const stats = {
-        present: attendance.filter(a => a.status === 'present').length,
-        absent: attendance.filter(a => a.status === 'absent').length,
-        late: attendance.filter(a => a.status === 'late').length,
-        excused: attendance.filter(a => a.status === 'excused').length,
-        total: attendance.length
-      };
-      const attended = stats.present + stats.late + stats.excused;
-      stats.percentage = stats.total > 0 ? ((attended / stats.total) * 100).toFixed(1) : '100';
-      // Alias for template compatibility
-      stats.rate = stats.percentage;
+    const stats = {
+      present: attendance.filter(a => a.status === 'present').length,
+      absent: attendance.filter(a => a.status === 'absent').length,
+      late: attendance.filter(a => a.status === 'late').length,
+      excused: attendance.filter(a => a.status === 'excused').length,
+      total: attendance.length
+    };
+    const attended = stats.present + stats.late + stats.excused;
+    stats.percentage = stats.total > 0 ? ((attended / stats.total) * 100).toFixed(1) : '100';
+    // Alias for template compatibility
+    stats.rate = stats.percentage;
 
 
     res.render('student/attendance', {
@@ -549,16 +563,6 @@ router.get('/announcements', async (req, res) => {
   }
 });
 
-// Helper to get system settings dynamically
-async function getSetting(key, defaultValue = '') {
-  try {
-    const [rows] = await pool.execute('SELECT setting_value FROM system_settings WHERE setting_key = ?', [key]);
-    return rows.length > 0 ? rows[0].setting_value : defaultValue;
-  } catch (e) {
-    return defaultValue;
-  }
-}
-
 // GET /student/api/grades - API returning JSON results matching exact required structure
 router.get('/api/grades', async (req, res) => {
   try {
@@ -569,11 +573,7 @@ router.get('/api/grades', async (req, res) => {
     if (!studentInfo[0]) return res.status(404).json({ error: 'Student not found' });
     const studentId = studentInfo[0].id;
 
-    const activeYear = await getSetting('academicYear', '2023-2024');
-    let activeSemSetting = await getSetting('semester', '1');
-    if (!activeSemSetting.startsWith('Semester')) {
-      activeSemSetting = 'Semester ' + activeSemSetting;
-    }
+    const { academicYear: activeYear, semesterLabel: activeSemSetting } = await getAcademicContext();
 
     const [courseResults] = await pool.execute(`
       SELECT scr.*, co.course_name, co.course_code, cl.name as class_name,
@@ -582,7 +582,7 @@ router.get('/api/grades', async (req, res) => {
       LEFT JOIN courses co ON (scr.course_id = co.id AND scr.course_id != 0)
       JOIN classes cl ON scr.class_id = cl.id
       LEFT JOIN teachers t ON scr.teacher_id = t.id
-      WHERE scr.student_id = ? AND scr.academic_year = ? AND scr.semester_id = ?
+      WHERE scr.student_id = ? AND scr.status IN ('approved','saved') AND scr.academic_year = ? AND scr.semester_id = ?
       ORDER BY co.course_name ASC
     `, [studentId, activeYear, activeSemSetting]);
 
@@ -591,7 +591,7 @@ router.get('/api/grades', async (req, res) => {
     for (const cr of courseResults) {
       const [categories] = await pool.execute(`
         SELECT ac.name, ac.max_mark, ac.weight_percentage,
-               (SELECT sr.score FROM student_results sr WHERE sr.student_id = ? AND sr.category_id = ac.id AND sr.status = 'approved' LIMIT 1) as obtained_score
+               (SELECT sr.score FROM student_results sr WHERE sr.student_id = ? AND sr.category_id = ac.id AND sr.status IN ('approved','saved') LIMIT 1) as obtained_score
       FROM assessment_categories ac
       WHERE ac.structure_id = ?
     `, [studentId, cr.assessment_structure_id]);
@@ -651,25 +651,54 @@ router.get('/grades', async (req, res) => {
     if (!studentInfo[0]) return res.status(404).render('500-modern', { title: 'Not Found' });
     const studentId = studentInfo[0].id;
 
-    const activeYear = await getSetting('academicYear', '2023-2024');
-    let activeSemSetting = await getSetting('semester', '1');
-    if (!activeSemSetting.startsWith('Semester')) {
-      activeSemSetting = 'Semester ' + activeSemSetting;
-    }
+    const { academicYear: activeYear, semesterLabel: activeSemSetting } = await getAcademicContext();
 
     const [courseResults] = await pool.execute(`
-      SELECT scr.*, 
-             COALESCE(co.course_name, (SELECT course_name FROM courses WHERE teacher_id = scr.teacher_id AND grade = cl.grade LIMIT 1)) as course_name, 
-             COALESCE(co.course_code, (SELECT course_code FROM courses WHERE teacher_id = scr.teacher_id AND grade = cl.grade LIMIT 1)) as course_code, 
-             cl.name as class_name,
-             t.first_name as teacher_fname, t.last_name as teacher_lname
-      FROM approved_results scr
-      LEFT JOIN courses co ON (scr.course_id = co.id AND scr.course_id != 0)
-      JOIN classes cl ON scr.class_id = cl.id
-      LEFT JOIN teachers t ON scr.teacher_id = t.id
-      WHERE scr.student_id = ?
-      ORDER BY scr.academic_year DESC, scr.semester_id ASC, co.course_name ASC
-    `, [studentId]);
+    SELECT 
+        academic_year,
+        semester_id,
+        total_score,
+        assessment_structure_id,
+        course_name,
+        course_code,
+        class_name,
+        teacher_fname,
+        teacher_lname
+    FROM (
+        SELECT 
+            scr.academic_year,
+            scr.semester_id,
+            scr.total_score,
+            scr.assessment_structure_id,
+            COALESCE(co.course_name, (SELECT course_name FROM courses WHERE teacher_id = scr.teacher_id AND grade = cl.grade LIMIT 1)) AS course_name,
+            COALESCE(co.course_code, (SELECT course_code FROM courses WHERE teacher_id = scr.teacher_id AND grade = cl.grade LIMIT 1)) AS course_code,
+            cl.name AS class_name,
+            t.first_name AS teacher_fname,
+            t.last_name AS teacher_lname
+        FROM approved_results scr
+        LEFT JOIN courses co ON (scr.course_id = co.id AND scr.course_id != 0)
+        JOIN classes cl ON scr.class_id = cl.id
+        LEFT JOIN teachers t ON scr.teacher_id = t.id
+        WHERE scr.student_id = ?
+        UNION ALL
+        SELECT 
+            scr2.academic_year,
+            scr2.semester_id,
+            scr2.total_score,
+            scr2.assessment_structure_id,
+            COALESCE(co2.course_name, (SELECT course_name FROM courses WHERE teacher_id = scr2.teacher_id AND grade = cl2.grade LIMIT 1)) AS course_name,
+            COALESCE(co2.course_code, (SELECT course_code FROM courses WHERE teacher_id = scr2.teacher_id AND grade = cl2.grade LIMIT 1)) AS course_code,
+            cl2.name AS class_name,
+            t2.first_name AS teacher_fname,
+            t2.last_name AS teacher_lname
+        FROM student_course_results scr2
+        LEFT JOIN courses co2 ON (scr2.course_id = co2.id AND scr2.course_id != 0)
+        JOIN classes cl2 ON scr2.class_id = cl2.id
+        LEFT JOIN teachers t2 ON scr2.teacher_id = t2.id
+        WHERE scr2.student_id = ? AND scr2.status = 'saved'
+    ) AS combined
+    ORDER BY academic_year DESC, semester_id ASC, course_name ASC
+`, [studentId, studentId]);
 
     const courseList = courseResults.map(cr => ({
       course_name: cr.course_name || 'General Grade',
@@ -690,7 +719,7 @@ router.get('/grades', async (req, res) => {
       FROM student_results sr
       JOIN assessment_categories ac ON sr.category_id = ac.id
       JOIN grading_structures gs ON ac.structure_id = gs.id
-      WHERE sr.student_id = ? AND sr.status = 'approved'
+      WHERE sr.student_id = ? AND sr.status IN ('approved','saved')
       ORDER BY ac.order_index ASC
     `, [studentId]);
 
@@ -707,11 +736,11 @@ router.get('/grades', async (req, res) => {
         });
       }
     });
-    
+
     // Group into Current Semester vs Previous Semester
     const currentSemesterResults = [];
     const previousSemesterResults = [];
-    
+
     courseList.forEach(c => {
       if (c.academic_year === activeYear && c.semester === activeSemSetting) {
         currentSemesterResults.push(c);
@@ -742,10 +771,10 @@ router.get('/grades', async (req, res) => {
       if (clsForGrades.length > 0) gradesClassId = clsForGrades[0].id;
     }
     const gradesActiveYear = await getSetting('academicYear', '');
-    let gradesRankResult = [{ rank: 'N/A' }];
+    let gradesRankResult = [{ student_rank: 'N/A' }];
     if (gradesClassId) {
       const [gradesRankRows] = await pool.execute(`
-        SELECT COUNT(*) + 1 as rank
+        SELECT COUNT(*) + 1 as student_rank
         FROM (
           SELECT scr2.student_id, AVG(scr2.total_score) as avg_score
           FROM approved_results scr2
@@ -784,7 +813,7 @@ router.get('/grades', async (req, res) => {
       previousSum: previousSum.toFixed(1),
       overallAvg: overallAvg.toFixed(1),
       overallSum: overallSum.toFixed(1),
-      rank: (rankData[0] && rankData[0].rank) || 'N/A',
+      rank: (rankData[0] && rankData[0].student_rank) || 'N/A',
       courseResults: courseList,
       attendance_rate,
       hasResults: courseList.length > 0
@@ -815,13 +844,14 @@ router.get('/materials', async (req, res) => {
 
     // Fetch materials for all classes the student belongs to
     const [materials] = await pool.execute(`
-      SELECT m.*, c.name as class_name, t.first_name as teacher_fname, t.last_name as teacher_lname
-      FROM materials m
-      JOIN classes c ON m.class_id = c.id
-      JOIN class_students cs ON c.id = cs.class_id
-      LEFT JOIN teachers t ON m.teacher_id = t.id
-      WHERE cs.student_id = ?
-      ORDER BY m.created_at DESC
+        SELECT m.*, c.name as class_name, cr.course_name as course_name, t.first_name as teacher_fname, t.last_name as teacher_lname
+        FROM materials m
+        JOIN classes c ON m.class_id = c.id
+        JOIN class_students cs ON c.id = cs.class_id
+        LEFT JOIN teachers t ON m.teacher_id = t.id
+        LEFT JOIN courses cr ON m.course_id = cr.id
+        WHERE cs.student_id = ?
+        ORDER BY m.created_at DESC
     `, [studentId]);
 
     res.render('student/materials', {
@@ -981,18 +1011,7 @@ router.post('/registration/assisted', async (req, res) => {
       }
     }
 
-    // Try to safely alter the ENUM to include 'submitted' if it doesn't already
-    try {
-      await pool.execute("ALTER TABLE students MODIFY COLUMN registration_status ENUM('not_started', 'pending', 'submitted', 'registered') DEFAULT 'not_started'");
-    } catch (e) {
-      console.log("Could not alter students table enum silently, moving on.");
-    }
-
-    await pool.execute(
-      "UPDATE students SET registration_status = 'submitted' WHERE user_id = ?",
-      [studentUserId]
-    );
-
+    
     req.session.flash = { success: 'Assisted auto-enrollment complete. Registration submitted for admin approval.' };
     res.redirect('/student/registration');
   } catch (error) {
@@ -1024,5 +1043,44 @@ router.post('/registration/submit', async (req, res) => {
     res.redirect('/student/registration');
   }
 });
+
+
+
+
+// GET /student/registration/simple - Simple registration page
+router.get('/registration/simple', async (req, res) => {
+  try {
+    const studentUserId = req.session.user.id;
+    const [studentInfo] = await pool.execute('SELECT registration_status FROM students WHERE user_id = ?', [studentUserId]);
+    const registrationStatus = studentInfo[0].registration_status;
+    res.render('student/simple_registration', {
+      title: 'Semester Registration',
+      user: req.session.user,
+      registrationStatus,
+      success: req.session.flash ? req.session.flash.success : null,
+      error: req.session.flash ? req.session.flash.error : null
+    });
+    if (req.session.flash) delete req.session.flash;
+  } catch (error) {
+    console.error('Simple registration view error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error' });
+  }
+});
+
+// POST /student/registration/simple - Process registration click
+router.post('/registration/simple', async (req, res) => {
+  try {
+    const studentUserId = req.session.user.id;
+    await pool.execute('UPDATE students SET registration_status = ?, registration_updated_at = CURRENT_TIMESTAMP WHERE user_id = ?', ['registered', studentUserId]);
+    req.session.flash = { success: 'Semester registration successful.' };
+    // Redirect to dashboard (will show toast via flash)
+    res.redirect('/student/dashboard');
+  } catch (error) {
+    console.error('Simple registration submit error:', error);
+    req.session.flash = { error: 'Failed to complete registration.' };
+    res.redirect('/student/registration/simple');
+  }
+});
+
 
 module.exports = router;

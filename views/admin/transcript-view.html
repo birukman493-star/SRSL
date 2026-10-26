@@ -1,32 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Admin Dashboard</title>
+    <title>
+        <%= title %> - Admin Dashboard
+    </title>
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/all.min.css">
     <link href="/css/inter-font.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
         @media print {
-            .sidebar, .main-panel > .premium-panel:first-child, .no-print {
+
+            .sidebar,
+            .main-panel>.premium-panel:first-child,
+            .no-print {
                 display: none !important;
             }
+
             .main-panel {
                 width: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
             }
+
             .premium-panel {
                 box-shadow: none !important;
                 border: 1px solid #eee !important;
             }
         }
+
         .transcript-header {
             border-bottom: 3px solid var(--primary-color);
             padding-bottom: 20px;
         }
+
         .stat-card {
             background: #f8fafc;
             border-radius: 15px;
@@ -36,166 +46,235 @@
         }
     </style>
 </head>
+
 <body class="dashboard-body">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
-        <main class="main-panel p-4">
-            <div class="premium-panel mb-4 no-print">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Transcript Preview</h1>
-                        <p class="text-secondary m-0 fw-medium">Official academic record for <%= student.first_name %> <%= student.last_name %></p>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="/admin/transcripts" class="btn btn-light px-4 py-2 rounded-pill fw-bold border">
-                            <i class="fas fa-arrow-left me-2"></i>Back
-                        </a>
-                        <button onclick="window.print()" class="btn btn-dark px-4 py-2 rounded-pill fw-bold shadow-sm">
-                            <i class="fas fa-print me-2"></i>Print Transcript
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="premium-panel p-5 bg-white shadow-lg border-0" id="transcript-content" style="border-radius: 30px;">
-                <!-- Official Header -->
-                <div class="transcript-header mb-5 d-flex justify-content-between align-items-start">
-                    <div class="d-flex align-items-center">
-                        <div class="me-4">
-                            <img src="/img/logo.png" alt="School Logo" style="height: 80px;" onerror="this.src='https://ui-avatars.com/api/?name=AB&background=0D6EFD&color=fff&size=128'">
-                        </div>
+            <main class="main-panel p-4">
+                <div class="premium-panel mb-4 no-print">
+                    <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h2 class="fw-800 m-0">ABDIGUDINA HIGH SCHOOL</h2>
-                            <p class="text-secondary fw-bold m-0" style="letter-spacing: 2px;">OFFICIAL ACADEMIC TRANSCRIPT</p>
-                            <small class="text-secondary fw-medium">Jimma Institute of Technology, Ethiopia</small>
+                            <h1 class="fw-800 mb-1"
+                                style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                Transcript Preview</h1>
+                            <p class="text-secondary m-0 fw-medium">Official academic record for <%= student.first_name
+                                    %>
+                                    <%= student.last_name %>
+                            </p>
                         </div>
-                    </div>
-                    <div class="text-end">
-                        <div class="fw-800 text-primary h4 mb-1">ID: <%= student.student_id %></div>
-                        <div class="text-secondary small fw-bold">ISSUED: <%= new Date().toLocaleDateString() %></div>
-                    </div>
-                </div>
-
-                <!-- Student Profile Section -->
-                <div class="row g-4 mb-5">
-                    <div class="col-md-3">
-                        <div class="rounded-4 overflow-hidden border p-1 bg-light" style="width: 150px; height: 150px;">
-                            <img src="<%= student.profile_picture || '/img/default-avatar.png' %>" class="w-100 h-100 object-fit-cover rounded-4" alt="Student Photo" onerror="this.src='https://ui-avatars.com/api/?name=<%= student.first_name %>+<%= student.last_name %>&background=random&size=200'">
-                        </div>
-                    </div>
-                    <div class="col-md-9">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="text-secondary small fw-800 text-uppercase">Full Name</label>
-                                <div class="fw-bold h5 text-dark"><%= student.first_name %> <%= student.last_name %></div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="text-secondary small fw-800 text-uppercase">Grade & Section</label>
-                                <div class="fw-bold h5 text-dark">Grade <%= student.grade_level %> - <%= student.section %></div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="text-secondary small fw-800 text-uppercase">Email Address</label>
-                                <div class="fw-bold text-dark"><%= student.email %></div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="text-secondary small fw-800 text-uppercase">Enrollment Date</label>
-                                <div class="fw-bold text-dark"><%= new Date(student.enrollment_date).toLocaleDateString() %></div>
-                            </div>
+                        <div class="d-flex gap-2">
+                            <a href="/admin/transcripts" class="btn btn-light px-4 py-2 rounded-pill fw-bold border">
+                                <i class="fas fa-arrow-left me-2"></i>Back
+                            </a>
+                            <button onclick="window.print()"
+                                class="btn btn-dark px-4 py-2 rounded-pill fw-bold shadow-sm">
+                                <i class="fas fa-print me-2"></i>Print Transcript
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Statistics Section -->
-                <div class="row g-4 mb-5">
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <label class="text-secondary small fw-800 text-uppercase d-block mb-1">Overall Average</label>
-                            <div class="h2 fw-800 text-primary m-0"><%= transcript.average.toFixed(1) %>%</div>
+                <div class="premium-panel p-5 bg-white shadow-lg border-0" id="transcript-content"
+                    style="border-radius: 30px;">
+                    <!-- Official Header -->
+                    <div class="transcript-header mb-5 d-flex justify-content-between align-items-start">
+                        <div class="d-flex align-items-center">
+                            <div class="me-4">
+                                <img src="/img/logo.png" alt="School Logo" style="height: 80px;"
+                                    onerror="this.src='https://ui-avatars.com/api/?name=AB&background=0D6EFD&color=fff&size=128'">
+                            </div>
+                            <div>
+                                <h2 class="fw-800 m-0">ABDIGUDINA HIGH SCHOOL</h2>
+                                <p class="text-secondary fw-bold m-0" style="letter-spacing: 2px;">OFFICIAL ACADEMIC
+                                    TRANSCRIPT</p>
+                                <small class="text-secondary fw-medium">Jimma Institute of Technology, Ethiopia</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-800 text-primary h4 mb-1">ID: <%= student.student_id %>
+                            </div>
+                            <div class="text-secondary small fw-bold">ISSUED: <%= new Date().toLocaleDateString() %>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <label class="text-secondary small fw-800 text-uppercase d-block mb-1">Cumulative GPA</label>
-                            <div class="h2 fw-800 text-success m-0"><%= transcript.gpa.toFixed(2) %></div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <label class="text-secondary small fw-800 text-uppercase d-block mb-1">Class Rank</label>
-                            <div class="h2 fw-800 text-dark m-0">#<%= transcript.rank %></div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <label class="text-secondary small fw-800 text-uppercase d-block mb-1">Credits Earned</label>
-                            <div class="h2 fw-800 text-dark m-0"><%= transcript.courses.length * 3 %></div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Academic Records Table -->
-                <h4 class="fw-800 text-dark mb-4 border-start border-4 border-primary ps-3">ACADEMIC PERFORMANCE RECORDS</h4>
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle">
-                        <thead class="bg-light">
-                            <tr class="text-secondary small fw-800" style="text-transform: uppercase;">
-                                <th class="py-3">Course Code</th>
-                                <th class="py-3">Course Title</th>
-                                <th class="py-3 text-center">Academic Year</th>
-                                <th class="py-3 text-center">Score (100)</th>
-                                <th class="py-3 text-center">Result</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (transcript.courses.length > 0) { %>
-                                <% transcript.courses.forEach(course => { %>
-                                    <tr>
-                                        <td class="py-3 fw-bold"><%= course.course_code %></td>
-                                        <td class="py-3 fw-medium"><%= course.course_name %></td>
-                                        <td class="py-3 text-center"><%= course.academic_year %></td>
-                                        <td class="py-3 text-center fw-bold text-primary h5 m-0"><%= parseFloat(course.score).toFixed(1) %></td>
-                                        <td class="py-3 text-center">
-                                            <% if (course.score >= 50) { %>
-                                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold">PASS</span>
+                    <!-- Student Profile Section -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-3">
+                            <div class="rounded-4 overflow-hidden border p-1 bg-light"
+                                style="width: 150px; height: 150px;">
+                                <img src="<%= student.profile_picture || '/img/default-avatar.png' %>"
+                                    class="w-100 h-100 object-fit-cover rounded-4" alt="Student Photo"
+                                    onerror="this.src='https://ui-avatars.com/api/?name=<%= student.first_name %>+<%= student.last_name %>&background=random&size=200'">
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="text-secondary small fw-800 text-uppercase">Full Name</label>
+                                    <div class="fw-bold h5 text-dark">
+                                        <%= student.first_name %>
+                                            <%= student.last_name %>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-secondary small fw-800 text-uppercase">Grade & Section</label>
+                                    <div class="fw-bold h5 text-dark">Grade <%= student.grade_level %> - <%=
+                                                student.section %>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-secondary small fw-800 text-uppercase">Email Address</label>
+                                    <div class="fw-bold text-dark">
+                                        <%= student.email %>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-secondary small fw-800 text-uppercase">Enrollment Date</label>
+                                    <div class="fw-bold text-dark">
+                                        <%= new Date(student.enrollment_date).toLocaleDateString() %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Section -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <label class="text-secondary small fw-800 text-uppercase d-block mb-1">Overall
+                                    Average</label>
+                                <div class="h2 fw-800 text-primary m-0">
+                                    <%= transcript.average.toFixed(1) %>%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <label class="text-secondary small fw-800 text-uppercase d-block mb-1">Cumulative
+                                    GPA</label>
+                                <div class="h2 fw-800 text-success m-0">
+                                    <%= transcript.gpa.toFixed(2) %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <label class="text-secondary small fw-800 text-uppercase d-block mb-1">Semester 1
+                                    Rank</label>
+                                <div class="h2 fw-800 text-dark m-0">#<%= transcript.sem1Rank %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <label class="text-secondary small fw-800 text-uppercase d-block mb-1">Semester 2
+                                    Rank</label>
+                                <div class="h2 fw-800 text-dark m-0">#<%= transcript.sem2Rank %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <label class="text-secondary small fw-800 text-uppercase d-block mb-1">Final Year
+                                    Rank</label>
+                                <div class="h2 fw-800 text-dark m-0">#<%= transcript.finalRank %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <label class="text-secondary small fw-800 text-uppercase d-block mb-1">Credits
+                                    Earned</label>
+                                <div class="h2 fw-800 text-dark m-0">
+                                    <%= transcript.courses.length * 3 %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Academic Records Table -->
+                    <h4 class="fw-800 text-dark mb-4 border-start border-4 border-primary ps-3">ACADEMIC PERFORMANCE
+                        RECORDS</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle">
+                            <thead class="bg-light">
+                                <tr class="text-secondary small fw-800" style="text-transform: uppercase;">
+                                    <th class="py-3">Course Code</th>
+                                    <th class="py-3">Course Title</th>
+                                    <th class="py-3 text-center">Academic Year</th>
+                                    <th class="py-3 text-center">Score (100)</th>
+                                    <th class="py-3 text-center">Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (transcript.courses.length> 0) { %>
+                                    <% transcript.courses.forEach(course=> { %>
+                                        <tr>
+                                            <td class="py-3 fw-bold">
+                                                <%= course.course_code %>
+                                            </td>
+                                            <td class="py-3 fw-medium">
+                                                <%= course.course_name %>
+                                            </td>
+                                            <td class="py-3 text-center">
+                                                <%= course.academic_year %>
+                                            </td>
+                                            <td class="py-3 text-center fw-bold text-primary h5 m-0">
+                                                <%= parseFloat(course.score).toFixed(1) %>
+                                            </td>
+                                            <td class="py-3 text-center">
+                                                <% if (course.score>= 50) { %>
+                                                    <span
+                                                        class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold">PASS</span>
+                                                    <% } else { %>
+                                                        <span
+                                                            class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-bold">FAIL</span>
+                                                        <% } %>
+                                            </td>
+                                        </tr>
+                                        <% }) %>
                                             <% } else { %>
-                                                <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-bold">FAIL</span>
-                                            <% } %>
-                                        </td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
-                                <tr><td colspan="5" class="text-center py-4">No approved academic records found for this student.</td></tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
+                                                <tr>
+                                                    <td colspan="5" class="text-center py-4">No approved academic
+                                                        records found for this student.</td>
+                                                </tr>
+                                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
 
-                <!-- Signatures -->
-                <div class="row mt-5 pt-5">
-                    <div class="col-md-6">
-                        <div class="pt-3 border-top text-center" style="width: 250px;">
-                            <div class="fw-bold text-dark">Registrar Signature</div>
-                            <small class="text-secondary">Official Seal & Date</small>
+                    <!-- Signatures -->
+                    <div class="row mt-5 pt-5">
+                        <div class="col-md-6">
+                            <div class="pt-3 border-top text-center" style="width: 250px;">
+                                <div class="fw-bold text-dark">Registrar Signature</div>
+                                <small class="text-secondary">Official Seal & Date</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex justify-content-end">
+                            <div class="pt-3 border-top text-center" style="width: 250px;">
+                                <div class="fw-bold text-dark">Principal Signature</div>
+                                <small class="text-secondary">Official Seal & Date</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6 d-flex justify-content-end">
-                        <div class="pt-3 border-top text-center" style="width: 250px;">
-                            <div class="fw-bold text-dark">Principal Signature</div>
-                            <small class="text-secondary">Official Seal & Date</small>
-                        </div>
+
+                    <div class="mt-5 text-center text-secondary small">
+                        <hr class="opacity-10">
+                        <p class="m-0">This is an officially generated document from the Abdigudina Student Management
+                            System.</p>
+                        <p class="m-0 fw-bold">Verification Hash: <%= Math.random().toString(36).substring(2,
+                                15).toUpperCase() %>
+                        </p>
                     </div>
                 </div>
-
-                <div class="mt-5 text-center text-secondary small">
-                    <hr class="opacity-10">
-                    <p class="m-0">This is an officially generated document from the Abdigudina Student Management System.</p>
-                    <p class="m-0 fw-bold">Verification Hash: <%= Math.random().toString(36).substring(2, 15).toUpperCase() %></p>
-                </div>
-            </div>
-        </main>
+            </main>
     </div>
 
     <script src="/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

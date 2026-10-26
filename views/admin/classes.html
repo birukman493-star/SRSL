@@ -148,9 +148,21 @@
                                             easily</small>
                                     </div>
                                     <div class="col-md-3">
+                                        <label class="text-secondary small mb-1 fw-bold">Designated Attendance Teacher</label>
+                                        <select name="attendance_teacher_id" class="form-select bg-light border-0 rounded-3 px-3 py-2 fw-medium">
+                                            <option value="">Select Attendance Teacher (Optional)</option>
+                                            <% if (typeof teachers !== 'undefined' && teachers && teachers.length > 0) { %>
+                                                <% teachers.forEach(t => { %>
+                                                    <option value="<%= t.id %>"><%= t.first_name %> <%= t.last_name %> (<%= t.employee_id %>)</option>
+                                                <% }) %>
+                                            <% } %>
+                                        </select>
+                                        <small class="text-muted" style="font-size: 0.7rem;">Only this teacher will be allowed to take attendance for this class.</small>
+                                    </div>
+                                    <div class="col-md-3">
                                         <label class="text-secondary small mb-1 fw-bold">Academic Year</label>
                                         <input type="text" name="academic_year"
-                                            class="form-control bg-light border-0 rounded-3 px-3 py-2" value="2023-2024"
+                                            class="form-control bg-light border-0 rounded-3 px-3 py-2" value="2025-2026"
                                             required>
                                     </div>
                                     <div class="col-md-3">
@@ -299,6 +311,11 @@
                                                      <% } else { %>
                                                          <span style="color: var(--secondary-color);" class="fw-semibold small fst-italic">Not Assigned</span>
                                                      <% } %>
+                                                     <% if (cls.attendance_teacher_name) { %>
+                                                         <span class="badge rounded-pill px-2 py-1 small fw-bold text-success border border-success bg-success bg-opacity-10 mt-1 d-block w-100 text-start" style="font-size: 0.75rem; white-space: normal; text-align: left;">
+                                                             <i class="fas fa-clipboard-user me-1"></i>Attendance: <%= cls.attendance_teacher_name %>
+                                                         </span>
+                                                     <% } %>
                                                  </div>
                                             </td>
                                             <td class="border-0 py-3 text-center">
@@ -324,7 +341,8 @@
                                                         data-year="<%= cls.academic_year %>"
                                                         data-semester="<%= cls.semester %>"
                                                         data-teacher="<%= cls.teacher_ids || '' %>"
-                                                        data-course-limit="<%= cls.course_limit %>">
+                                                        data-course-limit="<%= cls.course_limit %>"
+                                                        data-attendance-teacher="<%= cls.attendance_teacher_id || '' %>">
                                                         <i class="fas fa-edit me-1"></i> Edit
                                                     </button>
                                                     <button class="btn btn-sm rounded-3 fw-bold px-3 delete-class-btn"
@@ -450,7 +468,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="text-secondary small mb-1 fw-bold">Academic Year</label>
-                            <input type="text" name="academic_year" class="form-control bg-light border-0 rounded-3 px-3 py-2" value="2023-2024" required>
+                            <input type="text" name="academic_year" class="form-control bg-light border-0 rounded-3 px-3 py-2" value="2025-2026" required>
                         </div>
                         <div class="mb-0">
                             <label class="text-secondary small mb-1 fw-bold">Semester</label>
@@ -508,7 +526,7 @@
                         </div>
                         <div class="mb-2">
                             <label class="form-label fw-bold small text-secondary mb-2">ACADEMIC YEAR</label>
-                            <input type="text" name="academic_year" class="form-control bg-light border-0 py-3 rounded-3" value="2025/2026" required>
+                            <input type="text" name="academic_year" class="form-control bg-light border-0 py-3 rounded-3" value="2025-2026" required>
                         </div>
                         <div class="mt-3 p-3 bg-primary bg-opacity-10 rounded-3">
                             <p class="small text-primary m-0">
@@ -533,7 +551,7 @@
             document.querySelectorAll('.edit-class-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const data = btn.dataset;
-                    editClass(data.id, data.name, data.grade, data.section, data.teacher, data.year, data.semester, data.courseLimit);
+                    editClass(data.id, data.name, data.grade, data.section, data.teacher, data.year, data.semester, data.courseLimit, data.attendanceTeacher);
                 });
             });
 
@@ -560,7 +578,7 @@
 
 
 
-        function editClass(id, name, grade, section, teacherIds, academicYear, semester, courseLimit) {
+        function editClass(id, name, grade, section, teacherIds, academicYear, semester, courseLimit, attendanceTeacherId) {
             const formDiv = document.getElementById('add-class-form');
             const form = formDiv.querySelector('form');
             const toggleBtn = document.getElementById('toggleFormBtn');
@@ -574,6 +592,7 @@
             form.querySelector('input[name="academic_year"]').value = academicYear;
             form.querySelector('select[name="semester"]').value = semester;
             form.querySelector('input[name="course_limit"]').value = courseLimit || 10;
+            form.querySelector('select[name="attendance_teacher_id"]').value = attendanceTeacherId || '';
 
             // Handle multiple select for teacher_id using checkboxes
             const checkboxes = form.querySelectorAll('.teacher-checkbox');
@@ -587,7 +606,7 @@
                 });
             }
 
-            form.querySelector('input[name="academic_year"]').value = academicYear || '2023-2024';
+            form.querySelector('input[name="academic_year"]').value = academicYear || '2025-2026';
             form.querySelector('select[name="semester"]').value = semester || '1';
 
             formDiv.style.display = 'block';

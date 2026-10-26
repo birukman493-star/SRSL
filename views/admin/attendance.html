@@ -122,6 +122,7 @@
                                 <tr class="text-secondary small fw-bold"
                                     style="text-transform: uppercase; letter-spacing: 0.05em;">
                                     <th class="border-0 py-3 ps-4">Student Profile</th>
+                                    <th class="border-0 py-3">Course</th>
                                     <th class="border-0 py-3">Class / Level</th>
                                     <th class="border-0 py-3 text-center">Status</th>
                                     <th class="border-0 py-3">Date</th>
@@ -150,6 +151,9 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </td>
+                                            <td class="border-0 py-3">
+                                                <span class="fw-bold small text-primary"><%= record.course_name || 'Homeroom' %></span>
                                             </td>
                                             <td class="border-0 py-3">
                                                 <div class="fw-bold small" style="color: var(--dark-text);">

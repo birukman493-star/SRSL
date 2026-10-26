@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Materials - Abdigudina</title>
+    <title>Course Materials - Student Dashboard</title>
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -13,51 +13,25 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
-        body { background: #f8fafc; color: #0f172a; }
-        .main-panel { background: #f8fafc; }
-        .premium-panel {
-            background: white;
-            border-radius: 24px;
-            padding: 2rem;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: var(--shadow-sm);
-        }
-        .material-card {
-            background: white;
-            border-radius: 24px;
-            padding: 2rem;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s ease;
-        }
-        .material-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.05);
-        }
+        .material-card { background: white; border-radius: 24px; padding: 2rem; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; transition: all 0.3s ease; }
+        .material-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
     </style>
 </head>
-<body class="dashboard-body">
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-
         <main class="main-panel w-100 p-4">
-            <!-- Header -->
-            <div class="premium-panel mb-4">
+            <div class="premium-card mb-4">
                 <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Course Materials</h1>
-                <p class="text-secondary m-0 fw-medium"><i class="fas fa-folder-open me-2"></i>Study resources and handouts from your teachers</p>
+                <p class="text-secondary m-0 fw-medium"><i class="fas fa-folder-open me-2"></i>Materials shared by your teachers.</p>
             </div>
-
-            <!-- Materials Grid -->
             <div class="row g-4">
                 <% if (materials && materials.length > 0) { %>
                     <% materials.forEach(m => { %>
                     <div class="col-12 col-md-6 col-xl-4">
                         <div class="material-card p-4">
                             <div class="d-flex align-items-center gap-3 mb-4">
-                                <div class="bg-primary bg-opacity-10 text-primary rounded-4 d-flex align-items-center justify-content-center" style="width: 55px; height: 55px; font-size: 1.4rem;">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-4 d-flex align-items-center justify-content-center" style="width:55px;height:55px;font-size:1.4rem;">
                                     <% if (m.material_type === 'reading') { %>
                                         <i class="fas fa-book-open"></i>
                                     <% } else if (m.material_type === 'video') { %>
@@ -70,41 +44,30 @@
                                 </div>
                                 <div>
                                     <h5 class="text-dark m-0 fw-bold"><%= m.title %></h5>
-                                    <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;"><%= m.class_name %></div>
+                                    <div class="text-secondary small fw-bold text-uppercase" style="font-size:0.65rem;letter-spacing:0.5px;"><%= m.class_name %></div>
                                 </div>
                             </div>
-                            
-                            <p class="text-secondary small mb-4 flex-grow-1 fw-medium" style="line-height: 1.6;">
-                                <%= m.description || 'Access high-quality study resources provided by your faculty to support your learning journey.' %>
-                            </p>
-                            
+                            <p class="text-secondary small mb-4 flex-grow-1 fw-medium" style="line-height:1.6;"><%= m.description || 'Study resource provided by your teacher.' %></p>
                             <div class="mt-auto pt-4 border-top">
                                 <div class="d-flex justify-content-between align-items-center mb-3 text-secondary small fw-bold">
                                     <span><i class="fas fa-user-tie me-1 text-primary"></i> <%= m.teacher_fname %> <%= m.teacher_lname %></span>
                                     <span><i class="far fa-calendar-alt me-1 text-primary"></i> <%= new Date(m.created_at).toLocaleDateString() %></span>
                                 </div>
-                                
                                 <% if (m.file_url) { %>
-                                <a href="<%= m.file_url %>" target="_blank" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm">
-                                    <i class="fas fa-cloud-download-alt me-2"></i> Access Material
-                                </a>
+                                    <a href="<%= m.file_url %>" target="_blank" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm"><i class="fas fa-cloud-download-alt me-2"></i> Access Material</a>
                                 <% } else { %>
-                                <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" disabled>
-                                    No Link Provided
-                                </button>
+                                    <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" disabled>No Link Provided</button>
                                 <% } %>
                             </div>
                         </div>
                     </div>
                     <% }); %>
                 <% } else { %>
-                    <div class="col-12">
-                        <div class="premium-panel text-center py-5">
-                            <div class="mb-4">
-                                <i class="fas fa-folder-open fa-4x text-secondary opacity-30"></i>
-                            </div>
-                            <h4 class="text-dark fw-bold">No materials available yet.</h4>
-                            <p class="text-secondary fw-medium">Your teachers haven't uploaded any study materials for your classes yet.</p>
+                    <div class="col-12 text-center py-5">
+                        <div class="premium-panel p-5">
+                            <i class="fas fa-folder-open fa-6x text-secondary opacity-20"></i>
+                            <h3 class="fw-900" style="color: var(--dark-text);">Repository Empty</h3>
+                            <p class="text-secondary fw-medium px-5">Your teachers haven't uploaded any study materials for your classes yet.</p>
                         </div>
                     </div>
                 <% } %>
@@ -112,8 +75,16 @@
         </main>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script>
+    <script src="/js/brocode-script.js"></script>
+    <script>
+        const socket = io({ query: { userId: '<%= user.id %>', role: 'student' } });
+        socket.on('newMaterial', data => {
+            // Simple refresh to display new material; can be replaced by DOM injection for smoother UX.
+            location.reload();
+        });
+    </script>
 </body>
 </html>
-

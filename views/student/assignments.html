@@ -1,9 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Abdigudina</title>
+    <title>
+        <%= title %> - Abdigudina
+    </title>
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -13,103 +16,176 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
-        body { background: #f8fafc; color: #0f172a; }
-        .main-panel { background: #f8fafc; }
+        body {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .main-panel {
+            background: #f8fafc;
+        }
+
         .premium-panel {
             background: white;
             border-radius: 24px;
             padding: 2rem;
-            border: 1px solid rgba(0,0,0,0.05);
+            border: 1px solid rgba(0, 0, 0, 0.05);
             box-shadow: var(--shadow-sm);
         }
+
         .assignment-card {
             background: white;
             border-radius: 20px;
             padding: 1.5rem;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
             margin-bottom: 1rem;
         }
+
         .assignment-card:hover {
             transform: scale(1.01);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
+
 <body class="dashboard-body">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
-        <main class="main-panel w-100 p-4">
-            <!-- Header -->
-            <div class="premium-panel mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">My Assignments</h1>
-                        <p class="text-secondary m-0 fw-medium"><i class="fas fa-tasks me-2"></i>Track your homework and project deadlines</p>
-                    </div>
-                    <div>
-                        <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill fw-bold text-uppercase" style="font-size: 0.7rem;">
-                            <i class="fas fa-clock me-1"></i> <%= assignments.filter(a => !a.is_submitted).length %> Pending
-                        </span>
+            <main class="main-panel w-100 p-4">
+                <!-- Header -->
+                <div class="premium-panel mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="fw-800 mb-1"
+                                style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                My Assignments</h1>
+                            <p class="text-secondary m-0 fw-medium"><i class="fas fa-tasks me-2"></i>Track your homework
+                                and project deadlines</p>
+                        </div>
+                        <div>
+                            <span
+                                class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill fw-bold text-uppercase"
+                                style="font-size: 0.7rem;">
+                                <i class="fas fa-clock me-1"></i>
+                                <%= assignments.filter(a=> !a.is_submitted).length %> Pending
+                            </span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Assignments Grid -->
-            <div class="row g-3">
-                <% if (assignments && assignments.length > 0) { %>
-                    <% assignments.forEach(assignment => { %>
-                    <div class="col-12">
-                        <div class="assignment-card">
-                            <div class="row align-items-center">
-                                <div class="col-md-1 d-none d-md-block text-center">
-                                    <div class="rounded-3 bg-primary bg-opacity-10 text-primary mx-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                                        <i class="fas fa-file-alt"></i>
+                <!-- Assignments Grid -->
+                <div class="row g-3">
+                    <% if (assignments && assignments.length> 0) { %>
+                        <% assignments.forEach(assignment=> { %>
+                            <div class="col-12">
+                                <div class="assignment-card">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-1 d-none d-md-block text-center">
+                                            <div class="rounded-3 bg-primary bg-opacity-10 text-primary mx-auto"
+                                                style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                                <i class="fas fa-file-alt"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <h5 class="text-dark m-0 fw-bold">
+                                                <%= assignment.title %>
+                                            </h5>
+                                            <div class="text-secondary small fw-medium mt-1">
+                                                <i class="fas fa-book me-1 text-primary"></i>
+                                                <%= assignment.class_name %> &bull;
+                                                    <i class="fas fa-user-tie me-1 text-primary"></i>
+                                                    <%= assignment.teacher_fname %>
+                                                        <%= assignment.teacher_lname %>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-secondary small fw-bold text-uppercase"
+                                                style="font-size: 0.6rem; letter-spacing: 0.5px;">Due Date</div>
+                                            <div
+                                                class="text-<%= (new Date(assignment.due_date) < new Date()) ? 'danger' : 'dark' %> fw-bold small">
+                                                <i class="far fa-calendar-alt me-1"></i>
+                                                <%= assignment.due_date ? new
+                                                    Date(assignment.due_date).toLocaleDateString(undefined, {
+                                                    month: 'short' , day: 'numeric' , year: 'numeric' }) : 'No Due Date'
+                                                    %>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                                            <span
+                                                class="badge rounded-pill bg-<%= assignment.is_submitted ? 'success' : 'warning' %> bg-opacity-10 text-<%= assignment.is_submitted ? 'success' : 'warning' %> px-3 py-2 fw-bold text-uppercase me-2"
+                                                style="font-size: 0.65rem;">
+                                                <%= assignment.is_submitted ? 'SUBMITTED' : 'PENDING' %>
+                                            </span>
+                                            <button
+                                                class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">View</button>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-md-5">
-                                    <h5 class="text-dark m-0 fw-bold"><%= assignment.title %></h5>
-                                    <div class="text-secondary small fw-medium mt-1">
-                                        <i class="fas fa-book me-1 text-primary"></i> <%= assignment.class_name %> &bull; 
-                                        <i class="fas fa-user-tie me-1 text-primary"></i> <%= assignment.teacher_fname %> <%= assignment.teacher_lname %>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Due Date</div>
-                                    <div class="text-<%= (new Date(assignment.due_date) < new Date()) ? 'danger' : 'dark' %> fw-bold small">
-                                        <i class="far fa-calendar-alt me-1"></i> 
-                                        <%= assignment.due_date ? new Date(assignment.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Due Date' %>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 text-md-end mt-3 mt-md-0">
-                                    <span class="badge rounded-pill bg-<%= assignment.is_submitted ? 'success' : 'warning' %> bg-opacity-10 text-<%= assignment.is_submitted ? 'success' : 'warning' %> px-3 py-2 fw-bold text-uppercase me-2" style="font-size: 0.65rem;">
-                                        <%= assignment.is_submitted ? 'SUBMITTED' : 'PENDING' %>
-                                    </span>
-                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">View</button>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <% }); %>
-                <% } else { %>
-                    <div class="col-12">
-                        <div class="premium-panel text-center py-5">
-                            <div class="mb-4">
-                                <i class="fas fa-check-double fa-4x text-success opacity-30"></i>
-                            </div>
-                            <h4 class="text-dark fw-bold">All caught up!</h4>
-                            <p class="text-secondary fw-medium">No pending assignments at the moment.</p>
-                        </div>
-                    </div>
-                <% } %>
-            </div>
-        </main>
+                            <% }); %>
+                                <% } else { %>
+                                    <div class="col-12">
+                                        <div class="premium-panel text-center py-5">
+                                            <div class="mb-4">
+                                                <i class="fas fa-check-double fa-4x text-success opacity-30"></i>
+                                            </div>
+                                            <h4 class="text-dark fw-bold">All caught up!</h4>
+                                            <p class="text-secondary fw-medium">No pending assignments at the moment.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <% } %>
+                </div>
+            </main>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io({ query: { userId: '<%= user.id %>', role: 'student' } });
+        socket.on('newAssignment', (data) => {
+            // Build assignment card HTML
+            const card = document.createElement('div');
+            card.className = 'col-12';
+            card.innerHTML = `
+      <div class="assignment-card">
+        <div class="row align-items-center">
+          <div class="col-md-1 d-none d-md-block text-center">
+            <div class="rounded-3 bg-primary bg-opacity-10 text-primary mx-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+              <i class="fas fa-file-alt"></i>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <h5 class="text-dark m-0 fw-bold">${data.title}</h5>
+                <div class="text-secondary small fw-medium mt-1">
+                  <i class="fas fa-book me-1 text-primary"></i> ${data.className} &bull; ${data.courseName ? data.courseName + ' • ' : ''}<i class="fas fa-user-tie me-1 text-primary"></i> ${data.teacherName}
+                </div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Due Date</div>
+            <div class="text-${data.dueDate && new Date(data.dueDate) < new Date() ? 'danger' : 'dark'} fw-bold small">
+              <i class="far fa-calendar-alt me-1"></i> ${data.dueDate ? new Date(data.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Due Date'}
+            </div>
+          </div>
+          <div class="col-md-3 text-md-end mt-3 mt-md-0">
+            <span class="badge rounded-pill bg-${data.isSubmitted ? 'success' : 'warning'} bg-opacity-10 text-${data.isSubmitted ? 'success' : 'warning'} px-3 py-2 fw-bold text-uppercase me-2" style="font-size: 0.65rem;">
+              ${data.isSubmitted ? 'SUBMITTED' : 'PENDING'}
+            </span>
+            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">View</button>
+          </div>
+        </div>
+      </div>`;
+            const container = document.querySelector('.row.g-3');
+            if (container) {
+                container.prepend(card);
+            }
+        });
+    </script>
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script>
+    <script src="/js/brocode-script.js"></script>
 </body>
-</html>
 
+</html>

@@ -26,6 +26,7 @@
 
         <!-- Main Content -->
         <main class="main-panel w-100 p-4">
+            <%- include('../partials/academic-context.html') %>
             <!-- Header -->
             <div class="dashboard-header mb-4 shadow-sm" style="background: var(--panel-bg); border-radius: 24px; border: 1px solid var(--panel-border); padding: 2.5rem;">
                 <div class="d-flex justify-content-between align-items-center">
@@ -33,7 +34,7 @@
                         <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
                             Welcome, <%= parent.first_name %>!
                         </h1>
-                        <p class="text-secondary m-0" style="font-weight: 500;">Parent Guardian Portal â€¢ Overseeing Academic Excellence</p>
+                        <p class="text-secondary m-0" style="font-weight: 500;">Parent Guardian Portal &bull; Overseeing Academic Excellence</p>
                     </div>
                     <div class="d-flex gap-3 align-items-center">
                         <div class="text-end d-none d-md-block me-3">
@@ -117,7 +118,7 @@
                                                 </div>
                                                 <div>
                                                     <h6 class="m-0 fw-800 text-dark" style="font-size: 1.1rem;"><%= child.first_name %> <%= child.last_name %></h6>
-                                                    <small class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Grade <%= child.grade_level %> â€¢ <%= child.section %></small>
+                                                    <small class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Grade <%= child.grade_level %> &bull; <%= child.section %></small>
                                                 </div>
                                             </div>
                                             
@@ -201,14 +202,14 @@
                                 <div class="small opacity-75 fw-800 text-uppercase" style="letter-spacing: 0.5px; font-size: 0.65rem;">Academic Pulse</div>
                                 <div class="fw-900">Success Rate</div>
                             </div>
-                            <div class="h2 fw-900 m-0">94%</div>
+                            <div class="h2 fw-900 m-0" id="successRateDisplay"><%= stats.overallSuccessRate %></div>
                         </div>
                         <div class="p-3 d-flex justify-content-between align-items-center transition hover-lift" style="background: rgba(255,255,255,0.15); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
                             <div>
-                                <div class="small opacity-75 fw-800 text-uppercase" style="letter-spacing: 0.5px; font-size: 0.65rem;">Institutional Care</div>
-                                <div class="fw-900">Support Status</div>
+                                <div class="small opacity-75 fw-800 text-uppercase" style="letter-spacing: 0.5px; font-size: 0.65rem;">Overall Attendance</div>
+                                <div class="fw-900">Attendance Rate</div>
                             </div>
-                            <div class="h4 fw-900 m-0">EXCELLENT</div>
+                            <div class="h4 fw-900 m-0" id="attendanceRateDisplay"><%= stats.overallAttendanceRate %></div>
                         </div>
                     </div>
                 </div>
@@ -220,6 +221,63 @@
     <script src="/js/translations.js"></script>
     <script src="/js/brocode-script.js"></script>
 
+    <script>
+    (function () {
+        // Connect to Socket.io as parent using the logged-in user ID
+        const socket = io({ query: { userId: window.currentUser.id, role: 'parent' } });
+
+        // Track cumulative attendance totals across all children
+        // (keyed by studentId so re-submissions replace the previous value)
+        const attendanceMap = {}; // { studentId: { present: N, total: N } }
+
+        function recalcOverallRate() {
+            let totalPresent = 0;
+            let totalRecords = 0;
+            Object.values(attendanceMap).forEach(function (s) {
+                totalPresent += s.present;
+                totalRecords += s.total;
+            });
+            return totalRecords > 0
+                ? (totalPresent / totalRecords * 100).toFixed(1) + '%'
+                : '100.0%';
+        }
+
+        function flashElement(el) {
+            el.style.transition = 'opacity 0.2s';
+            el.style.opacity = '0.3';
+            setTimeout(function () {
+                el.style.opacity = '1';
+            }, 250);
+        }
+
+        socket.on('studentAttendanceUpdated', function (payload) {
+            const sid = payload.studentId;
+            const present = (payload.totalPresent !== undefined) ? payload.totalPresent : 0;
+            const absent  = (payload.totalAbsent  !== undefined) ? payload.totalAbsent  : 0;
+            const total   = present + absent;
+
+            // Update tracked totals for this student
+            attendanceMap[sid] = { present: present, total: total };
+
+            // Recalculate & update the widget
+            const rateEl = document.getElementById('attendanceRateDisplay');
+            if (rateEl) {
+                flashElement(rateEl);
+                rateEl.textContent = recalcOverallRate();
+            }
+
+            // Update child card attendance rate badge if visible on this page
+            const childCard = document.querySelector('[data-student-id="' + sid + '"]');
+            if (childCard) {
+                const rateSpan = childCard.querySelector('.child-att-rate');
+                if (rateSpan && total > 0) {
+                    flashElement(rateSpan);
+                    rateSpan.textContent = (present / total * 100).toFixed(1) + '%';
+                }
+            }
+        });
+    })();
+    </script>
 
     <style>
         .fw-900 { font-weight: 900 !important; }

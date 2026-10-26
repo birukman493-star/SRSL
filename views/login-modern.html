@@ -8,9 +8,17 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="/css/all.min.css" />
-    <link href="/css/brocode-style.css" rel="stylesheet" />
+
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/brocode-style.css" />
     <style>
       * {
         box-sizing: border-box;
@@ -26,42 +34,30 @@
         min-height: 100vh;
         color: var(--light-text);
         padding-top: 80px;
-        /* Space for the navbar to avoid overlap */
+        padding-bottom: 2rem;
         position: relative;
-        background-color: #0f172a;
+        background:
+          radial-gradient(ellipse at 82% 18%, rgba(191, 219, 254, 0.62), transparent 30rem),
+          radial-gradient(ellipse at 12% 88%, rgba(219, 234, 254, 0.72), transparent 34rem),
+          linear-gradient(125deg, var(--bg-main) 0%, var(--bg-soft) 100%);
         z-index: 1;
       }
 
       body::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
-          url("/image/hero-bg.jpg") center/cover no-repeat;
-        z-index: -2;
-        animation: heroDynamicPan 30s infinite alternate
-          cubic-bezier(0.45, 0.05, 0.55, 0.95);
-        will-change: transform, filter;
+        content: none;
       }
 
       body::after {
         content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-          45deg,
-          rgba(37, 99, 235, 0.3) 0%,
-          rgba(249, 115, 22, 0.3) 100%
-        );
-        mix-blend-mode: overlay;
-        z-index: -1;
-        animation: pulseGradient 15s infinite alternate ease-in-out;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background: radial-gradient(rgba(59, 130, 246, 0.16) 0.7px, transparent 0.9px);
+        background-size: 28px 28px;
+        background-position: right 3rem center;
+        opacity: 0.5;
+        -webkit-mask-image: linear-gradient(90deg, transparent 25%, #000 100%);
+        mask-image: linear-gradient(90deg, transparent 25%, #000 100%);
         pointer-events: none;
       }
 
@@ -69,12 +65,10 @@
         width: 100%;
         max-width: 400px;
         padding: 40px 30px;
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        background: var(--panel-bg);
+        border-radius: 28px;
+        box-shadow: var(--shadow-xl);
+        border: 1px solid var(--panel-border);
         margin: 20px auto;
         position: relative;
         z-index: 10;
@@ -86,11 +80,15 @@
       }
 
       .header i {
-        font-size: 56px;
-        background: var(--gradient-1);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 20px;
+        display: grid;
+        width: 68px;
+        height: 68px;
+        place-items: center;
+        margin: 0 auto 18px;
+        border-radius: 22px;
+        background: linear-gradient(145deg, rgba(37, 120, 237, 0.12), rgba(101, 87, 220, 0.12));
+        color: var(--primary-color);
+        font-size: 28px;
       }
 
       .header h1 {
@@ -143,11 +141,11 @@
       .input-control {
         width: 100%;
         padding: 16px 16px 16px 46px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--dark-tertiary);
         border-radius: 12px;
         font-size: 15px;
         color: var(--dark-text);
-        background-color: #f8fafc;
+        background-color: var(--bg-soft);
         transition: all 0.2s ease;
         outline: none;
       }
@@ -159,7 +157,7 @@
       .input-control:focus {
         border-color: var(--primary-color);
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-        background-color: #ffffff;
+        background-color: var(--panel-bg);
       }
 
       .input-control:focus + i {
@@ -214,7 +212,7 @@
 
       .divider {
         height: 1px;
-        background-color: rgba(0, 0, 0, 0.1);
+        background-color: var(--panel-border);
         margin-bottom: 24px;
       }
 
@@ -240,7 +238,7 @@
 
   <body>
     <!-- Navigation Bar added back and properly padded -->
-    <nav class="navbar navbar-expand-lg navbar-transparent">
+    <nav class="navbar navbar-expand-lg navbar-transparent public-modern-nav">
       <div class="container">
         <a class="navbar-brand" href="/">
           <i class="fas fa-graduation-cap"></i>
@@ -274,6 +272,11 @@
             </li>
             <li class="nav-item">
               <a class="nav-link" href="/auth/register">Register</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" id="themeToggle" title="Toggle Theme" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+              </a>
             </li>
           </ul>
         </div>
@@ -345,8 +348,12 @@
       </div>
     </div>
 
+    <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
+
+    <script src="/js/translations.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/brocode-script.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         const loginForm = document.getElementById("loginForm");
@@ -406,5 +413,3 @@
     </script>
   </body>
 </html>
-
-

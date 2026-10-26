@@ -3,13 +3,15 @@ const session = require("express-session");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const path = require("node:path");
-const bcrypt = require("bcryptjs");
+const cors = require('cors');
+// app.use(cors...) moved below app initialization
 require("dotenv").config();
 
 // Import database configuration
 const { pool, initDatabase } = require("./config/db");
 
 const app = express();
+app.use(cors({ origin: true, credentials: true }));
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -46,6 +48,30 @@ app.use((req, res, next) => {
   next();
 });
 
+// Academic context middleware – adds req.academicYear & req.semester for downstream routes
+const academicContext = require('./middleware/academicContext');
+app.use(academicContext);
+
+
+// Active academic year & semester for all dashboards
+const {
+  getAcademicContext,
+  DEFAULT_ACADEMIC_YEAR,
+} = require("./config/systemSettings");
+app.use(async (req, res, next) => {
+  try {
+    res.locals.academicContext = await getAcademicContext();
+  } catch (e) {
+    res.locals.academicContext = {
+      academicYear: DEFAULT_ACADEMIC_YEAR,
+      semester: "1",
+      semesterLabel: "Semester 1",
+      semesterRaw: "1",
+    };
+  }
+  next();
+});
+
 // Initialize database
 initDatabase().catch((err) =>
   console.error("Database initialization error:", err)
@@ -55,8 +81,8 @@ initDatabase().catch((err) =>
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const studentRoutes = require("./routes/student");
-const http = require('http');
-const { Server } = require('socket.io');
+const http = require("http");
+const { Server } = require("socket.io");
 // Server and Socket.io will be created inside startServer to allow port retries without reusing the same server instance.
 
 const parentRoutes = require("./routes/parent");
@@ -85,9 +111,25 @@ app.get("/", async (req, res) => {
     const [courseCount] = await pool.query(
       "SELECT COUNT(*) as count FROM courses WHERE is_active = 1"
     );
+    const [testimonials] = await pool.query(
+      `SELECT
+         id,
+         name,
+         role,
+         quote,
+         rating,
+         CONCAT(
+           UPPER(LEFT(name, 1)),
+           UPPER(LEFT(SUBSTRING_INDEX(name, ' ', -1), 1))
+         ) AS initials
+       FROM testimonials
+       WHERE is_active = 1
+       ORDER BY sort_order ASC, created_at DESC, id DESC`
+    );
 
     res.render("index-modern", {
       title: "Student Registration and Management System",
+      testimonials,
       stats: {
         students: studentCount[0].count,
         teachers: teacherCount[0].count,
@@ -99,6 +141,7 @@ app.get("/", async (req, res) => {
     console.error("Error fetching stats for homepage:", error);
     res.render("index-modern", {
       title: "Student Registration and Management System",
+      testimonials: [],
       stats: { students: 0, teachers: 0, parents: 0, courses: 0 },
     });
   }
@@ -190,6 +233,15 @@ app.get("/gallery", (req, res) => {
   res.render("gallery-modern", { title: "Gallery" });
 });
 
+// Keep legacy page URLs working for existing navigation and bookmarks.
+app.get("/login-modern.html", (req, res) => {
+  res.redirect("/auth/login");
+});
+
+app.get("/register-modern.html", (req, res) => {
+  res.redirect("/auth/register");
+});
+
 // Dashboard route - redirects based on role
 app.get("/dashboard", (req, res) => {
   if (!req.session.user) {
@@ -246,12 +298,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Direct route for register-modern.html
-app.get("/register-modern.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "register-modern.html"));
-});
-
-let port = Number.parseInt(process.env.PORT) || 3001;
+let port = 3003;
 
 // Updated startServer to use HTTP server with Socket.io
 function startServer(port) {
@@ -259,30 +306,57 @@ function startServer(port) {
   const io = new Server(server, {
     cors: {
       origin: "*",
-      methods: ["GET", "POST"]
-    }
+      methods: ["GET", "POST"],
+    },
   });
   // Make io accessible in routes for this server instance
-  app.set('io', io);
+  app.set("io", io);
 
-    // Socket.io connection handling – join role‑based rooms
-    io.on('connection', (socket) => {
-      const { userId, role } = socket.handshake.query || {};
+  // Automatic Next-Year transition cron job (checks daily at midnight)
+  const cron = require('node-cron');
+  cron.schedule('0 0 * * *', async () => {
+    try {
+      const { getAcademicContext, getNextAcademicYear, setActiveAcademicYear } = require('./config/systemSettings');
+      const { setActiveSemester } = require('./config/academicSettings');
+      const ctx = await getAcademicContext();
 
-      if (!userId || !role) return;
+      if (ctx.semester === '2' || ctx.semesterLabel === 'Semester 2') {
+        const nextYear = getNextAcademicYear(ctx.academicYear);
+        if (nextYear) {
+          console.log(`[CRON] Midnight transition triggered. Transitioning from ${ctx.academicYear} Semester 2 -> ${nextYear} Semester 1...`);
+          await setActiveAcademicYear(nextYear);
+          await setActiveSemester('Semester 1');
 
-      if (role === "teacher") socket.join(`teacher_${userId}`);
-      if (role === "student") socket.join(`student_${userId}`);
-      if (role === "parent") socket.join(`parent_${userId}`);
-      if (role === "admin") socket.join(`admin_dashboard`);
-    });
+          const updatedCtx = await getAcademicContext();
+          io.emit('semesterChanged', updatedCtx);
+          io.emit('semesterUpdated', updatedCtx);
+          io.emit('academicContextUpdated', updatedCtx);
+          console.log(`[CRON] Transition completed successfully.`);
+        }
+      }
+    } catch (err) {
+      console.error('[CRON] Error during academic year automatic transition:', err);
+    }
+  });
 
-  server.listen(port, () => {
+  // Socket.io connection handling – join role‑based rooms
+  io.on("connection", (socket) => {
+    const { userId, role } = socket.handshake.query || {};
+
+    if (!userId || !role) return;
+
+    if (role === "teacher") socket.join(`teacher_${userId}`);
+    if (role === "student") socket.join(`student_${userId}`);
+    if (role === "parent") socket.join(`parent_${userId}`);
+    if (role === "admin") socket.join(`admin_dashboard`);
+  });
+
+  server.listen(port, '0.0.0.0', () => {
     console.log(`>>> SERVER START: Listening on port ${port}`);
   });
 
-  server.once('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
+  server.once("error", (err) => {
+    if (err.code === "EADDRINUSE") {
       console.log(`Port ${port} is in use, trying port ${port + 1}...`);
       server.close(() => startServer(port + 1));
     } else {

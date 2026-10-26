@@ -6,9 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account - Abdigudina EMS</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/all.min.css">
-    <link href="/css/brocode-style.css" rel="stylesheet">
+     <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css" />
+
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/brocode-style.css" />
     <style>
         * {
             box-sizing: border-box;
@@ -26,48 +34,39 @@
             padding-top: 100px;
             padding-bottom: 40px;
             position: relative;
-            background-color: #0f172a;
+            background:
+                radial-gradient(ellipse at 82% 18%, rgba(191, 219, 254, 0.62), transparent 30rem),
+                radial-gradient(ellipse at 12% 88%, rgba(219, 234, 254, 0.72), transparent 34rem),
+                linear-gradient(125deg, var(--bg-main) 0%, var(--bg-soft) 100%);
             z-index: 1;
         }
 
         body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
-                url('/image/hero-bg.jpg') center/cover no-repeat;
-            z-index: -2;
-            animation: heroDynamicPan 30s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95);
-            will-change: transform, filter;
+            content: none;
         }
 
         body::after {
             content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, rgba(37, 99, 235, 0.3) 0%, rgba(249, 115, 22, 0.3) 100%);
-            mix-blend-mode: overlay;
-            z-index: -1;
-            animation: pulseGradient 15s infinite alternate ease-in-out;
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: radial-gradient(rgba(59, 130, 246, 0.16) 0.7px, transparent 0.9px);
+            background-size: 28px 28px;
+            background-position: right 3rem center;
+            opacity: 0.5;
+            -webkit-mask-image: linear-gradient(90deg, transparent 25%, #000 100%);
+            mask-image: linear-gradient(90deg, transparent 25%, #000 100%);
             pointer-events: none;
         }
 
         .login-wrapper {
             width: 100%;
             max-width: 550px;
-            padding: 40px 30px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: clamp(24px, 5vw, 40px) clamp(20px, 4vw, 30px);
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 28px;
+            box-shadow: var(--shadow-xl);
             margin: auto;
             position: relative;
             z-index: 10;
@@ -79,11 +78,15 @@
         }
 
         .header i {
-            font-size: 56px;
-            background: var(--gradient-1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
+            display: grid;
+            width: 68px;
+            height: 68px;
+            place-items: center;
+            margin: 0 auto 18px;
+            border-radius: 22px;
+            background: linear-gradient(145deg, rgba(37, 120, 237, 0.12), rgba(101, 87, 220, 0.12));
+            color: var(--primary-color);
+            font-size: 28px;
         }
 
         .header h1 {
@@ -138,8 +141,8 @@
         }
 
         .role-card {
-            background: #f8fafc;
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: var(--bg-soft);
+            border: 1px solid var(--dark-tertiary);
             border-radius: 12px;
             padding: 14px 8px;
             text-align: center;
@@ -167,7 +170,7 @@
         }
 
         .role-card:hover {
-            border-color: rgba(255, 255, 255, 0.2);
+            border-color: var(--primary-color);
         }
 
         .role-card.active {
@@ -201,11 +204,11 @@
         .input-control {
             width: 100%;
             padding: 16px 16px 16px 44px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--dark-tertiary);
             border-radius: 12px;
             font-size: 15px;
             color: var(--dark-text);
-            background-color: #f8fafc;
+            background-color: var(--bg-soft);
             transition: all 0.2s ease;
             outline: none;
         }
@@ -335,7 +338,7 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-transparent">
+    <nav class="navbar navbar-expand-lg navbar-transparent public-modern-nav">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-graduation-cap"></i>
@@ -347,27 +350,32 @@
                 <span></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/about">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/contact">Contact</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/gallery">Gallery</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/auth/login">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/auth/register">Register</a>
-                    </li>
-                </ul>
-            </div>
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/about">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/contact">Contact</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/gallery">Gallery</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/login">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="/auth/register">Register</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" id="themeToggle" title="Toggle Theme" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+              </a>
+            </li>
+          </ul>
+        </div>
         </div>
     </nav>
 
@@ -378,192 +386,261 @@
             <p>Select your role below to begin.</p>
         </div>
 
-        <% if (typeof error !=='undefined' && error) { %>
-            <div class="error-alert">
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="error-alert" id="serverErrorAlert">
                 <i class="fas fa-exclamation-circle"></i>
                 <span>
                     <%= error %>
                 </span>
             </div>
-            <% } %>
+        <% } %>
 
-                <% if (typeof success !=='undefined' && success) { %>
-                    <div class="success-alert">
-                        <i class="fas fa-check-circle"></i>
-                        <span>
-                            <%= success %>
-                        </span>
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="success-alert" id="serverSuccessAlert">
+                <i class="fas fa-check-circle"></i>
+                <span>
+                    <%= success %>
+                </span>
+            </div>
+        <% } %>
+
+        <div class="error-alert" id="errorAlert" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="errorMessage"></span>
+        </div>
+
+        <form id="registerForm" action="/auth/register" method="POST" enctype="multipart/form-data">
+            <!-- Replacing old Role Buttons with new Grid Style Map (Only Student & Parent allowed) -->
+            <div class="role-grid" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="role-card" data-role="student" id="roleBtnStudent">
+                    <i class="fas fa-user-graduate"></i>
+                    <h5>Student</h5>
+                </div>
+                <div class="role-card" data-role="parent" id="roleBtnParent">
+                    <i class="fas fa-user-friends"></i>
+                    <h5>Parent</h5>
+                </div>
+            </div>
+
+            <input type="hidden" id="userType" name="userType" required>
+
+            <!-- Role Specific Fields: Student -->
+            <div id="studentFields" style="display: none;">
+                <div class="input-row row-gap">
+                    <div class="input-group">
+                        <select id="grade" name="grade" class="input-control">
+                            <option value="">Select Grade Level *</option>
+                            <% for(let i=1; i<=8; i++) { %>
+                                <option value="<%= i %>">Grade <%= i %></option>
+                            <% } %>
+                        </select>
+                        <i class="fas fa-level-up-alt icon-left"></i>
                     </div>
-                    <% } %>
+                    <div class="input-group">
+                        <select id="section" name="section" class="input-control">
+                            <option value="">Select Section *</option>
+                            <option value="A">Section A</option>
+                            <option value="B">Section B</option>
+                            <option value="C">Section C</option>
+                            <option value="D">Section D</option>
+                        </select>
+                        <i class="fas fa-cubes icon-left"></i>
+                    </div>
+                </div>
 
-                        <div class="error-alert" id="errorAlert" style="display: none;">
-                            <i class="fas fa-exclamation-circle"></i>
-                            <span id="errorMessage"></span>
+                <div class="input-row row-gap">
+                    <div class="input-group">
+                        <input type="text" id="parentGuardianName" name="parentGuardianName" class="input-control" placeholder="Parent/Guardian Full Name *">
+                        <i class="fas fa-user-shield icon-left"></i>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="studentId" name="studentId" class="input-control" placeholder="Reference ID (Optional)">
+                        <i class="fas fa-id-card icon-left"></i>
+                    </div>
+                </div>
+
+                <div class="input-row row-gap">
+                    <div class="input-group">
+                        <input type="date" id="dateOfBirth" name="dateOfBirth" class="input-control" placeholder="Date of Birth *">
+                        <i class="fas fa-calendar-alt icon-left"></i>
+                    </div>
+                    <div class="input-group">
+                        <select id="gender" name="gender" class="input-control">
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                        <i class="fas fa-venus-mars icon-left"></i>
+                    </div>
+                </div>
+
+                <div class="input-group row-gap">
+                    <input type="text" id="address" name="address" class="input-control" placeholder="Permanent Home Address">
+                    <i class="fas fa-map-marker-alt icon-left"></i>
+                </div>
+
+                <!-- Admission Type & File Uploads -->
+                <div class="row-gap p-3 rounded-3 mb-3" style="background: rgba(0, 0, 0, 0.02); border: 1px dashed rgba(0, 0, 0, 0.1);">
+                    <label class="d-block text-secondary small fw-bold mb-2">Admission Type</label>
+                    <div class="d-flex gap-4 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="admission_type" value="new" id="admNew" checked>
+                            <label class="form-check-label small fw-bold" for="admNew">New Entry</label>
                         </div>
-
-                        <form id="registerForm" action="/auth/register" method="POST">
-                            <!-- Replacing old Role Buttons with new Grid Style Map -->
-                            <div class="role-grid">
-                                <div class="role-card" data-role="student">
-                                    <i class="fas fa-user-graduate"></i>
-                                    <h5>Student</h5>
-                                </div>
-                                <div class="role-card" data-role="teacher">
-                                    <i class="fas fa-chalkboard-teacher"></i>
-                                    <h5>Teacher</h5>
-                                </div>
-                                <div class="role-card" data-role="parent">
-                                    <i class="fas fa-user-friends"></i>
-                                    <h5>Parent</h5>
-                                </div>
-                                <div class="role-card" data-role="admin">
-                                    <i class="fas fa-user-shield"></i>
-                                    <h5>Admin</h5>
-                                </div>
-                            </div>
-
-                            <input type="hidden" id="userType" name="userType" required>
-
-                            <div id="studentFields" style="display: none;">
-                                <div class="input-row row-gap">
-                                    <div class="input-group">
-                                        <input type="text" id="studentId" name="studentId" class="input-control"
-                                            placeholder="Student ID">
-                                        <i class="fas fa-id-card icon-left"></i>
-                                    </div>
-                                    <div class="input-group">
-                                        <select id="grade" name="grade" class="input-control">
-                                            <option value="">Select Grade</option>
-                                            <% for(let i=1; i<=8; i++) { %>
-                                                <option value="<%= i %>">Grade <%= i %>
-                                                </option>
-                                                <% } %>
-                                        </select>
-                                        <i class="fas fa-level-up-alt icon-left"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="teacherFields" style="display: none;">
-                                <div class="input-row row-gap">
-                                    <div class="input-group">
-                                        <input type="text" id="employeeId" name="employeeId" class="input-control"
-                                            placeholder="Employee ID">
-                                        <i class="fas fa-id-badge icon-left"></i>
-                                    </div>
-                                    <div class="input-group">
-                                        <input type="text" id="department" name="department" class="input-control"
-                                            placeholder="Department">
-                                        <i class="fas fa-building icon-left"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="parentFields" style="display: none;">
-                                <div class="input-row row-gap">
-                                    <div class="input-group">
-                                        <input type="text" id="occupation" name="occupation" class="input-control"
-                                            placeholder="Occupation">
-                                        <i class="fas fa-briefcase icon-left"></i>
-                                    </div>
-                                    <div class="input-group">
-                                        <select id="relationship" name="relationship" class="input-control">
-                                            <option value="">Relationship</option>
-                                            <option value="father">Father</option>
-                                            <option value="mother">Mother</option>
-                                            <option value="guardian">Guardian</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                        <i class="fas fa-users icon-left"></i>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="input-row row-gap">
-                                <div class="input-group">
-                                    <input type="text" id="firstName" name="firstName" class="input-control"
-                                        placeholder="First Name" data-i18n-placeholder="placeholder_first_name"
-                                        required>
-                                    <i class="fas fa-user icon-left"></i>
-                                </div>
-                                <div class="input-group">
-                                    <input type="text" id="lastName" name="lastName" class="input-control"
-                                        placeholder="Last Name" data-i18n-placeholder="placeholder_last_name" required>
-                                    <i class="fas fa-user icon-left"></i>
-                                </div>
-                            </div>
-
-                            <div class="input-row row-gap">
-                                <div class="input-group">
-                                    <input type="email" id="email" name="email" class="input-control"
-                                        placeholder="Email Address" data-i18n-placeholder="placeholder_email" required>
-                                    <i class="fas fa-envelope icon-left"></i>
-                                </div>
-                                <div class="input-group">
-                                    <input type="tel" id="phone" name="phone" class="input-control"
-                                        placeholder="Phone Number" data-i18n-placeholder="placeholder_phone">
-                                    <i class="fas fa-phone icon-left"></i>
-                                </div>
-                            </div>
-
-                            <div class="input-group row-gap">
-                                <input type="text" id="username" name="username" class="input-control"
-                                    placeholder="Username" required>
-                                <i class="fas fa-at icon-left"></i>
-                            </div>
-
-                            <div class="input-row">
-                                <div class="input-group">
-                                    <input type="password" id="password" name="password" class="input-control"
-                                        placeholder="Password" required>
-                                    <i class="fas fa-lock icon-left"></i>
-                                </div>
-                                <div class="input-group">
-                                    <input type="password" id="confirmPassword" name="confirmPassword"
-                                        class="input-control" placeholder="Confirm Password" required>
-                                    <i class="fas fa-lock icon-left"></i>
-                                </div>
-                            </div>
-
-                            <div class="requirements">
-                                <div class="requirement" id="lengthReq"><i class="fas fa-circle"></i> At least 8 chars
-                                </div>
-                            </div>
-
-                            <div class="form-check mt-3 mb-4 ps-1 d-flex gap-2">
-                                <input class="form-check-input flex-shrink-0" type="checkbox" id="terms" name="terms"
-                                    value="on" required style="margin-top: 4px;">
-                                <label class="form-check-label" for="terms">
-                                    I agree to the <a href="/terms" class="text-decoration-none"
-                                        style="color: var(--primary-color);">Terms and Conditions</a>
-                                </label>
-                            </div>
-
-                            <button type="submit" class="submit-btn" id="submitBtn">
-                                <span id="btnText">Create Account</span>
-                                <i class="fas fa-arrow-right" id="btnIcon"></i>
-                            </button>
-                        </form>
-
-                        <div class="divider"></div>
-
-                        <div class="login-text">
-                            Already have an account? <a href="/auth/login">Login here</a>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="admission_type" value="transfer" id="admTransfer">
+                            <label class="form-check-label small fw-bold" for="admTransfer">Transfer Student</label>
                         </div>
+                    </div>
+
+                    <div class="input-group mb-2">
+                        <label class="small text-secondary fw-bold mb-1 d-block w-100">Student Profile Photo (Optional)</label>
+                        <input type="file" id="studentPhoto" name="studentPhoto" class="input-control" accept="image/*" style="padding-top: 10px; padding-bottom: 10px;">
+                        <i class="fas fa-camera icon-left"></i>
+                    </div>
+
+                    <!-- Transfer specific inputs (Hidden by default) -->
+                    <div id="transferInputs" style="display: none;">
+                        <div class="input-row mb-3">
+                            <div class="input-group">
+                                <input type="text" id="previousSchool" name="previousSchool" class="input-control" placeholder="Previous School Name *">
+                                <i class="fas fa-university icon-left"></i>
+                            </div>
+                            <div class="input-group">
+                                <input type="date" id="transfer_date" name="transfer_date" class="input-control" placeholder="Transfer Date">
+                                <i class="fas fa-calendar-day icon-left"></i>
+                            </div>
+                        </div>
+                        <div class="input-group mb-3">
+                            <textarea id="transfer_reason" name="transfer_reason" class="input-control" placeholder="Reason for transfer..." rows="2" style="padding-left: 44px; padding-top: 12px; min-height: 60px; height: 60px;"></textarea>
+                            <i class="fas fa-comment-alt icon-left" style="top: 25px;"></i>
+                        </div>
+                        <div class="input-group mb-2">
+                            <label class="small text-secondary fw-bold mb-1 d-block w-100">Previous Transcripts / Report Cards * (Multiple allowed)</label>
+                            <input type="file" id="previousTranscript" name="previousTranscript" class="input-control" accept="image/*,application/pdf" multiple style="padding-top: 10px; padding-bottom: 10px;">
+                            <i class="fas fa-file-upload icon-left"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Specific Fields: Parent -->
+            <div id="parentFields" style="display: none;">
+                <div class="input-row row-gap">
+                    <div class="input-group">
+                        <input type="text" id="occupation" name="occupation" class="input-control" placeholder="Occupation">
+                        <i class="fas fa-briefcase icon-left"></i>
+                    </div>
+                    <div class="input-group">
+                        <select id="relationship" name="relationship" class="input-control">
+                            <option value="">Relationship *</option>
+                            <option value="father">Father</option>
+                            <option value="mother">Mother</option>
+                            <option value="guardian">Guardian</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <i class="fas fa-users icon-left"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Common Basic Info Fields -->
+            <div class="input-row row-gap">
+                <div class="input-group">
+                    <input type="text" id="firstName" name="firstName" class="input-control" placeholder="First Name *" required>
+                    <i class="fas fa-user icon-left"></i>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="lastName" name="lastName" class="input-control" placeholder="Last Name *" required>
+                    <i class="fas fa-user icon-left"></i>
+                </div>
+            </div>
+
+            <div class="input-row row-gap">
+                <div class="input-group">
+                    <input type="email" id="email" name="email" class="input-control" placeholder="Email Address *" required>
+                    <i class="fas fa-envelope icon-left"></i>
+                </div>
+                <div class="input-group">
+                    <input type="tel" id="phone" name="phone" class="input-control" placeholder="Phone Number">
+                    <i class="fas fa-phone icon-left"></i>
+                </div>
+            </div>
+
+            <div class="input-group row-gap">
+                <input type="text" id="username" name="username" class="input-control" placeholder="Portal Username *" required>
+                <i class="fas fa-at icon-left"></i>
+            </div>
+
+            <div class="input-row">
+                <div class="input-group">
+                    <input type="password" id="password" name="password" class="input-control" placeholder="Secure Password *" required>
+                    <i class="fas fa-lock icon-left"></i>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="input-control" placeholder="Confirm Password *" required>
+                    <i class="fas fa-lock icon-left"></i>
+                </div>
+            </div>
+
+            <div class="requirements">
+                <div class="requirement" id="lengthReq"><i class="fas fa-circle" style="font-size: 6px; vertical-align: middle; margin-right: 6px;"></i> Password must be at least 8 characters</div>
+            </div>
+
+            <div class="form-check mt-3 mb-4 ps-1 d-flex gap-2">
+                <input class="form-check-input flex-shrink-0" type="checkbox" id="terms" name="terms" value="on" required style="margin-top: 4px;">
+                <label class="form-check-label" for="terms">
+                    I agree to the <a href="/terms" class="text-decoration-none" style="color: var(--primary-color);">Terms and Conditions</a>
+                </label>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span id="btnText">Request Admission</span>
+                <i class="fas fa-arrow-right" id="btnIcon"></i>
+            </button>
+        </form>
+
+        <div class="divider"></div>
+
+        <div class="login-text">
+            Already have an account? <a href="/auth/login">Login here</a>
+        </div>
     </div>
 
+    <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
+
+    <script src="/js/translations.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/brocode-script.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Restore role JS toggle without bulky step flow
             const roleBtns = document.querySelectorAll('.role-card');
             const userTypeInput = document.getElementById('userType');
             const parentFields = document.getElementById('parentFields');
             const studentFields = document.getElementById('studentFields');
-            const teacherFields = document.getElementById('teacherFields');
 
+            // Dynamic Admission Type Inputs Toggling
+            const admNew = document.getElementById('admNew');
+            const admTransfer = document.getElementById('admTransfer');
+            const transferInputs = document.getElementById('transferInputs');
+
+            function toggleAdmissionType() {
+                if (admTransfer && admTransfer.checked) {
+                    transferInputs.style.display = 'block';
+                    document.getElementById('previousSchool').required = true;
+                } else {
+                    transferInputs.style.display = 'none';
+                    document.getElementById('previousSchool').required = false;
+                }
+            }
+
+            if (admNew && admTransfer) {
+                admNew.addEventListener('change', toggleAdmissionType);
+                admTransfer.addEventListener('change', toggleAdmissionType);
+            }
+
+            // Role selector interactions
             roleBtns.forEach(btn => {
                 btn.addEventListener('click', function () {
                     const role = this.getAttribute('data-role');
@@ -572,36 +649,90 @@
                     this.classList.add('active');
                     userTypeInput.value = role;
 
-                    if (studentFields) studentFields.style.display = (role === 'student') ? 'block' : 'none';
-                    if (teacherFields) teacherFields.style.display = (role === 'teacher') ? 'block' : 'none';
-                    if (parentFields) parentFields.style.display = (role === 'parent') ? 'block' : 'none';
+                    if (role === 'student') {
+                        if (studentFields) studentFields.style.display = 'block';
+                        if (parentFields) parentFields.style.display = 'none';
+
+                        // Set student fields required
+                        document.getElementById('grade').required = true;
+                        document.getElementById('section').required = true;
+                        document.getElementById('parentGuardianName').required = true;
+                        document.getElementById('dateOfBirth').required = true;
+                        toggleAdmissionType();
+
+                        // Disable parent fields required
+                        document.getElementById('relationship').required = false;
+                    } else if (role === 'parent') {
+                        if (studentFields) studentFields.style.display = 'none';
+                        if (parentFields) parentFields.style.display = 'block';
+
+                        // Disable student fields required
+                        document.getElementById('grade').required = false;
+                        document.getElementById('section').required = false;
+                        document.getElementById('parentGuardianName').required = false;
+                        document.getElementById('dateOfBirth').required = false;
+                        document.getElementById('previousSchool').required = false;
+
+                        // Set parent fields required
+                        document.getElementById('relationship').required = true;
+                    }
                 });
             });
 
+            // Form Submit validations
             const registerForm = document.getElementById('registerForm');
             const submitBtn = document.getElementById('submitBtn');
             const btnText = document.getElementById('btnText');
             const btnIcon = document.getElementById('btnIcon');
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMessage = document.getElementById('errorMessage');
 
             if (registerForm) {
                 registerForm.addEventListener('submit', function (e) {
+                    // Hide any active notifications first
+                    errorAlert.style.display = 'none';
+                    const serverError = document.getElementById('serverErrorAlert');
+                    const serverSuccess = document.getElementById('serverSuccessAlert');
+                    if (serverError) serverError.style.display = 'none';
+                    if (serverSuccess) serverSuccess.style.display = 'none';
+
                     if (!userTypeInput.value) {
-                        const errorAlert = document.getElementById('errorAlert');
                         errorAlert.style.display = 'flex';
-                        document.getElementById('errorMessage').textContent = 'Please select a role first.';
+                        errorMessage.textContent = 'Please click Student or Parent role first.';
                         e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                         return;
                     }
 
-                    // High speed transition setup
-                    btnText.textContent = 'Processing...';
+                    // Client‑side Password verification
+                    const pw = document.getElementById('password').value;
+                    const cpw = document.getElementById('confirmPassword').value;
+
+                    if (pw.length < 8) {
+                        errorAlert.style.display = 'flex';
+                        errorMessage.textContent = 'Password must be at least 8 characters long.';
+                        e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        return;
+                    }
+
+                    if (pw !== cpw) {
+                        errorAlert.style.display = 'flex';
+                        errorMessage.textContent = 'Passwords do not match.';
+                        e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        return;
+                    }
+
+                    // High speed transition submit feedback
+                    btnText.textContent = 'Submitting...';
                     btnIcon.className = 'fas fa-circle-notch fa-spin';
                     submitBtn.style.pointerEvents = 'none';
                     submitBtn.style.opacity = '0.9';
                 });
             }
 
-            // Instant.page-like prefetching for ultra-high speed
+            // Prefetching logic for navigation
             document.querySelectorAll('a').forEach(link => {
                 link.addEventListener('mouseover', () => {
                     const url = link.getAttribute('href');
@@ -618,5 +749,3 @@
 </body>
 
 </html>
-
-

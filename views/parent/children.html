@@ -14,39 +14,229 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
-        .premium-card {
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --dark-text: #0f172a;
+            --light-bg: #f8fafc;
+            --card-border: rgba(0, 0, 0, 0.05);
+            --gradient-primary: linear-gradient(135deg, #2563eb, #3b82f6);
+            --gradient-success: linear-gradient(135deg, #10b981, #34d399);
+            --gradient-warning: linear-gradient(135deg, #f59e0b, #fbbf24);
+            --gradient-card-header: linear-gradient(to bottom, #f8fafc, #ffffff);
+        }
+
+        .child-card {
             background: white;
-            border-radius: 28px;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border-radius: 24px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.02);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
-        .premium-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary-color);
-            box-shadow: 0 20px 50px rgba(37,99,235,0.08);
+        
+        .child-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(37, 99, 235, 0.2);
+            box-shadow: 0 20px 40px rgba(37, 99, 235, 0.08);
         }
+
+        .card-accent-bar {
+            height: 5px;
+            background: var(--gradient-primary);
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
         .child-header {
-            background: #f8fafc;
-            padding: 2.5rem;
+            background: var(--gradient-card-header);
+            padding: 2.5rem 1.5rem 1.5rem;
             border-bottom: 1px solid rgba(0,0,0,0.03);
             text-align: center;
         }
+
         .child-avatar-wrap {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 1.5rem;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 1.25rem;
             background: white;
-            border-radius: 32px;
+            border-radius: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
-            font-weight: 900;
+            font-size: 2.2rem;
+            font-weight: 800;
             color: var(--primary-color);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.03);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.1);
+            border: 2px solid rgba(37, 99, 235, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .child-card:hover .child-avatar-wrap {
+            transform: scale(1.05);
+            box-shadow: 0 12px 25px rgba(37, 99, 235, 0.15);
+        }
+
+        .child-name {
+            color: var(--dark-text);
+            font-weight: 800;
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+            margin-top: 0;
+        }
+
+        .badge-grade {
+            background: rgba(37, 99, 235, 0.06);
+            color: var(--primary-color);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            font-weight: 700;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            letter-spacing: 0.3px;
+        }
+
+        .child-body {
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .stat-box {
+            background: #f8fafc;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            border-radius: 16px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+            background: #f1f5f9;
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--dark-text);
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+        .attendance-summary-card {
+            background: #f8fafc;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .attendance-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        .attendance-value {
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .mini-stat {
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+            padding: 0.5rem;
+        }
+
+        .mini-val {
+            font-size: 0.95rem;
+            font-weight: 800;
+        }
+
+        .mini-lbl {
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #94a3b8;
+        }
+
+        .btn-action-primary {
+            background: var(--gradient-primary);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.85rem 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-action-primary:hover {
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .btn-action-secondary {
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            color: var(--dark-text);
+            font-weight: 700;
+            padding: 0.85rem 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-action-secondary:hover {
+            background: #f8fafc;
+            border-color: rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            color: var(--dark-text);
+        }
+
+        .transition-arrow {
+            transition: transform 0.2s ease;
+        }
+
+        .btn-action-primary:hover .transition-arrow,
+        .btn-action-secondary:hover .transition-arrow {
+            transform: translateX(4px);
         }
     </style>
 </head>
@@ -71,56 +261,82 @@
                 <% if (children && children.length > 0) { %>
                     <% children.forEach(child => { %>
                         <div class="col-lg-4 col-md-6">
-                            <div class="premium-card h-100" data-student-id="<%= child.id %>">
+                            <div class="child-card" data-student-id="<%= child.id %>">
+                                <div class="card-accent-bar"></div>
                                 <div class="child-header">
                                     <div class="child-avatar-wrap">
                                         <%= child.first_name[0] %><%= child.last_name[0] %>
                                     </div>
-                                    <h2 class="fw-bold mb-1" style="color: var(--dark-text); font-size: 1.5rem;"><%= child.first_name %> <%= child.last_name %></h2>
-                                    <div class="text-primary fw-800 text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">
-                                        <%= child.student_id %> â€¢ Grade <%= child.grade_level %>-<%= child.section %>
-                                    </div>
+                                    <h2 class="child-name"><%= child.first_name %> <%= child.last_name %></h2>
+                                    <span class="badge-grade">
+                                        <i class="fas fa-graduation-cap me-1"></i> <%= child.student_id %> &bull; Grade <%= child.grade_level %>-<%= child.section %>
+                                    </span>
                                 </div>
-                                <div class="p-4 p-xl-5">
-                                    <div class="row g-3 mb-5">
-    <div class="col-4">
-        <div class="p-3 rounded-4 bg-light text-center border">
-            <div class="h3 fw-bold text-dark mb-0"><%= child.grade_count || 0 %></div>
-            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Graded Subjects</div>
-        </div>
-    </div>
-    <div class="col-4">
-        <div class="p-3 rounded-4 bg-light text-center border">
-            <div class="h3 fw-bold text-primary mb-0"><%= child.average_grade ? Math.round(child.average_grade) + '%' : '0%' %></div>
-            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Avg. Achievement</div>
-        </div>
-    </div>
-    <div class="col-4">
-        <div class="p-3 rounded-4 bg-light text-center border">
-            <div class="h3 fw-bold text-success mb-0"><%= child.present %></div>
-            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Present Days</div>
-        </div>
-        <div class="p-3 rounded-4 bg-light text-center border mt-2">
-            <div class="h3 fw-bold text-danger mb-0"><%= child.absent %></div>
-            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Absent Days</div>
-        </div>
-        <div class="p-3 rounded-4 bg-light text-center border mt-2">
-            <div class="h3 fw-bold text-warning mb-0"><%= child.late %></div>
-            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Late Count</div>
-        </div>
-        <div class="p-3 rounded-4 bg-light text-center border mt-2">
-            <div class="h3 fw-bold text-primary mb-0"><%= child.attendance_rate %>%</div>
-            <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Attendance %</div>
-        </div>
-    </div>
-</div>
+                                <div class="child-body">
+                                    <!-- Academic Overview -->
+                                    <div class="section-title">
+                                        <i class="fas fa-book-open me-2 text-primary"></i> Academic Overview
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6">
+                                            <div class="stat-box h-100">
+                                                <div class="stat-value"><%= child.grade_count || 0 %></div>
+                                                <div class="stat-label">Graded Subjects</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="stat-box h-100">
+                                                <div class="stat-value text-primary"><%= child.average_grade ? Math.round(child.average_grade) + '%' : '0%' %></div>
+                                                <div class="stat-label">Avg. Achievement</div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     
-                                    <div class="d-grid gap-3">
-                                        <a href="/parent/grades/<%= child.id %>" class="btn btn-primary py-3 rounded-pill fw-bold shadow-sm">
-                                            <i class="fas fa-file-invoice me-2"></i> Academic Performance
+                                    <!-- Attendance Overview -->
+                                    <div class="section-title">
+                                        <i class="fas fa-calendar-check me-2 text-success"></i> Attendance Overview
+                                    </div>
+                                    <div class="attendance-summary-card">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="attendance-label">Attendance Rate</span>
+                                            <span class="attendance-value <%= parseFloat(child.attendance_rate) >= 90 ? 'text-success' : 'text-warning' %>">
+                                                <%= child.attendance_rate %>%
+                                            </span>
+                                        </div>
+                                        <div class="progress rounded-pill mb-3" style="height: 8px;">
+                                            <div class="progress-bar rounded-pill <%= parseFloat(child.attendance_rate) >= 90 ? 'bg-success' : 'bg-warning' %>" role="progressbar" style="width: <%= child.attendance_rate %>%"></div>
+                                        </div>
+                                        <div class="row g-1 text-center">
+                                            <div class="col-4">
+                                                <div class="mini-stat text-success">
+                                                    <div class="mini-val"><%= child.present %></div>
+                                                    <div class="mini-lbl">Present</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="mini-stat text-danger">
+                                                    <div class="mini-val"><%= child.absent %></div>
+                                                    <div class="mini-lbl">Absent</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="mini-stat text-warning">
+                                                    <div class="mini-val"><%= child.late %></div>
+                                                    <div class="mini-lbl">Late</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Action Buttons -->
+                                    <div class="action-buttons mt-auto">
+                                        <a href="/parent/grades/<%= child.id %>" class="btn-action-primary w-100 mb-2">
+                                            <span>Academic Performance</span>
+                                            <i class="fas fa-chevron-right transition-arrow"></i>
                                         </a>
-                                        <a href="/parent/attendance/<%= child.id %>" class="btn btn-light py-3 rounded-pill fw-bold border shadow-xs" style="background: #f8fafc; color: var(--dark-text);">
-                                            <i class="fas fa-user-clock me-2 text-info"></i> Attendance History
+                                        <a href="/parent/attendance/<%= child.id %>" class="btn-action-secondary w-100">
+                                            <span>Attendance History</span>
+                                            <i class="fas fa-chevron-right transition-arrow"></i>
                                         </a>
                                     </div>
                                 </div>

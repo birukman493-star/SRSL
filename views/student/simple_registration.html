@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %> - Registration</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="/css/inter-font.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/all.min.css" />
+    <link rel="stylesheet" href="/css/brocode-style.css" />
+    <style>
+        body { background: #f8fafc; color: #0f172a; }
+        .card { background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow-sm); padding: 2rem; max-width: 480px; margin: 4rem auto; transition: transform 0.3s ease; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
+        .btn-primary { background: var(--gradient-1); border: none; }
+    </style>
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-wrapper">
+        <%- include('partials/sidebar.html') %>
+        <main class="main-panel w-100 p-4">
+            <div class="premium-panel mb-4">
+                <h1 class="fw-800" style="font-size:2.2rem;background: var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Semester Registration</h1>
+                <p class="text-secondary">Click the button below to register for the upcoming semester. No course selection is required.</p>
+            </div>
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="alert alert-success mb-4 rounded-4 border-0 bg-success bg-opacity-10 text-success p-4 alert-dismissible fade show fw-bold" role="alert">
+                    <i class="fas fa-check-circle me-2"></i> <%= success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-danger mb-4 rounded-4 border-0 bg-danger bg-opacity-10 text-danger p-4 alert-dismissible fade show fw-bold" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i> <%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+            <div class="card text-center">
+                <p class="mb-4 text-secondary">Your registration status will be updated instantly.</p>
+                <form action="/student/registration/simple" method="POST" onsubmit="return confirm('Confirm semester registration?');">
+                    <button type="submit" class="btn btn-primary btn-lg px-5 fw-bold">Register for Semester</button>
+                </form>
+            </div>
+        </main>
+    </div>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/brocode-script.js"></script>
+</body>
+</html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Semester Registration</title>
+  <link href="/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="/css/inter-font.css" rel="stylesheet" />
+  <style>
+    .registration-card {
+      background: white;
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+      max-width: 500px;
+      margin: 3rem auto;
+      text-align: center;
+    }
+    .registration-card h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <div class="registration-card">
+    <h1>Semester Registration</h1>
+    <p class="text-secondary">Click the button below to confirm your registration for the current academic year and semester.</p>
+    <form action="/student/registration/submit" method="POST">
+      <button type="submit" class="btn btn-primary btn-lg fw-bold">Register for Semester</button>
+    </form>
+    <% if (typeof error !== 'undefined') { %>
+      <div class="alert alert-danger mt-3"><%= error %></div>
+    <% } %>
+    <% if (typeof success !== 'undefined') { %>
+      <div class="alert alert-success mt-3"><%= success %></div>
+    <% } %>
+  </div>
+  <script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

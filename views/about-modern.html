@@ -7,16 +7,16 @@
   <title>About Us - Student Registration System</title>
 
   <!-- Bootstrap CSS -->
-  <link href="/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="/css/bootstrap.min.css" rel="stylesheet" />
 
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="/css/all.min.css" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/css/all.min.css" />
 
-  <!-- Google Fonts -->
-  <link href="/css/inter-font.css" rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link href="/css/inter-font.css" rel="stylesheet" />
 
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="/css/brocode-style.css" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/brocode-style.css" />
 
   <style>
     body {
@@ -111,6 +111,306 @@
       border-left: 4px solid var(--primary-color);
     }
 
+    .about-hero {
+      min-height: 0;
+      display: block;
+      position: relative;
+      overflow: hidden;
+      padding: clamp(8rem, 11vw, 9.5rem) 0 clamp(3rem, 5vw, 4.5rem);
+      background:
+        radial-gradient(ellipse at 8% 18%, rgba(125, 146, 95, 0.15), transparent 32rem),
+        radial-gradient(ellipse at 92% 46%, rgba(194, 108, 66, 0.12), transparent 29rem),
+        linear-gradient(135deg, #f8f6ee 0%, #f2f4ec 100%);
+    }
+
+    [data-theme="dark"] .about-hero,
+    .dark .about-hero {
+      background:
+        radial-gradient(ellipse at 8% 18%, rgba(84, 112, 74, 0.24), transparent 32rem),
+        radial-gradient(ellipse at 92% 46%, rgba(181, 107, 67, 0.18), transparent 29rem),
+        var(--bg-main);
+    }
+
+    .about-hero .container {
+      position: relative;
+      z-index: 1;
+    }
+
+    .about-hero-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: clamp(2rem, 4vw, 3rem);
+    }
+
+    .about-hero-content {
+      max-width: 860px;
+      margin: 0 auto clamp(2rem, 4vw, 3.5rem);
+      text-align: center;
+    }
+
+    .about-hero .about-eyebrow {
+      justify-content: center;
+      color: #677a47;
+    }
+
+    .about-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin-bottom: 1.1rem;
+      color: var(--primary-color);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .about-eyebrow::before,
+    .about-eyebrow::after {
+      width: 1.7rem;
+      height: 2px;
+      border-radius: 99px;
+      background: currentColor;
+      content: "";
+    }
+
+    .about-hero .hero-title {
+      max-width: 18ch;
+      margin: 0 auto 1rem;
+      color: var(--dark-text) !important;
+      font-size: clamp(2.25rem, 4.3vw, 3.7rem);
+      letter-spacing: -0.045em;
+      line-height: 1.08;
+      text-shadow: none;
+      text-wrap: balance;
+    }
+
+    .about-hero .hero-title span {
+      background: linear-gradient(100deg, #54704a, #b56b43);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .about-hero .hero-subtitle {
+      max-width: 650px;
+      margin: 0 auto;
+      color: var(--gray-text) !important;
+      font-size: clamp(1rem, 1.4vw, 1.1rem);
+      line-height: 1.8;
+      text-shadow: none;
+    }
+
+    .about-hero-scene {
+      position: relative;
+      overflow: hidden;
+      height: clamp(250px, 38vw, 440px);
+      border: 1px solid var(--panel-border);
+      border-radius: clamp(20px, 3vw, 34px);
+      background: #e8e8db;
+      box-shadow: 0 24px 70px rgba(58, 65, 45, 0.16);
+      isolation: isolate;
+    }
+
+    .about-hero-scene::after {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: linear-gradient(90deg, rgba(10, 25, 30, 0.58), transparent 78%),
+        linear-gradient(0deg, rgba(10, 25, 30, 0.62), transparent 60%);
+      content: "";
+      pointer-events: none;
+    }
+
+    .about-hero-scene img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 48%;
+      animation: aboutSceneReveal 1.1s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+      transition: transform 0.7s ease;
+    }
+
+    .about-hero-scene:hover img {
+      transform: scale(1.035);
+    }
+
+    .about-hero-image-caption {
+      position: absolute;
+      right: clamp(1.25rem, 4vw, 3rem);
+      bottom: clamp(1.25rem, 4vw, 3rem);
+      left: clamp(1.25rem, 4vw, 3rem);
+      z-index: 1;
+      max-width: 580px;
+      color: #fff;
+      text-align: left;
+    }
+
+    .about-hero-image-caption span {
+      display: block;
+      margin-bottom: 0.35rem;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.75rem;
+      font-weight: 750;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .about-hero-image-caption strong {
+      display: block;
+      font-size: clamp(1.25rem, 2.4vw, 2rem);
+      font-weight: 750;
+      letter-spacing: -0.03em;
+    }
+
+    .about-story-section {
+      padding: clamp(4rem, 8vw, 7rem) 0;
+      background:
+        radial-gradient(circle at 8% 8%, rgba(125, 146, 95, 0.1), transparent 28rem),
+        radial-gradient(circle at 95% 95%, rgba(194, 108, 66, 0.07), transparent 24rem),
+        var(--bg-soft);
+    }
+
+    .about-story-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      align-items: center;
+      gap: clamp(2rem, 5vw, 4rem);
+      margin-bottom: clamp(2.5rem, 5vw, 4rem);
+    }
+
+    .about-story-copy h2,
+    .about-section-heading h2 {
+      color: var(--dark-text);
+      font-size: clamp(2rem, 3.8vw, 3.1rem);
+      font-weight: 750;
+      letter-spacing: -0.045em;
+      line-height: 1.12;
+      text-wrap: balance;
+    }
+
+    .about-story-copy p,
+    .about-section-heading p {
+      color: var(--gray-text);
+      line-height: 1.8;
+    }
+
+    .about-story-image {
+      position: relative;
+      overflow: hidden;
+      min-height: 320px;
+      border: 1px solid var(--panel-border);
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(125, 146, 95, 0.15), var(--panel-bg));
+      box-shadow: var(--shadow-lg);
+    }
+
+    .about-story-image img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 320px;
+      max-height: 440px;
+      object-fit: cover;
+      transition: transform 0.7s cubic-bezier(0.2, 0.75, 0.25, 1);
+    }
+
+    .about-story-image:hover img {
+      transform: scale(1.035);
+    }
+
+    .about-pillars {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.2rem;
+    }
+
+    .about-pillars .mission-card {
+      height: 100%;
+      margin: 0;
+      border: 1px solid var(--panel-border);
+      border-top: 3px solid #54704a;
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(125, 146, 95, 0.1), transparent 55%),
+        var(--panel-bg);
+      box-shadow: var(--shadow-md);
+    }
+
+    .about-pillars .mission-card:nth-child(2) {
+      border-top-color: #b56b43;
+    }
+
+    .about-pillars .mission-card:nth-child(3) {
+      border-top-color: #899653;
+    }
+
+    .about-pillars .mission-card h3 {
+      color: var(--dark-text) !important;
+      font-weight: 750;
+    }
+
+    .about-pillars .mission-card p,
+    .about-pillars .mission-card li {
+      color: var(--gray-text);
+      line-height: 1.75;
+    }
+
+    .about-section-heading {
+      max-width: 700px;
+      margin: 0 auto 3rem;
+    }
+
+    .about-section-heading .about-eyebrow,
+    .about-story-copy .about-eyebrow {
+      color: #677a47;
+    }
+
+    .timeline::before,
+    .timeline-dot {
+      background: #677a47;
+    }
+
+    .timeline-item {
+      padding-bottom: 0.25rem;
+    }
+
+    .timeline-content {
+      padding: 1.5rem;
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      background: var(--panel-bg);
+      box-shadow: var(--shadow-md);
+    }
+
+    .timeline-content h5,
+    .team-card h4 {
+      color: var(--dark-text);
+    }
+
+    .timeline-content p {
+      margin-bottom: 0;
+      color: var(--gray-text);
+      line-height: 1.7;
+    }
+
+    .team-card {
+      border: 1px solid var(--panel-border);
+      background: var(--panel-bg);
+      box-shadow: var(--shadow-md);
+    }
+
+    .team-avatar {
+      background: linear-gradient(145deg, #54704a, #9b9862);
+      box-shadow: 0 12px 28px rgba(84, 112, 74, 0.22);
+    }
+
+    @keyframes aboutSceneReveal {
+      from { transform: scale(1.06); opacity: 0.7; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
     @media (max-width: 768px) {
       .timeline::before {
         left: 20px;
@@ -127,40 +427,40 @@
       .timeline-dot {
         left: 20px;
       }
+
+      .about-story-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .about-hero-scene {
+        height: clamp(260px, 68vw, 340px);
+      }
+
+      .about-pillars {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-content {
+        padding: 1.15rem;
+      }
     }
 
-    .hero-title {
-      font-size: clamp(2rem, 8vw, 4.5rem);
-      font-weight: 800;
-      color: #ffffff !important;
-      text-shadow: 0 2px 15px rgba(0, 0, 0, 0.4);
-      margin-bottom: 1rem;
+    @media (prefers-reduced-motion: reduce) {
+      .about-hero-scene img {
+        animation: none;
+      }
+
+      .about-story-image img {
+        transition: none;
+      }
     }
 
-    .hero-subtitle {
-      font-size: clamp(1rem, 3vw, 1.6rem);
-      color: rgba(255, 255, 255, 0.95) !important;
-      font-weight: 500;
-      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
-    }
-
-    .hero {
-      min-height: 65vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
-        url('/images/about-hero.jpg') center/cover no-repeat !important;
-      padding: clamp(6rem, 15vw, 16rem) 0 clamp(4rem, 10vw, 12rem);
-      overflow: hidden;
-    }
   </style>
 </head>
 
 <body>
   <!-- Navigation -->
-  <nav class="navbar navbar-expand-lg navbar-transparent navbar-dark-mode">
+  <nav class="navbar navbar-expand-lg navbar-transparent navbar-dark-mode public-modern-nav">
     <div class="container">
       <a href="/" class="navbar-brand">
         <i class="fas fa-graduation-cap"></i>
@@ -171,41 +471,41 @@
         <span></span>
         <span></span>
       </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <a href="/" class="nav-link" data-key="nav_home" data-key="nav_home">Home</a>
-          </li>
-          <li class="nav-item">
-            <a href="/about" class="nav-link active" data-key="nav_about" data-key="nav_about">About</a>
-          </li>
-          <li class="nav-item">
-            <a href="/gallery" class="nav-link" data-key="nav_gallery" data-key="nav_gallery">Gallery</a>
-          </li>
-          <li class="nav-item">
-            <a href="/contact" class="nav-link" data-key="nav_contact" data-key="nav_contact">Contact</a>
-          </li>
-          <li class="nav-item">
-            <a href="/auth/login" class="nav-link" data-key="nav_login" data-key="nav_login">Login</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" id="themeToggle" title="Toggle Theme">
-              <i class="fas fa-moon"></i>
-            </a>
-          </li>
-          <li class="nav-item dropdown language-selector">
-            <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown"
-              aria-expanded="false">
-              <i class="fas fa-globe"></i> <span id="currentLangLabel">EN</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end glass-dropdown" aria-labelledby="languageDropdown">
-              <li><a class="dropdown-item lang-switch" href="#" data-lang="en">English</a></li>
-              <li><a class="dropdown-item" href="?lang=am">Amharic (አማርኛ)</a></li>
-              <li><a class="dropdown-item lang-switch" href="#" data-lang="om">Afan Oromo</a></li>
-            </ul>
-          </li>
-        </ul>
-      </div>
+       <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a href="/" class="nav-link" data-key="nav_home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/about" class="nav-link active" data-key="nav_about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/gallery" class="nav-link" data-key="nav_gallery">Gallery</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/contact" class="nav-link" data-key="nav_contact">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/auth/login" class="nav-link" data-key="nav_login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="themeToggle" title="Toggle Theme">
+                            <i class="fas fa-moon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown language-selector">
+                        <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-globe"></i> <span id="currentLangLabel">EN</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end glass-dropdown" aria-labelledby="languageDropdown">
+                            <li><a class="dropdown-item lang-switch" href="#" data-lang="en">English</a></li>
+                            <li><a class="dropdown-item lang-switch" href="#" data-lang="am">Amharic (አማርኛ)</a></li>
+                            <li><a class="dropdown-item lang-switch" href="#" data-lang="om">Afan Oromo</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
     </div>
   </nav>
 
@@ -213,71 +513,65 @@
     <!-- Hero Section -->
 
     <section class="about-hero">
-      <div class="hero-particles">
-        <div class="floating-element floating-1"></div>
-        <div class="floating-element floating-2"></div>
-        <div class="floating-element floating-3"></div>
-      </div>
       <div class="container">
-        <div class="hero-content">
-          <h1 class="hero-title" data-typing data-key="nav_about">About Abdigudina</h1>
-          <p class="hero-subtitle">
-            Pioneering the Future of Educational Technology
-          </p>
+        <div class="about-hero-layout">
+          <div class="about-hero-content" data-reveal="bottom">
+            <span class="about-eyebrow">About Abdigudina</span>
+            <h1 class="hero-title">A school community built around <span>every learner.</span></h1>
+            <p class="hero-subtitle">
+              Get to know the people, purpose, and shared commitment behind a more connected school experience.
+            </p>
+          </div>
+          <div class="about-hero-scene" data-reveal="bottom" data-delay="0.12s">
+            <img src="/image/school-community-playground.png" alt="Children playing together in the school playground" fetchpriority="high">
+            <div class="about-hero-image-caption">
+              <span>Our community, our purpose</span>
+              <strong>Every day is a chance to help a learner thrive.</strong>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- About Section -->
-    <section class="about-section">
+    <section class="about-section about-story-section" id="our-story">
       <div class="container">
-        <div class="about-content">
-          <div class="row align-items-center">
-            <div class="col-lg-6 mb-4">
-              <div class="animate-on-scroll" data-reveal="left">
-                <h2 class="display-4 mb-4" style="color: var(--light-text)">
-                  Our Mission
-                </h2>
-                <p class="lead mb-4" style="color: var(--gray-text)">
-                  We are dedicated to transforming education through innovative
-                  technology solutions. Our Student Registration System (Abdigudina)
-                  empowers educational institutions with comprehensive
-                  management tools that streamline operations, enhance
-                  communication, and improve learning outcomes.
-                </p>
-                <p class="lead" style="color: var(--gray-text)">
-                  Founded with a vision to bridge the gap between traditional
-                  education and modern technology, we serve thousands of
-                  students, teachers, and administrators worldwide.
-                </p>
-              </div>
-            </div>
-            <div class="col-lg-6 mb-4">
-              <div class="animate-on-scroll" data-reveal="right">
-                <div class="mission-card">
-                  <h3 class="h4 mb-3" style="color: var(--primary-color)">
-                    <i class="fas fa-bullseye me-2"></i>Our Vision
-                  </h3>
-                  <p class="text-gray-300">
-                    To create a world where every educational institution has
-                    access to cutting-edge technology that enhances teaching,
-                    learning, and administrative efficiency.
-                  </p>
-                </div>
-                <div class="mission-card">
-                  <h3 class="h4 mb-3" style="color: var(--secondary-color)">
-                    <i class="fas fa-heart me-2"></i>Our Values
-                  </h3>
-                  <ul class="text-gray-300">
-                    <li>Innovation in education technology</li>
-                    <li>Student-centered approach</li>
-                    <li>Data-driven decision making</li>
-                    <li>Continuous improvement</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+        <div class="about-story-grid">
+          <div class="about-story-copy" data-reveal="left">
+            <span class="about-eyebrow">What guides us</span>
+            <h2>Great learning happens when a whole community is connected.</h2>
+            <p class="lead">
+              Abdigudina helps schools bring everyday learning and essential school services into one clear, supportive experience.
+            </p>
+            <p>
+              We believe technology should give teachers more room to teach, help families stay involved, and make it easier for every student to keep moving forward.
+            </p>
           </div>
+          <div class="about-story-image" data-reveal="right">
+            <img src="/image/gallery-7.jpg" alt="Students learning together in a classroom" loading="lazy">
+          </div>
+        </div>
+
+        <div class="about-pillars">
+          <article class="mission-card" data-reveal="bottom">
+            <h3 class="h4 mb-3"><i class="fas fa-bullseye me-2"></i>Our Mission</h3>
+            <p class="mb-0">
+              To make school life easier to manage and learning easier to support through thoughtful, accessible technology.
+            </p>
+          </article>
+          <article class="mission-card" data-reveal="bottom" data-distance="30px">
+            <h3 class="h4 mb-3"><i class="fas fa-eye me-2"></i>Our Vision</h3>
+            <p class="mb-0">
+              A connected school community where every learner has the encouragement and tools to reach their potential.
+            </p>
+          </article>
+          <article class="mission-card" data-reveal="bottom" data-distance="60px">
+            <h3 class="h4 mb-3"><i class="fas fa-heart me-2"></i>Our Values</h3>
+            <ul class="mb-0 ps-3">
+              <li>Students at the center</li>
+              <li>Families and educators working together</li>
+              <li>Useful, responsible innovation</li>
+            </ul>
+          </article>
         </div>
       </div>
     </section>
@@ -285,7 +579,8 @@
     <!-- Timeline Section -->
     <section class="about-section">
       <div class="container">
-        <div class="text-center mb-5">
+        <div class="text-center mb-5 about-section-heading">
+          <span class="about-eyebrow">How we got here</span>
           <h2 class="display-4 mb-3" style="color: var(--light-text)">
             Our Journey
           </h2>
@@ -510,13 +805,19 @@
           <div class="col-lg-2 col-md-6 mb-4">
             <h5 class="mb-3" style="color: var(--dark-text)" data-key="footer_quick_links">Quick Links</h5>
             <ul class="list-unstyled">
-              <li class="mb-2"><a href="/" style="color: var(--gray-text); text-decoration: none;">Home</a></li>
-              <li class="mb-2"><a href="/about" style="color: var(--gray-text); text-decoration: none;">About</a></li>
-              <li class="mb-2"><a href="/gallery" style="color: var(--gray-text); text-decoration: none;">Gallery</a>
-              </li>
-              <li class="mb-2"><a href="/contact" style="color: var(--gray-text); text-decoration: none;">Contact</a>
-              </li>
-            </ul>
+                        <li class="mb-2">
+                            <a href="/" style="color: var(--gray-text); text-decoration: none;">Home</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/about" style="color: var(--gray-text); text-decoration: none;">About</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/gallery" style="color: var(--gray-text); text-decoration: none;">Gallery</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/contact" style="color: var(--gray-text); text-decoration: none;">Contact</a>
+                        </li>
+                    </ul>
           </div>
 
           <div class="col-lg-3 col-md-6 mb-4">
@@ -554,15 +855,12 @@
 
   </div>
 
-  <!-- Bootstrap JS -->
+ <!-- Bootstrap JS -->
+    <script src="/js/bootstrap.bundle.min.js"></script>
 
-  <script src="/js/bootstrap.bundle.min.js"></script>
-
-  <!-- Custom JS -->
-  <script src="/js/translations.js"></script>
-  <script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/brocode-script.js"></script>
 </body>
 
 </html>
-
-

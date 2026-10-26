@@ -7,6 +7,36 @@ const { pool } = require('../config/db');
 const { getSettings } = require('../config/settingsControl');
 const router = express.Router();
 
+// --- Dedicated Multer Configuration for Self-Registered Student Documents ---
+const studentStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    let dir = './public/uploads/students';
+    if (file.fieldname === 'previousTranscript') {
+      dir = './public/uploads/transcripts';
+    }
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    let prefix = 'student-';
+    if (file.fieldname === 'previousTranscript') prefix = 'transcript-';
+    cb(null, prefix + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadStudent = multer({
+  storage: studentStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png|webp|pdf/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    if (mimetype && extname) return cb(null, true);
+    cb(new Error('Only images (jpeg, jpg, png, webp) and PDF files are allowed'));
+  }
+});
+
 
 
 // GET /auth/login - Show login form
@@ -83,37 +113,42 @@ router.post('/login', async (req, res) => {
     }
 
 
-    // Create session
+    const role = String(user.role || '').trim().toLowerCase();
+    const dashboardByRole = {
+      admin: '/admin/dashboard',
+      student: '/student/dashboard',
+      teacher: '/teacher/dashboard',
+      parent: '/parent/dashboard'
+    };
+    const dashboardPath = dashboardByRole[role];
+    if (!dashboardPath) {
+      log('Unsupported account role for ' + user.username + ': ' + role);
+      return res.status(403).render('login-modern', {
+        title: 'Login - Student Registration System',
+        error: 'This account role is not configured. Please contact the administrator.'
+      });
+    }
+
+    await new Promise((resolve, reject) => {
+      req.session.regenerate((error) => error ? reject(error) : resolve());
+    });
+
     req.session.user = {
       id: user.id,
       username: user.username,
       email: user.email,
       first_name: user.first_name,
       last_name: user.last_name,
-      role: user.role,
+      role,
       profile_picture: user.profile_picture
     };
 
-    log('Session created for ' + user.username + '. Redirecting based on role: ' + user.role);
+    await new Promise((resolve, reject) => {
+      req.session.save((error) => error ? reject(error) : resolve());
+    });
 
-    // Redirect based on role
-    switch (user.role) {
-      case 'admin':
-        res.redirect('/admin/dashboard');
-        break;
-      case 'student':
-        res.redirect('/student/dashboard');
-        break;
-      case 'teacher':
-        log('Redirecting to /teacher/dashboard');
-        res.redirect('/teacher/dashboard');
-        break;
-      case 'parent':
-        res.redirect('/parent/dashboard');
-        break;
-      default:
-        res.redirect('/dashboard');
-    }
+    log('Session saved for ' + user.username + '. Redirecting to ' + dashboardPath);
+    return res.redirect(dashboardPath);
 
   } catch (error) {
     log('Login error: ' + error.message);
@@ -140,39 +175,44 @@ router.get('/register', (req, res) => {
   });
 });
 
-// POST /auth/register - Handle registration
-router.post('/register', async (req, res) => {
+// POST /auth/register - Handle registration staging (Admin Approval Workflow)
+router.post('/register', uploadStudent.fields([
+  { name: 'studentPhoto', maxCount: 1 },
+  { name: 'previousTranscript', maxCount: 5 }
+]), async (req, res) => {
   const settings = getSettings();
   if (!settings.publicRegistrationEnabled) {
     return res.status(403).send('Public registration is currently closed.');
   }
 
   try {
-    console.log('=== REGISTRATION START ===');
-    console.log('Request body:', req.body);
-
+    console.log('=== STAGED REGISTRATION START ===');
     const {
       userType, firstName, lastName, email, phone, username,
-      studentId, employeeId, grade, department, occupation, relationship,
+      studentId, grade, section, parentGuardianName, dateOfBirth, gender,
+      address, previousSchool, admission_type, transfer_date, transfer_reason,
+      occupation, relationship,
       password, confirmPassword, terms
     } = req.body;
+    console.log('Registration request received for role:', userType);
 
-    console.log('Extracted data:', {
-      userType,
-      firstName,
-      lastName,
-      email,
-      username,
-      hasPassword: !!password,
-      termsAccepted: !!terms
-    });
+    // 1. Role Control & Validation
+    if (userType !== 'student' && userType !== 'parent') {
+      console.log('❌ Invalid registration role attempted:', userType);
+      return res.render('register-modern', {
+        title: 'Register - Student Registration System',
+        error: 'Registration is only open to Students and Parents. Teachers and Administrators must be created by the system.',
+        success: null
+      });
+    }
 
     // Validate required fields
     if (!userType || !firstName || !lastName || !email || !username || !password || !confirmPassword) {
       console.log('❌ Missing required fields');
       return res.render('register-modern', {
         title: 'Register - Student Registration System',
-        error: 'All required fields must be filled'
+        error: 'All required core fields must be filled',
+        success: null
       });
     }
 
@@ -181,7 +221,8 @@ router.post('/register', async (req, res) => {
       console.log('❌ Terms not accepted');
       return res.render('register-modern', {
         title: 'Register - Student Registration System',
-        error: 'You must accept terms and conditions'
+        error: 'You must accept the terms and conditions',
+        success: null
       });
     }
 
@@ -190,7 +231,8 @@ router.post('/register', async (req, res) => {
       console.log('❌ Passwords do not match');
       return res.render('register-modern', {
         title: 'Register - Student Registration System',
-        error: 'Passwords do not match'
+        error: 'Passwords do not match',
+        success: null
       });
     }
 
@@ -199,45 +241,70 @@ router.post('/register', async (req, res) => {
       console.log('❌ Password too short');
       return res.render('register-modern', {
         title: 'Register - Student Registration System',
-        error: 'Password must be at least 8 characters long'
+        error: 'Password must be at least 8 characters long',
+        success: null
       });
     }
 
-    // Validate grade level for students
+    // Validate role-specific fields
     if (userType === 'student') {
       const gradeLevel = parseInt(grade);
       if (!gradeLevel || gradeLevel < 1 || gradeLevel > 8) {
         console.log('❌ Invalid grade level:', grade);
         return res.render('register-modern', {
           title: 'Register - Student Registration System',
-          error: 'Student grade level must be between 1 and 8'
+          error: 'Student grade level must be between 1 and 8',
+          success: null
+        });
+      }
+      if (!section) {
+        return res.render('register-modern', {
+          title: 'Register - Student Registration System',
+          error: 'Please select a Class Section',
+          success: null
+        });
+      }
+      if (!dateOfBirth) {
+        return res.render('register-modern', {
+          title: 'Register - Student Registration System',
+          error: 'Date of Birth is required for students',
+          success: null
+        });
+      }
+      if (!parentGuardianName) {
+        return res.render('register-modern', {
+          title: 'Register - Student Registration System',
+          error: 'Parent / Guardian Name is required for students',
+          success: null
+        });
+      }
+      if (admission_type === 'transfer' && !previousSchool) {
+        return res.render('register-modern', {
+          title: 'Register - Student Registration System',
+          error: 'Previous School is required for transfer students',
+          success: null
+        });
+      }
+    } else if (userType === 'parent') {
+      if (!relationship) {
+        return res.render('register-modern', {
+          title: 'Register - Student Registration System',
+          error: 'Relationship field is required for parents',
+          success: null
         });
       }
     }
 
-    console.log('✅ Basic validation passed');
+    console.log('✅ Fields validation passed');
 
-    // Test database connection
-    try {
-      const [testResult] = await pool.execute('SELECT 1 as test');
-      console.log('✅ Database connection OK:', testResult);
-    } catch (dbError) {
-      console.error('❌ Database connection failed:', dbError);
-      return res.render('register-modern', {
-        title: 'Register - Student Registration System',
-        error: 'Database connection failed: ' + dbError.message
-      });
-    }
-
-    // Check if username or email already exists
-    console.log('🔍 Checking for existing users...');
+    // 2. Duplicate Check against both users and active pending queue
     const [existingUsers] = await pool.execute(
-      'SELECT id FROM users WHERE username = ? OR email = ?',
+      'SELECT id, username, email FROM users WHERE username = ? OR email = ?',
       [username, email]
     );
 
     if (existingUsers.length > 0) {
-      console.log('❌ User already exists');
+      console.log('❌ User already exists in active database');
       let errorMessage = 'Username or email already exists';
       if (existingUsers[0].username === username) {
         errorMessage = `Username '${username}' is already taken. Please choose a different username.`;
@@ -246,124 +313,108 @@ router.post('/register', async (req, res) => {
       }
       return res.render('register-modern', {
         title: 'Register - Student Registration System',
-        error: errorMessage
+        error: errorMessage,
+        success: null
       });
     }
 
-    console.log('✅ No existing users found');
+    const [existingPending] = await pool.execute(
+      "SELECT id, username, email FROM pending_registrations WHERE (username = ? OR email = ?) AND status = 'pending'",
+      [username, email]
+    );
 
-    // Hash password
+    if (existingPending.length > 0) {
+      console.log('❌ User already exists in pending registrations queue');
+      let errorMessage = 'Username or email already has a pending registration';
+      if (existingPending[0].username === username) {
+        errorMessage = `Username '${username}' has a pending registration request waiting for admin approval.`;
+      } else if (existingPending[0].email === email) {
+        errorMessage = `Email '${email}' has a pending registration request waiting for admin approval.`;
+      }
+      return res.render('register-modern', {
+        title: 'Register - Student Registration System',
+        error: errorMessage,
+        success: null
+      });
+    }
+
+    // 3. Securely Hash Password
     console.log('🔐 Hashing password...');
     const hashedPassword = await bcrypt.hash(password, 12);
     console.log('✅ Password hashed');
 
-    // Insert user without transaction first (simpler)
-    console.log('💾 Inserting user into database...');
-    try {
-      const [userResult] = await pool.execute(
-        `INSERT INTO users (username, email, password, first_name, last_name, role, phone, is_active, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 1, NOW())`,
-        [username, email, hashedPassword, firstName, lastName, userType, phone || null]
-      );
+    // 4. File uploads processing
+    const profilePicture = req.files && req.files['studentPhoto']
+      ? '/uploads/students/' + req.files['studentPhoto'][0].filename
+      : null;
 
-      console.log('✅ User inserted successfully:', userResult);
-      const userId = userResult.insertId;
+    let transcriptsJson = null;
+    if (req.files && req.files['previousTranscript']) {
+      const docs = req.files['previousTranscript'].map(file => ({
+        file_url: '/uploads/transcripts/' + file.filename,
+        file_name: file.originalname
+      }));
+      transcriptsJson = JSON.stringify(docs);
+    }
 
-      // Insert role-specific data (without transaction for now)
-      console.log(`💾 Inserting ${userType} specific data...`);
+    // 5. Save to Pending Staging Table
+    console.log('💾 Staging registration request into database...');
+    const [insertResult] = await pool.execute(
+      `INSERT INTO pending_registrations (
+        username, email, password, first_name, last_name, role, phone,
+        grade_level, section, date_of_birth, gender, parent_guardian_name,
+        address, previous_school, admission_type, transfer_date, transfer_reason,
+        profile_picture, transcripts_json, occupation, relationship, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [
+        username, email, hashedPassword, firstName, lastName, userType, phone || null,
+        userType === 'student' ? grade : null,
+        userType === 'student' ? section : null,
+        userType === 'student' ? (dateOfBirth || null) : null,
+        userType === 'student' ? (gender || 'male') : null,
+        userType === 'student' ? (parentGuardianName || null) : null,
+        userType === 'student' ? (address || null) : null,
+        userType === 'student' ? (previousSchool || null) : null,
+        userType === 'student' ? (admission_type || 'new') : null,
+        userType === 'student' ? (transfer_date || null) : null,
+        userType === 'student' ? (transfer_reason || null) : null,
+        userType === 'student' ? profilePicture : null,
+        userType === 'student' ? transcriptsJson : null,
+        userType === 'parent' ? (occupation || null) : null,
+        userType === 'parent' ? (relationship || 'guardian') : null
+      ]
+    );
 
-      switch (userType) {
-        case 'student':
-          try {
-            await pool.execute(
-              `INSERT INTO students (user_id, student_id, first_name, last_name, email, phone, grade_level, gender, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, 'male', NOW())`,
-              [userId, studentId || `STU${Date.now()}`, firstName, lastName, email, phone || null, grade || null]
-            );
-            console.log('✅ Student data inserted');
-          } catch (studentError) {
-            console.warn('⚠️ Student table might not exist:', studentError.message);
-          }
-          break;
+    const pendingId = insertResult.insertId;
+    console.log('✅ Registration request successfully staged. ID:', pendingId);
 
-        case 'teacher':
-          try {
-            await pool.execute(
-              `INSERT INTO teachers (user_id, employee_id, first_name, last_name, email, phone, department, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-              [userId, employeeId || `TCH${Date.now()}`, firstName, lastName, email, phone || null, department || null]
-            );
-            console.log('✅ Teacher data inserted');
-          } catch (teacherError) {
-            console.warn('⚠️ Teacher table might not exist:', teacherError.message);
-          }
-          break;
-
-        case 'parent':
-          try {
-            await pool.execute(
-              `INSERT INTO parents (user_id, relationship, occupation, created_at)
-               VALUES (?, ?, ?, NOW())`,
-              [userId, relationship || 'Parent', occupation || null]
-            );
-            console.log('✅ Parent data inserted');
-          } catch (parentError) {
-            console.warn('⚠️ Parent table might not exist:', parentError.message);
-          }
-          break;
-
-        case 'admin':
-          console.log('✅ Admin user created - no additional data needed');
-          break;
-      }
-
-      // Auto-login after registration
-      console.log('🔓 Auto-login user...');
-      req.session.user = {
-        id: userId,
-        username: username,
-        email: email,
-        first_name: firstName,
-        last_name: lastName,
-        role: userType
-      };
-
-      console.log('✅ Session created');
-
-      // Redirect based on role
-      console.log(`🔄 Redirecting to ${userType} dashboard...`);
-      switch (userType) {
-        case 'admin':
-          res.redirect('/admin/dashboard');
-          break;
-        case 'student':
-          res.redirect('/student/dashboard');
-          break;
-        case 'teacher':
-          res.redirect('/teacher/dashboard');
-          break;
-        case 'parent':
-          res.redirect('/parent/dashboard');
-          break;
-        default:
-          res.redirect('/dashboard');
-      }
-
-      console.log('=== REGISTRATION SUCCESS ===');
-
-    } catch (insertError) {
-      console.error('❌ Database insertion failed:', insertError);
-      return res.render('register-modern', {
-        title: 'Register - Student Registration System',
-        error: 'Failed to save user data: ' + insertError.message
+    // 6. Socket.IO Real-time notification to active admin dashboards
+    const io = req.app.get('io');
+    if (io) {
+      console.log('🔌 Emitting real-time newPendingRegistration socket event to admin_dashboard');
+      io.to('admin_dashboard').emit('newPendingRegistration', {
+        id: pendingId,
+        firstName,
+        lastName,
+        email,
+        role: userType,
+        created_at: new Date()
       });
     }
+
+    console.log('=== STAGED REGISTRATION SUCCESS ===');
+    return res.render('register-modern', {
+      title: 'Register - Student Registration System',
+      success: 'Your registration request has been submitted successfully! Waiting for admin approval. You will receive system access once an administrator approves your request.',
+      error: null
+    });
 
   } catch (error) {
     console.error('❌ Registration error:', error);
     res.render('register-modern', {
       title: 'Register - Student Registration System',
-      error: 'Registration failed: ' + error.message
+      error: 'Registration failed: ' + error.message,
+      success: null
     });
   }
 });

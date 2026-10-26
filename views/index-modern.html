@@ -30,6 +30,207 @@
             font-family: "Inter", sans-serif;
         }
 
+        .navbar.home-modern-nav {
+            top: 14px;
+            left: 50%;
+            width: min(1240px, calc(100% - 40px));
+            padding: 0.45rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.82);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.82) !important;
+            box-shadow: 0 12px 40px rgba(29, 59, 104, 0.1);
+            backdrop-filter: blur(22px) saturate(160%);
+            -webkit-backdrop-filter: blur(22px) saturate(160%);
+            transform: translateX(-50%);
+        }
+
+        .navbar.home-modern-nav.scrolled {
+            top: 8px;
+            padding: 0.35rem 1rem;
+            border-color: rgba(219, 230, 247, 0.9);
+            background: rgba(255, 255, 255, 0.94) !important;
+            box-shadow: 0 10px 32px rgba(29, 59, 104, 0.12);
+        }
+
+        .home-modern-nav .navbar-brand,
+        .home-modern-nav.navbar-dark-mode .navbar-brand {
+            color: #17345d !important;
+            font-size: 1.15rem;
+            font-weight: 750;
+            letter-spacing: -0.04em;
+        }
+
+        .home-modern-nav .navbar-brand i {
+            display: grid;
+            width: 38px;
+            height: 38px;
+            place-items: center;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #2878ed, #6557dc);
+            box-shadow: 0 6px 14px rgba(48, 103, 211, 0.22);
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .home-modern-nav .navbar-nav {
+            gap: 0.3rem;
+        }
+
+        .home-modern-nav .nav-link,
+        .home-modern-nav.navbar-dark-mode .nav-link:not(.active),
+        .home-modern-nav.scrolled .nav-link:not(.active) {
+            padding: 0.65rem 0.9rem;
+            border-radius: 12px;
+            color: #425675 !important;
+            font-size: 0.9rem;
+            font-weight: 600;
+            opacity: 1;
+            transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+        }
+
+        .home-modern-nav .nav-link:hover,
+        .home-modern-nav.scrolled .nav-link:hover {
+            background: #f0f5ff;
+            color: #2563eb !important;
+            transform: translateY(-1px);
+        }
+
+        .home-modern-nav .nav-link.active,
+        .home-modern-nav.scrolled .nav-link.active {
+            padding: 0.65rem 0.95rem !important;
+            border: 1px solid #dce9ff;
+            border-radius: 12px;
+            background: #edf4ff;
+            box-shadow: none;
+            color: #2563eb !important;
+            font-weight: 700;
+        }
+
+        .home-modern-nav .language-selector {
+            margin-left: 0.2rem;
+        }
+
+        .home-modern-nav .language-selector .nav-link,
+        .home-modern-nav.scrolled .language-selector .nav-link {
+            gap: 0.45rem;
+            border: 1px solid #e2eaf5;
+            background: rgba(247, 250, 255, 0.86) !important;
+            color: #425675 !important;
+        }
+
+        .home-modern-nav #themeToggle {
+            display: grid;
+            width: 40px;
+            height: 40px;
+            place-items: center;
+            padding: 0;
+            border: 1px solid #e2eaf5;
+            background: rgba(247, 250, 255, 0.86);
+            color: #425675 !important;
+        }
+
+        .home-modern-nav .navbar-toggler {
+            border: 1px solid #dbe6f5 !important;
+            background: #f5f8ff !important;
+            box-shadow: 0 4px 14px rgba(38, 76, 139, 0.1) !important;
+        }
+
+        .home-modern-nav .navbar-toggler span {
+            background: #35557e;
+        }
+
+        @media (max-width: 991.98px) {
+            .navbar.home-modern-nav {
+                top: 10px;
+                width: calc(100% - 24px);
+                padding: 0.45rem 0.7rem;
+                border-radius: 18px;
+            }
+
+            .home-modern-nav .container {
+                padding-right: 0.25rem;
+                padding-left: 0.25rem;
+            }
+
+            .home-modern-nav .navbar-toggler {
+                position: static !important;
+                display: flex;
+                width: 42px;
+                height: 42px;
+                border-radius: 13px !important;
+                flex-shrink: 0;
+            }
+
+            .home-modern-nav .navbar-collapse {
+                top: 68px;
+                right: 12px;
+                width: min(340px, calc(100vw - 24px));
+                height: auto;
+                max-height: calc(100vh - 88px);
+                overflow-y: auto;
+                justify-content: flex-start;
+                align-items: stretch;
+                padding: 0.8rem;
+                border: 1px solid #e1eaf6;
+                border-radius: 20px;
+                background: rgba(255, 255, 255, 0.97) !important;
+                box-shadow: 0 22px 60px rgba(29, 59, 104, 0.18);
+                -webkit-backdrop-filter: blur(22px);
+                backdrop-filter: blur(22px);
+            }
+
+            .home-modern-nav .navbar-collapse.show {
+                right: 12px;
+            }
+
+            .home-modern-nav .navbar-nav {
+                align-items: stretch;
+                gap: 0.2rem;
+            }
+
+            .home-modern-nav .navbar-collapse .nav-item {
+                text-align: left;
+                transition: opacity 0.2s ease, transform 0.2s ease;
+            }
+
+            .home-modern-nav .navbar-collapse .nav-link,
+            .home-modern-nav .navbar-collapse .nav-link.active {
+                display: flex;
+                min-height: 46px;
+                align-items: center;
+                padding: 0.7rem 0.9rem !important;
+                border: 0;
+                border-radius: 12px !important;
+                border-bottom: 0;
+                background: transparent;
+                color: #425675 !important;
+                font-size: 0.96rem !important;
+                font-weight: 600 !important;
+                text-align: left;
+            }
+
+            .home-modern-nav .navbar-collapse .nav-link:hover,
+            .home-modern-nav .navbar-collapse .nav-link.active {
+                background: #edf4ff !important;
+                color: #2563eb !important;
+            }
+
+            .home-modern-nav .navbar-collapse #themeToggle {
+                display: flex;
+                width: 100%;
+                height: auto;
+                border: 0;
+                background: transparent;
+            }
+
+            .home-modern-nav .navbar-collapse .language-selector .nav-link {
+                width: 100%;
+                justify-content: flex-start;
+                border: 0;
+                background: transparent !important;
+            }
+        }
+
         .feature-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -110,16 +311,497 @@
             line-height: 1.6;
         }
 
+        .testimonials-section {
+            position: relative;
+            overflow: hidden;
+            padding: clamp(4rem, 7vw, 6rem) 0;
+            background:
+                radial-gradient(ellipse at 8% 0%, rgba(10, 132, 255, 0.08), transparent 30rem),
+                var(--bg-main);
+        }
+
+        .testimonials-heading {
+            max-width: 720px;
+            margin: 0 auto 3rem;
+        }
+
+        .testimonials-heading .section-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .testimonials-heading .section-eyebrow::before {
+            width: 1.7rem;
+            height: 2px;
+            border-radius: 99px;
+            background: currentColor;
+            content: "";
+        }
+
+        .testimonials-heading h2 {
+            margin-bottom: 1rem;
+            color: var(--light-text);
+        }
+
+        .testimonials-heading p {
+            max-width: 600px;
+            margin: 0 auto;
+            color: var(--gray-text);
+        }
+
+        .testimonials-grid {
+            align-items: stretch;
+        }
+
+        .testimonial-card {
+            position: relative;
+            display: flex;
+            height: 100%;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 2rem !important;
+            border: 1px solid var(--panel-border) !important;
+            border-radius: 20px !important;
+            background: var(--dark-secondary) !important;
+            box-shadow: var(--shadow-md) !important;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease !important;
+        }
+
         .testimonial-card:hover {
-            transform: translateY(-10px) !important;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+            transform: translateY(-8px) !important;
+            border-color: var(--primary-color) !important;
+            box-shadow: var(--shadow-xl) !important;
+        }
+
+        .testimonial-person {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            margin-bottom: 1.4rem;
+        }
+
+        .testimonial-person .avatar-initials {
+            width: 52px;
+            height: 52px;
+            flex: 0 0 52px;
+            font-size: 1rem;
+        }
+
+        .testimonial-person h3 {
+            margin: 0 0 0.2rem;
+            color: var(--light-text);
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .testimonial-role {
+            color: var(--primary-color);
+            font-size: 0.84rem;
+            font-weight: 650;
+        }
+
+        .testimonial-rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            margin-bottom: 1rem;
+            color: #e9a323;
+            font-size: 0.86rem;
+        }
+
+        .testimonial-rating .is-empty {
+            color: var(--gray-text);
+            opacity: 0.4;
+        }
+
+        .testimonial-rating-label {
+            margin-left: 0.4rem;
+            color: var(--gray-text);
+            font-size: 0.76rem;
+            font-weight: 600;
+        }
+
+        .testimonial-quote {
+            margin: 0;
+            color: var(--gray-text);
+            font-size: 0.95rem;
+            font-style: italic;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 767px) {
+            .testimonials-section {
+                padding: 4rem 0;
+            }
+
+            .testimonial-card {
+                padding: 1.5rem !important;
+            }
+        }
+
+        .section-eyebrow {
+            color: var(--primary-color);
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .features-section {
+            padding: clamp(4rem, 8vw, 7rem) 0;
+            background:
+                radial-gradient(circle at 8% 8%, rgba(10, 132, 255, 0.08), transparent 28rem),
+                var(--bg-soft);
+        }
+
+        .feature-stories {
+            display: grid;
+            gap: clamp(1.5rem, 4vw, 3rem);
+        }
+
+        .feature-story {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            min-height: 320px;
+            overflow: hidden;
+            align-items: stretch;
+            border: 1px solid var(--panel-border);
+            border-radius: 32px;
+            background:
+                radial-gradient(circle at 100% 0%, rgba(10, 132, 255, 0.09), transparent 55%),
+                var(--panel-bg);
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-story:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-story:nth-child(even) {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        }
+
+        .feature-story:nth-child(even) .feature-story-image {
+            order: 2;
+        }
+
+        .feature-story-image {
+            display: flex;
+            min-height: 320px;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: clamp(1.25rem, 3vw, 2.25rem);
+            background:
+                radial-gradient(ellipse at 50% 45%, rgba(10, 132, 255, 0.15), transparent 68%),
+                linear-gradient(145deg, var(--bg-soft), var(--panel-bg));
+        }
+
+        .feature-story-image img {
+            display: block;
+            width: min(100%, 340px);
+            max-height: 290px;
+            object-fit: contain;
+            filter: drop-shadow(0 18px 24px rgba(15, 23, 42, 0.12));
+            transition: transform 0.55s cubic-bezier(0.2, 0.75, 0.25, 1);
+        }
+
+        .feature-story:hover .feature-story-image img {
+            transform: scale(1.055) rotate(-1deg);
+        }
+
+        .feature-story-copy {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            padding: clamp(1.75rem, 4vw, 3.5rem);
+        }
+
+        .feature-story-caption {
+            position: relative;
+            max-width: 18ch;
+            margin: 0.8rem 0 0.75rem;
+            color: var(--dark-text);
+            font-size: clamp(1.7rem, 3vw, 2.45rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 1.15;
+        }
+
+        .feature-story-caption::before {
+            display: block;
+            width: 3rem;
+            height: 4px;
+            margin-bottom: 1.5rem;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--primary-color), rgba(10, 132, 255, 0.25));
+            content: "";
+        }
+
+        .feature-story-description {
+            max-width: 38rem;
+            margin: 0;
+            color: var(--gray-text);
+            font-size: 1rem;
+            line-height: 1.75;
+        }
+
+        .feature-story:nth-child(even) .feature-story-caption::before {
+            background: linear-gradient(90deg, #8b5cf6, rgba(139, 92, 246, 0.25));
+        }
+
+        .community-feature {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            align-items: center;
+            gap: clamp(2rem, 5vw, 4.5rem);
+            padding: clamp(1.25rem, 4vw, 3rem);
+            border: 1px solid var(--panel-border);
+            border-radius: 30px;
+            background: var(--panel-bg);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .community-feature img {
+            display: block;
+            width: 100%;
+            max-height: 470px;
+            object-fit: cover;
+            border-radius: 22px;
+        }
+
+        .community-feature-copy h2 {
+            color: var(--dark-text);
+        }
+
+        .community-feature-copy p {
+            color: var(--gray-text);
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+
+        .home-hero .hero-content {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.65fr);
+            align-items: center;
+            gap: clamp(1.5rem, 4vw, 3rem);
+            text-align: left;
+        }
+
+        .home-hero-copy {
+            max-width: 800px;
+        }
+
+        .home-hero .hero-title {
+            font-size: clamp(2.35rem, 4.3vw, 3.9rem);
+            line-height: 1.04;
+            text-wrap: balance;
+        }
+
+        .home-hero .hero-subtitle {
+            margin-left: 0;
+        }
+
+        .home-hero .hero-buttons {
+            justify-content: flex-start;
+        }
+
+        .home-hero-art {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 380px;
+            isolation: isolate;
+        }
+
+        .home-hero-art::before {
+            position: absolute;
+            z-index: -1;
+            width: min(84%, 320px);
+            aspect-ratio: 1;
+            border: 1px solid rgba(255, 255, 255, 0.32);
+            border-radius: 50%;
+            background:
+                radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.25), transparent 38%),
+                linear-gradient(145deg, rgba(10, 132, 255, 0.38), rgba(139, 92, 246, 0.18));
+            box-shadow: 0 0 90px rgba(10, 132, 255, 0.24);
+            content: "";
+        }
+
+        .home-hero-art img {
+            display: block;
+            width: min(100%, 270px);
+            max-height: 390px;
+            padding: 0.55rem;
+            border: 1px solid rgba(255, 255, 255, 0.74);
+            border-radius: 1.75rem;
+            background: rgba(255, 255, 255, 0.96);
+            object-fit: contain;
+            box-shadow:
+                0 32px 80px rgba(0, 0, 0, 0.34),
+                0 8px 22px rgba(0, 0, 0, 0.2);
+            transform: rotate(1.5deg);
+            transition: transform 0.45s ease, box-shadow 0.45s ease;
+        }
+
+        .home-hero-art:hover img {
+            transform: translateY(-6px) rotate(0);
+            box-shadow:
+                0 40px 90px rgba(0, 0, 0, 0.4),
+                0 12px 28px rgba(0, 0, 0, 0.22);
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(220px, 0.34fr);
+            align-items: stretch;
+            gap: 1.5rem;
+        }
+
+        .stats-overview .stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            margin: 0;
+        }
+
+        .stats-visual {
+            display: flex;
+            min-height: 100%;
+            overflow: hidden;
+            align-items: flex-end;
+            justify-content: center;
+            border-radius: 22px;
+            background: linear-gradient(155deg, rgba(10, 132, 255, 0.12), var(--panel-bg));
+            border: 1px solid var(--panel-border);
+        }
+
+        .stats-visual img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            max-height: 310px;
+            object-fit: contain;
+            object-position: center bottom;
+        }
+
+        .cta-panel {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.8fr);
+            align-items: center;
+            gap: 2rem;
+            overflow: hidden;
+            text-align: left;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: clamp(2rem, 5vw, 4rem);
+            border-radius: 30px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .cta-panel img {
+            width: 100%;
+            max-height: 320px;
+            object-fit: contain;
+            object-position: center bottom;
+        }
+
+        .cta-panel .hero-buttons {
+            justify-content: flex-start;
+        }
+
+        @media (max-width: 767px) {
+            .home-hero .hero-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .home-hero .hero-subtitle {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .home-hero .hero-buttons {
+                justify-content: center;
+            }
+
+            .home-hero-art {
+                min-height: 0;
+                margin-top: 0.5rem;
+                padding: 1rem 0;
+            }
+
+            .home-hero-art::before {
+                width: min(78%, 270px);
+            }
+
+            .home-hero-art img {
+                width: min(72%, 250px);
+                max-height: 300px;
+            }
+
+            .community-feature {
+                grid-template-columns: 1fr;
+            }
+
+            .community-feature img {
+                max-height: 340px;
+            }
+
+            .feature-story,
+            .feature-story:nth-child(even) {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-story:nth-child(even) .feature-story-image {
+                order: 0;
+            }
+
+            .feature-story-image {
+                min-height: 230px;
+                height: 230px;
+            }
+
+            .feature-story-image img {
+                max-height: 205px;
+            }
+
+            .feature-story-copy {
+                padding: 1.5rem 1.5rem 1.75rem;
+            }
+
+            .stats-overview {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-visual {
+                min-height: 240px;
+            }
+
+            .cta-panel {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .cta-panel .hero-buttons {
+                justify-content: center;
+            }
+
+            .cta-panel img {
+                max-height: 240px;
+            }
         }
     </style>
 </head>
 
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-transparent navbar-dark-mode notranslate">
+    <nav class="navbar navbar-expand-lg navbar-transparent navbar-dark-mode notranslate home-modern-nav public-modern-nav">
         <div class="container">
             <a href="/" class="navbar-brand">
                 <i class="fas fa-graduation-cap"></i>
@@ -171,173 +853,125 @@
     <div class="page-transition-wrapper">
         <!-- Hero Section -->
 
-        <section class="hero">
-            <div class="hero-particles">
-                <div class="floating-element floating-1"></div>
-                <div class="floating-element floating-2"></div>
-                <div class="floating-element floating-3"></div>
-            </div>
+        <section class="hero home-hero">
             <div class="container">
                 <div class="hero-content">
-                    <h1 class="hero-title animate-on-scroll" data-key="welcome_title">
-                    Welcome to <span class="text-gradient">Abdigudina</span> Elementary School
-                </h1>
-                    <p class="hero-subtitle" data-key="hero_subtitle">
-                        Empowering Education Through Modern Technology
-                    </p>
-                    <div class="hero-buttons">
-                        <a href="/auth/register" class="btn-hero btn-primary pulse-animation">
-                            <i class="fas fa-rocket"></i>
-                            <span data-key="get_started">Get Started</span>
-                        </a>
-                        <a href="/about" class="btn-hero btn-secondary">
-                            <i class="fas fa-info-circle"></i>
-                            <span data-key="learn_more">Learn More</span>
-                        </a>
+                    <div class="home-hero-copy">
+                        <h1 class="hero-title animate-on-scroll" data-key="welcome_title">
+                            Welcome to <span class="text-gradient">Abdigudina</span> Elementary School
+                        </h1>
+                        <p class="hero-subtitle" data-key="hero_subtitle">
+                            Empowering Education Through Modern Technology
+                        </p>
+                        <div class="hero-buttons">
+                            <a href="/auth/register" class="btn-hero btn-primary pulse-animation">
+                                <i class="fas fa-rocket"></i>
+                                <span data-key="get_started">Get Started</span>
+                            </a>
+                            <a href="/about" class="btn-hero btn-secondary">
+                                <i class="fas fa-info-circle"></i>
+                                <span data-key="learn_more">Learn More</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="home-hero-art" data-reveal="right">
+                        <img src="/image/feature-easy-configuration.png" alt="Student excited to start learning at school" fetchpriority="high">
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Features Section -->
-        <section class="features-section"
-            style="padding: 8rem 0; background: #ffffff; position: relative; overflow: hidden;">
-            <!-- Premium Mesh Gradient Background -->
-            <div
-                style="position: absolute; top: -10%; right: -10%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, rgba(255,255,255,0) 70%); filter: blur(80px); z-index: 0; pointer-events: none;">
-            </div>
-            <div
-                style="position: absolute; bottom: -10%; left: -10%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(249, 115, 22, 0.05) 0%, rgba(255,255,255,0) 70%); filter: blur(80px); z-index: 0; pointer-events: none;">
-            </div>
+        <!-- School Platform Highlights -->
+        <section class="features-section">
+            <div class="container">
+                <div class="feature-stories">
+                    <article class="feature-story" data-reveal="bottom">
+                        <div class="feature-story-image">
+                            <img src="/image/feature-student-portal.png" alt="Student learning at a school computer" loading="lazy">
+                        </div>
+                        <div class="feature-story-copy">
+                            <span class="section-eyebrow">A moment of discovery</span>
+                            <h2 class="feature-story-caption">Curiosity starts with one small question.</h2>
+                            <p class="feature-story-description">A student explores a lesson at the computer, turning a quiet moment into a new discovery.</p>
+                        </div>
+                    </article>
 
-            <div class="container" style="position: relative; z-index: 1;">
-                <div class="text-center mb-5 pb-4">
-                    <span class="badge rounded-pill px-3 py-2 mb-3 shadow-sm"
-                        style="background: rgba(37,99,235,0.05); color: var(--primary-color); font-weight: 700; letter-spacing: 1.5px; font-size: 0.75rem; text-transform: uppercase; border: 1px solid rgba(37,99,235,0.1);">
-                        Core Ecosystem
-                    </span>
-                    <h2 class="display-4 fw-bold mb-3" style="color: var(--dark-text)" data-key="powerful_features">
-                        Powerful Features
-                    </h2>
-                    <p class="lead" style="color: var(--gray-text); max-width: 650px; margin: 0 auto;" data-key="features_subtitle">
-                        Everything you need for modern education management packed into one beautiful, intelligent
-                        interface.
-                    </p>
+                    <article class="feature-story" data-reveal="bottom">
+                        <div class="feature-story-image">
+                            <img src="/image/feature-teacher-dashboard.png" alt="Teacher guiding students through a classroom lesson" loading="lazy">
+                        </div>
+                        <div class="feature-story-copy">
+                            <span class="section-eyebrow">Learning together</span>
+                            <h2 class="feature-story-caption">Every classroom has room to grow.</h2>
+                            <p class="feature-story-description">A teacher brings the class together, guiding students as they share ideas and learn side by side.</p>
+                        </div>
+                    </article>
+
+                    <article class="feature-story" data-reveal="bottom">
+                        <div class="feature-story-image">
+                            <img src="/image/feature-analytics.png" alt="Student working carefully on classroom activities" loading="lazy">
+                        </div>
+                        <div class="feature-story-copy">
+                            <span class="section-eyebrow">Hands-on learning</span>
+                            <h2 class="feature-story-caption">Big ideas begin with little steps.</h2>
+                            <p class="feature-story-description">Focused on a classroom activity, a student works carefully through each part of a new challenge.</p>
+                        </div>
+                    </article>
+
+                    <article class="feature-story" data-reveal="bottom">
+                        <div class="feature-story-image">
+                            <img src="/image/feature-security.png" alt="Student prepared for the school day with books" loading="lazy">
+                        </div>
+                        <div class="feature-story-copy">
+                            <span class="section-eyebrow">A fresh start</span>
+                            <h2 class="feature-story-caption">A backpack full of possibility.</h2>
+                            <p class="feature-story-description">Books in hand and ready for class, a student sets out for another day of learning.</p>
+                        </div>
+                    </article>
+
+                    <article class="feature-story" data-reveal="bottom">
+                        <div class="feature-story-image">
+                            <img src="/image/feature-mobile-learning.png" alt="Student exploring a creative classroom project" loading="lazy">
+                        </div>
+                        <div class="feature-story-copy">
+                            <span class="section-eyebrow">Create and explore</span>
+                            <h2 class="feature-story-caption">Make something wonderful together.</h2>
+                            <p class="feature-story-description">A hands-on project invites students to explore materials, experiment, and bring their ideas to life.</p>
+                        </div>
+                    </article>
+
+                    <article class="feature-story" data-reveal="bottom">
+                        <div class="feature-story-image">
+                            <img src="/image/student-journey-2.png" alt="Student smiling with books in her school bag" loading="lazy">
+                        </div>
+                        <div class="feature-story-copy">
+                            <span class="section-eyebrow">Welcome to school</span>
+                            <h2 class="feature-story-caption">There is something new to discover.</h2>
+                            <p class="feature-story-description">With books close by and a smile, a young learner is ready to explore a new school day.</p>
+                        </div>
+                    </article>
                 </div>
+            </div>
+        </section>
 
-                <div class="row g-4 justify-content-center">
-                    <!-- Feature 1: Student Portal -->
-                    <div class="col-lg-4 col-md-6 animate-on-scroll" data-reveal="bottom">
-                        <div class="feature-card-premium p-5 rounded-4 h-100 border-0"
-                            style="background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.03); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(0,0,0,0.04) !important;">
-                            <div class="feature-icon-vibrant mb-4 d-flex align-items-center justify-content-center"
-                                style="width: 70px; height: 70px; border-radius: 20px; background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.02)); color: var(--primary-color); font-size: 1.8rem; box-shadow: inset 0 2px 4px rgba(37,99,235,0.1);">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)" data-key="student_portal">Student Portal</h3>
-                            <p class="mb-0" style="color: var(--gray-text); line-height: 1.6;">
-                                Comprehensive registration, profile management, and academic record tracking with
-                                intelligent filtering.
-                            </p>
-                        </div>
+        <section class="community-section py-5 py-lg-6" style="background: var(--bg-main);">
+            <div class="container py-4">
+                <div class="community-feature">
+                    <img src="/image/school-community-playground.png" alt="Students playing together in a welcoming school playground" loading="lazy">
+                    <div class="community-feature-copy">
+                        <span class="section-eyebrow">A place to learn and belong</span>
+                        <h2 class="display-5 fw-bold mt-3 mb-3">Great schools grow stronger together.</h2>
+                        <p>
+                            Learning reaches beyond the classroom. Give students, families, and educators a shared
+                            space to stay connected, celebrate progress, and build a brighter school community.
+                        </p>
+                        <a href="/about" class="btn-hero btn-primary mt-2">
+                            <i class="fas fa-heart"></i>
+                            Discover our community
+                        </a>
                     </div>
-
-                    <!-- Feature 2: Teacher Dashboard -->
-                    <div class="col-lg-4 col-md-6 animate-on-scroll" data-reveal="bottom" data-distance="40px">
-                        <div class="feature-card-premium p-5 rounded-4 h-100 border-0"
-                            style="background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.03); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(0,0,0,0.04) !important;">
-                            <div class="feature-icon-vibrant mb-4 d-flex align-items-center justify-content-center"
-                                style="width: 70px; height: 70px; border-radius: 20px; background: linear-gradient(135deg, rgba(249,115,22,0.1), rgba(249,115,22,0.02)); color: #f97316; font-size: 1.8rem; box-shadow: inset 0 2px 4px rgba(249,115,22,0.1);">
-                                <i class="fas fa-chalkboard-teacher"></i>
-                            </div>
-                            <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)" data-key="teacher_dashboard">Teacher Dashboard</h3>
-                            <p class="mb-0" style="color: var(--gray-text); line-height: 1.6;">
-                                Dedicated workspace for educators to manage classes, attendance, and student performance
-                                metrics.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Feature 3: Analytics Engine -->
-                    <div class="col-lg-4 col-md-6 animate-on-scroll" data-reveal="bottom" data-distance="60px">
-                        <div class="feature-card-premium p-5 rounded-4 h-100 border-0"
-                            style="background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.03); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(0,0,0,0.04) !important;">
-                            <div class="feature-icon-vibrant mb-4 d-flex align-items-center justify-content-center"
-                                style="width: 70px; height: 70px; border-radius: 20px; background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.02)); color: #10b981; font-size: 1.8rem; box-shadow: inset 0 2px 4px rgba(16,185,129,0.1);">
-                                <i class="fas fa-chart-pie"></i>
-                            </div>
-                            <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)" data-key="analytics_engine">Analytics Engine</h3>
-                            <p class="mb-0" style="color: var(--gray-text); line-height: 1.6;">
-                                Real-time performance tracking and comprehensive reporting for data-driven academic
-                                success.
-                            </p>
-                        </div>
-                    </div>
-                    <!-- Feature 4: Secure Platform -->
-                    <div class="col-lg-4 col-md-6 animate-on-scroll" data-reveal="bottom">
-                        <div class="feature-card-premium p-5 rounded-4 h-100 border-0"
-                            style="background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.03); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(0,0,0,0.04) !important;">
-                            <div class="feature-icon-vibrant mb-4 d-flex align-items-center justify-content-center"
-                                style="width: 70px; height: 70px; border-radius: 20px; background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(99,102,241,0.02)); color: #6366f1; font-size: 1.8rem; box-shadow: inset 0 2px 4px rgba(99,102,241,0.1);">
-                                <i class="fas fa-shield-alt"></i>
-                            </div>
-                            <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)" data-key="secure_platform">Secure Platform</h3>
-                            <p class="mb-0" style="color: var(--gray-text); line-height: 1.6;">
-                                Enterprise-grade security with role-based access control and data encryption to protect
-                                sensitive information.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Feature 5: Mobile Responsive -->
-                    <div class="col-lg-4 col-md-6 animate-on-scroll" data-reveal="bottom" data-distance="40px">
-                        <div class="feature-card-premium p-5 rounded-4 h-100 border-0"
-                            style="background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.03); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(0,0,0,0.04) !important;">
-                            <div class="feature-icon-vibrant mb-4 d-flex align-items-center justify-content-center"
-                                style="width: 70px; height: 70px; border-radius: 20px; background: linear-gradient(135deg, rgba(236,72,153,0.1), rgba(236,72,153,0.02)); color: #ec4899; font-size: 1.8rem; box-shadow: inset 0 2px 4px rgba(236,72,153,0.1);">
-                                <i class="fas fa-mobile-alt"></i>
-                            </div>
-                            <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)" data-key="mobile_responsive">Mobile Responsive</h3>
-                            <p class="mb-0" style="color: var(--gray-text); line-height: 1.6;">
-                                Fully responsive design that works seamlessly on desktop, tablet, and mobile devices for
-                                learning on the go.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Feature 6: Easy Configuration -->
-                    <div class="col-lg-4 col-md-6 animate-on-scroll" data-reveal="bottom" data-distance="60px">
-                        <div class="feature-card-premium p-5 rounded-4 h-100 border-0"
-                            style="background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.03); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(0,0,0,0.04) !important;">
-                            <div class="feature-icon-vibrant mb-4 d-flex align-items-center justify-content-center"
-                                style="width: 70px; height: 70px; border-radius: 20px; background: linear-gradient(135deg, rgba(20,184,166,0.1), rgba(20,184,166,0.02)); color: #14b8a6; font-size: 1.8rem; box-shadow: inset 0 2px 4px rgba(20,184,166,0.1);">
-                                <i class="fas fa-cog"></i>
-                            </div>
-                            <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)" data-key="easy_config">Easy Configuration</h3>
-                            <p class="mb-0" style="color: var(--gray-text); line-height: 1.6;">
-                                Intuitive admin panel for system configuration, user management, and seamless
-                                customization.
-                            </p>
-                        </div>
-                    </div>
-                    <style>
-                        .feature-card-premium:hover {
-                            transform: translateY(-12px);
-                            box-shadow: 0 30px 60px rgba(37, 99, 235, 0.08) !important;
-                            border-color: rgba(37, 99, 235, 0.2) !important;
-                        }
-
-                        .feature-card-premium:hover .feature-icon-vibrant {
-                            transform: scale(1.1) rotate(5deg);
-                            background: var(--gradient-1) !important;
-                            color: white !important;
-                        }
-
-                        .feature-icon-vibrant {
-                            transition: all 0.4s ease;
-                        }
-                    </style>
                 </div>
+            </div>
         </section>
 
         <!-- Stats Section -->
@@ -355,7 +989,8 @@
                     </p>
                 </div>
 
-                <div class="stats-grid">
+                <div class="stats-overview">
+                    <div class="stats-grid">
                     <div class="stat-card animate-on-scroll" data-reveal="bottom">
                         <div class="stat-number">
                             <%= typeof stats !=='undefined' ? stats.students : 0 %>
@@ -383,126 +1018,85 @@
                         </div>
                         <div class="stat-label">Active Courses</div>
                     </div>
+                    </div>
+                    <div class="stats-visual" data-reveal="right">
+                        <img src="/image/feature-security.png" alt="Student prepared for class with a stack of books" loading="lazy">
+                    </div>
                 </div>
             </div>
         </section>
 
+        <% if (testimonials && testimonials.length) { %>
         <!-- Testimonials Section -->
-        <section class="testimonials-section" style="padding: 8rem 0; background: var(--bg-soft);">
+        <section class="testimonials-section">
             <div class="container">
-                <div class="text-center mb-5">
-                    <span
-                        style="color: var(--primary-color); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; margin-bottom: 1rem; display: inline-block;">Testimonials</span>
-                    <h2 class="display-4 fw-bold mb-3" style="color: var(--dark-text)">
-                        What Our Community Says
-                    </h2>
-                    <p class="lead" style="color: var(--gray-text); max-width: 600px; margin: 0 auto;">
-                        Discover how abdigudina school is transforming the educational experience for everyone.
+                <div class="testimonials-heading text-center">
+                    <span class="section-eyebrow">Testimonials</span>
+                    <h2 class="display-4 mb-3">What Our Community Says</h2>
+                    <p class="lead">
+                        Hear from the families, teachers, and school leaders who make Abdigudina a welcoming place to learn.
                     </p>
                 </div>
 
-                <div class="row g-4">
-                    <div class="col-lg-4 col-md-6" data-reveal="bottom">
-                        <div class="testimonial-card p-4 h-100"
-                            style="background: white; border-radius: 24px; box-shadow: var(--shadow-premium); transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.02);">
-                            <div class="d-flex align-items-center mb-4">
-                                <div class="avatar-initials avatar-blue me-3">SJ</div>
+                <div class="row g-4 testimonials-grid">
+                    <% testimonials.forEach((testimonial, index) => { %>
+                    <div class="col-lg-4 col-md-6" data-reveal="bottom" data-distance="<%= index * 30 %>px">
+                        <article class="testimonial-card">
+                            <div class="testimonial-person">
+                                <div class="avatar-initials <%= ['avatar-blue', 'avatar-orange', 'avatar-green'][index % 3] %>"><%= testimonial.initials %></div>
                                 <div>
-                                    <h5 class="mb-0 fw-bold" style="color: var(--dark-text)">Sarah Jenkins</h5>
-                                    <small style="color: var(--primary-color); font-weight: 600;">Parent</small>
+                                    <h3><%= testimonial.name %></h3>
+                                    <span class="testimonial-role"><%= testimonial.role %></span>
                                 </div>
                             </div>
-                            <div class="stars mb-3" style="color: #f59e0b; font-size: 0.9rem;">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                                    class="fas fa-star"></i><i class="fas fa-star"></i>
+                            <div class="testimonial-rating" role="img" aria-label="Rated <%= testimonial.rating %> out of 5">
+                                <% for (let star = 1; star <= 5; star++) { %>
+                                <i class="fas fa-star <%= star <= Number(testimonial.rating) ? 'is-filled' : 'is-empty' %>" aria-hidden="true"></i>
+                                <% } %>
+                                <span class="testimonial-rating-label"><%= Number(testimonial.rating).toFixed(1) %></span>
                             </div>
-                            <p style="color: var(--gray-text); font-style: italic; line-height: 1.7; margin-bottom: 0;">
-                                "The parent portal has completely changed how I stay involved in my child's education.
-                                Real-time updates on grades and attendance are a game-changer!"
-                            </p>
-                        </div>
+                            <p class="testimonial-quote"><%= testimonial.quote %></p>
+                        </article>
                     </div>
-
-                    <div class="col-lg-4 col-md-6" data-reveal="bottom" data-distance="40px">
-                        <div class="testimonial-card p-4 h-100"
-                            style="background: white; border-radius: 24px; box-shadow: var(--shadow-premium); transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.02);">
-                            <div class="d-flex align-items-center mb-4">
-                                <div class="avatar-initials avatar-orange me-3">MR</div>
-                                <div>
-                                    <h5 class="mb-0 fw-bold" style="color: var(--dark-text)">Marcus Rodriguez</h5>
-                                    <small style="color: var(--secondary-color); font-weight: 600;">Teacher</small>
-                                </div>
-                            </div>
-                            <div class="stars mb-3" style="color: #f59e0b; font-size: 0.9rem;">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                                    class="fas fa-star"></i><i class="fas fa-star"></i>
-                            </div>
-                            <p style="color: var(--gray-text); font-style: italic; line-height: 1.7; margin-bottom: 0;">
-                                "Managing my classes and grading assignments used to take hours. Now, everything is
-                                streamlined into one beautiful, easy-to-use interface."
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4 col-md-6" data-reveal="bottom" data-distance="80px">
-                        <div class="testimonial-card p-4 h-100"
-                            style="background: white; border-radius: 24px; box-shadow: var(--shadow-premium); transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.02);">
-                            <div class="d-flex align-items-center mb-4">
-                                <div class="avatar-initials avatar-green me-3">ET</div>
-                                <div>
-                                    <h5 class="mb-0 fw-bold" style="color: var(--dark-text)">Elena Thompson</h5>
-                                    <small style="color: #10b981; font-weight: 600;">School Administrator</small>
-                                </div>
-                            </div>
-                            <div class="stars mb-3" style="color: #f59e0b; font-size: 0.9rem;">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
-                                    class="fas fa-star"></i><i class="fas fa-star"></i>
-                            </div>
-                            <p style="color: var(--gray-text); font-style: italic; line-height: 1.7; margin-bottom: 0;">
-                                "The administrative tools are incredibly robust. Setting up the academic year and
-                                managing
-                                user permissions is completely hassle-free."
-                            </p>
-                        </div>
-                    </div>
+                    <% }); %>
                 </div>
             </div>
         </section>
+        <% } %>
 
 
         <!-- CTA Section -->
-        <section class="cta-section" style="background: #f8fafc; padding: 7rem 0;">
+        <section class="cta-section" style="background: var(--bg-soft); padding: 7rem 0;">
             <div class="container">
-                <div style="background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05); padding: 4rem 2rem; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.05);"
-                    class="text-center">
-                    <div class="text-center">
-                        <span
-                            style="color: var(--primary-color); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem; margin-bottom: 1rem; display: inline-block;"
-                            data-reveal="bottom">Get Started</span>
-                        <h2 class="display-4 fw-bold mb-4" style="color: var(--dark-text)" data-reveal="bottom">
+                <div class="cta-panel">
+                    <div>
+                        <span class="section-eyebrow" data-reveal="bottom">A better school day starts here</span>
+                        <h2 class="display-4 fw-bold mb-3 mt-2" style="color: var(--dark-text)" data-reveal="bottom">
                             Ready to Transform Your School?
                         </h2>
-                        <p class="lead mb-4" style="color: var(--gray-text); max-width: 600px; margin: 0 auto;"
+                        <p class="lead mb-4" style="color: var(--gray-text); max-width: 620px;"
                             data-reveal="bottom" data-distance="40px">
-                            Join the modern education revolution today
+                            Bring students, families, and educators together with one simple school platform.
                         </p>
+                        <div class="hero-buttons" data-reveal="bottom" data-distance="60px">
+                            <a href="/auth/register" class="btn-hero btn-primary float-animation">
+                                <i class="fas fa-rocket"></i>
+                                Get started
+                            </a>
+                            <a href="/contact" class="btn-hero btn-secondary">
+                                <i class="fas fa-phone"></i>
+                                Talk to our team
+                            </a>
+                        </div>
                     </div>
-                    <div class="hero-buttons justify-content-center" data-reveal="bottom" data-distance="60px">
-                        <a href="/auth/register" class="btn-hero btn-primary float-animation">
-                            <i class="fas fa-rocket"></i>
-                            Start Free Trial
-                        </a>
-                        <a href="/contact" class="btn-hero btn-secondary">
-                            <i class="fas fa-phone"></i>
-                            Contact Sales
-                        </a>
-                    </div>
+                    <img src="/image/feature-teacher-dashboard.png" alt="Teacher helping students learn together" loading="lazy">
                 </div>
+            </div>
         </section>
 
         <!-- Footer -->
         <footer class="footer"
-            style="background: #f8fafc; padding: 4rem 0 2rem; margin-top: 0; border-top: 1px solid rgba(0,0,0,0.05);">
+            style="background: var(--bg-main); padding: 4rem 0 2rem; margin-top: 0; border-top: 1px solid var(--panel-border);">
             <div class="container">
                 <div class="row">
                     <div class="col-lg-4 col-md-6 mb-4">
@@ -537,19 +1131,19 @@
                     <div class="col-lg-2 col-md-6 mb-4">
                         <h5 class="mb-3" style="color: var(--dark-text)">Quick Links</h5>
                         <ul class="list-unstyled">
-                            <li class="mb-2">
-                                <a href="/" style="color: var(--gray-text); text-decoration: none;">Home</a>
-                            </li>
-                            <li class="mb-2">
-                                <a href="/about" style="color: var(--gray-text); text-decoration: none;">About</a>
-                            </li>
-                            <li class="mb-2">
-                                <a href="/gallery" style="color: var(--gray-text); text-decoration: none;">Gallery</a>
-                            </li>
-                            <li class="mb-2">
-                                <a href="/contact" style="color: var(--gray-text); text-decoration: none;">Contact</a>
-                            </li>
-                        </ul>
+                        <li class="mb-2">
+                            <a href="/" style="color: var(--gray-text); text-decoration: none;">Home</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/about" style="color: var(--gray-text); text-decoration: none;">About</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/gallery" style="color: var(--gray-text); text-decoration: none;">Gallery</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/contact" style="color: var(--gray-text); text-decoration: none;">Contact</a>
+                        </li>
+                    </ul>
                     </div>
 
                     <div class="col-lg-3 col-md-6 mb-4">
@@ -586,7 +1180,7 @@
                     </div>
                 </div>
 
-                <hr style="border-color: rgba(0,0,0,0.1);" class="my-4" />
+                <hr style="border-color: var(--panel-border);" class="my-4" />
 
                 <div class="text-center">
                     <p style="color: var(--gray-text);" class="mb-0">
@@ -617,4 +1211,3 @@
 </body>
 
 </html>
-

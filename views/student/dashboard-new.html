@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Abdigudina</title>
+    <title>
+        <%= title %> - Abdigudina
+    </title>
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -17,7 +20,7 @@
             background: var(--dark-bg);
             color: var(--light-text);
         }
-        
+
         .main-panel {
             background: var(--dark-bg);
         }
@@ -30,7 +33,7 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             transition: all 0.3s ease;
         }
-        
+
         .stat-card-premium:hover {
             transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
@@ -86,7 +89,7 @@
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
         }
-        
+
         .agenda-item {
             border-left: 3px solid var(--primary-color);
             background: var(--bg-soft);
@@ -95,7 +98,7 @@
             margin-bottom: 1rem;
             transition: var(--transition);
         }
-        
+
         .agenda-item:hover {
             background: var(--dark-secondary);
         }
@@ -107,366 +110,577 @@
         };
     </script>
 </head>
+
 <body class="dashboard-body">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
-        <main class="main-panel w-100 p-4">
-<%
-const getCategoryScore = (categories, names) => {
-    const cat = categories.find(c => names.some(n => c.category_name.toLowerCase().includes(n.toLowerCase())));
-    if (cat) return Math.round(parseFloat(cat.score));
-    return '-';
-};
-%>
-            <!-- Header (Admin Style) -->
-            <div class="premium-panel mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="header-welcome">Welcome back, <%= user.first_name %>!</h1>
-                        <p class="text-secondary m-0 fw-medium">Student Portal &bull; Grade <%= student.grade_level %> <%= student.section %> &bull; ID: <%= student.student_id %></p>
-                    </div>
-                    <div class="d-flex gap-3 align-items-center">
-                        <div class="text-end d-none d-md-block">
-                            <div class="fw-bold" style="color: var(--dark-text)" id="live-date">Loading...</div>
-                            <small class="text-secondary">Official Status: <span class="text-success fw-bold">Active</span></small>
-                        </div>
-                        <button class="btn btn-icon-glass shadow-sm" id="themeToggle" title="Toggle Theme" style="width: 50px; height: 50px; border-radius: 15px; display: flex; align-items: center; justify-content: center; background: var(--panel-bg); border: 1px solid var(--panel-border); color: var(--primary-color);">
-                            <i class="fas fa-moon"></i>
-                        </button>
-                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Registration Notification -->
-            <% if (typeof isRegistrationOpen !== 'undefined' && isRegistrationOpen) { %>
-                <% if (student.registration_status === 'pending' || student.registration_status === 'not_started') { %>
-                    <div class="premium-panel mb-4" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; box-shadow: 0 10px 25px rgba(16,185,129,0.25);">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                            <div class="d-flex align-items-center gap-4">
-                                <div class="bg-white bg-opacity-20 text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 1.8rem;">
-                                    <i class="fas fa-calendar-check"></i>
-                                </div>
+            <main class="main-panel w-100 p-4">
+                <%- include('../partials/academic-context.html') %>
+                    <% const getCategoryScore=(categories, names)=> {
+                        const cat = categories.find(c => names.some(n =>
+                        c.category_name.toLowerCase().includes(n.toLowerCase())));
+                        if (cat) return Math.round(parseFloat(cat.score));
+                        return '-';
+                        };
+                        %>
+                        <!-- Header (Admin Style) -->
+                        <div class="premium-panel mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h3 class="h4 fw-bold text-white mb-1">Semester Registration is OPEN!</h3>
-                                    <p class="text-white text-opacity-90 m-0 fw-medium">The official enrollment window for the upcoming academic period is now active. Register your courses before the deadline.</p>
+                                    <h1 class="header-welcome">Welcome back, <%= user.first_name %>!</h1>
+                                    <p class="text-secondary m-0 fw-medium">Student Portal &bull; Grade <%=
+                                            student.grade_level %>
+                                            <%= student.section %> &bull; ID: <%= student.student_id %>
+                                    </p>
                                 </div>
-                            </div>
-                            <a href="/student/registration" class="btn px-5 py-3 rounded-pill fw-800 shadow-lg" style="background: white; color: #059669; border: none;">
-                                REGISTER NOW <i class="fas fa-arrow-right ms-2"></i>
-                            </a>
-                        </div>
-                    </div>
-                <% } else if (student.registration_status === 'submitted') { %>
-                    <div class="premium-panel mb-4" style="background: var(--panel-bg); border-left: 5px solid #f59e0b;">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div>
-                                    <h5 class="fw-bold text-dark mb-0">Registration Pending Approval</h5>
-                                    <p class="text-secondary small m-0">You have submitted your course selections. Please wait for the registrar to confirm your enrollment.</p>
-                                </div>
-                            </div>
-                            <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill fw-bold">SUBMITTED</span>
-                        </div>
-                    </div>
-                <% } %>
-            <% } %>
-
-            <!-- Stats Grid -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-3">
-                    <div class="stat-card-premium">
-                        <div class="d-flex align-items-center gap-3">
-                            <div style="width: 60px; height: 60px; background: rgba(37, 99, 235, 0.08); color: var(--primary-color); border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-                                <i class="fas fa-book"></i>
-                            </div>
-                            <div>
-                                <div class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 1px;">Courses</div>
-                                <div class="h3 fw-800 mb-0 text-dark"><%= courses_count %></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card-premium">
-                        <div class="d-flex align-items-center gap-3">
-                            <div style="width: 60px; height: 60px; background: rgba(16, 185, 129, 0.08); color: #10b981; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <div>
-                                <div class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 1px;">Avg Grade</div>
-                                <div class="h3 fw-800 mb-0 text-dark"><%= average_grade %></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-    <div class="stat-card-premium premium-card" data-student-id="<%= student.id %>">
-        <div class="d-flex align-items-center gap-3">
-            <div style="width: 60px; height: 60px; background: rgba(245, 158, 11, 0.08); color: #f59e0b; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-                <i class="fas fa-clipboard-check"></i>
-            </div>
-            <div>
-                <div class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 1px;">Attendance</div>
-            <div class="h3 fw-800 mb-0 text-dark global-attendance-rate"><%= attendance.percentage %></div>
-            <div class="small text-muted">Present: <%= attendance.present %></div>
-            <div class="small text-muted">Absent: <%= attendance.absent %></div>
-            <div class="small text-muted">Late: <%= attendance.late %></div>
-            <div class="small text-muted">Excused: <%= attendance.excused %></div>
-            <div class="small text-muted">Sessions: <%= attendance.present + attendance.late + attendance.excused %></div>
-            
-            <div class="teacher-attendance-container w-100 mt-3 d-flex flex-column gap-2 border-top pt-3">
-                <!-- Dynamically populated by JS when updates arrive -->
-            </div>
-            </div>
-        </div>
-    </div>
-</div>
-                <div class="col-md-3">
-                    <div class="stat-card-premium">
-                        <div class="d-flex align-items-center gap-3">
-                            <div style="width: 60px; height: 60px; background: rgba(139, 92, 246, 0.08); color: #8b5cf6; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-                                <i class="fas fa-award"></i>
-                            </div>
-                            <div>
-                                <div class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 1px;">Rank</div>
-                                <div class="h3 fw-800 mb-0 text-dark">#<%= rank %></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row g-4">
-                <!-- Academic Center -->
-                <div class="col-lg-8">
-                    <!-- Courses Section -->
-                    <div class="premium-panel mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="h5 fw-bold m-0 text-dark"><i class="fas fa-graduation-cap me-2 text-primary"></i>My Approved Courses</h3>
-                            <a href="/student/grades" class="btn btn-sm btn-light border fw-bold px-3 rounded-pill">View Transcripts</a>
-                        </div>
-                        <div class="courses-list">
-                            <% if (typeof courses !== 'undefined' && courses.length > 0) { %>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead style="background:#f8fafc">
-                                        <tr class="text-secondary small fw-bold text-uppercase" style="letter-spacing:.8px">
-                                            <th class="px-4 py-3 border-0">Course</th>
-                                            <th class="py-3 border-0">Teacher</th>
-                                            <th class="py-3 border-0 text-center">Attendance</th>
-                                            <th class="py-3 border-0 text-center">Quiz</th>
-                                            <th class="py-3 border-0 text-center">Assignment</th>
-                                            <th class="py-3 border-0 text-center">Mid Exam</th>
-                                            <th class="py-3 border-0 text-center">Final Exam</th>
-                                            <th class="py-3 border-0 text-center">Total</th>
-                                            <th class="py-3 border-0 text-center">Grade</th>
-                                            <th class="py-3 border-0 text-center px-4">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <% courses.forEach(course => {
-                                            const score = course.total_weighted;
-                                            const isPassing = score >= 50;
-                                            const grade = score >= 90 ? 'A+' : score >= 85 ? 'A' : score >= 80 ? 'A-' : score >= 75 ? 'B+' : score >= 70 ? 'B' : score >= 65 ? 'B-' : score >= 60 ? 'C+' : score >= 55 ? 'C' : score >= 50 ? 'D' : 'F';
-                                            const gradeColor = score >= 70 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
-                                        %>
-                                        <tr>
-                                            <td class="px-4 py-3 border-0 fw-bold text-dark">
-                                                <%= course.course_name %>
-                                                <% if (course.course_code) { %><small class="text-secondary fw-medium" style="font-size:0.75rem"><br>(<%= course.course_code %>)</small><% } %>
-                                            </td>
-                                            <td class="py-3 border-0 text-secondary fw-medium"><%= course.teacher_name %></td>
-                                            <td class="py-3 border-0 text-center fw-medium"><%= getCategoryScore(course.categories, ['attendance', 'participation']) %></td>
-                                            <td class="py-3 border-0 text-center fw-medium"><%= getCategoryScore(course.categories, ['quiz']) %></td>
-                                            <td class="py-3 border-0 text-center fw-medium"><%= getCategoryScore(course.categories, ['assignment', 'project']) %></td>
-                                            <td class="py-3 border-0 text-center fw-medium"><%= getCategoryScore(course.categories, ['mid']) %></td>
-                                            <td class="py-3 border-0 text-center fw-medium"><%= getCategoryScore(course.categories, ['final']) %></td>
-                                            <td class="py-3 border-0 text-center fw-bold text-primary"><%= Math.round(score) %></td>
-                                            <td class="py-3 border-0 text-center fw-bold" style="color: <%= gradeColor %>"><%= grade %></td>
-                                            <td class="py-3 border-0 text-center px-4">
-                                                <span class="badge rounded-pill fw-bold px-3" style="background:rgba(16,185,129,0.12);color:#065f46"><i class="fas fa-check me-1"></i>Approved</span>
-                                            </td>
-                                        </tr>
-                                        <% }) %>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <% } else { %>
-                                <div class="text-center py-5">
-                                    <div class="text-secondary opacity-30 mb-3"><i class="fas fa-folder-open fa-4x"></i></div>
-                                    <div class="text-secondary fw-bold">No approved courses found</div>
-                                </div>
-                            <% } %>
-                        </div>
-                    </div>
-
-                    <!-- Assignments Section -->
-                    <div class="premium-panel">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="h5 fw-bold m-0 text-dark"><i class="fas fa-tasks me-2 text-primary"></i>Recent Assignments</h3>
-                        </div>
-                        <div class="assignments-list">
-                            <% if (typeof assignments !== 'undefined' && assignments.length > 0) { %>
-                                <% assignments.forEach(assignment => { %>
-                                <div class="course-item-modern d-flex align-items-center justify-content-between">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="bg-warning bg-opacity-10 text-warning rounded-3" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">
-                                            <i class="fas fa-file-alt"></i>
+                                <div class="d-flex gap-3 align-items-center">
+                                    <div class="text-end d-none d-md-block">
+                                        <div class="fw-bold" style="color: var(--dark-text)" id="live-date">Loading...
                                         </div>
-                                        <div>
-                                            <div class="fw-bold text-dark"><%= assignment.title %></div>
-                                            <div class="text-secondary small fw-medium">
-                                                <%= assignment.course_name %> &bull; <%= assignment.teacher_fname %>
+                                        <small class="text-secondary">Official Status: <span
+                                                class="text-success fw-bold">Active</span></small>
+                                    </div>
+                                    <button class="btn btn-icon-glass shadow-sm" id="themeToggle" title="Toggle Theme"
+                                        style="width: 50px; height: 50px; border-radius: 15px; display: flex; align-items: center; justify-content: center; background: var(--panel-bg); border: 1px solid var(--panel-border); color: var(--primary-color);">
+                                        <i class="fas fa-moon"></i>
+                                    </button>
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle"
+                                        style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                        <i class="fas fa-user-graduate"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Registration Notification -->
+                        <% if (typeof isRegistrationOpen !=='undefined' && isRegistrationOpen) { %>
+                            <% if (student.registration_status==='pending' ||
+                                student.registration_status==='not_started' ) { %>
+                                <div class="premium-panel mb-4"
+                                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; box-shadow: 0 10px 25px rgba(16,185,129,0.25);">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                        <div class="d-flex align-items-center gap-4">
+                                            <div class="bg-white bg-opacity-20 text-white rounded-circle d-flex align-items-center justify-content-center"
+                                                style="width: 70px; height: 70px; font-size: 1.8rem;">
+                                                <i class="fas fa-calendar-check"></i>
+                                            </div>
+                                            <div>
+                                                <h3 class="h4 fw-bold text-white mb-1">Semester Registration is OPEN!
+                                                </h3>
+                                                <p class="text-white text-opacity-90 m-0 fw-medium">The official
+                                                    enrollment window for the upcoming academic period is now active.
+                                                    Register your courses before the deadline.</p>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="text-end">
-                                        <div class="text-<%= (new Date(assignment.due_date) < new Date()) ? 'danger' : 'dark' %> fw-bold small">
-                                            <i class="far fa-calendar-alt me-1"></i> 
-                                            <%= assignment.due_date ? new Date(assignment.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'No Due' %>
-                                        </div>
-                                        <div class="text-secondary smaller mt-1">Status: Pending</div>
+                                        <a href="/student/registration"
+                                            class="btn px-5 py-3 rounded-pill fw-800 shadow-lg"
+                                            style="background: white; color: #059669; border: none;">
+                                            REGISTER NOW <i class="fas fa-arrow-right ms-2"></i>
+                                        </a>
                                     </div>
                                 </div>
-                                <% }); %>
-                            <% } else { %>
-                                <div class="text-center py-5">
-                                    <div class="text-secondary opacity-30 mb-3"><i class="fas fa-check-double fa-4x"></i></div>
-                                    <div class="text-secondary fw-bold">No pending assignments</div>
-                                </div>
-                            <% } %>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Daily Schedule & Progress -->
-                <div class="col-lg-4">
-                    <!-- Today's Schedule -->
-                    <div class="premium-panel mb-4">
-                        <h3 class="h5 fw-bold mb-4 text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Today's Schedule</h3>
-                        <div class="schedule-list">
-                            <% if (typeof todaySchedule !== 'undefined' && todaySchedule.length > 0) { %>
-                                <% todaySchedule.forEach(p => { %>
-                                    <div class="agenda-item">
-                                        <div class="d-flex justify-content-between mb-1">
-                                            <span class="text-primary fw-bold small"><%= p.start_time.substring(0,5) %> - <%= p.end_time.substring(0,5) %></span>
-                                            <span class="text-secondary smaller fw-bold"><%= p.period %></span>
-                                        </div>
-                                        <div class="fw-bold text-dark small"><%= p.course_name %></div>
-                                        <div class="text-secondary smaller"><i class="fas fa-map-marker-alt me-1"></i><%= p.room || 'TBD' %></div>
-                                    </div>
-                                <% }); %>
-                            <% } else { %>
-                                <div class="text-center py-4">
-                                    <p class="text-secondary small m-0 fw-bold">No classes scheduled for today.</p>
-                                </div>
-                            <% } %>
-                        </div>
-                    </div>
-
-                    <!-- Academic Health -->
-                    <div class="premium-panel" style="background: var(--gradient-1) !important; color: white !important; border: none; box-shadow: 0 15px 35px rgba(37,99,235,0.25);">
-                        <h3 class="h5 fw-bold mb-4 text-white"><i class="fas fa-chart-pie me-2"></i>Academic Pulse</h3>
-                        <div class="d-flex align-items-center gap-4">
-                            <div class="progress-circle-wrap">
-                                <svg width="130" height="130" viewBox="0 0 130 130">
-                                    <circle cx="65" cy="65" r="58" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="10" />
-                                    <circle cx="65" cy="65" r="58" fill="none" stroke="#ffffff" stroke-width="10" 
-                                            stroke-dasharray="364.42" stroke-dashoffset="<%= 364.42 * (1 - overall_progress/100) %>" 
-                                            stroke-linecap="round" />
-                                </svg>
-                                <div class="progress-circle-text">
-                                    <div class="h3 fw-bold m-0"><%= overall_progress %>%</div>
-                                    <div class="small opacity-75 fw-bold">PROGRESS</div>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="h4 fw-bold mb-1"><%= overall_progress %>%</div>
-                                <div class="small opacity-75 fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.65rem;">Academic Completion</div>
-                                <div class="badge bg-white bg-opacity-20 text-white rounded-pill mt-2 fw-bold" style="font-size: 0.7rem;">In Good Standing</div>
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-3 border-top border-white border-opacity-10 text-center">
-                            <a href="/student/grades" class="text-white text-decoration-none small fw-bold" style="letter-spacing: 1px;">
-                                VIEW DETAILED REPORT <i class="fas fa-arrow-right ms-2"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Weekly Timetable (Tabular) -->
-            <div class="row g-4 mt-2">
-                <div class="col-12">
-                    <div class="premium-panel">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="h5 fw-bold m-0 text-dark"><i class="fas fa-calendar-alt me-2 text-primary"></i>Weekly Academic Timetable</h3>
-                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold" style="font-size: 0.7rem;">WEEKLY VIEW</span>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead style="background: var(--bg-soft)">
-                                    <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 1px;">
-                                        <th class="border-0 py-3">Day</th>
-                                        <th class="border-0 py-3">Period</th>
-                                        <th class="border-0 py-3">Course / Subject</th>
-                                        <th class="border-0 py-3">Time Window</th>
-                                        <th class="border-0 text-end py-3">Location</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% if (typeof fullSchedule !== 'undefined' && fullSchedule.length > 0) { %>
-                                        <% fullSchedule.forEach(p => { %>
-                                        <tr>
-                                            <td class="border-0 py-3">
-                                                <span class="badge bg-light text-dark fw-bold" style="font-size: 0.7rem;"><%= p.day_of_week %></span>
-                                            </td>
-                                            <td class="border-0 py-3">
-                                                <span class="text-primary fw-800"><%= p.period %></span>
-                                            </td>
-                                            <td class="border-0 py-3">
-                                                <div class="fw-bold text-dark"><%= p.course_name %></div>
-                                                <small class="text-secondary fw-medium"><%= p.course_code %></small>
-                                            </td>
-                                            <td class="border-0 py-3">
-                                                <div class="text-dark small fw-bold">
-                                                    <i class="far fa-clock me-1 text-primary"></i>
-                                                    <%= p.start_time.substring(0,5) %> - <%= p.end_time.substring(0,5) %>
+                                <% } else if (student.registration_status==='submitted' ) { %>
+                                    <div class="premium-panel mb-4"
+                                        style="background: var(--panel-bg); border-left: 5px solid #f59e0b;">
+                                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center"
+                                                    style="width: 50px; height: 50px;">
+                                                    <i class="fas fa-clock"></i>
                                                 </div>
-                                            </td>
-                                            <td class="border-0 text-end">
-                                                <div class="badge bg-secondary bg-opacity-10 text-secondary rounded-3 px-3 py-2 fw-bold" style="font-size: 0.7rem;">
-                                                    <i class="fas fa-map-marker-alt me-1"></i><%= p.room || 'TBD' %>
+                                                <div>
+                                                    <h5 class="fw-bold text-dark mb-0">Registration Pending Approval
+                                                    </h5>
+                                                    <p class="text-secondary small m-0">You have submitted your course
+                                                        selections. Please wait for the registrar to confirm your
+                                                        enrollment.</p>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                        <% }); %>
-                                    <% } else { %>
-                                        <tr>
-                                            <td colspan="5" class="text-center py-5">
-                                                <div class="text-secondary opacity-30 mb-2"><i class="fas fa-calendar-times fa-3x"></i></div>
-                                                <p class="text-secondary fw-bold m-0">No classes scheduled for the current curriculum period.</p>
-                                            </td>
-                                        </tr>
+                                            </div>
+                                            <span
+                                                class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill fw-bold">SUBMITTED</span>
+                                        </div>
+                                    </div>
                                     <% } %>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+                                        <% } %>
+
+                                            <!-- Stats Grid -->
+                                            <div class="row g-4 mb-4">
+                                                <div class="col-md-3">
+                                                    <div class="stat-card-premium">
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <div
+                                                                style="width: 60px; height: 60px; background: rgba(37, 99, 235, 0.08); color: var(--primary-color); border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                                                <i class="fas fa-book"></i>
+                                                            </div>
+                                                            <div>
+                                                                <div class="text-secondary small fw-bold text-uppercase"
+                                                                    style="letter-spacing: 1px;">Courses</div>
+                                                                <div class="h3 fw-800 mb-0 text-dark">
+                                                                    <%= courses_count %>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="stat-card-premium">
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <div
+                                                                style="width: 60px; height: 60px; background: rgba(16, 185, 129, 0.08); color: #10b981; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                                                <i class="fas fa-chart-line"></i>
+                                                            </div>
+                                                            <div>
+                                                                <div class="text-secondary small fw-bold text-uppercase"
+                                                                    style="letter-spacing: 1px;">Avg Grade</div>
+                                                                <div class="h3 fw-800 mb-0 text-dark">
+                                                                    <%= average_grade %>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="stat-card-premium premium-card"
+                                                        data-student-id="<%= student.id %>">
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <div
+                                                                style="width: 60px; height: 60px; background: rgba(245, 158, 11, 0.08); color: #f59e0b; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                                                <i class="fas fa-clipboard-check"></i>
+                                                            </div>
+                                                            <div>
+                                                                <div class="text-secondary small fw-bold text-uppercase"
+                                                                    style="letter-spacing: 1px;">Attendance</div>
+                                                                <div
+                                                                    class="h3 fw-800 mb-0 text-dark global-attendance-rate">
+                                                                    <%= attendance.percentage %>
+                                                                </div>
+                                                                <div class="small text-muted">Present: <%=
+                                                                        attendance.present %>
+                                                                </div>
+                                                                <div class="small text-muted">Absent: <%=
+                                                                        attendance.absent %>
+                                                                </div>
+                                                                <div class="small text-muted">Late: <%= attendance.late
+                                                                        %>
+                                                                </div>
+                                                                <div class="small text-muted">Excused: <%=
+                                                                        attendance.excused %>
+                                                                </div>
+                                                                <div class="small text-muted">Sessions: <%=
+                                                                        attendance.present + attendance.late +
+                                                                        attendance.excused %>
+                                                                </div>
+
+                                                                <div
+                                                                    class="teacher-attendance-container w-100 mt-3 d-flex flex-column gap-2 border-top pt-3">
+                                                                    <!-- Dynamically populated by JS when updates arrive -->
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="stat-card-premium">
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <div
+                                                                style="width: 60px; height: 60px; background: rgba(139, 92, 246, 0.08); color: #8b5cf6; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                                                                <i class="fas fa-award"></i>
+                                                            </div>
+                                                            <div>
+                                                                <div class="text-secondary small fw-bold text-uppercase"
+                                                                    style="letter-spacing: 1px;">Rank</div>
+                                                                <div class="h3 fw-800 mb-0 text-dark">#<%= rank %>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-4">
+                                                <!-- Academic Center -->
+                                                <div class="col-lg-8">
+                                                    <!-- Courses Section -->
+                                                    <div class="premium-panel mb-4">
+                                                        <div
+                                                            class="d-flex justify-content-between align-items-center mb-4">
+                                                            <h3 class="h5 fw-bold m-0 text-dark"><i
+                                                                    class="fas fa-graduation-cap me-2 text-primary"></i>My
+                                                                Approved Courses</h3>
+                                                            <a href="/student/grades"
+                                                                class="btn btn-sm btn-light border fw-bold px-3 rounded-pill">View
+                                                                Transcripts</a>
+                                                        </div>
+                                                        <div class="courses-list">
+                                                            <% if (typeof courses !=='undefined' && courses.length> 0) {
+                                                                %>
+                                                                <div class="table-responsive">
+                                                                    <table class="table table-hover align-middle mb-0">
+                                                                        <thead style="background:#f8fafc">
+                                                                            <tr class="text-secondary small fw-bold text-uppercase"
+                                                                                style="letter-spacing:.8px">
+                                                                                <th class="px-4 py-3 border-0">Course
+                                                                                </th>
+                                                                                <th class="py-3 border-0">Teacher</th>
+                                                                                <th class="py-3 border-0 text-center">
+                                                                                    Attendance</th>
+                                                                                <th class="py-3 border-0 text-center">
+                                                                                    Quiz</th>
+                                                                                <th class="py-3 border-0 text-center">
+                                                                                    Assignment</th>
+                                                                                <th class="py-3 border-0 text-center">
+                                                                                    Mid Exam</th>
+                                                                                <th class="py-3 border-0 text-center">
+                                                                                    Final Exam</th>
+                                                                                <th class="py-3 border-0 text-center">
+                                                                                    Total</th>
+                                                                                <th class="py-3 border-0 text-center">
+                                                                                    Grade</th>
+                                                                                <th
+                                                                                    class="py-3 border-0 text-center px-4">
+                                                                                    Status</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            <% courses.forEach(course=> {
+                                                                                const score = course.total_weighted;
+                                                                                const isPassing = score >= 50;
+                                                                                const grade = score >= 90 ? 'A+' : score
+                                                                                >= 85 ? 'A' : score >= 80 ? 'A-' : score
+                                                                                >= 75 ? 'B+' : score >= 70 ? 'B' : score
+                                                                                >= 65 ? 'B-' : score >= 60 ? 'C+' :
+                                                                                score >= 55 ? 'C' : score >= 50 ? 'D' :
+                                                                                'F';
+                                                                                const gradeColor = score >= 70 ?
+                                                                                '#10b981' : score >= 50 ? '#f59e0b' :
+                                                                                '#ef4444';
+                                                                                %>
+                                                                                <tr>
+                                                                                    <td
+                                                                                        class="px-4 py-3 border-0 fw-bold text-dark">
+                                                                                        <%= course.course_name %>
+                                                                                            <% if (course.course_code) {
+                                                                                                %><small
+                                                                                                    class="text-secondary fw-medium"
+                                                                                                    style="font-size:0.75rem"><br>(
+                                                                                                    <%= course.course_code
+                                                                                                        %>)</small>
+                                                                                                <% } %>
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="py-3 border-0 text-secondary fw-medium">
+                                                                                        <%= course.teacher_name %>
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="py-3 border-0 text-center fw-medium">
+                                                                                        <%= getCategoryScore(course.categories,
+                                                                                            ['attendance', 'participation'
+                                                                                            ]) %>
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="py-3 border-0 text-center fw-medium">
+                                                                                        <%= getCategoryScore(course.categories,
+                                                                                            ['quiz']) %>
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="py-3 border-0 text-center fw-medium">
+                                                                                        <%= getCategoryScore(course.categories,
+                                                                                            ['assignment', 'project' ])
+                                                                                            %>
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="py-3 border-0 text-center fw-medium">
+                                                                                        <%= getCategoryScore(course.categories,
+                                                                                            ['mid']) %>
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="py-3 border-0 text-center fw-medium">
+                                                                                        <%= getCategoryScore(course.categories,
+                                                                                            ['final']) %>
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="py-3 border-0 text-center fw-bold text-primary">
+                                                                                        <%= Math.round(score) %>
+                                                                                    </td>
+                                                                                    <td class="py-3 border-0 text-center fw-bold"
+                                                                                        style="color: <%= gradeColor %>">
+                                                                                        <%= grade %>
+                                                                                    </td>
+                                                                                    <td
+                                                                                        class="py-3 border-0 text-center px-4">
+                                                                                        <span
+                                                                                            class="badge rounded-pill fw-bold px-3"
+                                                                                            style="background:rgba(16,185,129,0.12);color:#065f46"><i
+                                                                                                class="fas fa-check me-1"></i>Approved</span>
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <% }) %>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                                <% } else { %>
+                                                                    <div class="text-center py-5">
+                                                                        <div class="text-secondary opacity-30 mb-3"><i
+                                                                                class="fas fa-folder-open fa-4x"></i>
+                                                                        </div>
+                                                                        <div class="text-secondary fw-bold">No approved
+                                                                            courses found</div>
+                                                                    </div>
+                                                                    <% } %>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Assignments Section -->
+                                                    <div class="premium-panel">
+                                                        <div
+                                                            class="d-flex justify-content-between align-items-center mb-4">
+                                                            <h3 class="h5 fw-bold m-0 text-dark"><i
+                                                                    class="fas fa-tasks me-2 text-primary"></i>Recent
+                                                                Assignments</h3>
+                                                        </div>
+                                                        <div class="assignments-list">
+                                                            <% if (typeof assignments !=='undefined' &&
+                                                                assignments.length> 0) { %>
+                                                                <% assignments.forEach(assignment=> { %>
+                                                                    <div
+                                                                        class="course-item-modern d-flex align-items-center justify-content-between">
+                                                                        <div class="d-flex align-items-center gap-3">
+                                                                            <div class="bg-warning bg-opacity-10 text-warning rounded-3"
+                                                                                style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">
+                                                                                <i class="fas fa-file-alt"></i>
+                                                                            </div>
+                                                                            <div>
+                                                                                <div class="fw-bold text-dark">
+                                                                                    <%= assignment.title %>
+                                                                                </div>
+                                                                                <div
+                                                                                    class="text-secondary small fw-medium">
+                                                                                    <%= assignment.course_name %> &bull;
+                                                                                        <%= assignment.teacher_fname %>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="text-end">
+                                                                            <div
+                                                                                class="text-<%= (new Date(assignment.due_date) < new Date()) ? 'danger' : 'dark' %> fw-bold small">
+                                                                                <i class="far fa-calendar-alt me-1"></i>
+                                                                                <%= assignment.due_date ? new
+                                                                                    Date(assignment.due_date).toLocaleDateString(undefined,
+                                                                                    { month: 'short' , day: 'numeric' })
+                                                                                    : 'No Due' %>
+                                                                            </div>
+                                                                            <div class="text-secondary smaller mt-1">
+                                                                                Status: Pending</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <% }); %>
+                                                                        <% } else { %>
+                                                                            <div class="text-center py-5">
+                                                                                <div
+                                                                                    class="text-secondary opacity-30 mb-3">
+                                                                                    <i
+                                                                                        class="fas fa-check-double fa-4x"></i>
+                                                                                </div>
+                                                                                <div class="text-secondary fw-bold">No
+                                                                                    pending assignments</div>
+                                                                            </div>
+                                                                            <% } %>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Daily Schedule & Progress -->
+                                                <div class="col-lg-4">
+                                                    <!-- Today's Schedule -->
+                                                    <div class="premium-panel mb-4">
+                                                        <h3 class="h5 fw-bold mb-4 text-dark"><i
+                                                                class="fas fa-calendar-day me-2 text-primary"></i>Today's
+                                                            Schedule</h3>
+                                                        <div class="schedule-list">
+                                                            <% if (typeof todaySchedule !=='undefined' &&
+                                                                todaySchedule.length> 0) { %>
+                                                                <% todaySchedule.forEach(p=> { %>
+                                                                    <div class="agenda-item">
+                                                                        <div
+                                                                            class="d-flex justify-content-between mb-1">
+                                                                            <span class="text-primary fw-bold small">
+                                                                                <%= p.start_time.substring(0,5) %> - <%=
+                                                                                        p.end_time.substring(0,5) %>
+                                                                            </span>
+                                                                            <span
+                                                                                class="text-secondary smaller fw-bold">
+                                                                                <%= p.period %>
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="fw-bold text-dark small">
+                                                                            <%= p.course_name %>
+                                                                        </div>
+                                                                        <div class="text-secondary smaller"><i
+                                                                                class="fas fa-map-marker-alt me-1"></i>
+                                                                            <%= p.room || 'TBD' %>
+                                                                        </div>
+                                                                    </div>
+                                                                    <% }); %>
+                                                                        <% } else { %>
+                                                                            <div class="text-center py-4">
+                                                                                <p
+                                                                                    class="text-secondary small m-0 fw-bold">
+                                                                                    No classes scheduled for today.</p>
+                                                                            </div>
+                                                                            <% } %>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Academic Health -->
+                                                    <div class="premium-panel"
+                                                        style="background: var(--gradient-1) !important; color: white !important; border: none; box-shadow: 0 15px 35px rgba(37,99,235,0.25);">
+                                                        <h3 class="h5 fw-bold mb-4 text-white"><i
+                                                                class="fas fa-chart-pie me-2"></i>Academic Pulse</h3>
+                                                        <div class="d-flex align-items-center gap-4">
+                                                            <div class="progress-circle-wrap">
+                                                                <svg width="130" height="130" viewBox="0 0 130 130">
+                                                                    <circle cx="65" cy="65" r="58" fill="none"
+                                                                        stroke="rgba(255,255,255,0.15)"
+                                                                        stroke-width="10" />
+                                                                    <circle cx="65" cy="65" r="58" fill="none"
+                                                                        stroke="#ffffff" stroke-width="10"
+                                                                        stroke-dasharray="364.42"
+                                                                        stroke-dashoffset="<%= 364.42 * (1 - overall_progress/100) %>"
+                                                                        stroke-linecap="round" />
+                                                                </svg>
+                                                                <div class="progress-circle-text">
+                                                                    <div class="h3 fw-bold m-0">
+                                                                        <%= overall_progress %>%
+                                                                    </div>
+                                                                    <div class="small opacity-75 fw-bold">PROGRESS</div>
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <div class="h4 fw-bold mb-1">
+                                                                    <%= overall_progress %>%
+                                                                </div>
+                                                                <div class="small opacity-75 fw-bold text-uppercase"
+                                                                    style="letter-spacing: 0.5px; font-size: 0.65rem;">
+                                                                    Academic Completion</div>
+                                                                <div class="badge bg-white bg-opacity-20 text-white rounded-pill mt-2 fw-bold"
+                                                                    style="font-size: 0.7rem;">In Good Standing</div>
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="mt-4 pt-3 border-top border-white border-opacity-10 text-center">
+                                                            <a href="/student/grades"
+                                                                class="text-white text-decoration-none small fw-bold"
+                                                                style="letter-spacing: 1px;">
+                                                                VIEW DETAILED REPORT <i
+                                                                    class="fas fa-arrow-right ms-2"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Weekly Timetable (Tabular) -->
+                                            <div class="row g-4 mt-2">
+                                                <div class="col-12">
+                                                    <div class="premium-panel">
+                                                        <div
+                                                            class="d-flex justify-content-between align-items-center mb-4">
+                                                            <h3 class="h5 fw-bold m-0 text-dark"><i
+                                                                    class="fas fa-calendar-alt me-2 text-primary"></i>Weekly
+                                                                Academic Timetable</h3>
+                                                            <span
+                                                                class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold"
+                                                                style="font-size: 0.7rem;">WEEKLY VIEW</span>
+                                                        </div>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-hover align-middle mb-0">
+                                                                <thead style="background: var(--bg-soft)">
+                                                                    <tr class="text-secondary small fw-bold"
+                                                                        style="text-transform: uppercase; letter-spacing: 1px;">
+                                                                        <th class="border-0 py-3">Day</th>
+                                                                        <th class="border-0 py-3">Period</th>
+                                                                        <th class="border-0 py-3">Course / Subject</th>
+                                                                        <th class="border-0 py-3">Time Window</th>
+                                                                        <th class="border-0 text-end py-3">Location</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <% if (typeof fullSchedule !=='undefined' &&
+                                                                        fullSchedule.length> 0) { %>
+                                                                        <% fullSchedule.forEach(p=> { %>
+                                                                            <tr>
+                                                                                <td class="border-0 py-3">
+                                                                                    <span
+                                                                                        class="badge bg-light text-dark fw-bold"
+                                                                                        style="font-size: 0.7rem;">
+                                                                                        <%= p.day_of_week %>
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td class="border-0 py-3">
+                                                                                    <span class="text-primary fw-800">
+                                                                                        <%= p.period %>
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td class="border-0 py-3">
+                                                                                    <div class="fw-bold text-dark">
+                                                                                        <%= p.course_name %>
+                                                                                    </div>
+                                                                                    <small
+                                                                                        class="text-secondary fw-medium">
+                                                                                        <%= p.course_code %>
+                                                                                    </small>
+                                                                                </td>
+                                                                                <td class="border-0 py-3">
+                                                                                    <div
+                                                                                        class="text-dark small fw-bold">
+                                                                                        <i
+                                                                                            class="far fa-clock me-1 text-primary"></i>
+                                                                                        <%= p.start_time.substring(0,5)
+                                                                                            %> - <%=
+                                                                                                p.end_time.substring(0,5)
+                                                                                                %>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td class="border-0 text-end">
+                                                                                    <div class="badge bg-secondary bg-opacity-10 text-secondary rounded-3 px-3 py-2 fw-bold"
+                                                                                        style="font-size: 0.7rem;">
+                                                                                        <i
+                                                                                            class="fas fa-map-marker-alt me-1"></i>
+                                                                                        <%= p.room || 'TBD' %>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <% }); %>
+                                                                                <% } else { %>
+                                                                                    <tr>
+                                                                                        <td colspan="5"
+                                                                                            class="text-center py-5">
+                                                                                            <div
+                                                                                                class="text-secondary opacity-30 mb-2">
+                                                                                                <i
+                                                                                                    class="fas fa-calendar-times fa-3x"></i>
+                                                                                            </div>
+                                                                                            <p
+                                                                                                class="text-secondary fw-bold m-0">
+                                                                                                No classes scheduled for
+                                                                                                the current curriculum
+                                                                                                period.</p>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    <% } %>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+            </main>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script>
+    <script src="/js/brocode-script.js"></script>
     <script>
         const dateElement = document.getElementById('live-date');
         if (dateElement) {
@@ -474,5 +688,5 @@ const getCategoryScore = (categories, names) => {
         }
     </script>
 </body>
-</html>
 
+</html>

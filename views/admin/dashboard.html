@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -23,161 +23,67 @@
 
             <!-- Main Content -->
             <main class="main-panel w-100 p-4">
-                <!-- Header -->
-                <div class="dashboard-header mb-4 notranslate" data-reveal="bottom" data-distance="30px" data-delay="0.1s"
-                    style="background: var(--panel-bg); border-radius: var(--panel-radius); border: 1px solid var(--panel-border); padding: 1.5rem 2.5rem; box-shadow: var(--shadow-md);">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="dashboard-title ls-tight"
-                                style="font-size: 2.25rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-premium); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                                <span data-key="welcome_back">Welcome back</span>, <%= (user && user.first_name) ? user.first_name : 'Admin' %>!
-                            </h1>
-                            <p class="text-secondary m-0 fw-medium" style="font-size: 1.1rem; opacity: 0.8;" data-key="welcome_sub">Empowering excellence in academic management and system administration.</p>
-                        </div>
-                        <div class="d-flex align-items-center gap-4">
-                            <!-- Academic Year Selector -->
-                            <div class="year-selector d-none d-lg-block">
-                                <label class="text-secondary small fw-bold d-block mb-2 text-uppercase"
-                                    style="font-size: 0.7rem; letter-spacing: 1px; opacity: 0.6;" data-key="academic_session">Academic Session</label>
-                                <form action="/admin/dashboard" method="GET" id="yearFilterForm">
-                                    <select name="year" class="form-select border-0 bg-light fw-bold"
-                                        onchange="this.form.submit()"
-                                        style="border-radius: 12px; min-width: 160px; padding: 0.6rem 1.2rem; font-size: 0.95rem; box-shadow: var(--shadow-sm);">
-                                        <% availableYears.forEach(year=> { %>
-                                            <option value="<%= year %>" <%=selectedYear===year ? 'selected' : '' %>><%=
-                                                    year %>
-                                            </option>
-                                            <% }); %>
+                <%- include('../partials/academic-context.html', { academicContext: typeof academicContext
+                    !=='undefined' ? academicContext : null }) %>
+                    <!-- Header -->
+                    <div class="dashboard-header mb-4 notranslate" data-reveal="bottom" data-distance="30px"
+                        data-delay="0.1s"
+                        style="background: var(--panel-bg); border-radius: var(--panel-radius); border: 1px solid var(--panel-border); padding: 1.5rem 2.5rem; box-shadow: var(--shadow-md);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h1 class="dashboard-title"
+                                    style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                    <span data-key="welcome_back">Welcome back</span>, <%= (user && user.first_name) ?
+                                        user.first_name : 'Admin' %>!
+                                </h1>
+                                <p class="text-secondary m-0 fw-medium" data-key="welcome_sub">Empowering excellence in
+                                    academic management and system administration.</p>
+                            </div>
+                            <div class="d-flex align-items-center gap-4">
+                                <!-- Academic Year Selector -->
+                                <div class="year-selector d-none d-lg-block">
+                                    <label class="text-secondary small fw-bold d-block mb-2 text-uppercase"
+                                        style="font-size: 0.7rem; letter-spacing: 1px; opacity: 0.6;"
+                                        data-key="academic_session">Academic Session</label>
+                                    <form action="/admin/dashboard" method="GET" id="yearFilterForm">
+                                        <!-- <select name="year" class="form-select border-0 bg-light fw-bold"
+                                            onchange="this.form.submit()"
+                                            style="border-radius: 12px; min-width: 160px; padding: 0.6rem 1.2rem; font-size: 0.95rem; box-shadow: var(--shadow-sm);">
+                                            <% availableYears.forEach(year=> { %>
+                                                <option value="<%= year %>" <%=selectedYear===year ? 'selected' : '' %>>
+                                                    <%= year %>
+                                                </option>
+                                                <% }); %>
+                                        </select> -->
+                                    </form>
+                                </div>
+
+                                <div class="d-flex gap-3 align-items-center">
+                                    <!-- Language Selector -->
+                                    <select id="languageSelector" class="form-select border-0 bg-light fw-bold"
+                                        style="border-radius: 12px; width: 70px; padding: 0.5rem; font-size: 0.9rem; box-shadow: var(--shadow-sm); cursor: pointer;">
+                                        <option value="en">EN</option>
+                                        <option value="am">AM</option>
+                                        <option value="om">OM</option>
                                     </select>
-                                </form>
-                            </div>
 
-                            <div class="d-flex gap-3 align-items-center">
-                                <!-- Language Selector -->
-                                <select id="languageSelector" class="form-select border-0 bg-light fw-bold" 
-                                    style="border-radius: 12px; width: 70px; padding: 0.5rem; font-size: 0.9rem; box-shadow: var(--shadow-sm); cursor: pointer;">
-                                    <option value="en">EN</option>
-                                    <option value="am">AM</option>
-                                    <option value="om">OM</option>
-                                </select>
-
-                                <button class="btn btn-icon-glass shadow-sm transition-transform" id="themeToggle" title="Toggle Appearance"
-                                    style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: var(--bg-soft); border: 1px solid var(--panel-border); color: var(--primary-color); font-size: 1.2rem;">
-                                    <i class="fas fa-moon"></i>
-                                </button>
-                                <div class="vertical-divider d-none d-md-block"
-                                    style="width: 1px; height: 40px; background: rgba(0,0,0,0.06);"></div>
-                                <div class="text-end d-none d-md-block">
-                                    <div class="fw-bold ls-tight" style="color: var(--dark-text); font-size: 1rem;">
-                                        <%= new Date().toLocaleDateString('en-US', { weekday: 'long' , month: 'short' , day: 'numeric' }) %>
-                                    </div>
-                                    <div class="d-flex align-items-center justify-content-end gap-2 mt-1">
-                                        <span class="pulse-dot" style="width: 8px; height: 8px; background: var(--success-color); border-radius: 50%; display: inline-block;"></span>
-                                        <small class="text-secondary fw-bold" style="font-size: 0.75rem;" data-key="system_active">SYSTEM ACTIVE</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Primary Stats Row -->
-                <div class="row g-4 mb-4">
-                    <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.1s">
-                        <div class="dashboard-card apple-card transition-hover">
-                            <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-color);">
-                                <i class="fas fa-user-graduate"></i>
-                            </div>
-                            <div class="text-secondary small fw-bold text-uppercase mb-1" style="letter-spacing: 1px; opacity: 0.7;" data-key="total_enrollment">Total Enrollment</div>
-                            <div class="h2 fw-900 mb-0 ls-tighter" style="color: var(--dark-text)">
-                                <%= stats.students %>
-                            </div>
-                            <div class="mt-2 small text-success fw-bold">
-                                <i class="fas fa-arrow-up me-1"></i> <span data-key="active_scholars">Active Scholars</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.2s">
-                        <div class="dashboard-card apple-card transition-hover">
-                            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--secondary-color);">
-                                <i class="fas fa-chalkboard-teacher"></i>
-                            </div>
-                            <div class="text-secondary small fw-bold text-uppercase mb-1" style="letter-spacing: 1px; opacity: 0.7;" data-key="academic_faculty">Academic Faculty</div>
-                            <div class="h2 fw-900 mb-0 ls-tighter" style="color: var(--dark-text)">
-                                <%= stats.teachers %>
-                            </div>
-                            <div class="mt-2 small text-warning fw-bold">
-                                <i class="fas fa-star me-1"></i> <span data-key="expert_educators">Expert Educators</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.3s">
-                        <div class="dashboard-card apple-card transition-hover">
-                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
-                                <i class="fas fa-user-friends"></i>
-                            </div>
-                            <div class="text-secondary small fw-bold text-uppercase mb-1" style="letter-spacing: 1px; opacity: 0.7;" data-key="community_parents">Community Parents</div>
-                            <div class="h2 fw-900 mb-0 ls-tighter" style="color: var(--dark-text)">
-                                <%= stats.parents %>
-                            </div>
-                            <div class="mt-2 small text-info fw-bold">
-                                <i class="fas fa-link me-1"></i> <span data-key="connected_guardians">Connected Guardians</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.4s">
-                        <div class="dashboard-card apple-card transition-hover">
-                            <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--danger-color);">
-                                <i class="fas fa-user-minus"></i>
-                            </div>
-                            <div class="text-secondary small fw-bold text-uppercase mb-1" style="letter-spacing: 1px; opacity: 0.7;" data-key="offboarded">Offboarded</div>
-                            <div class="h2 fw-900 mb-0 ls-tighter" style="color: var(--dark-text)">
-                                <%= stats.withdrawn_count %>
-                            </div>
-                            <div class="mt-2 small text-secondary fw-bold">
-                                <i class="fas fa-archive me-1"></i> <span data-key="archived_records">Archived Records</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Detailed Metrics Row -->
-                <div class="row g-4 mb-4">
-                    <!-- Gender Stats -->
-                    <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.2s">
-                        <div class="dashboard-card apple-card transition-hover">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 1px; opacity: 0.7;" data-key="gender_diversity">
-                                    Gender Diversity</div>
-                                <i class="fas fa-venus-mars text-primary opacity-50"></i>
-                            </div>
-                            <div class="d-flex flex-column gap-3">
-                                <div>
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="small fw-bold text-secondary" data-key="male_scholars">Male Scholars</span>
-                                        <span class="small fw-900 text-primary">
-                                            <%= stats.male_count %>
-                                        </span>
-                                    </div>
-                                    <div class="progress shadow-none" style="height: 8px; border-radius: 10px; background: rgba(59, 130, 246, 0.05);">
-                                        <div class="progress-bar"
-                                            style="width: <%= (stats.students > 0) ? (stats.male_count / stats.students * 100) : 0 %>%; background: var(--gradient-1); border-radius: 10px;">
+                                    <button class="btn btn-icon-glass shadow-sm transition-transform" id="themeToggle"
+                                        title="Toggle Appearance"
+                                        style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: var(--bg-soft); border: 1px solid var(--panel-border); color: var(--primary-color); font-size: 1.2rem;">
+                                        <i class="fas fa-moon"></i>
+                                    </button>
+                                    <div class="vertical-divider d-none d-md-block"
+                                        style="width: 1px; height: 40px; background: rgba(0,0,0,0.06);"></div>
+                                    <div class="text-end d-none d-md-block">
+                                        <div class="fw-bold ls-tight" style="color: var(--dark-text); font-size: 1rem;">
+                                            <%= new Date().toLocaleDateString('en-US', { weekday: 'long' ,
+                                                month: 'short' , day: 'numeric' }) %>
                                         </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span class="small fw-bold text-secondary" data-key="female_scholars">Female Scholars</span>
-                                        <span class="small fw-900 text-danger">
-                                            <%= stats.female_count %>
-                                        </span>
-                                    </div>
-                                    <div class="progress shadow-none" style="height: 8px; border-radius: 10px; background: rgba(239, 68, 68, 0.05);">
-                                        <div class="progress-bar bg-danger"
-                                            style="width: <%= (stats.students > 0) ? (stats.female_count / stats.students * 100) : 0 %>%; border-radius: 10px;">
+                                        <div class="d-flex align-items-center justify-content-end gap-2 mt-1">
+                                            <span class="pulse-dot"
+                                                style="width: 8px; height: 8px; background: var(--success-color); border-radius: 50%; display: inline-block;"></span>
+                                            <small class="text-secondary fw-bold" style="font-size: 0.75rem;"
+                                                data-key="system_active">SYSTEM ACTIVE</small>
                                         </div>
                                     </div>
                                 </div>
@@ -185,240 +91,493 @@
                         </div>
                     </div>
 
-                    <!-- Academic Success -->
-                    <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.3s">
-                        <div class="dashboard-card apple-card transition-hover">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 1px; opacity: 0.7;" data-key="promotion_rate">
-                                    Promotion Rate</div>
-                                <i class="fas fa-award text-success opacity-50"></i>
-                            </div>
-                            <div class="d-flex align-items-end gap-3 mb-3">
-                                <div class="h1 fw-900 mb-0 text-success ls-tighter">
-                                    <%= (stats.pass_count + stats.fail_count> 0) ? Math.round(stats.pass_count /
-                                        (stats.pass_count + stats.fail_count) * 100) : 0 %>%
+                    <!-- Primary Stats Row -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.1s">
+                            <div class="dashboard-card apple-card transition-hover">
+                                <div class="stat-icon"
+                                    style="background: rgba(59, 130, 246, 0.1); color: var(--primary-color);">
+                                    <i class="fas fa-user-graduate"></i>
                                 </div>
-                                <div class="text-secondary small fw-bold mb-2" data-key="overall_success">Overall Success</div>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <span class="badge rounded-pill bg-success bg-opacity-10 text-success border-0 px-3 py-2 fw-bold" style="font-size: 0.7rem;">
-                                    <%= stats.pass_count %> <span data-key="promoted">PROMOTED</span>
-                                </span>
-                                <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger border-0 px-3 py-2 fw-bold" style="font-size: 0.7rem;">
-                                    <%= stats.fail_count %> <span data-key="retained">RETAINED</span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- National Exams -->
-                    <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.4s">
-                        <div class="dashboard-card apple-card transition-hover">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div class="text-secondary small fw-bold text-uppercase" style="letter-spacing: 1px; opacity: 0.7;" data-key="performance_index">
-                                    Performance Index</div>
-                                <i class="fas fa-file-contract text-info opacity-50"></i>
-                            </div>
-                            <div class="mb-3">
+                                <div class="text-secondary small fw-bold text-uppercase mb-1"
+                                    style="letter-spacing: 1px; opacity: 0.7;" data-key="total_enrollment">Total
+                                    Enrollment</div>
                                 <div class="h2 fw-900 mb-0 ls-tighter" style="color: var(--dark-text)">
-                                    <%= stats.national_exam_avg ? parseFloat(stats.national_exam_avg).toFixed(1) : '0.0' %>
+                                    <%= stats.students %>
                                 </div>
-                                <div class="text-secondary small fw-bold" data-key="average_proficiency">Average Proficiency</div>
-                            </div>
-                            <div class="p-2 px-3 rounded-pill bg-light d-flex justify-content-between align-items-center border">
-                                <span class="smaller fw-bold text-secondary text-uppercase" style="letter-spacing: 0.5px;" data-key="tests_analyzed">Tests Analyzed</span>
-                                <span class="small fw-900 text-primary">
-                                    <%= stats.national_exam_count %>
-                                </span>
+                                <div class="mt-2 small text-success fw-bold">
+                                    <i class="fas fa-arrow-up me-1"></i> <span data-key="active_scholars">Active
+                                        Scholars</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Withdrawn Students -->
-                    <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.5s">
-                        <div class="dashboard-card apple-card transition-hover" style="background: var(--gradient-2); color: white;">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div class="small fw-bold text-uppercase" style="letter-spacing: 1px; color: rgba(255,255,255,0.8);" data-key="retention">
-                                    Retention</div>
-                                <i class="fas fa-user-minus opacity-50"></i>
+                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.2s">
+                            <div class="dashboard-card apple-card transition-hover">
+                                <div class="stat-icon"
+                                    style="background: rgba(245, 158, 11, 0.1); color: var(--secondary-color);">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                </div>
+                                <div class="text-secondary small fw-bold text-uppercase mb-1"
+                                    style="letter-spacing: 1px; opacity: 0.7;" data-key="academic_faculty">Academic
+                                    Faculty</div>
+                                <div class="h2 fw-900 mb-0 ls-tighter" style="color: var(--dark-text)">
+                                    <%= stats.teachers %>
+                                </div>
+                                <div class="mt-2 small text-warning fw-bold">
+                                    <i class="fas fa-star me-1"></i> <span data-key="expert_educators">Expert
+                                        Educators</span>
+                                </div>
                             </div>
-                            <div class="text-center py-2">
-                                <div class="h1 fw-900 mb-0 ls-tighter">
+                        </div>
+
+                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.3s">
+                            <div class="dashboard-card apple-card transition-hover">
+                                <div class="stat-icon"
+                                    style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
+                                    <i class="fas fa-user-friends"></i>
+                                </div>
+                                <div class="text-secondary small fw-bold text-uppercase mb-1"
+                                    style="letter-spacing: 1px; opacity: 0.7;" data-key="community_parents">Community
+                                    Parents</div>
+                                <div class="h2 fw-900 mb-0 ls-tighter" style="color: var(--dark-text)">
+                                    <%= stats.parents %>
+                                </div>
+                                <div class="mt-2 small text-info fw-bold">
+                                    <i class="fas fa-link me-1"></i> <span data-key="connected_guardians">Connected
+                                        Guardians</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.4s">
+                            <div class="dashboard-card apple-card transition-hover">
+                                <div class="stat-icon"
+                                    style="background: rgba(239, 68, 68, 0.1); color: var(--danger-color);">
+                                    <i class="fas fa-user-minus"></i>
+                                </div>
+                                <div class="text-secondary small fw-bold text-uppercase mb-1"
+                                    style="letter-spacing: 1px; opacity: 0.7;" data-key="offboarded">Offboarded</div>
+                                <div class="h2 fw-900 mb-0 ls-tighter" style="color: var(--dark-text)">
                                     <%= stats.withdrawn_count %>
                                 </div>
-                                <div class="small fw-bold text-uppercase mt-1"
-                                    style="letter-spacing: 1px; color: rgba(255,255,255,0.8);" data-key="withdrawn_archive">Withdrawn Archive</div>
-                            </div>
-                            <div class="mt-3 text-center">
-                                <a href="/admin/students?status=withdrawn"
-                                    class="btn btn-sm btn-glass-light w-100 rounded-pill fw-bold" 
-                                    style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                                    <span data-key="audit_records">Audit Records</span> <i class="fas fa-chevron-right ms-2 small"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Content Grid -->
-                <div class="row g-4">
-                    <!-- Recent Activities -->
-                    <div class="col-lg-8" data-reveal="bottom" data-distance="40px" data-delay="0.2s">
-                        <div class="dashboard-card apple-card transition-hover h-100 p-0 overflow-hidden">
-                            <div class="p-4 px-5 d-flex justify-content-between align-items-center border-bottom bg-light bg-opacity-50">
-                                <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i
-                                        class="fas fa-history me-3 text-primary"></i><span data-key="operational_insights">Operational Insights</span></h3>
-                                <a href="/admin/users"
-                                    class="btn btn-sm btn-link text-decoration-none fw-bold text-primary"><span data-key="view_history">View Full
-                                    History</span> <i class="fas fa-arrow-right ms-2 small"></i></a>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="bg-light bg-opacity-25">
-                                        <tr class="text-secondary small fw-bold"
-                                            style="text-transform: uppercase; letter-spacing: 1px;">
-                                            <th class="border-0 py-4 px-5" data-key="admin_event">Administrative Event</th>
-                                            <th class="border-0 py-4" data-key="timestamp">Timestamp</th>
-                                            <th class="border-0 py-4 px-5 text-end" data-key="outcome">Outcome</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <% if (recentActivities && recentActivities.length> 0) { %>
-                                            <% for (let activity of recentActivities) { %>
-                                                <tr>
-                                                    <td class="border-0 py-4 px-5">
-                                                        <div class="d-flex align-items-center gap-4">
-                                                            <div class="avatar-initials avatar-blue shadow-sm"
-                                                                style="width: 44px; height: 44px; font-size: 1rem; border-radius: 12px;">
-                                                                <%= (activity.description ?
-                                                                    activity.description.charAt(0).toUpperCase() : '?' )
-                                                                    %>
-                                                            </div>
-                                                            <div>
-                                                                <div class="fw-bold" style="color: var(--dark-text); font-size: 1rem;">
-                                                                    <%= activity.description %>
-                                                                </div>
-                                                                <div
-                                                                    class="text-secondary smaller fw-bold text-uppercase mt-1" style="letter-spacing: 0.5px; opacity: 0.6;">
-                                                                    <%= activity.role || 'System' %> <span data-key="account">Account</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td class="border-0 py-4">
-                                                        <div class="text-secondary small fw-bold">
-                                                            <%= new
-                                                                Date(activity.activity_date).toLocaleDateString(undefined,
-                                                                { month: 'short' , day: 'numeric' })
-                                                                %>
-                                                        </div>
-                                                        <div class="smaller text-muted mt-1 fw-medium">
-                                                            <%= new Date(activity.activity_date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) %>
-                                                        </div>
-                                                    </td>
-                                                    <td class="border-0 py-4 px-5 text-end">
-                                                        <span
-                                                            class="badge rounded-pill px-3 py-2 fw-bold text-uppercase"
-                                                            style="background: rgba(16,185,129,0.08); color: #10b981; font-size: 0.65rem; letter-spacing: 0.5px;">
-                                                            <i class="fas fa-check-circle me-1"></i> <span data-key="verified">VERIFIED</span>
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                                <% } %>
-                                                    <% } else { %>
-                                                        <tr>
-                                                            <td colspan="3" class="border-0 text-center py-5">
-                                                                <div class="text-secondary opacity-30 mb-3">
-                                                                    <i class="fas fa-inbox fa-4x"></i>
-                                                                </div>
-                                                                <div class="text-secondary fw-bold" data-key="no_activities">No recent activities
-                                                                    found</div>
-                                                            </td>
-                                                        </tr>
-                                                        <% } %>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- System & Quick Actions -->
-                    <div class="col-lg-4" data-reveal="bottom" data-distance="40px" data-delay="0.4s">
-                        <div class="dashboard-card apple-card transition-hover mb-4">
-                            <h3 class="h5 fw-bold mb-4" style="color: var(--dark-text)"><i
-                                     class="fas fa-bolt me-2 text-warning"></i><span data-key="direct_command">Direct Command</span></h3>
-                            <div class="d-grid gap-3">
-                                <a href="/admin/students?form=open"
-                                    class="btn btn-primary w-100 py-3 d-flex align-items-center justify-content-center gap-3 fw-bold rounded-4 shadow-premium border-0 transition-transform">
-                                    <i class="fas fa-user-plus"></i> <span data-key="enroll_student">Enroll Student</span>
-                                </a>
-                                <a href="/admin/teachers?form=open"
-                                    class="btn btn-light w-100 py-3 d-flex align-items-center justify-content-center gap-3 fw-bold rounded-4 shadow-sm border-0 transition-transform"
-                                    style="background: var(--bg-main); color: var(--dark-text)">
-                                    <i class="fas fa-user-tie"></i> <span data-key="recruit_faculty">Recruit Faculty</span>
-                                </a>
-                                <div class="d-flex gap-3">
-                                    <a href="/admin/parents?form=open"
-                                        class="btn btn-outline-primary w-50 py-3 rounded-4 fw-bold"
-                                        style="border-width: 2px;" data-key="add_guardian">
-                                        Add Guardian
-                                    </a>
-                                    <a href="/admin/announcements?form=open"
-                                        class="btn btn-outline-secondary w-50 py-3 rounded-4 fw-bold"
-                                        style="border-width: 2px;" data-key="broadcast">
-                                        Broadcast
-                                    </a>
+                                <div class="mt-2 small text-secondary fw-bold">
+                                    <i class="fas fa-archive me-1"></i> <span data-key="archived_records">Archived
+                                        Records</span>
                                 </div>
-                                <a href="/admin/certificates"
-                                    class="btn btn-outline-success w-100 py-3 d-flex align-items-center justify-content-center gap-3 fw-bold rounded-4 shadow-sm"
-                                    style="border-width: 2px; border-style: dashed;">
-                                    <i class="fas fa-award"></i> <span data-key="issue_certificates">Issue Certificates</span>
-                                </a>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="dashboard-card apple-card transition-hover"
-                            style="background: var(--gradient-premium) !important; color: white !important; border: none !important; box-shadow: var(--shadow-premium);">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="h5 fw-bold m-0" style="color: white"><i class="fas fa-chart-pie me-3"></i><span data-key="system_pulse">System Pulse</span></h3>
-                                <div class="badge bg-white bg-opacity-20 rounded-pill px-3 py-1 smaller fw-bold" data-key="real_time">REAL-TIME</div>
-                            </div>
-                            
-                            <div class="d-flex flex-column gap-3">
-                                <div class="p-3 d-flex justify-content-between align-items-center"
-                                    style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(5px);">
+                    <!-- Detailed Metrics Row -->
+                    <div class="row g-4 mb-4">
+                        <!-- Gender Stats -->
+                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.2s">
+                            <div class="dashboard-card apple-card transition-hover">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="text-secondary small fw-bold text-uppercase"
+                                        style="letter-spacing: 1px; opacity: 0.7;" data-key="gender_diversity">
+                                        Gender Diversity</div>
+                                    <i class="fas fa-venus-mars text-primary opacity-50"></i>
+                                </div>
+                                <div class="d-flex flex-column gap-3">
                                     <div>
-                                        <div class="small opacity-75 fw-bold text-uppercase"
-                                            style="letter-spacing: 1px; font-size: 0.65rem;" data-key="programs">Programs</div>
-                                        <div class="fw-bold" style="font-size: 0.95rem;" data-key="active_courses">Active Courses</div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="small fw-bold text-secondary" data-key="male_scholars">Male
+                                                Scholars</span>
+                                            <span class="small fw-900 text-primary">
+                                                <%= stats.male_count %>
+                                            </span>
+                                        </div>
+                                        <div class="progress shadow-none"
+                                            style="height: 8px; border-radius: 10px; background: rgba(59, 130, 246, 0.05);">
+                                            <div class="progress-bar"
+                                                style="width: <%= (stats.students > 0) ? (stats.male_count / stats.students * 100) : 0 %>%; background: var(--gradient-1); border-radius: 10px;">
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="h3 fw-900 m-0">
-                                        <%= stats.courses %>
-                                    </div>
-                                </div>
-                                
-                                <div class="p-3 d-flex justify-content-between align-items-center"
-                                    style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(5px);">
                                     <div>
-                                        <div class="small opacity-75 fw-bold text-uppercase"
-                                            style="letter-spacing: 1px; font-size: 0.65rem;" data-key="success">Success</div>
-                                        <div class="fw-bold" style="font-size: 0.95rem;" data-key="live_enrollments">Live Enrollments</div>
-                                    </div>
-                                    <div class="h3 fw-900 m-0">
-                                        <%= stats.enrollments %>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="small fw-bold text-secondary" data-key="female_scholars">Female
+                                                Scholars</span>
+                                            <span class="small fw-900 text-danger">
+                                                <%= stats.female_count %>
+                                            </span>
+                                        </div>
+                                        <div class="progress shadow-none"
+                                            style="height: 8px; border-radius: 10px; background: rgba(239, 68, 68, 0.05);">
+                                            <div class="progress-bar bg-danger"
+                                                style="width: <%= (stats.students > 0) ? (stats.female_count / stats.students * 100) : 0 %>%; border-radius: 10px;">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="mt-4 pt-2 text-center border-top border-white border-opacity-10">
-                                <a href="/admin/reports" class="text-white text-decoration-none small fw-bold d-flex align-items-center justify-content-center gap-2"
-                                    style="letter-spacing: 1.5px; opacity: 0.9;">
-                                    <span data-key="access_analytics">ACCESS DATA ANALYTICS</span> <i class="fas fa-external-link-alt smaller"></i>
-                                </a>
+                        <!-- Academic Success -->
+                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.3s">
+                            <div class="dashboard-card apple-card transition-hover">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="text-secondary small fw-bold text-uppercase"
+                                        style="letter-spacing: 1px; opacity: 0.7;" data-key="promotion_rate">
+                                        Promotion Rate</div>
+                                    <i class="fas fa-award text-success opacity-50"></i>
+                                </div>
+                                <div class="d-flex align-items-end gap-3 mb-3">
+                                    <div class="h1 fw-900 mb-0 text-success ls-tighter">
+                                        <%= (stats.pass_count + stats.fail_count> 0) ? Math.round(stats.pass_count /
+                                            (stats.pass_count + stats.fail_count) * 100) : 0 %>%
+                                    </div>
+                                    <div class="text-secondary small fw-bold mb-2" data-key="overall_success">Overall
+                                        Success</div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <span
+                                        class="badge rounded-pill bg-success bg-opacity-10 text-success border-0 px-3 py-2 fw-bold"
+                                        style="font-size: 0.7rem;">
+                                        <%= stats.pass_count %> <span data-key="promoted">PROMOTED</span>
+                                    </span>
+                                    <span
+                                        class="badge rounded-pill bg-danger bg-opacity-10 text-danger border-0 px-3 py-2 fw-bold"
+                                        style="font-size: 0.7rem;">
+                                        <%= stats.fail_count %> <span data-key="retained">RETAINED</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- National Exams -->
+                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.4s">
+                            <div class="dashboard-card apple-card transition-hover">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="text-secondary small fw-bold text-uppercase"
+                                        style="letter-spacing: 1px; opacity: 0.7;" data-key="performance_index">
+                                        Performance Index</div>
+                                    <i class="fas fa-file-contract text-info opacity-50"></i>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="h2 fw-900 mb-0 ls-tighter" style="color: var(--dark-text)">
+                                        <%= stats.national_exam_avg ? parseFloat(stats.national_exam_avg).toFixed(1)
+                                            : '0.0' %>
+                                    </div>
+                                    <div class="text-secondary small fw-bold" data-key="average_proficiency">Average
+                                        Proficiency</div>
+                                </div>
+                                <div
+                                    class="p-2 px-3 rounded-pill bg-light d-flex justify-content-between align-items-center border">
+                                    <span class="smaller fw-bold text-secondary text-uppercase"
+                                        style="letter-spacing: 0.5px;" data-key="tests_analyzed">Tests Analyzed</span>
+                                    <span class="small fw-900 text-primary">
+                                        <%= stats.national_exam_count %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Withdrawn Students -->
+                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.5s">
+                            <div class="dashboard-card apple-card transition-hover"
+                                style="background: var(--gradient-2); color: white;">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="small fw-bold text-uppercase"
+                                        style="letter-spacing: 1px; color: rgba(255,255,255,0.8);" data-key="retention">
+                                        Retention</div>
+                                    <i class="fas fa-user-minus opacity-50"></i>
+                                </div>
+                                <div class="text-center py-2">
+                                    <div class="h1 fw-900 mb-0 ls-tighter">
+                                        <%= stats.withdrawn_count %>
+                                    </div>
+                                    <div class="small fw-bold text-uppercase mt-1"
+                                        style="letter-spacing: 1px; color: rgba(255,255,255,0.8);"
+                                        data-key="withdrawn_archive">Withdrawn Archive</div>
+                                </div>
+                                <div class="mt-3 text-center">
+                                    <a href="/admin/students?status=withdrawn"
+                                        class="btn btn-sm btn-glass-light w-100 rounded-pill fw-bold"
+                                        style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                                        <span data-key="audit_records">Audit Records</span> <i
+                                            class="fas fa-chevron-right ms-2 small"></i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Content Grid -->
+                    <div class="row g-4">
+                        <!-- Recent Activities -->
+                        <div class="col-lg-8" data-reveal="bottom" data-distance="40px" data-delay="0.2s">
+                            <div class="dashboard-card apple-card transition-hover h-100 p-0 overflow-hidden">
+                                <div
+                                    class="p-4 px-5 d-flex justify-content-between align-items-center border-bottom bg-light bg-opacity-50">
+                                    <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i
+                                            class="fas fa-history me-3 text-primary"></i><span
+                                            data-key="operational_insights">Operational Insights</span></h3>
+                                    <a href="/admin/users"
+                                        class="btn btn-sm btn-link text-decoration-none fw-bold text-primary"><span
+                                            data-key="view_history">View Full
+                                            History</span> <i class="fas fa-arrow-right ms-2 small"></i></a>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="bg-light bg-opacity-25">
+                                            <tr class="text-secondary small fw-bold"
+                                                style="text-transform: uppercase; letter-spacing: 1px;">
+                                                <th class="border-0 py-4 px-5" data-key="admin_event">Administrative
+                                                    Event</th>
+                                                <th class="border-0 py-4" data-key="timestamp">Timestamp</th>
+                                                <th class="border-0 py-4 px-5 text-end" data-key="outcome">Outcome</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% if (recentActivities && recentActivities.length> 0) { %>
+                                                <% for (let activity of recentActivities) { %>
+                                                    <tr>
+                                                        <td class="border-0 py-4 px-5">
+                                                            <div class="d-flex align-items-center gap-4">
+                                                                <div class="avatar-initials avatar-blue shadow-sm"
+                                                                    style="width: 44px; height: 44px; font-size: 1rem; border-radius: 12px;">
+                                                                    <%= (activity.description ?
+                                                                        activity.description.charAt(0).toUpperCase()
+                                                                        : '?' ) %>
+                                                                </div>
+                                                                <div>
+                                                                    <div class="fw-bold"
+                                                                        style="color: var(--dark-text); font-size: 1rem;">
+                                                                        <%= activity.description %>
+                                                                    </div>
+                                                                    <div class="text-secondary smaller fw-bold text-uppercase mt-1"
+                                                                        style="letter-spacing: 0.5px; opacity: 0.6;">
+                                                                        <%= activity.role || 'System' %> <span
+                                                                                data-key="account">Account</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="border-0 py-4">
+                                                            <div class="text-secondary small fw-bold">
+                                                                <%= new
+                                                                    Date(activity.activity_date).toLocaleDateString(undefined,
+                                                                    { month: 'short' , day: 'numeric' }) %>
+                                                            </div>
+                                                            <div class="smaller text-muted mt-1 fw-medium">
+                                                                <%= new
+                                                                    Date(activity.activity_date).toLocaleTimeString(undefined,
+                                                                    { hour: '2-digit' , minute: '2-digit' }) %>
+                                                            </div>
+                                                        </td>
+                                                        <td class="border-0 py-4 px-5 text-end">
+                                                            <span
+                                                                class="badge rounded-pill px-3 py-2 fw-bold text-uppercase"
+                                                                style="background: rgba(16,185,129,0.08); color: #10b981; font-size: 0.65rem; letter-spacing: 0.5px;">
+                                                                <i class="fas fa-check-circle me-1"></i> <span
+                                                                    data-key="verified">VERIFIED</span>
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    <% } %>
+                                                        <% } else { %>
+                                                            <tr>
+                                                                <td colspan="3" class="border-0 text-center py-5">
+                                                                    <div class="text-secondary opacity-30 mb-3">
+                                                                        <i class="fas fa-inbox fa-4x"></i>
+                                                                    </div>
+                                                                    <div class="text-secondary fw-bold"
+                                                                        data-key="no_activities">No recent activities
+                                                                        found</div>
+                                                                </td>
+                                                            </tr>
+                                                            <% } %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System & Quick Actions -->
+                        <div class="col-lg-4" data-reveal="bottom" data-distance="40px" data-delay="0.4s">
+                            <!-- Global Semester Management Card -->
+                            <div class="dashboard-card apple-card transition-hover mb-4"
+                                style="background: var(--panel-bg); border-radius: var(--panel-radius); border: 1px solid var(--panel-border); padding: 1.5rem; box-shadow: var(--shadow-md);">
+                                <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)">
+                                    <i class="fas fa-calendar-check me-2 text-success"></i>
+                                    <span data-key="semester_management">Semester Control</span>
+                                </h3>
+                                <p class="text-secondary small mb-3" data-key="semester_control_desc">Switch the active
+                                    semester globally. All dashboards and modules will instantly synchronize.</p>
+
+                                <div class="d-flex align-items-center gap-3">
+                                    <button type="button"
+                                        class="btn btn-sm w-100 py-2 fw-bold rounded-3 transition-transform btn-semester-switch <%= academicContext.semester === '1' ? 'btn-primary' : 'btn-outline-primary' %>"
+                                        data-semester="Semester 1" style="font-size: 0.9rem;">
+                                        Semester 1
+                                    </button>
+                                    <button type="button"
+                                        class="btn btn-sm w-100 py-2 fw-bold rounded-3 transition-transform btn-semester-switch <%= academicContext.semester === '2' ? 'btn-primary' : 'btn-outline-primary' %>"
+                                        data-semester="Semester 2" style="font-size: 0.9rem;">
+                                        Semester 2
+                                    </button>
+                                </div>
+
+                                <div class="dashboard-card apple-card transition-hover mb-4"
+                                    style="background: var(--panel-bg); border-radius: var(--panel-radius); border: 1px solid var(--panel-border); padding: 1.5rem; box-shadow: var(--shadow-md);">
+                                    <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)">Past Academic Sessions
+                                    </h3>
+                                    <select id="pastSessionsSelect" class="form-select border-0 bg-light fw-bold"
+                                        style="border-radius:12px; min-width:200px; padding:0.6rem 1.2rem; font-size:0.95rem; box-shadow: var(--shadow-sm);">
+                                        <option value="" disabled selected>Loading sessions...</option>
+                                    </select>
+                                    <button id="activateSessionBtn" class="btn btn-primary w-100 mt-2"
+                                        style="border-radius:12px; padding:0.6rem 1.2rem; font-size:0.95rem; box-shadow: var(--shadow-sm);">Activate
+                                        Selected Session</button>
+                                </div>
+                                <script>
+                                    async function loadSessions() {
+                                        try {
+                                            const res = await fetch('/admin/sessions');
+                                            const data = await res.json();
+                                            const sessions = data.sessions || [];
+                                            const select = document.getElementById('pastSessionsSelect');
+                                            select.innerHTML = '';
+                                            sessions.forEach(s => {
+                                                const opt = document.createElement('option');
+                                                opt.value = s.id;
+                                                opt.textContent = `${s.academic_year} - Semester ${s.semester}` + (s.is_active ? ' (active)' : '');
+                                                select.appendChild(opt);
+                                            });
+                                        } catch (e) {
+                                            console.error('Failed to load sessions', e);
+                                        }
+                                    }
+                                    document.getElementById('activateSessionBtn').addEventListener('click', async () => {
+                                        const select = document.getElementById('pastSessionsSelect');
+                                        const sessionId = select.value;
+                                        if (!sessionId) return alert('Select a session first');
+                                        try {
+                                            const res = await fetch(`/admin/sessions/${sessionId}/activate`, { method: 'PATCH' });
+                                            const data = await res.json();
+                                            if (data.success) {
+                                                alert('Session activated');
+                                                loadSessions();
+                                            } else {
+                                                alert('Failed: ' + (data.error || data.message));
+                                            }
+                                        } catch (e) {
+                                            console.error('Activation error', e);
+                                        }
+                                    });
+                                    // Also activate on select change
+                                    document.getElementById('pastSessionsSelect').addEventListener('change', async (e) => {
+                                        const sessionId = e.target.value;
+                                        if (!sessionId) return;
+                                        try {
+                                            const res = await fetch(`/admin/sessions/${sessionId}/activate`, { method: 'PATCH' });
+                                            const data = await res.json();
+                                            if (data.success) {
+                                                alert('Session activated via selection');
+                                                loadSessions();
+                                            } else {
+                                                alert('Failed: ' + (data.error || data.message));
+                                            }
+                                        } catch (e) {
+                                            console.error('Activation error', e);
+                                        }
+                                    });
+                                    loadSessions();
+                                </script>
+                            </div>
+
+                            <div class="dashboard-card apple-card transition-hover mb-4"
+                                style="background: var(--panel-bg); border-radius: var(--panel-radius); border: 1px solid var(--panel-border); padding: 1.5rem; box-shadow: var(--shadow-md);">
+                                <h3 class="h5 fw-bold mb-4" style="color: var(--dark-text)"><i
+                                        class="fas fa-bolt me-2 text-warning"></i><span data-key="direct_command">Direct
+                                        Command</span></h3>
+                                <div class="d-grid gap-3">
+                                    <a href="/admin/students?form=open"
+                                        class="btn btn-primary w-100 py-3 d-flex align-items-center justify-content-center gap-3 fw-bold rounded-4 shadow-premium border-0 transition-transform">
+                                        <i class="fas fa-user-plus"></i> <span data-key="enroll_student">Enroll
+                                            Student</span>
+                                    </a>
+                                    <a href="/admin/teachers?form=open"
+                                        class="btn btn-light w-100 py-3 d-flex align-items-center justify-content-center gap-3 fw-bold rounded-4 shadow-sm border-0 transition-transform"
+                                        style="background: var(--bg-main); color: var(--dark-text)">
+                                        <i class="fas fa-user-tie"></i> <span data-key="recruit_faculty">Recruit
+                                            Faculty</span>
+                                    </a>
+                                    <div class="d-flex gap-3">
+                                        <a href="/admin/parents?form=open"
+                                            class="btn btn-outline-primary w-50 py-3 rounded-4 fw-bold"
+                                            style="border-width: 2px;" data-key="add_guardian">
+                                            Add Guardian
+                                        </a>
+                                        <a href="/admin/announcements?form=open"
+                                            class="btn btn-outline-secondary w-50 py-3 rounded-4 fw-bold"
+                                            style="border-width: 2px;" data-key="broadcast">
+                                            Broadcast
+                                        </a>
+                                    </div>
+                                    <a href="/admin/certificates"
+                                        class="btn btn-outline-success w-100 py-3 d-flex align-items-center justify-content-center gap-3 fw-bold rounded-4 shadow-sm"
+                                        style="border-width: 2px; border-style: dashed;">
+                                        <i class="fas fa-award"></i> <span data-key="issue_certificates">Issue
+                                            Certificates</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="dashboard-card apple-card transition-hover"
+                                style="background: var(--gradient-premium) !important; color: white !important; border: none !important; box-shadow: var(--shadow-premium);">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h3 class="h5 fw-bold m-0" style="color: white"><i
+                                            class="fas fa-chart-pie me-3"></i><span data-key="system_pulse">System
+                                            Pulse</span></h3>
+                                    <div class="badge bg-white bg-opacity-20 rounded-pill px-3 py-1 smaller fw-bold"
+                                        data-key="real_time">REAL-TIME</div>
+                                </div>
+
+                                <div class="d-flex flex-column gap-3">
+                                    <div class="p-3 d-flex justify-content-between align-items-center"
+                                        style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(5px);">
+                                        <div>
+                                            <div class="small opacity-75 fw-bold text-uppercase"
+                                                style="letter-spacing: 1px; font-size: 0.65rem;" data-key="programs">
+                                                Programs</div>
+                                            <div class="fw-bold" style="font-size: 0.95rem;" data-key="active_courses">
+                                                Active Courses</div>
+                                        </div>
+                                        <div class="h3 fw-900 m-0">
+                                            <%= stats.courses %>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-3 d-flex justify-content-between align-items-center"
+                                        style="background: rgba(255,255,255,0.1); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(5px);">
+                                        <div>
+                                            <div class="small opacity-75 fw-bold text-uppercase"
+                                                style="letter-spacing: 1px; font-size: 0.65rem;" data-key="success">
+                                                Success</div>
+                                            <div class="fw-bold" style="font-size: 0.95rem;"
+                                                data-key="live_enrollments">Live Enrollments</div>
+                                        </div>
+                                        <div class="h3 fw-900 m-0">
+                                            <%= stats.enrollments %>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 pt-2 text-center border-top border-white border-opacity-10">
+                                    <a href="/admin/reports"
+                                        class="text-white text-decoration-none small fw-bold d-flex align-items-center justify-content-center gap-2"
+                                        style="letter-spacing: 1.5px; opacity: 0.9;">
+                                        <span data-key="access_analytics">ACCESS DATA ANALYTICS</span> <i
+                                            class="fas fa-external-link-alt smaller"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
 
             </main>
@@ -426,6 +585,46 @@
 
     <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.currentUser = { id: <%= user.id %>, role: "<%= user.role %>" };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const switchButtons = document.querySelectorAll('.btn-semester-switch');
+            switchButtons.forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const semester = btn.getAttribute('data-semester');
+
+                    // Show a loader state
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    btn.disabled = true;
+
+                    try {
+                        const response = await fetch('/admin/semester/switch', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ semester })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            // Socket.IO will trigger reload automatically via semesterChanged event.
+                        } else {
+                            alert('Failed to switch semester: ' + (data.message || data.error));
+                            btn.innerHTML = originalHTML;
+                            btn.disabled = false;
+                        }
+                    } catch (err) {
+                        console.error('Error switching semester:', err);
+                        alert('Network error switching semester');
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }
+                });
+            });
+            loadSessions();
+        });
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="/js/translations.js"></script>
     <script src="/js/brocode-script.js"></script>
 </body>

@@ -8,6 +8,10 @@
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/all.min.css">
     <link href="/css/inter-font.css" rel="stylesheet">
+<style>
+<style>
+  /* Removed custom admin-grades-table CSS. Bootstrap default table styling will be used. */
+</style></style>
     <link rel="stylesheet" href="/css/brocode-style.css">
 </head>
 
@@ -74,7 +78,8 @@
                 </li>
             </ul>
 
-            <div class="tab-content">
+            <div class="premium-panel p-4 mb-4">
+        <div class="tab-content">
                 <!-- All Records Tab -->
                 <div class="tab-pane fade show active" id="records" role="tabpanel">
                     <!-- Quick Grade Badges -->
@@ -118,14 +123,22 @@
 
                     <div class="glass-panel" style="background: white !important; border-radius: 24px;">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead style="background: rgba(0,0,0,0.02)">
+                            <table class="table table-hover align-middle mb-0 table-striped">
+                                <colgroup>
+                                    <col style="width: 20%;">
+                                    <col style="width: 30%;">
+                                    <col style="width: 10%;">
+                                    <col style="width: 10%;">
+                                    <col style="width: 20%;">
+                                    <col style="width: 10%;">
+                                </colgroup>
+                                <thead style="background:#f8fafc">
                                     <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 0.05em;">
-                                        <th class="border-0 py-3">Student Profile</th>
-                                        <th class="border-0 py-3">Subject & Task</th>
+                                        <th class="border-0 py-3 text-start">Student Profile</th>
+                                        <th class="border-0 py-3 text-start">Subject &amp; Task</th>
                                         <th class="border-0 py-3 text-center">Score</th>
                                         <th class="border-0 py-3 text-center">Status</th>
-                                        <th class="border-0 py-3">Evaluation Date</th>
+                                        <th class="border-0 py-3 text-start">Evaluation Date</th>
                                         <th class="border-0 py-3 text-end pe-4">Management</th>
                                     </tr>
                                 </thead>
@@ -269,7 +282,7 @@
                                                 </td>
                                                 <td class="py-3 border-0">
                                                     <div class="fw-bold"><%= att.class_name %></div>
-                                                    <small class="text-primary fw-bold"><%= att.course_name || 'Daily Attendance' %></small>
+                                                    <small class="text-primary fw-bold"><%= att.course_name || 'Homeroom' %></small>
                                                 </td>
                                                 <td class="py-3 border-0 text-center">
                                                     <span class="badge bg-light text-dark px-3 py-2 rounded-pill fw-bold border"><%= att.total_records %> students</span>

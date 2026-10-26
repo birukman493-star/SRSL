@@ -1,10 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Assignments - Abdigudina Faculty</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -17,14 +18,16 @@
         .premium-card {
             background: white;
             border-radius: 24px;
-            border: 1px solid rgba(0,0,0,0.05);
+            border: 1px solid rgba(0, 0, 0, 0.05);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
+
         .premium-card:hover {
             transform: translateY(-5px);
             border-color: var(--primary-color);
         }
+
         .premium-input {
             background: #f8fafc !important;
             border: 1px solid #e2e8f0 !important;
@@ -33,11 +36,13 @@
             font-weight: 600;
             color: var(--dark-text) !important;
         }
+
         .premium-input:focus {
             background: white !important;
             border-color: var(--primary-color) !important;
             box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
+
         .stat-badge {
             padding: 4px 12px;
             border-radius: 100px;
@@ -48,107 +53,139 @@
         }
     </style>
 </head>
+
 <body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
-        <main class="main-panel w-100 p-4">
-            <!-- Header -->
-            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
-                            Academic Assignments
-                        </h1>
-                        <p class="text-secondary m-0" style="font-weight: 500;">Design, deploy, and track student assessments and tasks</p>
-                    </div>
-                    <div>
-                        <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#newAssignmentModal">
-                            <i class="fas fa-plus-circle me-2"></i> Create New Task
-                        </button>
+            <main class="main-panel w-100 p-4">
+                <!-- Header -->
+                <div class="dashboard-header mb-4 shadow-sm"
+                    style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="dashboard-title"
+                                style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
+                                Academic Assignments
+                            </h1>
+                            <p class="text-secondary m-0" style="font-weight: 500;">Design, deploy, and track student
+                                assessments and tasks</p>
+                        </div>
+                        <div>
+                            <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm"
+                                data-bs-toggle="modal" data-bs-target="#newAssignmentModal">
+                                <i class="fas fa-plus-circle me-2"></i> Create New Task
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="row g-4">
-                <% if (assignments && assignments.length > 0) { %>
-                    <% assignments.forEach(a => { %>
-                    <div class="col-12">
-                        <div class="premium-card p-4">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center gap-4">
-                                    <div class="shadow-sm d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: rgba(37, 99, 235, 0.08); color: var(--primary-color); border-radius: 18px; font-size: 1.5rem;">
-                                        <i class="fas fa-file-signature"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="fw-800 mb-1" style="color: var(--dark-text);"><%= a.title %></h4>
-                                        <div class="d-flex gap-3 text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.7rem;">
-                                            <span><i class="fas fa-graduation-cap text-primary me-1"></i> <%= a.class_name %></span>
-                                            <span class="opacity-25">|</span>
-                                            <span><i class="far fa-calendar-alt text-warning me-1"></i> Due: <%= new Date(a.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
+                <div class="row g-4">
+                    <% if (assignments && assignments.length> 0) { %>
+                        <% assignments.forEach(a=> { %>
+                            <div class="col-12">
+                                <div class="premium-card p-4">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center gap-4">
+                                            <div class="shadow-sm d-flex align-items-center justify-content-center"
+                                                style="width: 60px; height: 60px; background: rgba(37, 99, 235, 0.08); color: var(--primary-color); border-radius: 18px; font-size: 1.5rem;">
+                                                <i class="fas fa-file-signature"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="fw-800 mb-1" style="color: var(--dark-text);">
+                                                    <%= a.title %>
+                                                </h4>
+                                                <div class="d-flex gap-3 text-secondary small fw-bold text-uppercase"
+                                                    style="letter-spacing: 0.5px; font-size: 0.7rem;">
+                                                    <span><i class="fas fa-graduation-cap text-primary me-1"></i>
+                                                        <%= a.class_name %>
+                                                    </span>
+                                                    <span class="opacity-25">|</span>
+                                                    <span><i class="far fa-calendar-alt text-warning me-1"></i> Due: <%=
+                                                            new Date(a.due_date).toLocaleDateString(undefined, {
+                                                            month: 'short' , day: 'numeric' , year: 'numeric' }) %>
+                                                            </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-4">
+                                            <div class="text-end me-2">
+                                                <div class="h3 fw-bold mb-0" style="color: var(--dark-text);">
+                                                    <%= a.max_points %> <small class="text-secondary fw-bold"
+                                                            style="font-size: 0.65rem;">PTS</small>
+                                                </div>
+                                                <div class="text-secondary fw-bold"
+                                                    style="font-size: 0.65rem; text-transform: uppercase;">Maximum Score
+                                                </div>
+                                            </div>
+                                            <span class="stat-badge bg-primary bg-opacity-10 text-primary">
+                                                <%= a.assignment_type %>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center gap-4">
-                                    <div class="text-end me-2">
-                                        <div class="h3 fw-bold mb-0" style="color: var(--dark-text);"><%= a.max_points %> <small class="text-secondary fw-bold" style="font-size: 0.65rem;">PTS</small></div>
-                                        <div class="text-secondary fw-bold" style="font-size: 0.65rem; text-transform: uppercase;">Maximum Score</div>
+                            </div>
+                            <% }); %>
+                                <% } else { %>
+                                    <div class="col-12 text-center py-5">
+                                        <div class="p-5 premium-card">
+                                            <div class="text-secondary opacity-20 mb-4">
+                                                <i class="fas fa-tasks fa-5x"></i>
+                                            </div>
+                                            <h3 class="fw-900" style="color: var(--dark-text);">No Active Assignments
+                                            </h3>
+                                            <p class="text-secondary fw-medium px-5">Your task list is empty. Click
+                                                "Create New Task" to begin drafting assignments for your classes.</p>
+                                        </div>
                                     </div>
-                                    <span class="stat-badge bg-primary bg-opacity-10 text-primary">
-                                        <%= a.assignment_type %>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <% }); %>
-                <% } else { %>
-                    <div class="col-12 text-center py-5">
-                        <div class="p-5 premium-card">
-                            <div class="text-secondary opacity-20 mb-4">
-                                <i class="fas fa-tasks fa-5x"></i>
-                            </div>
-                            <h3 class="fw-900" style="color: var(--dark-text);">No Active Assignments</h3>
-                            <p class="text-secondary fw-medium px-5">Your task list is empty. Click "Create New Task" to begin drafting assignments for your classes.</p>
-                        </div>
-                    </div>
-                <% } %>
-            </div>
-        </main>
+                                    <% } %>
+                </div>
+            </main>
     </div>
-    
+
     <!-- Modal -->
     <div class="modal fade" id="newAssignmentModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content" style="border-radius: 28px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+            <div class="modal-content"
+                style="border-radius: 28px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
                 <div class="modal-header border-0 p-4">
-                    <h5 class="modal-title fw-900" style="color: var(--dark-text); font-size: 1.5rem;"><i class="fas fa-plus-circle text-primary me-2"></i> Create Assignment</h5>
+                    <h5 class="modal-title fw-900" style="color: var(--dark-text); font-size: 1.5rem;"><i
+                            class="fas fa-plus-circle text-primary me-2"></i> Create Assignment</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 pt-0">
                     <form id="assignmentForm">
                         <div class="row g-4">
                             <div class="col-md-8">
-                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing: 1px;">Assignment Title</label>
-                                <input type="text" class="form-control premium-input" name="title" placeholder="e.g. Unit 4 Final Project" required>
+                                <label class="form-label text-secondary small fw-800 text-uppercase"
+                                    style="letter-spacing: 1px;">Assignment Title</label>
+                                <input type="text" class="form-control premium-input" name="title"
+                                    placeholder="e.g. Unit 4 Final Project" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing: 1px;">Max Points</label>
+                                <label class="form-label text-secondary small fw-800 text-uppercase"
+                                    style="letter-spacing: 1px;">Max Points</label>
                                 <input type="number" class="form-control premium-input" name="maxPoints" value="100">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing: 1px;">Target Class</label>
-                                <select class="form-select premium-input" name="classId" required style="background-image: none;">
-                                    <% if (typeof classes !== 'undefined') { %>
-                                        <% classes.forEach(c => { %>
-                                            <option value="<%= c.id %>"><%= c.name %> (<%= c.grade %>-<%= c.section %>)</option>
-                                        <% }); %>
-                                    <% } %>
+                                <label class="form-label text-secondary small fw-800 text-uppercase"
+                                    style="letter-spacing: 1px;">Target Class</label>
+                                <select class="form-select premium-input" name="classId" required
+                                    style="background-image: none;">
+                                    <% if (typeof classes !=='undefined' ) { %>
+                                        <% classes.forEach(c=> { %>
+                                            <option value="<%= c.id %>">
+                                                <%= c.name %> (<%= c.grade %>-<%= c.section %>)
+                                            </option>
+                                            <% }); %>
+                                                <% } %>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing: 1px;">Task Category</label>
-                                <select class="form-select premium-input" name="assignmentType" style="background-image: none;">
+                                <label class="form-label text-secondary small fw-800 text-uppercase"
+                                    style="letter-spacing: 1px;">Task Category</label>
+                                <select class="form-select premium-input" name="assignmentType"
+                                    style="background-image: none;">
                                     <option value="homework">Homework</option>
                                     <option value="project">Project</option>
                                     <option value="lab">Lab / Practical</option>
@@ -156,19 +193,24 @@
                                 </select>
                             </div>
                             <div class="col-md-12">
-                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing: 1px;">Submission Deadline</label>
+                                <label class="form-label text-secondary small fw-800 text-uppercase"
+                                    style="letter-spacing: 1px;">Submission Deadline</label>
                                 <input type="date" class="form-control premium-input" name="dueDate" required>
                             </div>
                             <div class="col-12">
-                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing: 1px;">Instructional Notes</label>
-                                <textarea class="form-control premium-input" name="description" rows="4" placeholder="Describe the task and expectations..."></textarea>
+                                <label class="form-label text-secondary small fw-800 text-uppercase"
+                                    style="letter-spacing: 1px;">Instructional Notes</label>
+                                <textarea class="form-control premium-input" name="description" rows="4"
+                                    placeholder="Describe the task and expectations..."></textarea>
                             </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">
-                    <button type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" id="submitAssignment">
+                    <button type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold"
+                        data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm"
+                        id="submitAssignment">
                         <i class="fas fa-check-circle me-2"></i> Deploy Assignment
                     </button>
                 </div>
@@ -177,12 +219,13 @@
     </div>
 
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script>
+    <script src="/js/brocode-script.js"></script>
     <script>
         document.getElementById('submitAssignment').addEventListener('click', async () => {
             const formData = new FormData(document.getElementById('assignmentForm'));
             const data = Object.fromEntries(formData.entries());
-            
+
             const btn = document.getElementById('submitAssignment');
             const originalHtml = btn.innerHTML;
             btn.disabled = true;
@@ -210,9 +253,14 @@
         });
     </script>
     <style>
-        .fw-800 { font-weight: 800; }
-        .fw-900 { font-weight: 900; }
+        .fw-800 {
+            font-weight: 800;
+        }
+
+        .fw-900 {
+            font-weight: 900;
+        }
     </style>
 </body>
-</html>
 
+</html>

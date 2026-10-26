@@ -1,5 +1,11 @@
 const express = require('express');
 const { pool } = require('../config/db');
+const {
+  getSetting,
+  getAcademicContext,
+  DEFAULT_ACADEMIC_YEAR,
+  ATTENDANCE_COURSE_NAME_SQL,
+} = require('../config/systemSettings');
 const router = express.Router();
 
 // Middleware to check if user is parent
@@ -12,16 +18,6 @@ function isParent(req, res, next) {
 
 // Apply parent middleware to all routes
 router.use(isParent);
-
-// Helper to get system settings dynamically
-async function getSetting(key, defaultValue = '') {
-  try {
-    const [rows] = await pool.execute('SELECT setting_value FROM system_settings WHERE setting_key = ?', [key]);
-    return rows.length > 0 ? rows[0].setting_value : defaultValue;
-  } catch (e) {
-    return defaultValue;
-  }
-}
 
 // GET /parent/dashboard - Parent dashboard
 router.get('/dashboard', async (req, res) => {
@@ -52,6 +48,9 @@ router.get('/dashboard', async (req, res) => {
     `, [parent.id]);
     
     // Get child-specific stats using ONLY approved_results view (Single Source of Truth)
+    let totalAttended = 0;
+    let totalAttendanceRecords = 0;
+    
     for (let child of children) {
       const [childStats] = await pool.execute(`
         SELECT 
@@ -83,21 +82,23 @@ router.get('/dashboard', async (req, res) => {
         );
         if (childCls.length > 0) childClassId = childCls[0].id;
       }
-      const activeYearForChild = await getSetting('academicYear', '');
-      let childRankData = [{ rank: 'N/A' }];
+      const activeYearForChild = (await getAcademicContext()).academicYear;
+      const activeSemForChild = (await getAcademicContext()).semester;
+      let childRankData = [{ child_rank: 'N/A' }];
       if (childClassId) {
         const childAvg = childStats[0].average_score ? parseFloat(childStats[0].average_score) : 0;
         const [childRankRows] = await pool.execute(`
-          SELECT COUNT(*) + 1 as rank
-          FROM (
-            SELECT scr2.student_id, AVG(scr2.total_score) as avg_score
-            FROM approved_results scr2
-            WHERE scr2.class_id = ?
-              AND (? = '' OR scr2.academic_year = ?)
-            GROUP BY scr2.student_id
-          ) as class_ranks
-          WHERE avg_score > ?
-        `, [childClassId, activeYearForChild, activeYearForChild, childAvg]);
+        SELECT COUNT(*) + 1 as child_rank
+        FROM (
+          SELECT scr2.student_id, AVG(scr2.total_score) as avg_score
+          FROM approved_results scr2
+          WHERE scr2.class_id = ?
+            AND (? = '' OR scr2.academic_year = ?)
+            AND (? = '' OR scr2.semester_id = ?)
+          GROUP BY scr2.student_id
+        ) as class_ranks
+        WHERE avg_score > ?
+      `, [childClassId, activeYearForChild, activeYearForChild, activeSemForChild, activeSemForChild, childAvg]);
         childRankData = childRankRows;
       }
 
@@ -117,13 +118,15 @@ router.get('/dashboard', async (req, res) => {
       `, [child.id]);
       const attTotal = childAttendance[0].total || 0;
       const attAttended = childAttendance[0].attended || 0;
+      totalAttended += attAttended;
+      totalAttendanceRecords += attTotal;
       child.attendance_rate = attTotal > 0 ? ((attAttended / attTotal) * 100).toFixed(1) : '100.0';
       
       child.gpa = childStats[0].average_score ? (parseFloat(childStats[0].average_score) / 25).toFixed(2) : '0.00'; 
       child.average_score = childStats[0].average_score ? parseFloat(childStats[0].average_score).toFixed(1) : '0.0';
       child.total_score = childStats[0].total_score || 0;
       child.semester_stats = childSemesterStats;
-      child.rank = (childRankData[0] && childRankData[0].rank) || 'N/A';
+      child.rank = (childRankData[0] && childRankData[0].child_rank) || 'N/A';
       child.total_in_class = totalInClass[0].total;
     }
 
@@ -144,12 +147,33 @@ router.get('/dashboard', async (req, res) => {
       WHERE psr.parent_id = ? AND scr.total_score >= 90
     `, [parent.id]);
 
+    const [successData] = await pool.execute(`
+      SELECT 
+        COUNT(*) as total_courses,
+        SUM(CASE WHEN scr.total_score >= 50 THEN 1 ELSE 0 END) as passed_courses
+      FROM approved_results scr
+      JOIN parent_student_relations psr ON scr.student_id = psr.student_id
+      WHERE psr.parent_id = ?
+    `, [parent.id]);
+
+    const totalCourses = successData[0].total_courses || 0;
+    const passedCourses = successData[0].passed_courses || 0;
+    const overallSuccessRate = totalCourses > 0
+      ? Math.round((passedCourses / totalCourses) * 100) + '%'
+      : '100%';
+
+    const overallAttendanceRate = totalAttendanceRecords > 0 
+      ? ((totalAttended / totalAttendanceRecords) * 100).toFixed(1) + '%'
+      : '100.0%';
+
     const stats = {
       averageGrade: statsData[0].avg_grade ? Math.round(parseFloat(statsData[0].avg_grade)) + '%' : 'N/A',
       cgpa: statsData[0].avg_grade ? (parseFloat(statsData[0].avg_grade) / 25).toFixed(2) : '0.00',
       totalScore: statsData[0].total_score || 0,
       maxTotal: (statsData[0].approved_count || 0) * 100,
-      achievements: achievementsData[0].count || 0
+      achievements: achievementsData[0].count || 0,
+      overallSuccessRate,
+      overallAttendanceRate
     };
     
     // Get recent activities
@@ -276,11 +300,7 @@ router.get('/grades/:studentId', async (req, res) => {
       ORDER BY scr.academic_year DESC, scr.semester_id ASC, co.course_name ASC
     `, [studentId]);
 
-    const activeYear = await getSetting('academicYear', '2023-2024');
-    let activeSemSetting = await getSetting('semester', '1');
-    if (!activeSemSetting.startsWith('Semester')) {
-      activeSemSetting = 'Semester ' + activeSemSetting;
-    }
+    const { academicYear: activeYear, semesterLabel: activeSemSetting } = await getAcademicContext();
 
     const courseList = courseResults.map(cr => ({
       course_name: cr.course_name || 'General Grade',
@@ -301,7 +321,7 @@ router.get('/grades/:studentId', async (req, res) => {
       FROM student_results sr
       JOIN assessment_categories ac ON sr.category_id = ac.id
       JOIN grading_structures gs ON ac.structure_id = gs.id
-      WHERE sr.student_id = ? AND sr.status = 'approved'
+      WHERE sr.student_id = ? AND sr.status IN ('approved','saved')
       ORDER BY ac.order_index ASC
     `, [studentId]);
 
@@ -403,7 +423,7 @@ router.get('/attendance/:studentId', async (req, res) => {
     
     const courseIdFilter = req.query.courseId;
     let query = `
-      SELECT a.*, c.name as class_name, COALESCE(co.course_name, 'Daily Attendance') as course_name
+      SELECT a.*, c.name as class_name, ${ATTENDANCE_COURSE_NAME_SQL} as course_name
       FROM attendance a
       JOIN classes c ON a.class_id = c.id
       LEFT JOIN courses co ON a.course_id = co.id

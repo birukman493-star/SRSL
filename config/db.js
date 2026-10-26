@@ -10,9 +10,10 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0
 });
-
+// Removed circular import; will import inside initDatabase
 // Database initialization function - creates database and tables dynamically
 async function initDatabase() {
+const { getActiveAcademicYear, getSetting, formatSemesterLabel, DEFAULT_SEMESTER } = require('./systemSettings');
   try {
     console.log('Initializing database...');
 
@@ -131,6 +132,52 @@ async function initDatabase() {
     try {
       await dbConnection.execute('ALTER TABLE teachers ADD COLUMN id_card_url VARCHAR(255)');
       console.log('Added id_card_url to teachers table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    // Create classes table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS classes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        grade VARCHAR(10) NOT NULL,
+        section VARCHAR(10),
+        teacher_id INT,
+        attendance_teacher_id INT NULL,
+        room VARCHAR(50),
+        schedule TEXT,
+        academic_year VARCHAR(20) DEFAULT '2025-2026',
+        semester VARCHAR(50) DEFAULT '1',
+        course_limit INT DEFAULT 10,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        FOREIGN KEY (attendance_teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
+        INDEX idx_grade (grade),
+        INDEX idx_teacher_id (teacher_id)
+      )
+    `);
+
+    // Add missing columns to classes if they don't exist
+    try {
+      await dbConnection.execute("ALTER TABLE classes ADD COLUMN academic_year VARCHAR(20) DEFAULT '2025-2026'");
+      console.log('Added academic_year to classes table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute("ALTER TABLE classes ADD COLUMN semester VARCHAR(50) DEFAULT '1'");
+      console.log('Added semester to classes table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
+
+    try {
+      await dbConnection.execute("ALTER TABLE classes ADD COLUMN course_limit INT DEFAULT 10");
+      console.log('Added course_limit to classes table');
     } catch (e) {
       if (e.code !== 'ER_DUP_FIELDNAME') throw e;
     }
@@ -274,6 +321,7 @@ async function initDatabase() {
         course_name VARCHAR(100) NOT NULL,
         course_code VARCHAR(20) UNIQUE NOT NULL,
         description TEXT,
+        grade VARCHAR(10),
         credits INT DEFAULT 3,
         teacher_id INT,
         is_active BOOLEAN DEFAULT TRUE,
@@ -285,6 +333,14 @@ async function initDatabase() {
         INDEX idx_course_name (course_name)
       )
     `);
+
+    // Add missing grade column to courses if it doesn't exist
+    try {
+      await dbConnection.execute("ALTER TABLE courses ADD COLUMN grade VARCHAR(10)");
+      console.log('Added grade to courses table');
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
 
     // Create enrollments table (fixed typo)
     await dbConnection.execute(`
@@ -305,25 +361,7 @@ async function initDatabase() {
       )
     `);
 
-    // Create classes table
-    await dbConnection.execute(`
-      CREATE TABLE IF NOT EXISTS classes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        grade VARCHAR(10) NOT NULL,
-        section VARCHAR(10),
-        teacher_id INT,
-        room VARCHAR(50),
-        schedule TEXT,
-        is_active BOOLEAN DEFAULT TRUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
-        INDEX idx_grade (grade),
-        INDEX idx_teacher_id (teacher_id)
-      )
-    `);
-
+    // Classes table was created earlier before students to satisfy foreign key dependencies.
     // Create class_teachers table for multiple teacher assignments
     await dbConnection.execute(`
       CREATE TABLE IF NOT EXISTS class_teachers (
@@ -613,6 +651,45 @@ async function initDatabase() {
       )
     `);
 
+      // Create system_settings table before any settings-dependent initialization
+      await dbConnection.execute(`
+        CREATE TABLE IF NOT EXISTS system_settings (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          setting_key VARCHAR(100) UNIQUE NOT NULL,
+          setting_value TEXT,
+          category VARCHAR(50),
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          INDEX idx_key (setting_key),
+          INDEX idx_category (category)
+        )
+      `);
+
+      // Create academic_sessions table – stores distinct year+semester sessions
+      await dbConnection.execute(`
+        CREATE TABLE IF NOT EXISTS academic_sessions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          academic_year VARCHAR(20) NOT NULL,
+          semester ENUM('Semester 1','Semester 2') NOT NULL,
+          start_date DATE,
+          end_date DATE,
+          is_active BOOLEAN DEFAULT FALSE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          UNIQUE KEY uq_year_semester (academic_year, semester)
+        )
+      `);
+      // Ensure at least one active session based on current system settings
+      const [existing] = await dbConnection.execute('SELECT id FROM academic_sessions WHERE is_active = 1');
+      if (existing.length === 0) {
+        const aYear = await getActiveAcademicYear();
+        const semRaw = await getSetting('semester', DEFAULT_SEMESTER);
+        const semester = formatSemesterLabel(semRaw);
+        await dbConnection.execute(
+          'INSERT INTO academic_sessions (academic_year, semester, is_active) VALUES (?, ?, TRUE)',
+          [aYear, semester]
+        );
+      }
+
     // Create grading_structures table (Flexible Assessment Templates)
     await dbConnection.execute(`
       CREATE TABLE IF NOT EXISTS grading_structures (
@@ -701,6 +778,7 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
         FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+        FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL,
         INDEX idx_class (class_id),
         INDEX idx_teacher (teacher_id)
       )
@@ -734,6 +812,44 @@ async function initDatabase() {
         INDEX idx_is_read (is_read)
       )
     `);
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS testimonials (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        role VARCHAR(100) NOT NULL,
+        quote TEXT NOT NULL,
+        rating TINYINT UNSIGNED NOT NULL DEFAULT 5,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        sort_order INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_testimonials_active_order (is_active, sort_order, id)
+      )
+    `);
+
+    const [existingTestimonials] = await dbConnection.execute(
+      'SELECT id FROM testimonials LIMIT 1'
+    );
+    if (existingTestimonials.length === 0) {
+      await dbConnection.execute(
+        `INSERT INTO testimonials (name, role, quote, rating, sort_order)
+         VALUES
+          (?, ?, ?, 5, 1),
+          (?, ?, ?, 5, 2),
+          (?, ?, ?, 5, 3)`,
+        [
+          'Sarah Jenkins',
+          'Parent',
+          "The parent portal has completely changed how I stay involved in my child's education. Real-time updates on grades and attendance are a game-changer!",
+          'Marcus Rodriguez',
+          'Teacher',
+          'Managing my classes and grading assignments used to take hours. Now, everything is streamlined into one beautiful, easy-to-use interface.',
+          'Elena Thompson',
+          'School Administrator',
+          'The administrative tools are incredibly robust. Setting up the academic year and managing user permissions is completely hassle-free.',
+        ]
+      );
+    }
 
     // Create academic_history table
     await dbConnection.execute(`
@@ -763,6 +879,39 @@ async function initDatabase() {
         INDEX idx_category (category)
       )
     `);
+
+    // Academic year history (active year in system_settings; past years preserved)
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS academic_years (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        year_label VARCHAR(20) NOT NULL,
+        is_active BOOLEAN DEFAULT FALSE,
+        started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        ended_at TIMESTAMP NULL,
+        changed_by INT NULL,
+        notes TEXT,
+        UNIQUE KEY unique_year_label (year_label),
+        INDEX idx_active (is_active),
+        FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE SET NULL
+      )
+    `);
+
+    // Create announcements table
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS announcements (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        audience ENUM('all', 'students', 'teachers', 'parents') DEFAULT 'all',
+        created_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_audience (audience),
+        INDEX idx_created_at (created_at)
+      )
+    `);
+    console.log('Verified announcements table');
 
     // Create national_exams table
     await dbConnection.execute(`
@@ -848,6 +997,27 @@ async function initDatabase() {
     `);
     console.log('Verified grade_submissions table');
 
+    // Create student_rankings table for storing calculated ranks
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS student_rankings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        class_id INT NOT NULL,
+        section VARCHAR(10) NOT NULL,
+        semester VARCHAR(50) NOT NULL,
+        academic_year VARCHAR(20) NOT NULL,
+        average_score DECIMAL(5,2) NOT NULL,
+        gpa DECIMAL(5,2) NOT NULL,
+        rank_position INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+        INDEX idx_student_class_year_sem (student_id, class_id, academic_year, semester)
+      )
+    `);
+    console.log('Verified student_rankings table');
+
     // Create student_course_results table (Final course marks)
     await dbConnection.execute(`
       CREATE TABLE IF NOT EXISTS student_course_results (
@@ -918,10 +1088,51 @@ async function initDatabase() {
     `);
     console.log('Verified grade_change_logs table');
 
+    // Create pending_registrations table for student/parent staging queue
+    await dbConnection.execute(`
+      CREATE TABLE IF NOT EXISTS pending_registrations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) NOT NULL,
+        email VARCHAR(100) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        first_name VARCHAR(50) NOT NULL,
+        last_name VARCHAR(50) NOT NULL,
+        role ENUM('student', 'parent') NOT NULL,
+        phone VARCHAR(20),
+        
+        -- Student specific fields
+        grade_level VARCHAR(10),
+        section VARCHAR(10),
+        date_of_birth DATE,
+        gender ENUM('male', 'female') DEFAULT 'male',
+        parent_guardian_name VARCHAR(100),
+        address TEXT,
+        previous_school VARCHAR(255),
+        admission_type ENUM('new', 'transfer') DEFAULT 'new',
+        transfer_date DATE,
+        transfer_reason TEXT,
+        profile_picture VARCHAR(255),
+        transcripts_json TEXT, -- Store list of transcripts as JSON string
+        
+        -- Parent specific fields
+        occupation VARCHAR(100),
+        relationship VARCHAR(50),
+        
+        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        admin_feedback TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_pending_email (email),
+        INDEX idx_pending_username (username),
+        INDEX idx_pending_status (status)
+      )
+    `);
+    console.log('Verified pending_registrations table');
+
     // Create approved_results view (Strict final transcript data source)
     await dbConnection.execute(`
       CREATE OR REPLACE VIEW approved_results AS
-      SELECT * FROM student_course_results WHERE status = 'approved'
+        SELECT * FROM student_course_results WHERE status IN ('approved','saved')
     `);
     console.log('Verified approved_results view');
 
@@ -939,6 +1150,13 @@ async function initDatabase() {
       `ALTER TABLE student_course_results DROP INDEX unique_student_course_result`,
       `ALTER TABLE student_course_results ADD UNIQUE KEY unique_student_course_result (student_id, course_id, semester_id, academic_year, assessment_structure_id)`,
       `ALTER TABLE grade_change_logs ADD COLUMN comment TEXT NULL`,
+      // Enforce Designated Attendance Teacher per class
+      `ALTER TABLE classes ADD COLUMN attendance_teacher_id INT NULL`,
+      `ALTER TABLE classes ADD CONSTRAINT fk_classes_attendance_teacher FOREIGN KEY (attendance_teacher_id) REFERENCES teachers(id) ON DELETE SET NULL`,
+      // Expand grade status ENUM values
+      `ALTER TABLE grade_submissions MODIFY COLUMN status ENUM('draft', 'saved', 'submitted', 'pending', 'approved', 'rejected') DEFAULT 'draft'`,
+      `ALTER TABLE student_course_results MODIFY COLUMN status ENUM('draft', 'saved', 'submitted', 'pending', 'approved', 'rejected') DEFAULT 'draft'`,
+      `ALTER TABLE student_results MODIFY COLUMN status ENUM('draft', 'saved', 'submitted', 'pending', 'approved', 'rejected') DEFAULT 'draft'`,
     ];
     for (const sql of migrations) {
       try { await dbConnection.execute(sql); } catch (e) { /* Already applied or constraint name differs — safe to ignore */ }
@@ -969,6 +1187,45 @@ async function initDatabase() {
       console.log(`>>> DEFAULT ADMIN CREATED: username="${ADMIN_USERNAME}"  secret="${ADMIN_SECRET}"`);
     }
     // ===========================
+
+    // Seed active academic year (2025-2026) and preserve history
+    const DEFAULT_YEAR = '2025-2026';
+    const [yearRows] = await dbConnection.execute(
+      'SELECT COUNT(*) as cnt FROM academic_years'
+    );
+    if (yearRows[0].cnt === 0) {
+      await dbConnection.execute(
+        `INSERT INTO academic_years (year_label, is_active, notes) VALUES (?, 1, 'Initial active year')`,
+        [DEFAULT_YEAR]
+      );
+    }
+    const [aySetting] = await dbConnection.execute(
+      'SELECT setting_value FROM system_settings WHERE setting_key = ?',
+      ['academicYear']
+    );
+    const currentAy =
+      aySetting.length > 0 ? aySetting[0].setting_value : null;
+    if (
+      !currentAy ||
+      currentAy === '2023-2024' ||
+      currentAy === '2023/2024'
+    ) {
+      const [exists] = await dbConnection.execute(
+        'SELECT id FROM system_settings WHERE setting_key = ?',
+        ['academicYear']
+      );
+      if (exists.length > 0) {
+        await dbConnection.execute(
+          'UPDATE system_settings SET setting_value = ?, category = ? WHERE setting_key = ?',
+          [DEFAULT_YEAR, 'academic', 'academicYear']
+        );
+      } else {
+        await dbConnection.execute(
+          'INSERT INTO system_settings (setting_key, setting_value, category) VALUES (?, ?, ?)',
+          ['academicYear', DEFAULT_YEAR, 'academic']
+        );
+      }
+    }
 
     dbConnection.release();
   } catch (error) {

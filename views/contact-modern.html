@@ -5,25 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Contact Us - Student Registration System</title>
 
-    <!-- Bootstrap CSS -->
+<!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet" />
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="/css/all.min.css" />
+
     <!-- Google Fonts -->
     <link href="/css/inter-font.css" rel="stylesheet" />
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/css/brocode-style.css" />
 
     <style>
-      :root {
-        --glass-bg: rgba(255, 255, 255, 0.7);
-        --glass-border: rgba(255, 255, 255, 0.4);
-        --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-      }
-
       body {
         font-family: "Inter", sans-serif;
-        background-color: #f8fafc;
+        background-color: var(--bg-main);
       }
 
       /* --- Hero Section --- */
@@ -34,34 +31,28 @@
         justify-content: center;
         position: relative;
         padding: clamp(5rem, 12vw, 12rem) 0;
-        background: radial-gradient(
-            circle at 0% 0%,
-            rgba(37, 99, 235, 0.15) 0%,
-            transparent 50%
-          ),
-          radial-gradient(
-            circle at 100% 100%,
-            rgba(249, 115, 22, 0.1) 0%,
-            transparent 50%
-          ),
-          linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        background:
+          radial-gradient(ellipse at 78% 42%, rgba(191, 219, 254, 0.62), transparent 30rem),
+          radial-gradient(ellipse at 18% 100%, rgba(219, 234, 254, 0.72), transparent 34rem),
+          linear-gradient(125deg, var(--bg-main) 0%, var(--bg-soft) 100%);
         overflow: hidden;
         text-align: center;
       }
 
-      .hero-title {
+      .contact-hero .hero-title {
         font-size: clamp(1.8rem, 8vw, 4rem);
         font-weight: 800;
-        color: #ffffff !important;
-        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        color: var(--dark-text) !important;
+        text-shadow: none;
         margin-bottom: 1rem;
       }
 
-      .hero-subtitle {
+      .contact-hero .hero-subtitle {
         font-size: clamp(1rem, 3vw, 1.4rem);
-        color: rgba(255, 255, 255, 0.9) !important;
+        color: var(--gray-text) !important;
         max-width: 700px;
         margin: 0 auto;
+        text-shadow: none;
       }
 
       /* --- Bento Box Layout --- */
@@ -91,7 +82,7 @@
 
       .bento-item:hover {
         transform: translateY(-8px) scale(1.02);
-        background: white;
+        background: var(--panel-bg);
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
         border-color: var(--primary-color);
       }
@@ -134,23 +125,26 @@
 
       /* --- Modern Form --- */
       .form-card {
-        background: white;
+        background: var(--panel-bg);
         border-radius: 30px;
         padding: 4rem;
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.04);
-        border: 1px solid rgba(0, 0, 0, 0.03);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--panel-border);
       }
 
       .form-control {
-        border: 2px solid #f1f5f9;
+        border: 2px solid var(--dark-tertiary);
         border-radius: 14px;
         padding: 0.75rem 1rem;
+        color: var(--light-text);
+        background-color: var(--bg-soft);
         transition: all 0.3s ease;
       }
 
       .form-control:focus {
         border-color: var(--primary-color);
         box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        background-color: var(--panel-bg);
       }
 
       /* --- Map Section --- */
@@ -158,18 +152,18 @@
         border-radius: 30px;
         overflow: hidden;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        border: 8px solid white;
+        border: 8px solid var(--panel-bg);
         height: 500px;
       }
 
       /* --- FAQ Cards --- */
       .faq-card {
-        background: white;
+        background: var(--panel-bg);
         border-radius: 20px;
         padding: 1.5rem;
         margin-bottom: 1rem;
         cursor: pointer;
-        border: 1px solid rgba(0, 0, 0, 0.04);
+        border: 1px solid var(--panel-border);
         transition: all 0.3s ease;
       }
 
@@ -225,7 +219,7 @@
 
   <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-transparent navbar-dark-mode">
+    <nav class="navbar navbar-expand-lg navbar-transparent navbar-dark-mode public-modern-nav">
       <div class="container">
         <a href="/" class="navbar-brand">
           <i class="fas fa-graduation-cap"></i> Abdigudina
@@ -237,63 +231,41 @@
         >
           <span></span><span></span><span></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-              <a href="/" class="nav-link" data-key="nav_home" data-key="nav_home">Home</a>
-            </li>
-            <li class="nav-item">
-              <a href="/about" class="nav-link" data-key="nav_about" data-key="nav_about">About</a>
-            </li>
-            <li class="nav-item">
-              <a href="/gallery" class="nav-link" data-key="nav_gallery"
-                >Gallery</a
-              >
-            </li>
-            <li class="nav-item">
-              <a href="/contact" class="nav-link active" data-key="nav_contact"
-                >Contact</a
-              >
-            </li>
-            <li class="nav-item">
-              <a href="/auth/login" class="nav-link" data-key="nav_login"
-                >Login</a
-              >
-            </li>
-            <li class="nav-item">
-              <a
-                class="nav-link"
-                href="#"
-                id="themeToggle"
-                title="Toggle Theme"
-              >
-                <i class="fas fa-moon"></i>
-              </a>
-            </li>
-            <li class="nav-item dropdown language-selector">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                id="languageDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <i class="fas fa-globe"></i> <span id="currentLangLabel">EN</span>
-              </a>
-              <ul
-                class="dropdown-menu dropdown-menu-end glass-dropdown"
-                aria-labelledby="languageDropdown"
-              >
-                <li><a class="dropdown-item lang-switch" href="#" data-lang="en">English</a></li>
-                <li>
-                  <a class="dropdown-item" href="?lang=am">Amharic (አማርኛ)</a>
-                </li>
-                <li><a class="dropdown-item lang-switch" href="#" data-lang="om">Afan Oromo</a></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
+         <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a href="/" class="nav-link" data-key="nav_home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/about" class="nav-link" data-key="nav_about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/gallery" class="nav-link" data-key="nav_gallery">Gallery</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/contact" class="nav-link active" data-key="nav_contact">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/auth/login" class="nav-link" data-key="nav_login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="themeToggle" title="Toggle Theme">
+                            <i class="fas fa-moon"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown language-selector">
+                        <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-globe"></i> <span id="currentLangLabel">EN</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end glass-dropdown" aria-labelledby="languageDropdown">
+                            <li><a class="dropdown-item lang-switch" href="#" data-lang="en">English</a></li>
+                            <li><a class="dropdown-item lang-switch" href="#" data-lang="am">Amharic (አማርኛ)</a></li>
+                            <li><a class="dropdown-item lang-switch" href="#" data-lang="om">Afan Oromo</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
       </div>
     </nav>
 
@@ -384,7 +356,7 @@
       </section>
 
       <!-- Map Section -->
-      <section class="py-5 bg-light">
+      <section class="py-5" style="background: var(--bg-soft)">
         <div class="container">
           <div class="text-center mb-5">
             <h2 class="display-6 fw-bold">Find Us on Campus</h2>
@@ -406,7 +378,7 @@
       </section>
 
       <!-- Contact Form Section -->
-      <section class="py-5" style="background: white">
+      <section class="py-5" style="background: var(--bg-main)">
         <div class="container py-5">
           <div class="row justify-content-center">
             <div class="col-xl-8">
@@ -521,10 +493,10 @@
       <footer
         class="footer"
         style="
-          background: #f8fafc;
+          background: var(--bg-main);
           padding: 4rem 0 2rem;
           margin-top: 0;
-          border-top: 1px solid rgba(0, 0, 0, 0.05);
+          border-top: 1px solid var(--panel-border);
         "
       >
         <div class="container">
@@ -586,35 +558,19 @@
                 Quick Links
               </h5>
               <ul class="list-unstyled">
-                <li class="mb-2">
-                  <a
-                    href="/"
-                    style="color: var(--gray-text); text-decoration: none"
-                    >Home</a
-                  >
-                </li>
-                <li class="mb-2">
-                  <a
-                    href="/about"
-                    style="color: var(--gray-text); text-decoration: none"
-                    >About</a
-                  >
-                </li>
-                <li class="mb-2">
-                  <a
-                    href="/gallery"
-                    style="color: var(--gray-text); text-decoration: none"
-                    >Gallery</a
-                  >
-                </li>
-                <li class="mb-2">
-                  <a
-                    href="/contact"
-                    style="color: var(--gray-text); text-decoration: none"
-                    >Contact</a
-                  >
-                </li>
-              </ul>
+                        <li class="mb-2">
+                            <a href="/" style="color: var(--gray-text); text-decoration: none;">Home</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/about" style="color: var(--gray-text); text-decoration: none;">About</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/gallery" style="color: var(--gray-text); text-decoration: none;">Gallery</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/contact" style="color: var(--gray-text); text-decoration: none;">Contact</a>
+                        </li>
+                    </ul>
             </div>
 
             <div class="col-lg-3 col-md-6 mb-4">
@@ -692,12 +648,11 @@
       </footer>
     </div>
 
-    <!-- Bootstrap JS -->
-
+   <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Custom JS -->
     <script src="/js/translations.js"></script>
+    <!-- Custom JS -->
     <script src="/js/brocode-script.js"></script>
 
     <!-- FAQ Toggle Script -->
@@ -726,5 +681,3 @@
     </script>
   </body>
 </html>
-
-

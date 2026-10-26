@@ -3,7 +3,14 @@ const { pool } = require('../config/db');
 const fs = require('fs');
 const path = require('path');
 const router = express.Router();
-const { pool: dbPool } = require('../config/db'); // Use alias if needed or just use pool
+const verifyTeacherAssignment = require('../middleware/verifyTeacherAssignment');
+const upload = require('../middleware/upload');
+const {
+  getAcademicContext,
+  formatSemesterLabel,
+  ATTENDANCE_COURSE_NAME_SQL,
+  DEFAULT_ACADEMIC_YEAR,
+} = require('../config/systemSettings');
 
 // Helper to log teacher activity
 async function logActivity(teacherId, type, desc, classId = null, courseId = null) {
@@ -117,7 +124,7 @@ router.get('/dashboard', async (req, res) => {
       
       UNION
       
-      SELECT DISTINCT c.*, 'Daily Attendance' as course_name, 'DAILY' as course_code,
+      SELECT DISTINCT c.*, CONCAT(c.name, ' — Homeroom') as course_name, 'HOMEROOM' as course_code,
              (SELECT COUNT(*) FROM students WHERE grade_level = c.grade AND section = c.section AND withdrawal_status = 'active') as student_count,
              'homeroom' as assignment_type
       FROM classes c
@@ -135,7 +142,7 @@ router.get('/dashboard', async (req, res) => {
     `, [teacherId]);
 
     // Get recent activities (mock or from a table if exists)
-    const activities = []; 
+    const activities = [];
     const [attendanceRate] = await pool.execute(`
       SELECT AVG(CASE WHEN a.status IN ('present','late','excused') THEN 1 ELSE 0 END) * 100 as rate
       FROM attendance a
@@ -157,6 +164,41 @@ router.get('/dashboard', async (req, res) => {
     `, [teacherId, today]);
 
 
+    // Performance Pulse: Academic Progress = % of teacher's course structures that have at least one student result saved/submitted
+    const [coverageData] = await pool.execute(`
+      SELECT
+        COUNT(DISTINCT gs.id) as total_structures,
+        COUNT(DISTINCT CASE WHEN sr.id IS NOT NULL THEN gs.id END) as covered_structures
+      FROM grading_structures gs
+      LEFT JOIN student_results sr ON sr.teacher_id = gs.teacher_id
+        AND sr.class_id = gs.class_id
+        AND (sr.course_id = gs.course_id OR (sr.course_id IS NULL AND gs.course_id IS NULL))
+      WHERE gs.teacher_id = ?
+    `, [teacherId]);
+
+    const totalStructures = coverageData[0].total_structures || 0;
+    const coveredStructures = coverageData[0].covered_structures || 0;
+    const academicProgress = totalStructures > 0
+      ? Math.round((coveredStructures / totalStructures) * 100) + '%'
+      : 'N/A';
+
+    // Performance Pulse: Passing Grade Avg = % of approved student course results ≥ 50 for this teacher
+    const [passData] = await pool.execute(`
+      SELECT
+        COUNT(*) as total_results,
+        SUM(CASE WHEN scr.total_score >= 50 THEN 1 ELSE 0 END) as passed_results
+      FROM student_course_results scr
+      WHERE scr.teacher_id = ? AND scr.status = 'approved'
+    `, [teacherId]);
+
+    const totalResults = passData[0].total_results || 0;
+    const passedResults = passData[0].passed_results || 0;
+    const passingGradeAvg = totalResults > 0
+      ? Math.round((passedResults / totalResults) * 100) + '%'
+      : 'N/A';
+
+    const academicContext = await getAcademicContext();
+
     res.render('teacher/dashboard', {
       title: 'Teacher Dashboard',
       user: req.session.user,
@@ -164,11 +206,14 @@ router.get('/dashboard', async (req, res) => {
         classes: classesCount[0].count,
         students: (studentCount[0] && studentCount[0].total_students) || 0,
         pendingGrades: 0, // Placeholder or actual pending grades count
-        attendanceRate: Math.round((attendanceRate[0] && attendanceRate[0].rate) || 0)
+        attendanceRate: Math.round((attendanceRate[0] && attendanceRate[0].rate) || 0),
+        academicProgress,
+        passingGradeAvg
       },
       classes,
       activities,
-      todaySchedule
+      todaySchedule,
+      academicContext,
     });
 
   } catch (error) {
@@ -238,14 +283,14 @@ router.get('/classes/:id/students', async (req, res) => {
     const [students] = await pool.execute(`
       SELECT u.id as user_id, s.id as student_pk, u.first_name, u.last_name, u.email, s.student_id,
              (SELECT AVG(g.score) FROM grades g WHERE g.student_id = s.id AND g.teacher_id = ?) as average_grade,
-             (SELECT COUNT(a.id) FROM attendance a WHERE a.student_id = s.id AND a.status = 'present' AND a.teacher_id = ?) / 
-             NULLIF((SELECT COUNT(*) FROM attendance a WHERE a.student_id = s.id AND a.teacher_id = ?), 0) * 100 as attendance_rate
+             (SELECT COUNT(a.id) FROM attendance a WHERE a.student_id = s.id AND a.status IN ('present', 'late', 'excused') AND a.approval_status = 'approved') / 
+             NULLIF((SELECT COUNT(*) FROM attendance a WHERE a.student_id = s.id AND a.approval_status = 'approved'), 0) * 100 as attendance_rate
       FROM users u
       JOIN students s ON u.id = s.user_id
       JOIN classes c ON s.grade_level = c.grade AND s.section = c.section
       WHERE c.id = ? AND u.role = 'student' AND s.withdrawal_status = 'active'
       ORDER BY u.last_name, u.first_name
-    `, [teacherId, teacherId, teacherId, classId]);
+    `, [teacherId, classId]);
 
     res.json(students);
 
@@ -269,16 +314,20 @@ router.get('/attendance', async (req, res) => {
       
       UNION
       
-      SELECT ct.class_id, 0 as course_id, c.name as class_name, c.grade, c.section, 'Daily Attendance' as course_name
+      SELECT ct.class_id, 0 as course_id, c.name as class_name, c.grade, c.section,
+             CONCAT(c.name, ' — Homeroom') as course_name
       FROM class_teachers ct
       JOIN classes c ON ct.class_id = c.id
       WHERE ct.teacher_id = ?
     `, [teacherId, teacherId]);
 
+    const academicContext = await getAcademicContext();
+
     res.render('teacher/attendance-index', {
       title: 'Attendance Management',
       user: req.session.user,
-      assignments
+      assignments,
+      academicContext,
     });
   } catch (error) {
     res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
@@ -302,20 +351,50 @@ router.get('/attendance/:classId/:courseId/:date', async (req, res) => {
       return res.status(403).render('500-modern', { title: 'Access Denied', message: 'You are not assigned to this course/class.' });
     }
 
+    // Verify designated attendance teacher constraint
+    const [classInfo] = await pool.execute('SELECT attendance_teacher_id, name FROM classes WHERE id = ?', [classId]);
+    const designatedTeacherId = classInfo[0] ? classInfo[0].attendance_teacher_id : null;
+
+    // Use integer comparison to avoid type mismatch
+    if (designatedTeacherId && parseInt(designatedTeacherId) !== parseInt(teacherId)) {
+      const [designatedName] = await pool.execute(`
+        SELECT CONCAT(u.first_name, ' ', u.last_name) as name 
+        FROM teachers t JOIN users u ON t.user_id = u.id WHERE t.id = ?
+      `, [designatedTeacherId]);
+      const nameStr = designatedName[0] ? designatedName[0].name : 'another teacher';
+      
+      // Determine request type: if AJAX/JSON expected, send JSON, else render informative page
+      if (req.xhr || req.headers.accept?.includes('application/json')) {
+        return res.status(403).json({ message: `Designated Attendance Teacher Constraint: Only the designated attendance teacher (${nameStr}) is allowed to take or manage attendance for Class ${classInfo[0]?.name || ''}.` });
+      }
+
+      return res.status(403).render('500-modern', {
+        title: 'Access Denied',
+        message: `Designated Attendance Teacher Constraint: Only the designated attendance teacher (${nameStr}) is allowed to take or manage attendance for Class ${classInfo[0]?.name || ''}.`
+      });
+    }
+
+    const dbCourseId = (courseId == 0 || !courseId) ? null : courseId;
+
     const [attendance] = await pool.execute(`
       SELECT s.id as student_pk, u.first_name, u.last_name, s.student_id, a.status, a.notes, a.approval_status
       FROM users u
       JOIN students s ON u.id = s.user_id
       JOIN classes c ON s.grade_level = c.grade AND s.section = c.section
-      LEFT JOIN attendance a ON s.id = a.student_id AND a.date = ? AND a.class_id = ? AND a.course_id = ? AND a.teacher_id = ?
+      LEFT JOIN attendance a ON s.id = a.student_id AND a.date = ? AND a.class_id = ?
+        AND (a.course_id <=> ?) AND a.teacher_id = ?
       WHERE c.id = ? AND u.role = 'student' AND s.withdrawal_status = 'active'
       ORDER BY u.last_name, u.first_name
-    `, [date, classId, courseId, teacherId, classId]);
+    `, [date, classId, dbCourseId, teacherId, classId]);
 
-    let courseName = 'Daily Attendance';
-    if (courseId != 0) {
-      const [courseInfo] = await pool.execute('SELECT course_name FROM courses WHERE id = ?', [courseId]);
+    let courseName = null;
+    if (dbCourseId) {
+      const [courseInfo] = await pool.execute('SELECT course_name FROM courses WHERE id = ?', [dbCourseId]);
       if (courseInfo.length > 0) courseName = courseInfo[0].course_name;
+    }
+    if (!courseName) {
+      const [classInfo] = await pool.execute('SELECT name FROM classes WHERE id = ?', [classId]);
+      courseName = classInfo[0] ? `${classInfo[0].name} — Homeroom` : 'Homeroom';
     }
 
     res.render('teacher/attendance', {
@@ -351,24 +430,37 @@ router.post('/attendance/save', async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
+    // Verify designated attendance teacher constraint
+    const [classInfo] = await pool.execute('SELECT attendance_teacher_id, name FROM classes WHERE id = ?', [classId]);
+    const designatedTeacherId = classInfo[0] ? classInfo[0].attendance_teacher_id : null;
+
+    if (designatedTeacherId && parseInt(designatedTeacherId) !== parseInt(teacherId)) {
+      return res.status(403).json({ message: 'Access Denied: Only the designated attendance teacher is allowed to record attendance for this class.' });
+    }
+
     // Get academic year, semester, class name, and subject name
     const [classDetails] = await pool.execute('SELECT academic_year, name FROM classes WHERE id = ?', [classId]);
     const academicYear = classDetails[0] ? classDetails[0].academic_year : '';
     const className = classDetails[0] ? classDetails[0].name : '';
-    
-    let subjectName = 'Daily Attendance';
-    if (courseId && courseId != 0) {
-      const [courseDetails] = await pool.execute('SELECT course_name FROM courses WHERE id = ?', [courseId]);
+
+    const dbCourseIdEarly = (courseId == 0 || !courseId) ? null : courseId;
+    let subjectName = null;
+    if (dbCourseIdEarly) {
+      const [courseDetails] = await pool.execute('SELECT course_name FROM courses WHERE id = ?', [dbCourseIdEarly]);
       if (courseDetails.length > 0) subjectName = courseDetails[0].course_name;
     }
+    if (!subjectName) {
+      subjectName = className ? `${className} — Homeroom` : 'Homeroom';
+    }
 
+    const ctx = await getAcademicContext();
     const [struct] = await pool.execute(
-      'SELECT semester FROM grading_structures WHERE (course_id = ? OR (course_id IS NULL AND ? = 0)) AND class_id = ? AND teacher_id = ? LIMIT 1',
-      [courseId, courseId, classId, teacherId]
+      'SELECT semester FROM grading_structures WHERE (course_id = ? OR (course_id IS NULL AND ? = 0)) AND class_id = ? AND teacher_id = ? AND semester = ? LIMIT 1',
+      [courseId, courseId, classId, teacherId, ctx.semesterLabel]
     );
-    const semester = struct[0] ? struct[0].semester : 'Semester 1';
+    const semester = struct[0] ? struct[0].semester : ctx.semesterLabel;
 
-    const studentIds = Object.keys(attendance);
+    const studentIds = attendance ? Object.keys(attendance) : [];
     const dbCourseId = (courseId == 0 || !courseId) ? null : courseId;
 
     if (studentIds.length > 0) {
@@ -385,14 +477,14 @@ router.post('/attendance/save', async (req, res) => {
       }
       insertQuery += insertPlaceholders.join(', ');
       insertQuery += ` ON DUPLICATE KEY UPDATE status = VALUES(status), notes = VALUES(notes), attendance_type = VALUES(attendance_type), approval_status = 'pending', academic_year = VALUES(academic_year), semester = VALUES(semester), teacher_id = VALUES(teacher_id), semester_id = VALUES(semester_id)`;
-      
+
       await pool.execute(insertQuery, insertValues);
 
       // Emit real-time updates to role-based rooms using single standardized payload
       const io = req.app.get('io');
       if (io) {
         const placeholders = studentIds.map(() => '?').join(',');
-        
+
         // 2. Batch fetch parent mappings with User IDs
         const [parentRelations] = await pool.execute(`
           SELECT psr.student_id, p.id as parent_id, p.user_id as parent_user_id 
@@ -400,13 +492,13 @@ router.post('/attendance/save', async (req, res) => {
           JOIN parents p ON psr.parent_id = p.id
           WHERE psr.student_id IN (${placeholders})
         `, studentIds);
-        
+
         const parentUserMap = {};
         const parentProfileMap = {};
         parentRelations.forEach(r => {
           if (!parentUserMap[r.student_id]) parentUserMap[r.student_id] = [];
           parentUserMap[r.student_id].push(r.parent_user_id);
-          
+
           if (!parentProfileMap[r.student_id]) parentProfileMap[r.student_id] = [];
           parentProfileMap[r.student_id].push(r.parent_id);
         });
@@ -417,7 +509,7 @@ router.post('/attendance/save', async (req, res) => {
           FROM students
           WHERE id IN (${placeholders})
         `, studentIds);
-        
+
         const studentUserMap = {};
         const studentRegMap = {};
         studentDetails.forEach(s => {
@@ -434,7 +526,7 @@ router.post('/attendance/save', async (req, res) => {
           WHERE student_id IN (${placeholders}) AND approval_status = 'approved'
           GROUP BY student_id
         `, studentIds);
-        
+
         const statsMap = {};
         stats.forEach(s => {
           statsMap[s.student_id] = { present: parseInt(s.present_count || 0), absent: parseInt(s.absent_count || 0) };
@@ -473,10 +565,10 @@ router.post('/attendance/save', async (req, res) => {
           parentUserIds.forEach((pUserId, index) => {
             const pid = parentProfileIds[index];
             const payload = buildAttendancePayload(sid, data.status, studentStats, pid, pUserId);
-            
+
             // Emit using user_id based room
             io.to(`parent_${pUserId}`).emit('studentAttendanceUpdated', payload);
-            
+
             // Fallback: Also emit to profile_id based room
             io.to(`parent_${pid}`).emit('studentAttendanceUpdated', payload);
           });
@@ -488,7 +580,7 @@ router.post('/attendance/save', async (req, res) => {
           }
           // Fallback: Also emit to profile_id based room
           io.to(`student_${sid}`).emit('studentAttendanceUpdated', studentPayload);
-          
+
           // Emit to Admin
           io.to('admin_dashboard').emit('studentAttendanceUpdated', studentPayload);
 
@@ -521,7 +613,7 @@ router.post('/attendance/save', async (req, res) => {
         };
         io.to(`teacher_${teacherUserId}`).emit('attendanceHistoryUpdated', summaryPayload);
         io.to(`teacher_${teacherId}`).emit('attendanceHistoryUpdated', summaryPayload);
-        
+
         // Emit to Admin
         io.to('admin_dashboard').emit('attendanceHistoryUpdated', summaryPayload);
       }
@@ -539,7 +631,7 @@ router.post('/attendance/save', async (req, res) => {
 
 
 // 3. Enter and update student grades dynamically
-router.post('/grades/save', async (req, res) => {
+router.post('/grades/save', verifyTeacherAssignment, async (req, res) => {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
@@ -562,25 +654,29 @@ router.post('/grades/save', async (req, res) => {
     const [classDetails] = await conn.execute('SELECT academic_year FROM classes WHERE id = ?', [classId]);
     const academicYear = classDetails[0] ? classDetails[0].academic_year : '';
 
-    // Get semester
-    const [structureDetails] = await conn.execute('SELECT semester FROM grading_structures WHERE id = ? AND teacher_id = ?', [structureId, teacherId]);
-    const semester = structureDetails[0] ? structureDetails[0].semester : 'Semester 1';
+    // Get semester and owner teacher ID from grading structure
+    const [structureDetails] = await conn.execute('SELECT semester, teacher_id FROM grading_structures WHERE id = ?', [structureId]);
+    const structureOwner = structureDetails[0];
+    const semester = structureOwner ? structureOwner.semester : 'Semester 1';
+    const ownerTeacherId = structureOwner ? structureOwner.teacher_id : teacherId;
 
     const dbCourseId = (courseId == 0 || !courseId) ? null : courseId;
 
-    // Save dynamic grades for each student and category
+    // Batch insert student_results for each student and category to improve performance
+    const studentResultValues = [];
+    const studentResultPlaceholders = [];
     for (const [studentId, categories] of Object.entries(studentResults)) {
       for (const [categoryId, score] of Object.entries(categories)) {
-        await conn.execute(`
-          INSERT INTO student_results (student_id, category_id, score, graded_by, grade_date, status, teacher_id, class_id, course_id, semester, semester_id, academic_year)
-          VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE 
-            score = ?, graded_by = ?, grade_date = ?, status = 'pending', teacher_id = ?, class_id = ?, course_id = ?, semester = ?, semester_id = ?, academic_year = ?
-        `, [
-          studentId, categoryId, score, teacherId, gradeDate, teacherId, classId, dbCourseId, semester, semester, academicYear,
-          score, teacherId, gradeDate, teacherId, classId, dbCourseId, semester, semester, academicYear
-        ]);
+        // Values for INSERT
+        studentResultValues.push(
+          studentId, categoryId, score, teacherId, gradeDate, 'saved', ownerTeacherId, classId, dbCourseId, semester, semester, academicYear
+        );
+        studentResultPlaceholders.push('( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )');
       }
+    }
+    if (studentResultValues.length > 0) {
+      const batchQuery = `INSERT INTO student_results (student_id, category_id, score, graded_by, grade_date, status, teacher_id, class_id, course_id, semester, semester_id, academic_year) VALUES ${studentResultPlaceholders.join(', ')} ON DUPLICATE KEY UPDATE score = VALUES(score), graded_by = VALUES(graded_by), grade_date = VALUES(grade_date), status = IF(VALUES(status) = 'approved', 'approved', 'saved'), teacher_id = VALUES(teacher_id), class_id = VALUES(class_id), course_id = VALUES(course_id), semester = VALUES(semester), semester_id = VALUES(semester_id), academic_year = VALUES(academic_year)`;
+      await conn.execute(batchQuery, studentResultValues);
     }
 
     // Now, create or update a grade_submissions record for this class/course/semester batch
@@ -588,9 +684,9 @@ router.post('/grades/save', async (req, res) => {
     const targetCourseId = dbCourseId || 0;
     await conn.execute(`
       INSERT INTO grade_submissions (teacher_id, course_id, class_id, semester_id, academic_year, status, submitted_by, submitted_at, comments)
-      VALUES (?, ?, ?, ?, ?, 'pending', ?, CURRENT_TIMESTAMP, NULL)
+      VALUES (?, ?, ?, ?, ?, 'saved', ?, CURRENT_TIMESTAMP, NULL)
       ON DUPLICATE KEY UPDATE
-        status = 'pending',
+        status = 'saved',
         submitted_by = ?,
         submitted_at = CURRENT_TIMESTAMP,
         approved_by = NULL,
@@ -598,12 +694,12 @@ router.post('/grades/save', async (req, res) => {
         rejected_by = NULL,
         rejected_at = NULL,
         comments = NULL
-    `, [teacherId, targetCourseId, classId, semester, academicYear, req.session.user.id, req.session.user.id]);
+    `, [ownerTeacherId, targetCourseId, classId, semester, academicYear, req.session.user.id, req.session.user.id]);
 
     const [existingSub] = await conn.execute(`
       SELECT id FROM grade_submissions 
       WHERE teacher_id = ? AND course_id = ? AND class_id = ? AND semester_id = ? AND academic_year = ?
-    `, [teacherId, targetCourseId, classId, semester, academicYear]);
+    `, [ownerTeacherId, targetCourseId, classId, semester, academicYear]);
     const submissionId = existingSub[0].id;
 
     // Calculate cumulative course scores for each student and save to student_course_results
@@ -616,22 +712,22 @@ router.post('/grades/save', async (req, res) => {
         WHERE sr.student_id = ? AND ac.structure_id = ?
       `, [studentId, structureId]);
 
-      const totalScore = categoryScores[0] && categoryScores[0].calculated_score !== null 
-        ? parseFloat(categoryScores[0].calculated_score) 
+      const totalScore = categoryScores[0] && categoryScores[0].calculated_score !== null
+        ? parseFloat(categoryScores[0].calculated_score)
         : 0.00;
 
       await conn.execute(`
         INSERT INTO student_course_results (
           submission_id, student_id, teacher_id, course_id, class_id, semester_id, academic_year, assessment_structure_id, total_score, status, submitted_by, submitted_at, approved_by, approved_at, rejected_by, rejected_at, comments
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, CURRENT_TIMESTAMP, NULL, NULL, NULL, NULL, NULL)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'saved', ?, CURRENT_TIMESTAMP, NULL, NULL, NULL, NULL, NULL)
         ON DUPLICATE KEY UPDATE
           submission_id = ?,
           teacher_id = ?,
           class_id = ?,
           assessment_structure_id = ?,
           total_score = ?,
-          status = 'pending',
+          status = 'saved',
           submitted_by = ?,
           submitted_at = CURRENT_TIMESTAMP,
           approved_by = NULL,
@@ -640,8 +736,8 @@ router.post('/grades/save', async (req, res) => {
           rejected_at = NULL,
           comments = NULL
       `, [
-        submissionId, studentId, teacherId, targetCourseId, classId, semester, academicYear, structureId, totalScore, req.session.user.id,
-        submissionId, teacherId, classId, structureId, totalScore, req.session.user.id
+        submissionId, studentId, ownerTeacherId, targetCourseId, classId, semester, academicYear, structureId, totalScore, req.session.user.id,
+        submissionId, ownerTeacherId, classId, structureId, totalScore, req.session.user.id
       ]);
     }
 
@@ -649,7 +745,27 @@ router.post('/grades/save', async (req, res) => {
     await logActivity(teacherId, 'Grades Submitted', `Recorded student scores for ${gradeDate}`, classId, courseId);
 
     await conn.commit();
-    res.json({ message: 'Grades submitted for approval' });
+    // Emit real-time update for saved grades
+    const io = req.app.get('io');
+    if (io) {
+      const studentIds = Object.keys(studentResults);
+      studentIds.forEach(sid => {
+        const payload = {
+          studentId: parseInt(sid),
+          classId: parseInt(classId),
+          courseId: dbCourseId,
+          teacherId: teacherId,
+          status: 'saved'
+        };
+        // Emit to student room
+        io.to(`student_${sid}`).emit('gradeUpdated', payload);
+        // Emit to parent room (assuming parent user IDs are linked via socket rooms elsewhere)
+        io.to(`parent_${sid}`).emit('gradeUpdated', payload);
+        // Also broadcast to admin dashboard
+        io.to('admin_dashboard').emit('gradeUpdated', payload);
+      });
+    }
+    res.json({ message: 'Grades saved' });
   } catch (error) {
     await conn.rollback();
     console.error('Save grades error:', error);
@@ -659,8 +775,38 @@ router.post('/grades/save', async (req, res) => {
   }
 });
 
-// POST /teacher/grades/edit - Edit grades after submission with auditable logging and instant sync
-router.post('/grades/edit', async (req, res) => {
+// POST /teacher/grades/submit - Final submission for approval
+router.post('/grades/submit', verifyTeacherAssignment, async (req, res) => {
+  const { classId, courseId } = req.body;
+  const teacherId = req.teacherId;
+  try {
+    const gradeCtx = await getAcademicContext();
+    const [structures] = await pool.execute(
+      'SELECT teacher_id FROM grading_structures WHERE (course_id = ? OR (course_id IS NULL AND ? = 0)) AND class_id = ? AND semester = ?',
+      [courseId, courseId, classId, gradeCtx.semesterLabel]
+    );
+    const ownerTeacherId = structures.length > 0 ? structures[0].teacher_id : teacherId;
+
+    await pool.execute(`
+      UPDATE grade_submissions 
+      SET status = 'submitted' 
+      WHERE teacher_id = ? AND class_id = ? AND course_id = ?
+    `, [ownerTeacherId, classId, courseId || 0]);
+
+    await pool.execute(`
+      UPDATE student_course_results 
+      SET status = 'submitted' 
+      WHERE teacher_id = ? AND class_id = ? AND course_id = ?
+    `, [ownerTeacherId, classId, courseId || 0]);
+
+    res.json({ message: 'Grades submitted for approval' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// POST /teacher/grades/edit - Edit grades before submission with auditable logging and instant sync
+router.post('/grades/edit', verifyTeacherAssignment, async (req, res) => {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
@@ -679,16 +825,39 @@ router.post('/grades/edit', async (req, res) => {
       return res.status(403).json({ message: 'Access denied: You are not assigned to this class/course.' });
     }
 
+    const dbCourseId = (courseId == 0 || !courseId) ? null : courseId;
+    const targetCourseId = dbCourseId || 0;
+
+    // Get semester and owner teacher ID from grading structure
+    const [structureDetails] = await conn.execute('SELECT semester, teacher_id FROM grading_structures WHERE id = ?', [structureId]);
+    const structureOwner = structureDetails[0];
+    const semester = structureOwner ? structureOwner.semester : 'Semester 1';
+    const ownerTeacherId = structureOwner ? structureOwner.teacher_id : teacherId;
+      // Prevent edits if grades have been submitted or approved
+      const [submissionStatus] = await conn.execute(
+        `SELECT status FROM grade_submissions 
+         WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status != 'saved'`,
+        [ownerTeacherId, classId, targetCourseId]
+      );
+      if (submissionStatus.length > 0) {
+        await conn.rollback();
+        return res.status(403).json({ message: 'Cannot edit: Grades have been submitted for approval.' });
+      }
+
+    // Prevent edits if already submitted/approved
+    const [submissionCheck] = await conn.execute(`
+      SELECT status FROM grade_submissions 
+      WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status != 'saved'
+    `, [ownerTeacherId, classId, targetCourseId]);
+
+    if (submissionCheck.length > 0) {
+      await conn.rollback();
+      return res.status(403).json({ message: 'Cannot edit: Grades are already submitted or approved.' });
+    }
+
     // Get academic year
     const [classDetails] = await conn.execute('SELECT academic_year FROM classes WHERE id = ?', [classId]);
     const academicYear = classDetails[0] ? classDetails[0].academic_year : '';
-
-    // Get semester
-    const [structureDetails] = await conn.execute('SELECT semester FROM grading_structures WHERE id = ? AND teacher_id = ?', [structureId, teacherId]);
-    const semester = structureDetails[0] ? structureDetails[0].semester : 'Semester 1';
-
-    const dbCourseId = (courseId == 0 || !courseId) ? null : courseId;
-    const targetCourseId = dbCourseId || 0;
 
     // Record dynamic grades and audit logs for each student
     for (const [studentId, categories] of Object.entries(studentResults)) {
@@ -700,7 +869,7 @@ router.post('/grades/edit', async (req, res) => {
         `, [studentId, categoryId]);
 
         const old_value = oldScoreRecord[0] ? parseFloat(oldScoreRecord[0].score) : null;
-        
+
         let new_value;
         let comment = null;
         if (score && typeof score === 'object') {
@@ -712,15 +881,7 @@ router.post('/grades/edit', async (req, res) => {
 
         // Only log and update if value has changed
         if (old_value !== new_value) {
-          // Update student_results score (preserving or forcing status to match grade submissions status)
-          // Since it might already be approved or pending, we set the status to 'approved' if already approved, or 'pending'.
-          // Wait, let's look at the current status in student_course_results or student_results for that student.
-          const [existingResult] = await conn.execute(`
-            SELECT status FROM student_results 
-            WHERE student_id = ? AND category_id = ?
-          `, [studentId, categoryId]);
-          
-          const currentStatus = existingResult[0] ? existingResult[0].status : 'pending';
+          const status = 'saved';
 
           await conn.execute(`
             INSERT INTO student_results (student_id, category_id, score, graded_by, grade_date, status, teacher_id, class_id, course_id, semester, semester_id, academic_year)
@@ -728,8 +889,8 @@ router.post('/grades/edit', async (req, res) => {
             ON DUPLICATE KEY UPDATE 
               score = ?, graded_by = ?, grade_date = CURDATE(), status = ?, teacher_id = ?, class_id = ?, course_id = ?, semester = ?, semester_id = ?, academic_year = ?
           `, [
-            studentId, categoryId, new_value, teacherId, currentStatus, teacherId, classId, dbCourseId, semester, semester, academicYear,
-            new_value, teacherId, currentStatus, teacherId, classId, dbCourseId, semester, semester, academicYear
+            studentId, categoryId, new_value, teacherId, status, ownerTeacherId, classId, dbCourseId, semester, semester, academicYear,
+            new_value, teacherId, status, ownerTeacherId, classId, dbCourseId, semester, semester, academicYear
           ]);
 
           // Insert into grade_change_logs
@@ -745,18 +906,22 @@ router.post('/grades/edit', async (req, res) => {
     const [existingSub] = await conn.execute(`
       SELECT id, status FROM grade_submissions 
       WHERE teacher_id = ? AND course_id = ? AND class_id = ? AND semester_id = ? AND academic_year = ?
-    `, [teacherId, targetCourseId, classId, semester, academicYear]);
+    `, [ownerTeacherId, targetCourseId, classId, semester, academicYear]);
 
     let submissionId = null;
-    let status = 'approved'; // Default to approved if nothing exists, but normally it should exist
     if (existingSub.length > 0) {
       submissionId = existingSub[0].id;
-      status = existingSub[0].status;
+      await conn.execute(`
+        UPDATE grade_submissions
+        SET status = 'saved',
+            submitted_by = ?, submitted_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `, [req.session.user.id, submissionId]);
     } else {
       const [insertSub] = await conn.execute(`
         INSERT INTO grade_submissions (teacher_id, course_id, class_id, semester_id, academic_year, status, submitted_by, submitted_at)
-        VALUES (?, ?, ?, ?, ?, 'approved', ?, CURRENT_TIMESTAMP)
-      `, [teacherId, targetCourseId, classId, semester, academicYear, req.session.user.id]);
+        VALUES (?, ?, ?, ?, ?, 'saved', ?, CURRENT_TIMESTAMP)
+      `, [ownerTeacherId, targetCourseId, classId, semester, academicYear, req.session.user.id]);
       submissionId = insertSub.insertId;
     }
 
@@ -770,38 +935,26 @@ router.post('/grades/edit', async (req, res) => {
         WHERE sr.student_id = ? AND ac.structure_id = ?
       `, [studentId, structureId]);
 
-      const totalScore = categoryScores[0] && categoryScores[0].calculated_score !== null 
-        ? parseFloat(categoryScores[0].calculated_score) 
+      const totalScore = categoryScores[0] && categoryScores[0].calculated_score !== null
+        ? parseFloat(categoryScores[0].calculated_score)
         : 0.00;
 
       await conn.execute(`
         INSERT INTO student_course_results (
           submission_id, student_id, teacher_id, course_id, class_id, semester_id, academic_year, assessment_structure_id, total_score, status, submitted_by, submitted_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'saved', ?, CURRENT_TIMESTAMP)
         ON DUPLICATE KEY UPDATE
           submission_id = ?,
           teacher_id = ?,
           class_id = ?,
           assessment_structure_id = ?,
           total_score = ?,
-          status = ?
+          status = 'saved'
       `, [
-        submissionId, studentId, teacherId, targetCourseId, classId, semester, academicYear, structureId, totalScore, status, req.session.user.id,
-        submissionId, teacherId, classId, structureId, totalScore, status
+        submissionId, studentId, ownerTeacherId, targetCourseId, classId, semester, academicYear, structureId, totalScore, req.session.user.id,
+        submissionId, ownerTeacherId, classId, structureId, totalScore
       ]);
-
-      // Synchronize academic_history/transcript
-      await conn.execute(`
-        UPDATE academic_history ah
-        JOIN (
-          SELECT student_id, academic_year, AVG(total_score) as new_avg
-          FROM approved_results
-          GROUP BY student_id, academic_year
-        ) as stats ON ah.student_id = stats.student_id AND ah.academic_year = stats.academic_year
-        SET ah.average_score = stats.new_avg
-        WHERE ah.student_id = ?
-      `, [studentId]);
     }
 
     // Log teacher activity
@@ -813,7 +966,7 @@ router.post('/grades/edit', async (req, res) => {
     if (io) {
       io.emit('gradeUpdated', { classId, courseId, teacherId });
     }
-    res.json({ message: 'Grades successfully updated and synced' });
+    res.json({ message: 'Grades updated', status: 'saved' });
   } catch (error) {
     await conn.rollback();
     console.error('Edit grades error:', error);
@@ -924,13 +1077,27 @@ router.get('/grades/:classId/:courseId', async (req, res) => {
       return res.status(403).render('500-modern', { title: 'Access Denied', message: 'You are not assigned to this course/class.' });
     }
 
-    // Fetch grading structure
+    const gradeCtx = await getAcademicContext();
+    // Fetch grading structure for active semester (any teacher's structure for this class/course)
     const [structures] = await pool.execute(
-      'SELECT id, status FROM grading_structures WHERE (course_id = ? OR (course_id IS NULL AND ? = 0)) AND class_id = ? AND teacher_id = ? AND semester = "Semester 1"',
-      [courseId, courseId, classId, teacherId]
+      'SELECT id, status, teacher_id, semester FROM grading_structures WHERE (course_id = ? OR (course_id IS NULL AND ? = 0)) AND class_id = ? AND semester = ?',
+      [courseId, courseId, classId, gradeCtx.semesterLabel]
     );
 
     let structure = structures.length > 0 ? structures[0] : null;
+    const ownerTeacherId = structure && structure.teacher_id ? structure.teacher_id : teacherId;
+
+    // Determine the teacher who owns the grading structure (original creator)
+    let teacherName = '';
+    if (structure && structure.teacher_id) {
+      const [owner] = await pool.execute(
+        `SELECT u.first_name, u.last_name FROM teachers t JOIN users u ON t.user_id = u.id WHERE t.id = ?`,
+        [structure.teacher_id]
+      );
+      if (owner.length > 0) {
+        teacherName = `${owner[0].first_name || ''} ${owner[0].last_name || ''}`.trim();
+      }
+    }
     let categories = [];
     let students = [];
     let studentResults = {};
@@ -958,15 +1125,15 @@ router.get('/grades/:classId/:courseId', async (req, res) => {
         FROM student_results sr
         JOIN assessment_categories ac ON sr.category_id = ac.id
         WHERE ac.structure_id = ? AND sr.teacher_id = ?
-      `, [structure.id, teacherId]);
+      `, [structure.id, ownerTeacherId]);
 
       // Calculate overall grades status
       const targetCourseId = courseId == 0 ? 0 : courseId;
       const [subs] = await pool.execute(`
         SELECT status FROM grade_submissions 
         WHERE class_id = ? AND course_id = ? AND teacher_id = ? AND semester_id = ?
-      `, [classId, targetCourseId, teacherId, structure.semester || 'Semester 1']);
-      
+      `, [classId, targetCourseId, ownerTeacherId, structure.semester || 'Semester 1']);
+
       if (subs.length > 0) {
         gradesStatus = subs[0].status;
       } else if (results.length > 0) {
@@ -999,6 +1166,7 @@ router.get('/grades/:classId/:courseId', async (req, res) => {
     res.render('teacher/grades', {
       title: 'Class Grades',
       user: req.session.user,
+      teacherName,
       classId,
       courseId,
       courseName,
@@ -1043,7 +1211,7 @@ router.get('/grading-structures/:classId/:courseId', async (req, res) => {
       const [courseInfo] = await pool.execute('SELECT course_name FROM courses WHERE id = ?', [courseId]);
       if (courseInfo.length > 0) courseName = courseInfo[0].course_name;
     }
-    
+
     // Get existing structure
     const [structures] = await pool.execute(
       'SELECT * FROM grading_structures WHERE teacher_id = ? AND course_id = ? AND class_id = ?',
@@ -1110,7 +1278,7 @@ router.post('/grading-structures/:classId/:courseId', async (req, res) => {
     let parsedCategories = typeof categories === 'string' ? JSON.parse(categories) : categories;
     let totalWeight = 0;
     parsedCategories.forEach(cat => totalWeight += parseFloat(cat.weight_percentage));
-    
+
     if (Math.abs(totalWeight - 100) > 0.01) {
       await conn.rollback();
       return res.status(400).json({ message: 'Total weight must equal exactly 100%' });
@@ -1156,7 +1324,7 @@ router.post('/grading-structures/:classId/:courseId', async (req, res) => {
         [structureId, cat.name || 'Category', parseFloat(cat.weight_percentage) || 0, parseFloat(cat.max_mark) || 100, cat.passing_mark ? parseFloat(cat.passing_mark) : null, cat.description || '', i]
       );
     }
-    
+
     // Log activity
     const activityDesc = saveStatus === 'pending' ? 'Submitted grading structure for approval' : 'Saved grading structure draft';
     await logActivity(teacherId, 'Grading Structure', activityDesc, classId, courseId);
@@ -1176,8 +1344,18 @@ router.post('/grading-structures/:classId/:courseId', async (req, res) => {
 router.post('/assignments/create', async (req, res) => {
   try {
     const {
-      classId, courseId, assignmentType, title, dueDate, maxPoints, timeLimit,
-      attemptsAllowed, description, learningObjectives, additionalLinks, visibleToStudents
+      classId,
+      courseId,
+      assignmentType,
+      title,
+      dueDate,
+      maxPoints,
+      timeLimit,
+      attemptsAllowed,
+      description,
+      learningObjectives,
+      additionalLinks,
+      visibleToStudents
     } = req.body;
     const teacherId = req.teacherId;
 
@@ -1205,8 +1383,8 @@ router.post('/assignments/create', async (req, res) => {
     );
     const semester = structureDetails[0] ? structureDetails[0].semester : 'Semester 1';
 
-    // Create assignment
-    await pool.execute(`
+    // Insert assignment and capture insertId
+    const [result] = await pool.execute(`
       INSERT INTO assignments (
         class_id, course_id, assignment_type, title, description, learning_objectives, additional_links, due_date, max_points, time_limit, 
         attempts_allowed, visible_to_students, created_by, teacher_id, academic_year, semester, semester_id
@@ -1216,6 +1394,48 @@ router.post('/assignments/create', async (req, res) => {
       attemptsAllowed || 'unlimited', visibleToStudents === 'on' ? 1 : 0, teacherId, teacherId, academicYear, semester, semester
     ]);
 
+    // Emit real-time update to students of the class via Socket.IO
+    const io = req.app.get('io');
+    if (io) {
+      // Fetch all student user IDs for the class
+      const [students] = await pool.execute(`
+        SELECT s.id as student_id, u.id as user_id
+        FROM students s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.class_id = ?
+      `, [classId]);
+
+      // Fetch class name and course name for payload
+      const [classInfo] = await pool.execute(`SELECT name FROM classes WHERE id = ?`, [classId]);
+      const className = classInfo.length ? classInfo[0].name : '';
+      let courseName = '';
+      if (courseId) {
+        const [courseInfo] = await pool.execute(`SELECT name FROM courses WHERE id = ?`, [courseId]);
+        courseName = courseInfo.length ? courseInfo[0].name : '';
+      }
+
+      const payload = {
+        assignmentId: result.insertId,
+        title,
+        classId,
+        className,
+        courseId: courseId || null,
+        courseName,
+        assignmentType,
+        dueDate,
+        maxPoints,
+        description,
+        teacherId,
+        teacherName: `${req.session.user.first_name || ''} ${req.session.user.last_name || ''}`
+      };
+      // Emit to each student in the class
+      students.forEach(st => {
+        io.to(`student_${st.user_id}`).emit('newAssignment', payload);
+      });
+      // Also emit to the class room
+      io.to(`class_${classId}`).emit('newAssignment', payload);
+    }
+
     res.json({ message: 'Assignment created successfully' });
 
   } catch (error) {
@@ -1224,15 +1444,17 @@ router.post('/assignments/create', async (req, res) => {
   }
 });
 
+
 // Get assignments for a teacher
 router.get('/assignments', async (req, res) => {
   try {
     const teacherId = req.teacherId;
 
     const [assignments] = await pool.execute(`
-      SELECT a.*, c.name as class_name, c.grade, c.section
+      SELECT a.*, c.name as class_name, c.grade, c.section, co.course_name as course_name
       FROM assignments a
       JOIN classes c ON a.class_id = c.id
+      LEFT JOIN courses co ON a.course_id = co.id
       WHERE a.teacher_id = ?
       ORDER BY a.created_at DESC
     `, [teacherId]);
@@ -1267,9 +1489,11 @@ router.get('/materials', async (req, res) => {
     const teacherId = req.teacherId;
 
     const [materials] = await pool.execute(`
-      SELECT m.*, c.name as class_name, c.grade, c.section
-      FROM materials m
-      JOIN classes c ON m.class_id = c.id
+        SELECT m.*, c.name as class_name, cr.course_name as course_name, t.first_name as teacher_fname, t.last_name as teacher_lname
+        FROM materials m
+        JOIN classes c ON m.class_id = c.id
+        LEFT JOIN teachers t ON m.teacher_id = t.id
+        LEFT JOIN courses cr ON m.course_id = cr.id
       WHERE m.teacher_id = ?
       ORDER BY m.created_at DESC
     `, [teacherId]);
@@ -1296,9 +1520,12 @@ router.get('/materials', async (req, res) => {
 });
 
 // POST /teacher/materials/create - Create new material
-router.post('/materials/create', async (req, res) => {
+router.post('/materials/create', upload.single('file'), async (req, res) => {
+  console.log('Create material request body:', req.body);
+  console.log('Uploaded file info:', req.file);
   try {
-    const { classId, courseId, title, description, fileUrl, materialType } = req.body;
+    const { classId, courseId, title, description, materialType } = req.body;
+    const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
     const teacherId = req.teacherId;
 
     // Verify class belongs to teacher
@@ -1325,18 +1552,46 @@ router.post('/materials/create', async (req, res) => {
     );
     const semester = structureDetails[0] ? structureDetails[0].semester : 'Semester 1';
 
-    await pool.execute(`
-      INSERT INTO materials (class_id, teacher_id, course_id, title, description, file_url, material_type, academic_year, semester, semester_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [classId, teacherId, courseId || null, title, description, fileUrl, materialType || 'reading', academicYear, semester, semester]);
+    const [result] = await pool.execute(`
+      INSERT INTO materials (class_id, teacher_id, course_id, title, description, file_url, material_type, academic_year, semester)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [classId, teacherId, courseId || null, title || '', description || '', fileUrl, materialType || 'reading', academicYear || '', semester || 'Semester 1']);
 
+    // Emit real-time update to students of the class via Socket.IO
+    const io = req.app.get('io');
+    if (io) {
+      const [students] = await pool.execute(`
+        SELECT s.id as student_id, u.id as user_id
+        FROM students s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.class_id = ?
+      `, [classId]);
+
+      const payload = {
+        materialId: result.insertId,
+        title,
+        classId,
+        courseId: courseId || null,
+        materialType: materialType || 'reading',
+        description,
+        fileUrl,
+        teacherId,
+        teacherName: `${req.session.user.first_name || ''} ${req.session.user.last_name || ''}`
+      };
+      students.forEach(st => {
+        io.to(`student_${st.user_id}`).emit('newMaterial', payload);
+        io.to(`class_${classId}`).emit('newMaterial', payload);
+      });
+    }
     // Log activity
     await logActivity(teacherId, 'Material Uploaded', `Uploaded ${materialType || 'resource'}: ${title}`, classId, courseId || null);
 
+    console.log('Material insert result:', result);
     res.json({ message: 'Material added successfully' });
   } catch (error) {
     console.error('Create material error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Create material error details:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 });
 
@@ -1482,6 +1737,8 @@ router.get('/schedule', async (req, res) => {
 });
 
 // POST /teacher/classes/schedule/add - BLOCKED: Only admin can schedule classes
+// Teacher self-registration routes have been removed for security.
+// Previously existed GET /teacher/register and POST /teacher/register now disabled.
 router.post('/classes/schedule/add', (req, res) => {
   res.status(403).render('500-modern', {
     title: 'Access Denied',

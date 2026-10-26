@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -41,7 +41,44 @@
 
             <div class="row">
                 <div class="col-xl-9">
-                    <form action="/admin/settings/update" method="POST">
+                    
+<button id="startYearBtn" class="btn btn-primary"><i class="fas fa-plus-circle me-1"></i> Start New Academic Year</button>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('startYearBtn');
+  if (!btn) return;
+  btn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Starting...';
+    try {
+      const res = await fetch('/admin/academic/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Academic year started');
+        // Optionally reload to reflect new year
+        location.reload();
+      } else {
+        alert(data.error || data.message || 'Failed to start new academic year');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  });
+});
+</script>
+<form action="/admin/settings/update" method="POST">
+
+
                         <!-- Institution Profile Section -->
                         <div class="glass-panel mb-4 p-4 p-md-5" style="background: white !important; border-radius: 24px;">
                             <h3 class="h5 fw-bold mb-4 d-flex align-items-center" style="color: var(--dark-text)">
@@ -57,8 +94,15 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="text-secondary small mb-2 fw-bold">Academic Calendar Year</label>
-                                    <input type="text" name="academicYear" class="form-control bg-light border-0 rounded-3 px-3 py-2" value="<%= settings.academicYear %>" required>
+                                    <input type="text" name="academicYear" class="form-control bg-light border-0 rounded-3 px-3 py-2" value="<%= settings.academicYear %>" placeholder="2025-2026" required>
+                                    <small class="text-secondary">Format: YYYY-YYYY (e.g. 2026-2027). Previous years are archived, not deleted.</small>
                                 </div>
+                                <div class="col-md-6 d-flex align-items-end">
+
+
+                                    <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i> Save Changes</button>
+                                </div>
+
                                 <div class="col-md-6">
                                     <label class="text-secondary small mb-2 fw-bold">Official Correspondence Email</label>
                                     <input type="email" name="contactEmail" class="form-control bg-light border-0 rounded-3 px-3 py-2" value="<%= settings.contactEmail %>" required>
@@ -189,16 +233,17 @@
                         </div>
                         <h4 class="h6 fw-bold uppercase tracking-wider mb-4" style="color: var(--dark-text)">Configuration Log</h4>
                         <div class="text-start">
-                            <div class="mb-4 border-start border-primary border-3 ps-3">
-                                <div class="fw-bold small" style="color: var(--dark-text)">Semester Updated</div>
-                                <div class="text-secondary extra-small">Changed to Semester 1</div>
-                                <div class="text-secondary" style="font-size: 0.65rem;">Today, 10:45 AM</div>
+                            <% if (typeof academicYearHistory !== 'undefined' && academicYearHistory.length) { %>
+                                <% academicYearHistory.forEach(function(row) { %>
+                            <div class="mb-4 border-start <%= row.is_active ? 'border-primary' : 'border-light' %> border-3 ps-3">
+                                <div class="fw-bold small" style="color: var(--dark-text)"><%= row.year_label %><%= row.is_active ? ' (Active)' : '' %></div>
+                                <% if (row.notes) { %><div class="text-secondary extra-small"><%= row.notes %></div><% } %>
+                                <div class="text-secondary" style="font-size: 0.65rem;"><%= new Date(row.started_at).toLocaleString() %></div>
                             </div>
-                            <div class="mb-4 border-start border-light border-3 ps-3">
-                                <div class="fw-bold small text-secondary">Threshold Updated</div>
-                                <div class="text-secondary extra-small">Set to 75%</div>
-                                <div class="text-secondary" style="font-size: 0.65rem;">Yesterday, 02:30 PM</div>
-                            </div>
+                                <% }); %>
+                            <% } else { %>
+                            <p class="text-secondary small mb-0">No academic year history yet.</p>
+                            <% } %>
                         </div>
                     </div>
                 </div>
