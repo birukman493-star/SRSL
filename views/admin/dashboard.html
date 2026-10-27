@@ -15,9 +15,130 @@
     <!-- Google Fonts -->
     <link href="/css/inter-font.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .admin-dashboard .main-panel {
+            padding: clamp(0.75rem, 1.5vw, 1.25rem) !important;
+        }
+
+        .admin-dashboard .dashboard-header {
+            padding: 1rem 1.25rem !important;
+            border-radius: 18px !important;
+        }
+
+        .admin-dashboard .dashboard-header-content {
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .admin-dashboard .dashboard-header-actions {
+            flex-wrap: wrap;
+            row-gap: 0.5rem;
+        }
+
+        .admin-dashboard .dashboard-summary-grid,
+        .admin-dashboard .dashboard-content-grid {
+            --bs-gutter-x: 0.75rem;
+            --bs-gutter-y: 0.75rem;
+        }
+
+        .admin-dashboard .dashboard-summary-grid .dashboard-card,
+        .admin-dashboard .dashboard-content-grid .dashboard-card {
+            border-radius: 16px;
+        }
+
+        .admin-dashboard .dashboard-summary-grid .dashboard-card {
+            min-height: 0;
+            padding: 1rem;
+        }
+
+        .admin-dashboard .dashboard-summary-grid .stat-icon {
+            width: 38px;
+            height: 38px;
+            margin-bottom: 0.5rem;
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+
+        .admin-dashboard .dashboard-summary-grid .h2 {
+            font-size: 1.5rem;
+        }
+
+        .admin-dashboard .dashboard-summary-grid .mt-2 {
+            margin-top: 0.25rem !important;
+        }
+
+        .admin-dashboard .dashboard-summary-grid .text-uppercase {
+            font-size: 0.68rem;
+        }
+
+        .admin-dashboard .dashboard-content-grid .dashboard-card {
+            box-shadow: var(--shadow-sm);
+        }
+
+        .admin-dashboard .dashboard-content-grid > .col-lg-4 > .dashboard-card {
+            height: auto !important;
+        }
+
+        .admin-dashboard .dashboard-detail-metrics {
+            display: none !important;
+        }
+
+        .admin-dashboard .dashboard-activity-heading {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.9rem 1rem !important;
+        }
+
+        .admin-dashboard .dashboard-activity-table th,
+        .admin-dashboard .dashboard-activity-table td {
+            padding: 0.75rem !important;
+            white-space: nowrap;
+        }
+
+        .admin-dashboard .dashboard-action-card {
+            padding: 1rem !important;
+        }
+
+        .admin-dashboard .dashboard-action-card .btn {
+            padding-top: 0.55rem !important;
+            padding-bottom: 0.55rem !important;
+        }
+
+        @media (max-width: 767.98px) {
+            .admin-dashboard .dashboard-header-content {
+                align-items: flex-start !important;
+            }
+
+            .admin-dashboard .dashboard-header-actions {
+                width: 100%;
+                justify-content: flex-start;
+                gap: 0.75rem !important;
+            }
+
+            .admin-dashboard .dashboard-title {
+                font-size: 1.5rem !important;
+            }
+
+            .admin-dashboard .dashboard-activity-heading {
+                align-items: flex-start !important;
+            }
+        }
+
+        @media (max-width: 379.98px) {
+            .admin-dashboard .dashboard-summary-grid > div {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .admin-dashboard .dashboard-card {
+                transition: none;
+            }
+        }
+    </style>
 </head>
 
-<body>
+<body class="admin-dashboard">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
@@ -29,35 +150,15 @@
                     <div class="dashboard-header mb-4 notranslate" data-reveal="bottom" data-distance="30px"
                         data-delay="0.1s"
                         style="background: var(--panel-bg); border-radius: var(--panel-radius); border: 1px solid var(--panel-border); padding: 1.5rem 2.5rem; box-shadow: var(--shadow-md);">
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="dashboard-header-content d-flex justify-content-between align-items-center">
                             <div>
                                 <h1 class="dashboard-title"
                                     style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                                     <span data-key="welcome_back">Welcome back</span>, <%= (user && user.first_name) ?
                                         user.first_name : 'Admin' %>!
                                 </h1>
-                                <p class="text-secondary m-0 fw-medium" data-key="welcome_sub">Empowering excellence in
-                                    academic management and system administration.</p>
                             </div>
-                            <div class="d-flex align-items-center gap-4">
-                                <!-- Academic Year Selector -->
-                                <div class="year-selector d-none d-lg-block">
-                                    <label class="text-secondary small fw-bold d-block mb-2 text-uppercase"
-                                        style="font-size: 0.7rem; letter-spacing: 1px; opacity: 0.6;"
-                                        data-key="academic_session">Academic Session</label>
-                                    <form action="/admin/dashboard" method="GET" id="yearFilterForm">
-                                        <!-- <select name="year" class="form-select border-0 bg-light fw-bold"
-                                            onchange="this.form.submit()"
-                                            style="border-radius: 12px; min-width: 160px; padding: 0.6rem 1.2rem; font-size: 0.95rem; box-shadow: var(--shadow-sm);">
-                                            <% availableYears.forEach(year=> { %>
-                                                <option value="<%= year %>" <%=selectedYear===year ? 'selected' : '' %>>
-                                                    <%= year %>
-                                                </option>
-                                                <% }); %>
-                                        </select> -->
-                                    </form>
-                                </div>
-
+                            <div class="dashboard-header-actions d-flex align-items-center gap-4">
                                 <div class="d-flex gap-3 align-items-center">
                                     <!-- Language Selector -->
                                     <select id="languageSelector" class="form-select border-0 bg-light fw-bold"
@@ -72,28 +173,14 @@
                                         style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: var(--bg-soft); border: 1px solid var(--panel-border); color: var(--primary-color); font-size: 1.2rem;">
                                         <i class="fas fa-moon"></i>
                                     </button>
-                                    <div class="vertical-divider d-none d-md-block"
-                                        style="width: 1px; height: 40px; background: rgba(0,0,0,0.06);"></div>
-                                    <div class="text-end d-none d-md-block">
-                                        <div class="fw-bold ls-tight" style="color: var(--dark-text); font-size: 1rem;">
-                                            <%= new Date().toLocaleDateString('en-US', { weekday: 'long' ,
-                                                month: 'short' , day: 'numeric' }) %>
-                                        </div>
-                                        <div class="d-flex align-items-center justify-content-end gap-2 mt-1">
-                                            <span class="pulse-dot"
-                                                style="width: 8px; height: 8px; background: var(--success-color); border-radius: 50%; display: inline-block;"></span>
-                                            <small class="text-secondary fw-bold" style="font-size: 0.75rem;"
-                                                data-key="system_active">SYSTEM ACTIVE</small>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Primary Stats Row -->
-                    <div class="row g-4 mb-4">
-                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.1s">
+                    <div class="row g-4 mb-4 dashboard-summary-grid">
+                        <div class="col-6 col-xl-3" data-reveal="bottom" data-distance="40px" data-delay="0.1s">
                             <div class="dashboard-card apple-card transition-hover">
                                 <div class="stat-icon"
                                     style="background: rgba(59, 130, 246, 0.1); color: var(--primary-color);">
@@ -112,7 +199,7 @@
                             </div>
                         </div>
 
-                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.2s">
+                        <div class="col-6 col-xl-3" data-reveal="bottom" data-distance="40px" data-delay="0.2s">
                             <div class="dashboard-card apple-card transition-hover">
                                 <div class="stat-icon"
                                     style="background: rgba(245, 158, 11, 0.1); color: var(--secondary-color);">
@@ -131,7 +218,7 @@
                             </div>
                         </div>
 
-                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.3s">
+                        <div class="col-6 col-xl-3" data-reveal="bottom" data-distance="40px" data-delay="0.3s">
                             <div class="dashboard-card apple-card transition-hover">
                                 <div class="stat-icon"
                                     style="background: rgba(16, 185, 129, 0.1); color: var(--success-color);">
@@ -150,7 +237,7 @@
                             </div>
                         </div>
 
-                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.4s">
+                        <div class="col-6 col-xl-3" data-reveal="bottom" data-distance="40px" data-delay="0.4s">
                             <div class="dashboard-card apple-card transition-hover">
                                 <div class="stat-icon"
                                     style="background: rgba(239, 68, 68, 0.1); color: var(--danger-color);">
@@ -170,9 +257,9 @@
                     </div>
 
                     <!-- Detailed Metrics Row -->
-                    <div class="row g-4 mb-4">
+                    <div class="row g-4 mb-4 dashboard-detail-metrics">
                         <!-- Gender Stats -->
-                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.2s">
+                        <div class="col-6 col-xl-3" data-reveal="bottom" data-distance="40px" data-delay="0.2s">
                             <div class="dashboard-card apple-card transition-hover">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div class="text-secondary small fw-bold text-uppercase"
@@ -216,7 +303,7 @@
                         </div>
 
                         <!-- Academic Success -->
-                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.3s">
+                        <div class="col-6 col-xl-3" data-reveal="bottom" data-distance="40px" data-delay="0.3s">
                             <div class="dashboard-card apple-card transition-hover">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div class="text-secondary small fw-bold text-uppercase"
@@ -248,7 +335,7 @@
                         </div>
 
                         <!-- National Exams -->
-                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.4s">
+                        <div class="col-6 col-xl-3" data-reveal="bottom" data-distance="40px" data-delay="0.4s">
                             <div class="dashboard-card apple-card transition-hover">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div class="text-secondary small fw-bold text-uppercase"
@@ -276,7 +363,7 @@
                         </div>
 
                         <!-- Withdrawn Students -->
-                        <div class="col-md-3" data-reveal="bottom" data-distance="40px" data-delay="0.5s">
+                        <div class="col-6 col-xl-3" data-reveal="bottom" data-distance="40px" data-delay="0.5s">
                             <div class="dashboard-card apple-card transition-hover"
                                 style="background: var(--gradient-2); color: white;">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -306,12 +393,12 @@
                     </div>
 
                     <!-- Content Grid -->
-                    <div class="row g-4">
+                    <div class="row g-4 dashboard-content-grid">
                         <!-- Recent Activities -->
                         <div class="col-lg-8" data-reveal="bottom" data-distance="40px" data-delay="0.2s">
                             <div class="dashboard-card apple-card transition-hover h-100 p-0 overflow-hidden">
                                 <div
-                                    class="p-4 px-5 d-flex justify-content-between align-items-center border-bottom bg-light bg-opacity-50">
+                                    class="dashboard-activity-heading p-4 px-5 d-flex justify-content-between align-items-center border-bottom bg-light bg-opacity-50">
                                     <h3 class="h5 fw-bold m-0" style="color: var(--dark-text)"><i
                                             class="fas fa-history me-3 text-primary"></i><span
                                             data-key="operational_insights">Operational Insights</span></h3>
@@ -321,7 +408,7 @@
                                             History</span> <i class="fas fa-arrow-right ms-2 small"></i></a>
                                 </div>
                                 <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
+                                    <table class="table table-hover align-middle mb-0 dashboard-activity-table">
                                         <thead class="bg-light bg-opacity-25">
                                             <tr class="text-secondary small fw-bold"
                                                 style="text-transform: uppercase; letter-spacing: 1px;">
@@ -398,41 +485,17 @@
 
                         <!-- System & Quick Actions -->
                         <div class="col-lg-4" data-reveal="bottom" data-distance="40px" data-delay="0.4s">
-                            <!-- Global Semester Management Card -->
-                            <div class="dashboard-card apple-card transition-hover mb-4"
+                            <div class="dashboard-card apple-card transition-hover mb-4 dashboard-action-card"
                                 style="background: var(--panel-bg); border-radius: var(--panel-radius); border: 1px solid var(--panel-border); padding: 1.5rem; box-shadow: var(--shadow-md);">
-                                <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)">
-                                    <i class="fas fa-calendar-check me-2 text-success"></i>
-                                    <span data-key="semester_management">Semester Control</span>
+                                <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)">Past Academic Sessions
                                 </h3>
-                                <p class="text-secondary small mb-3" data-key="semester_control_desc">Switch the active
-                                    semester globally. All dashboards and modules will instantly synchronize.</p>
-
-                                <div class="d-flex align-items-center gap-3">
-                                    <button type="button"
-                                        class="btn btn-sm w-100 py-2 fw-bold rounded-3 transition-transform btn-semester-switch <%= academicContext.semester === '1' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                        data-semester="Semester 1" style="font-size: 0.9rem;">
-                                        Semester 1
-                                    </button>
-                                    <button type="button"
-                                        class="btn btn-sm w-100 py-2 fw-bold rounded-3 transition-transform btn-semester-switch <%= academicContext.semester === '2' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                        data-semester="Semester 2" style="font-size: 0.9rem;">
-                                        Semester 2
-                                    </button>
-                                </div>
-
-                                <div class="dashboard-card apple-card transition-hover mb-4"
-                                    style="background: var(--panel-bg); border-radius: var(--panel-radius); border: 1px solid var(--panel-border); padding: 1.5rem; box-shadow: var(--shadow-md);">
-                                    <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)">Past Academic Sessions
-                                    </h3>
-                                    <select id="pastSessionsSelect" class="form-select border-0 bg-light fw-bold"
-                                        style="border-radius:12px; min-width:200px; padding:0.6rem 1.2rem; font-size:0.95rem; box-shadow: var(--shadow-sm);">
-                                        <option value="" disabled selected>Loading sessions...</option>
-                                    </select>
-                                    <button id="activateSessionBtn" class="btn btn-primary w-100 mt-2"
-                                        style="border-radius:12px; padding:0.6rem 1.2rem; font-size:0.95rem; box-shadow: var(--shadow-sm);">Activate
-                                        Selected Session</button>
-                                </div>
+                                <select id="pastSessionsSelect" class="form-select border-0 bg-light fw-bold"
+                                    style="border-radius:12px; min-width:200px; padding:0.6rem 1.2rem; font-size:0.95rem; box-shadow: var(--shadow-sm);">
+                                    <option value="" disabled selected>Loading sessions...</option>
+                                </select>
+                                <button id="activateSessionBtn" class="btn btn-primary w-100 mt-2"
+                                    style="border-radius:12px; padding:0.6rem 1.2rem; font-size:0.95rem; box-shadow: var(--shadow-sm);">Activate
+                                    Selected Session</button>
                                 <script>
                                     async function loadSessions() {
                                         try {
@@ -468,7 +531,6 @@
                                             console.error('Activation error', e);
                                         }
                                     });
-                                    // Also activate on select change
                                     document.getElementById('pastSessionsSelect').addEventListener('change', async (e) => {
                                         const sessionId = e.target.value;
                                         if (!sessionId) return;
@@ -487,6 +549,31 @@
                                     });
                                     loadSessions();
                                 </script>
+                            </div>
+
+                            <!-- Global Semester Management Card -->
+                            <div class="dashboard-card apple-card transition-hover mb-4 dashboard-action-card"
+                                style="background: var(--panel-bg); border-radius: var(--panel-radius); border: 1px solid var(--panel-border); padding: 1.5rem; box-shadow: var(--shadow-md);">
+                                <h3 class="h5 fw-bold mb-3" style="color: var(--dark-text)">
+                                    <i class="fas fa-calendar-check me-2 text-success"></i>
+                                    <span data-key="semester_management">Semester Control</span>
+                                </h3>
+                                <p class="text-secondary small mb-3" data-key="semester_control_desc">Switch the active
+                                    semester globally. All dashboards and modules will instantly synchronize.</p>
+
+                                <div class="d-flex align-items-center gap-3">
+                                    <button type="button"
+                                        class="btn btn-sm w-100 py-2 fw-bold rounded-3 transition-transform btn-semester-switch <%= academicContext.semester === '1' ? 'btn-primary' : 'btn-outline-primary' %>"
+                                        data-semester="Semester 1" style="font-size: 0.9rem;">
+                                        Semester 1
+                                    </button>
+                                    <button type="button"
+                                        class="btn btn-sm w-100 py-2 fw-bold rounded-3 transition-transform btn-semester-switch <%= academicContext.semester === '2' ? 'btn-primary' : 'btn-outline-primary' %>"
+                                        data-semester="Semester 2" style="font-size: 0.9rem;">
+                                        Semester 2
+                                    </button>
+                                </div>
+
                             </div>
 
                             <div class="dashboard-card apple-card transition-hover mb-4"
@@ -527,7 +614,7 @@
                                 </div>
                             </div>
 
-                            <div class="dashboard-card apple-card transition-hover"
+                            <div class="dashboard-card apple-card transition-hover dashboard-system-pulse"
                                 style="background: var(--gradient-premium) !important; color: white !important; border: none !important; box-shadow: var(--shadow-premium);">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <h3 class="h5 fw-bold m-0" style="color: white"><i

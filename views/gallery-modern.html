@@ -460,6 +460,369 @@
                 font-size: 0.9rem;
             }
         }
+
+        .gallery-hero {
+            min-height: 0;
+            padding: clamp(7rem, 11vw, 9rem) 0 clamp(4rem, 7vw, 6rem);
+            background:
+                radial-gradient(ellipse at 82% 18%, rgba(201, 121, 76, 0.13), transparent 28rem),
+                radial-gradient(ellipse at 12% 90%, rgba(91, 119, 87, 0.14), transparent 30rem),
+                linear-gradient(135deg, #f8f6ee 0%, #f1f3eb 100%);
+        }
+
+        [data-theme="dark"] .gallery-hero,
+        .dark .gallery-hero {
+            background:
+                radial-gradient(ellipse at 82% 18%, rgba(201, 121, 76, 0.16), transparent 28rem),
+                radial-gradient(ellipse at 12% 90%, rgba(91, 119, 87, 0.2), transparent 30rem),
+                var(--bg-main);
+        }
+
+        .gallery-hero-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(280px, 0.82fr);
+            align-items: center;
+            gap: clamp(2.5rem, 8vw, 7rem);
+        }
+
+        .gallery-hero .hero-content {
+            max-width: 680px;
+            margin: 0;
+            text-align: left;
+        }
+
+        .gallery-eyebrow,
+        .gallery-section-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #64764b;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .gallery-eyebrow {
+            margin-bottom: 1.35rem;
+        }
+
+        .gallery-eyebrow::before {
+            content: "";
+            width: 28px;
+            height: 1px;
+            background: currentColor;
+        }
+
+        .gallery-hero .hero-title {
+            max-width: 650px;
+            margin-bottom: 1.2rem;
+            font-size: clamp(3.5rem, 8vw, 7rem);
+            font-weight: 700;
+            letter-spacing: -0.085em;
+            line-height: 0.92;
+        }
+
+        .gallery-hero .hero-subtitle {
+            max-width: 450px;
+            margin: 0;
+            font-size: clamp(1rem, 1.6vw, 1.18rem);
+            line-height: 1.8;
+        }
+
+        .gallery-hero-art {
+            position: relative;
+            max-width: 470px;
+            justify-self: end;
+            width: 100%;
+            padding: 0 1.2rem 1.2rem 0;
+        }
+
+        .gallery-hero-image-wrap {
+            aspect-ratio: 0.94;
+            overflow: hidden;
+            border-radius: 48% 48% 20px 20px;
+            background: #d7ddce;
+            box-shadow: 0 28px 70px rgba(31, 47, 37, 0.18);
+        }
+
+        .gallery-hero-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-hero-stamp {
+            position: absolute;
+            left: -2.2rem;
+            bottom: 3.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.9rem 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.86);
+            box-shadow: 0 14px 40px rgba(31, 47, 37, 0.12);
+            backdrop-filter: blur(12px);
+            color: #263b2d;
+        }
+
+        .gallery-hero-stamp strong {
+            font-size: 2rem;
+            line-height: 1;
+            letter-spacing: -0.08em;
+        }
+
+        .gallery-hero-stamp span {
+            font-size: 0.72rem;
+            font-weight: 600;
+            line-height: 1.35;
+        }
+
+        .filter-section {
+            padding: 1.5rem 0;
+        }
+
+        .filter-buttons {
+            gap: 0.65rem;
+        }
+
+        .filter-btn {
+            padding: 0.65rem 1.25rem;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            letter-spacing: 0;
+            box-shadow: none;
+        }
+
+        .filter-btn::before {
+            background: #344b39;
+        }
+
+        .filter-btn:hover {
+            color: #344b39;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(31, 47, 37, 0.1);
+        }
+
+        .filter-btn.active {
+            background: #344b39;
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(31, 47, 37, 0.18);
+            transform: none;
+        }
+
+        .gallery-section {
+            padding: clamp(3.5rem, 7vw, 6rem) 0;
+            background: var(--bg-main);
+        }
+
+        .gallery-section::before,
+        .gallery-section::after {
+            content: none;
+        }
+
+        .gallery-section-heading {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto 2rem;
+        }
+
+        .gallery-section-kicker {
+            margin-bottom: 0.65rem;
+        }
+
+        .gallery-section-title {
+            margin: 0;
+            color: var(--dark-text);
+            font-size: clamp(1.7rem, 3vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.055em;
+        }
+
+        .gallery-section-count {
+            padding-bottom: 0.3rem;
+            color: var(--gray-text);
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .gallery-grid {
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            grid-auto-rows: 220px;
+            gap: 1rem;
+            max-width: 1400px;
+        }
+
+        .gallery-item,
+        .gallery-item:nth-child(1),
+        .gallery-item:nth-child(6),
+        .gallery-item:nth-child(8) {
+            grid-column: span 4;
+            border-radius: 22px;
+            box-shadow: 0 12px 30px rgba(25, 37, 29, 0.1);
+        }
+
+        .gallery-item:nth-child(1) {
+            grid-column: span 8;
+            grid-row: span 2;
+        }
+
+        .gallery-item:nth-child(2) {
+            grid-column: span 4;
+            grid-row: span 2;
+        }
+
+        .gallery-item:nth-child(6),
+        .gallery-item:nth-child(7) {
+            grid-column: span 6;
+            grid-row: span 2;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 24px 48px rgba(25, 37, 29, 0.2);
+        }
+
+        .gallery-image {
+            transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+        }
+
+        .gallery-overlay {
+            background: linear-gradient(180deg, rgba(17, 26, 19, 0.02) 20%, rgba(17, 26, 19, 0.78) 100%);
+        }
+
+        .gallery-content {
+            padding: clamp(1.25rem, 2.5vw, 2rem);
+        }
+
+        .gallery-category {
+            margin-bottom: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.68rem;
+            letter-spacing: 0.12em;
+        }
+
+        .gallery-title {
+            font-size: clamp(1.35rem, 2.3vw, 2rem);
+            letter-spacing: -0.04em;
+        }
+
+        .gallery-description {
+            font-size: 0.92rem;
+        }
+
+        .filter-btn:focus-visible,
+        .gallery-item:focus-visible {
+            outline: 3px solid #c8794c;
+            outline-offset: 4px;
+        }
+
+        @media (max-width: 900px) {
+            .gallery-hero-layout {
+                grid-template-columns: minmax(0, 1fr) minmax(240px, 0.72fr);
+                gap: 2rem;
+            }
+
+            .gallery-hero-stamp {
+                left: -1rem;
+            }
+
+            .gallery-grid {
+                grid-auto-rows: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .gallery-hero-layout {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+
+            .gallery-hero .hero-content {
+                text-align: center;
+                margin: 0 auto;
+            }
+
+            .gallery-hero .hero-title {
+                margin-right: auto;
+                margin-left: auto;
+            }
+
+            .gallery-hero .hero-subtitle {
+                margin: 0 auto;
+            }
+
+            .gallery-eyebrow {
+                justify-content: center;
+            }
+
+            .gallery-hero-art {
+                justify-self: center;
+                max-width: 360px;
+                padding-right: 0;
+            }
+
+            .gallery-hero-image-wrap {
+                aspect-ratio: 1.1;
+                border-radius: 42% 42% 18px 18px;
+            }
+
+            .gallery-hero-stamp {
+                left: -0.5rem;
+                bottom: 2rem;
+            }
+
+            .gallery-section-heading {
+                align-items: start;
+                margin-bottom: 1.5rem;
+            }
+
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                grid-auto-rows: auto;
+                gap: 1rem;
+            }
+
+            .gallery-item,
+            .gallery-item:nth-child(1),
+            .gallery-item:nth-child(2),
+            .gallery-item:nth-child(6),
+            .gallery-item:nth-child(7),
+            .gallery-item:nth-child(8) {
+                grid-column: span 1;
+                grid-row: span 1;
+                height: 330px !important;
+            }
+        }
+
+        @media (hover: none) {
+            .gallery-item .content-reveal {
+                max-height: 200px;
+                margin-top: 0.75rem;
+                opacity: 1;
+                transform: none;
+            }
+
+            .gallery-item .gallery-overlay i {
+                display: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .gallery-item,
+            .gallery-image,
+            .filter-btn,
+            .gallery-content,
+            .content-reveal {
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 
@@ -523,11 +886,23 @@
                 <div class="floating-element floating-3"></div>
             </div>
             <div class="container">
-                <div class="hero-content">
-                    <h1 class="hero-title" data-typing data-key="nav_gallery">Gallery</h1>
-                    <p class="hero-subtitle">
-                        Explore our campus life and educational journey
-                    </p>
+                <div class="gallery-hero-layout">
+                    <div class="hero-content">
+                        <span class="gallery-eyebrow">Life at Abdigudina</span>
+                        <h1 class="hero-title" data-typing data-key="nav_gallery">Gallery</h1>
+                        <p class="hero-subtitle">
+                            A closer look at the people, places, and moments that make our school community thrive.
+                        </p>
+                    </div>
+                    <div class="gallery-hero-art" aria-hidden="true">
+                        <div class="gallery-hero-image-wrap">
+                            <img src="/image/gallery-7.jpg" alt="" class="gallery-hero-image" />
+                        </div>
+                        <div class="gallery-hero-stamp">
+                            <strong>11</strong>
+                            <span>moments<br />and counting</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -536,22 +911,22 @@
         <section class="filter-section">
             <div class="container">
                 <div class="filter-buttons">
-                    <button class="filter-btn active" onclick="filterGallery('all', this)">
+                    <button class="filter-btn active" aria-pressed="true" onclick="filterGallery('all', this)">
                         All
                     </button>
-                    <button class="filter-btn" onclick="filterGallery('campus', this)">
+                    <button class="filter-btn" aria-pressed="false" onclick="filterGallery('campus', this)">
                         Campus
                     </button>
-                    <button class="filter-btn" onclick="filterGallery('classroom', this)">
+                    <button class="filter-btn" aria-pressed="false" onclick="filterGallery('classroom', this)">
                         Classroom
                     </button>
-                    <button class="filter-btn" onclick="filterGallery('events', this)">
+                    <button class="filter-btn" aria-pressed="false" onclick="filterGallery('events', this)">
                         Events
                     </button>
-                    <button class="filter-btn" onclick="filterGallery('sports', this)">
+                    <button class="filter-btn" aria-pressed="false" onclick="filterGallery('sports', this)">
                         Sports
                     </button>
-                    <button class="filter-btn" onclick="filterGallery('technology', this)">
+                    <button class="filter-btn" aria-pressed="false" onclick="filterGallery('technology', this)">
                         Technology
                     </button>
                 </div>
@@ -561,9 +936,16 @@
         <!-- Gallery Section -->
         <section class="gallery-section">
             <div class="container">
+                <div class="gallery-section-heading">
+                    <div>
+                        <span class="gallery-section-kicker">Snapshots of school life</span>
+                        <h2 class="gallery-section-title">A community in motion</h2>
+                    </div>
+                    <span class="gallery-section-count">01 — 11 moments</span>
+                </div>
                 <div class="gallery-grid" id="galleryGrid">
                     <!-- Gallery Item 1 -->
-                    <div class="gallery-item animate-on-scroll" data-category="campus" onclick="openModal(this)">
+                    <div class="gallery-item animate-on-scroll" data-category="campus" onclick="openModal(this, event)">
                         <div class="gallery-image-container">
                             <img src="/image/gallery-1.jpg"
                                 alt="Modern Campus Building" class="gallery-image" />
@@ -593,7 +975,7 @@
                     </div>
 
                     <!-- Gallery Item 2 -->
-                    <div class="gallery-item animate-on-scroll" data-category="classroom" onclick="openModal(this)">
+                    <div class="gallery-item animate-on-scroll" data-category="classroom" onclick="openModal(this, event)">
                         <div class="gallery-image-container">
                             <img src="/image/hero-bg.jpg"
                                 alt="Interactive Classroom" class="gallery-image" />
@@ -623,7 +1005,7 @@
                     </div>
 
                     <!-- Gallery Item 3 -->
-                    <div class="gallery-item animate-on-scroll" data-category="events" onclick="openModal(this)">
+                    <div class="gallery-item animate-on-scroll" data-category="events" onclick="openModal(this, event)">
                         <div class="gallery-image-container">
                             <img src="/image/gallery-2.jpg"
                                 alt="Science Fair Exhibition" class="gallery-image" />
@@ -653,7 +1035,7 @@
                     </div>
 
                     <!-- Gallery Item 4 -->
-                    <div class="gallery-item animate-on-scroll" data-category="sports" onclick="openModal(this)">
+                    <div class="gallery-item animate-on-scroll" data-category="sports" onclick="openModal(this, event)">
                         <div class="gallery-image-container">
                             <img src="/image/gallery-3.jpg"
                                 alt="Sports Competition" class="gallery-image" />
@@ -683,7 +1065,7 @@
                     </div>
 
                     <!-- Gallery Item 5 -->
-                    <div class="gallery-item animate-on-scroll" data-category="technology" onclick="openModal(this)">
+                    <div class="gallery-item animate-on-scroll" data-category="technology" onclick="openModal(this, event)">
                         <div class="gallery-image-container">
                             <img src="/image/gallery-4.jpg"
                                 alt="Computer Lab" class="gallery-image" />
@@ -713,7 +1095,7 @@
                     </div>
 
                     <!-- Gallery Item 6 -->
-                    <div class="gallery-item animate-on-scroll" data-category="campus" onclick="openModal(this)">
+                    <div class="gallery-item animate-on-scroll" data-category="campus" onclick="openModal(this, event)">
                         <div class="gallery-image-container">
                             <img src="/image/gallery-5.jpg"
                                 alt="Digital Library" class="gallery-image" />
@@ -743,7 +1125,7 @@
                     </div>
 
                     <!-- Gallery Item 7 -->
-                    <div class="gallery-item animate-on-scroll" data-category="classroom" onclick="openModal(this)">
+                    <div class="gallery-item animate-on-scroll" data-category="classroom" onclick="openModal(this, event)">
                         <div class="gallery-image-container">
                             <img src="/image/gallery-6.jpg"
                                 alt="Art Studio" class="gallery-image" />
@@ -773,7 +1155,7 @@
                     </div>
 
                     <!-- Gallery Item 8 -->
-                    <div class="gallery-item animate-on-scroll" data-category="events" onclick="openModal(this)">
+                    <div class="gallery-item animate-on-scroll" data-category="events" onclick="openModal(this, event)">
                         <div class="gallery-image-container">
                             <img src="/image/gallery-7.jpg"
                                 alt="Cultural Festival" class="gallery-image" />
@@ -803,7 +1185,7 @@
                     </div>
 
                     <!-- Gallery Item 9 -->
-                    <div class="gallery-item animate-on-scroll" data-category="technology" onclick="openModal(this)">
+                    <div class="gallery-item animate-on-scroll" data-category="technology" onclick="openModal(this, event)">
                         <div class="gallery-image-container">
                             <img src="/image/gallery-8.jpg"
                                 alt="Robotics Lab" class="gallery-image" />
@@ -833,7 +1215,7 @@
                     </div>
 
                     <!-- Gallery Item 10 -->
-                    <div class="gallery-item animate-on-scroll" data-category="sports" onclick="openModal(this)">
+                    <div class="gallery-item animate-on-scroll" data-category="sports" onclick="openModal(this, event)">
                         <div class="gallery-image-container">
                             <img src="/image/gallery-9.jpg"
                                 alt="Athletics Track" class="gallery-image" />
@@ -863,7 +1245,7 @@
                     </div>
 
                     <!-- Gallery Item 11 -->
-                    <div class="gallery-item animate-on-scroll" data-category="campus" onclick="openModal(this)">
+                    <div class="gallery-item animate-on-scroll" data-category="campus" onclick="openModal(this, event)">
                         <div class="gallery-image-container">
                             <img src="/image/gallery-10.jpg"
                                 alt="Student Lounge" class="gallery-image" />
@@ -1032,8 +1414,10 @@
             // Update active button
             document.querySelectorAll(".filter-btn").forEach((btn) => {
                 btn.classList.remove("active");
+                btn.setAttribute("aria-pressed", "false");
             });
             btnEl.classList.add("active");
+            btnEl.setAttribute("aria-pressed", "true");
 
             // Filter gallery items
             const items = document.querySelectorAll(".gallery-item");
@@ -1054,7 +1438,8 @@
             });
         }
 
-        function openModal(element) {
+        function openModal(element, event) {
+            event.stopImmediatePropagation();
             const modal = document.getElementById("galleryModal");
             const img = element.querySelector(".gallery-image");
             const title = element.querySelector(".gallery-title").textContent;

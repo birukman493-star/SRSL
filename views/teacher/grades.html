@@ -62,9 +62,13 @@
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
                         <h1 class="dashboard-title" style="font-size: 1.75rem; font-weight: 900; margin-bottom: 0.25rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                            <%= courseName %> Results
+                            Enter Grades: <%= courseName %>
                         </h1>
                         <p class="text-secondary m-0 fw-medium small">Academic performance analysis and grading suite</p>
+                        <div class="mt-2">
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">Selected course</span>
+                            <strong class="ms-2"><%= courseName %></strong>
+                        </div>
                     </div>
                     <div class="d-flex gap-3 flex-wrap align-items-center">
                         <a href="/teacher/grades" class="btn btn-light fw-bold rounded-pill px-4 py-2 border-0 shadow-sm">
@@ -195,8 +199,10 @@
                                             <% categories.forEach(cat => { %>
                                                 <% 
                                                     let existingScore = '';
+                                                    let existingGrade = null;
                                                     if (studentResults[student.student_id] && studentResults[student.student_id][cat.id]) {
-                                                        existingScore = studentResults[student.student_id][cat.id].score;
+                                                        existingGrade = studentResults[student.student_id][cat.id];
+                                                        existingScore = existingGrade.score;
                                                     }
                                                 %>
                                                 <td class="py-3 border-bottom border-light text-center">
@@ -208,6 +214,13 @@
                                                            value="<%= existingScore %>"
                                                            min="0" max="<%= cat.max_mark %>" step="0.5"
                                                            <%= (gradesStatus === 'approved') ? 'disabled' : '' %>>
+                                                    <% if (existingGrade && !['pending', 'submitted', 'approved'].includes(existingGrade.status) && !['pending', 'submitted', 'approved'].includes(gradesStatus)) { %>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger mt-1 grade-delete-btn"
+                                                                data-grade-id="<%= existingGrade.id %>"
+                                                                aria-label="Delete this grade">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    <% } %>
                                                     <input type="text"
                                                            class="form-control form-control-sm grade-comment-input mt-1 mx-auto d-none"
                                                            placeholder="Comment"
@@ -304,8 +317,33 @@
                 badge.style.background = bg;
             }
 
-            document.getElementById('saveGradesBtn').addEventListener('click', async () => {
-                const saveBtn = document.getElementById('saveGradesBtn');
+            document.querySelectorAll('.grade-delete-btn').forEach(button => {
+                button.addEventListener('click', async () => {
+                    if (!confirm('Delete this grade? This cannot be undone.')) return;
+
+                    button.disabled = true;
+                    try {
+                        const response = await fetch(`/teacher/grades/${encodeURIComponent(button.dataset.gradeId)}`, {
+                            method: 'DELETE'
+                        });
+                        const data = await response.json();
+                        if (!response.ok) {
+                            alert(data.message || 'Unable to delete this grade.');
+                            button.disabled = false;
+                            return;
+                        }
+                        window.location.reload();
+                    } catch (error) {
+                        console.error('Delete grade error:', error);
+                        alert('A network error occurred while deleting the grade.');
+                        button.disabled = false;
+                    }
+                });
+            });
+
+            const saveGradesBtn = document.getElementById('saveGradesBtn');
+            if (saveGradesBtn) saveGradesBtn.addEventListener('click', async () => {
+                const saveBtn = saveGradesBtn;
                 saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Submitting...';
                 saveBtn.disabled = true;
 

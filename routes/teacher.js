@@ -3,7 +3,10 @@ const { pool } = require('../config/db');
 const fs = require('fs');
 const path = require('path');
 const router = express.Router();
-const verifyTeacherAssignment = require('../middleware/verifyTeacherAssignment');
+const {
+  verifyTeacherAssignment,
+  isTeacherAssigned,
+} = require('../middleware/verifyTeacherAssignment');
 const upload = require('../middleware/upload');
 const {
   getAcademicContext,
@@ -11,6 +14,127 @@ const {
   ATTENDANCE_COURSE_NAME_SQL,
   DEFAULT_ACADEMIC_YEAR,
 } = require('../config/systemSettings');
+
+function getCourseId(courseId) {
+  if (
+    typeof courseId !== 'number' &&
+    (typeof courseId !== 'string' || !/^\d+$/.test(courseId))
+  ) {
+    return null;
+  }
+
+  const parsed = Number(courseId);
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
+async function getOwnedGradingStructure(executor, teacherId, classId, courseId, structureId, semester) {
+  const params = [teacherId, classId, courseId, courseId];
+  let structureFilter = '';
+
+  if (structureId !== undefined) {
+    structureFilter = ' AND id = ?';
+    params.push(structureId);
+  }
+  if (semester !== undefined) {
+    structureFilter += ' AND semester = ?';
+    params.push(semester);
+  }
+
+  const [structures] = await executor.execute(
+    `SELECT id, teacher_id, course_id, class_id, semester, status
+     FROM grading_structures
+     WHERE teacher_id = ? AND class_id = ?
+       AND ((? = 0 AND course_id IS NULL) OR course_id = ?)
+       ${structureFilter}
+     LIMIT 1`,
+    params
+  );
+  return structures[0] || null;
+}
+
+async function validateGradeEntries(executor, structureId, classId, studentResults) {
+  if (!studentResults || typeof studentResults !== 'object' || Array.isArray(studentResults)) {
+    return { error: 'Student grades must be provided as an object.' };
+  }
+
+  const rawEntries = Object.entries(studentResults);
+  if (rawEntries.length === 0) {
+    return { error: 'At least one student grade is required.' };
+  }
+
+  const entries = [];
+  const studentIds = new Set();
+  const categoryIds = new Set();
+  for (const [rawStudentId, categories] of rawEntries) {
+    const studentId = Number(rawStudentId);
+    if (
+      !Number.isSafeInteger(studentId) ||
+      studentId <= 0 ||
+      !categories ||
+      typeof categories !== 'object' ||
+      Array.isArray(categories)
+    ) {
+      return { error: 'Invalid student or category data.' };
+    }
+
+    studentIds.add(studentId);
+    for (const [rawCategoryId, value] of Object.entries(categories)) {
+      const categoryId = Number(rawCategoryId);
+      if (!Number.isSafeInteger(categoryId) || categoryId <= 0) {
+        return { error: 'Invalid assessment category.' };
+      }
+
+      const rawScore = value && typeof value === 'object' ? value.score : value;
+      const score = Number(rawScore);
+      if (rawScore === '' || rawScore === null || !Number.isFinite(score) || score < 0) {
+        return { error: 'Grades must be valid non-negative numbers.' };
+      }
+
+      entries.push({
+        studentId,
+        categoryId,
+        score,
+        comment: value && typeof value === 'object' && typeof value.comment === 'string'
+          ? value.comment.slice(0, 200)
+          : null,
+      });
+      categoryIds.add(categoryId);
+    }
+  }
+
+  if (entries.length === 0) {
+    return { error: 'At least one student grade is required.' };
+  }
+
+  const categoryPlaceholders = Array.from(categoryIds, () => '?').join(', ');
+  const [categories] = await executor.execute(
+    `SELECT id, max_mark FROM assessment_categories
+     WHERE structure_id = ? AND id IN (${categoryPlaceholders})`,
+    [structureId, ...categoryIds]
+  );
+  if (categories.length !== categoryIds.size) {
+    return { error: 'One or more assessment categories do not belong to this grading structure.' };
+  }
+
+  const categoryMaxMarks = new Map(categories.map((category) => [Number(category.id), Number(category.max_mark)]));
+  if (entries.some((entry) => entry.score > categoryMaxMarks.get(entry.categoryId))) {
+    return { error: 'A grade cannot exceed the assessment maximum mark.' };
+  }
+
+  const studentPlaceholders = Array.from(studentIds, () => '?').join(', ');
+  const [students] = await executor.execute(
+    `SELECT s.id
+     FROM students s
+     JOIN classes c ON s.grade_level = c.grade AND s.section = c.section
+     WHERE c.id = ? AND s.withdrawal_status = 'active' AND s.id IN (${studentPlaceholders})`,
+    [classId, ...studentIds]
+  );
+  if (students.length !== studentIds.size) {
+    return { error: 'One or more students are not active members of this class.' };
+  }
+
+  return { entries };
+}
 
 // Helper to log teacher activity
 async function logActivity(teacherId, type, desc, classId = null, courseId = null) {
@@ -84,12 +208,26 @@ router.get('/dashboard', async (req, res) => {
 
     // Get teacher's assigned classes and courses
     const [assignedCourses] = await pool.execute(`
-      SELECT tca.*, c.name as class_name, c.grade, c.section, co.course_name, co.course_code
-      FROM teacher_course_assignments tca
-      JOIN classes c ON tca.class_id = c.id
-      JOIN courses co ON tca.course_id = co.id
-      WHERE tca.teacher_id = ? AND tca.status = 'active'
-    `, [teacherId]);
+      SELECT assigned.class_id, assigned.course_id, c.name as class_name,
+             c.grade, c.section, co.course_name, co.course_code
+      FROM (
+        SELECT class_id, course_id
+        FROM teacher_course_assignments
+        WHERE teacher_id = ? AND status = 'active'
+        UNION
+        SELECT class_id, course_id
+        FROM class_schedule
+        WHERE teacher_id = ?
+        UNION
+        SELECT cs.class_id, cs.course_id
+        FROM class_schedule cs
+        JOIN courses course_owner ON course_owner.id = cs.course_id
+        WHERE course_owner.teacher_id = ?
+      ) assigned
+      JOIN classes c ON assigned.class_id = c.id
+      JOIN courses co ON assigned.course_id = co.id
+      ORDER BY co.course_name, c.grade, c.section
+    `, [teacherId, teacherId, teacherId]);
 
     // Get total students count across all assigned classes
     const [studentCount] = await pool.execute(`
@@ -99,32 +237,58 @@ router.get('/dashboard', async (req, res) => {
       WHERE c.id IN (
         SELECT class_id FROM teacher_course_assignments WHERE teacher_id = ? AND status = 'active'
         UNION
+        SELECT class_id FROM class_schedule WHERE teacher_id = ?
+        UNION
+        SELECT cs.class_id FROM class_schedule cs
+        JOIN courses course_owner ON course_owner.id = cs.course_id
+        WHERE course_owner.teacher_id = ?
+        UNION
         SELECT class_id FROM class_teachers WHERE teacher_id = ?
-      ) 
-    `, [teacherId, teacherId]);
+      )
+    `, [teacherId, teacherId, teacherId, teacherId]);
 
     // Get assigned classes count
     const [classesCount] = await pool.execute(`
       SELECT COUNT(DISTINCT class_id) as count FROM (
         SELECT class_id FROM teacher_course_assignments WHERE teacher_id = ? AND status = 'active'
         UNION
+        SELECT class_id FROM class_schedule WHERE teacher_id = ?
+        UNION
+        SELECT cs.class_id FROM class_schedule cs
+        JOIN courses course_owner ON course_owner.id = cs.course_id
+        WHERE course_owner.teacher_id = ?
+        UNION
         SELECT class_id FROM class_teachers WHERE teacher_id = ?
       ) as combined_classes
-    `, [teacherId, teacherId]);
+    `, [teacherId, teacherId, teacherId, teacherId]);
 
     // Get assigned classes details - Updated to UNION both assignment types
     const [classes] = await pool.execute(`
-      SELECT DISTINCT c.*, co.course_name, co.course_code,
+      SELECT DISTINCT c.*, assigned.course_id as assigned_course_id,
+             co.course_name, co.course_code,
              (SELECT COUNT(*) FROM students WHERE grade_level = c.grade AND section = c.section AND withdrawal_status = 'active') as student_count,
              'course' as assignment_type
       FROM classes c
-      JOIN teacher_course_assignments tca ON c.id = tca.class_id
-      JOIN courses co ON tca.course_id = co.id
-      WHERE tca.teacher_id = ? AND tca.status = 'active'
+      JOIN (
+        SELECT class_id, course_id
+        FROM teacher_course_assignments
+        WHERE teacher_id = ? AND status = 'active'
+        UNION
+        SELECT class_id, course_id
+        FROM class_schedule
+        WHERE teacher_id = ?
+        UNION
+        SELECT cs.class_id, cs.course_id
+        FROM class_schedule cs
+        JOIN courses course_owner ON course_owner.id = cs.course_id
+        WHERE course_owner.teacher_id = ?
+      ) assigned ON c.id = assigned.class_id
+      JOIN courses co ON assigned.course_id = co.id
       
       UNION
       
-      SELECT DISTINCT c.*, CONCAT(c.name, ' — Homeroom') as course_name, 'HOMEROOM' as course_code,
+      SELECT DISTINCT c.*, 0 as assigned_course_id,
+             CONCAT(c.name, ' — Homeroom') as course_name, 'HOMEROOM' as course_code,
              (SELECT COUNT(*) FROM students WHERE grade_level = c.grade AND section = c.section AND withdrawal_status = 'active') as student_count,
              'homeroom' as assignment_type
       FROM classes c
@@ -132,7 +296,7 @@ router.get('/dashboard', async (req, res) => {
       WHERE ct.teacher_id = ?
       
       ORDER BY grade, section
-    `, [teacherId, teacherId]);
+    `, [teacherId, teacherId, teacherId, teacherId]);
 
     // Get pending assignments count for the teacher
     const [assignmentsCount] = await pool.execute(`
@@ -211,6 +375,7 @@ router.get('/dashboard', async (req, res) => {
         passingGradeAvg
       },
       classes,
+      assignedCourses,
       activities,
       todaySchedule,
       academicContext,
@@ -635,53 +800,114 @@ router.post('/grades/save', verifyTeacherAssignment, async (req, res) => {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const { classId, courseId, structureId, gradeDate, studentResults } = req.body;
+    const classId = req.classId;
+    const courseId = req.courseId;
+    const structureId = Number(req.body.structureId);
+    const { gradeDate, studentResults } = req.body;
     const teacherId = req.teacherId;
 
-    // Verify assignment
-    const [assignmentCheck] = await conn.execute(`
-      SELECT id FROM teacher_course_assignments WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status = 'active'
-      UNION
-      SELECT id FROM class_teachers WHERE teacher_id = ? AND class_id = ? AND ? = 0
-    `, [teacherId, classId, courseId, teacherId, classId, courseId]);
-
-    if (assignmentCheck.length === 0) {
+    if (!Number.isSafeInteger(structureId) || structureId <= 0) {
       await conn.rollback();
-      return res.status(403).json({ message: 'Access denied' });
+      return res.status(400).json({ message: 'A valid grading structure is required.' });
     }
 
-    // Get academic year
-    const [classDetails] = await conn.execute('SELECT academic_year FROM classes WHERE id = ?', [classId]);
-    const academicYear = classDetails[0] ? classDetails[0].academic_year : '';
+    const structure = await getOwnedGradingStructure(
+      conn,
+      teacherId,
+      classId,
+      courseId,
+      structureId
+    );
+    if (!structure || structure.status !== 'approved') {
+      await conn.rollback();
+      return res.status(403).json({ message: 'You cannot manage grades for this grading structure.' });
+    }
 
-    // Get semester and owner teacher ID from grading structure
-    const [structureDetails] = await conn.execute('SELECT semester, teacher_id FROM grading_structures WHERE id = ?', [structureId]);
-    const structureOwner = structureDetails[0];
-    const semester = structureOwner ? structureOwner.semester : 'Semester 1';
-    const ownerTeacherId = structureOwner ? structureOwner.teacher_id : teacherId;
+    const validation = await validateGradeEntries(conn, structureId, classId, studentResults);
+    if (validation.error) {
+      await conn.rollback();
+      return res.status(400).json({ message: validation.error });
+    }
 
-    const dbCourseId = (courseId == 0 || !courseId) ? null : courseId;
+    const [classDetails] = await conn.execute(
+      'SELECT academic_year FROM classes WHERE id = ?',
+      [classId]
+    );
+    if (classDetails.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ message: 'Class not found.' });
+    }
 
-    // Batch insert student_results for each student and category to improve performance
-    const studentResultValues = [];
-    const studentResultPlaceholders = [];
-    for (const [studentId, categories] of Object.entries(studentResults)) {
-      for (const [categoryId, score] of Object.entries(categories)) {
-        // Values for INSERT
-        studentResultValues.push(
-          studentId, categoryId, score, teacherId, gradeDate, 'saved', ownerTeacherId, classId, dbCourseId, semester, semester, academicYear
-        );
-        studentResultPlaceholders.push('( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )');
+    const academicYear = classDetails[0].academic_year;
+    const semester = structure.semester;
+    const dbCourseId = courseId === 0 ? null : courseId;
+    const targetCourseId = courseId;
+    const studentIds = Array.from(new Set(validation.entries.map((entry) => entry.studentId)));
+    const studentPlaceholders = studentIds.map(() => '?').join(', ');
+
+    const [existingFinalResults] = await conn.execute(
+      `SELECT status FROM student_course_results
+       WHERE teacher_id = ? AND class_id = ?
+         AND ((course_id = ?) OR (course_id IS NULL AND ? = 0))
+         AND semester_id = ? AND academic_year = ? AND assessment_structure_id = ?
+         AND student_id IN (${studentPlaceholders})
+       FOR UPDATE`,
+      [teacherId, classId, targetCourseId, targetCourseId, semester, academicYear, structureId, ...studentIds]
+    );
+    if (existingFinalResults.some((result) => ['pending', 'submitted', 'approved'].includes(result.status))) {
+      await conn.rollback();
+      return res.status(403).json({ message: 'Cannot edit grades that are submitted or finalized.' });
+    }
+
+    for (const entry of validation.entries) {
+      const [existing] = await conn.execute(
+        `SELECT sr.teacher_id, sr.class_id, sr.course_id, sr.status
+         FROM student_results sr
+         WHERE sr.student_id = ? AND sr.category_id = ?
+         FOR UPDATE`,
+        [entry.studentId, entry.categoryId]
+      );
+      if (existing.length > 0) {
+        const row = existing[0];
+        const existingCourseId = row.course_id === null ? 0 : Number(row.course_id);
+        if (
+          (row.teacher_id !== null && Number(row.teacher_id) !== teacherId) ||
+          Number(row.class_id) !== classId ||
+          existingCourseId !== courseId ||
+          ['pending', 'submitted', 'approved'].includes(row.status)
+        ) {
+          await conn.rollback();
+          return res.status(403).json({ message: 'This grade is owned by another teacher or is finalized.' });
+        }
       }
     }
+
+    const studentResultValues = [];
+    const studentResultPlaceholders = [];
+    for (const entry of validation.entries) {
+      studentResultValues.push(
+        entry.studentId,
+        entry.categoryId,
+        entry.score,
+        teacherId,
+        gradeDate || null,
+        'saved',
+        teacherId,
+        classId,
+        dbCourseId,
+        semester,
+        semester,
+        academicYear
+      );
+      studentResultPlaceholders.push('( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )');
+    }
+
     if (studentResultValues.length > 0) {
       const batchQuery = `INSERT INTO student_results (student_id, category_id, score, graded_by, grade_date, status, teacher_id, class_id, course_id, semester, semester_id, academic_year) VALUES ${studentResultPlaceholders.join(', ')} ON DUPLICATE KEY UPDATE score = VALUES(score), graded_by = VALUES(graded_by), grade_date = VALUES(grade_date), status = IF(VALUES(status) = 'approved', 'approved', 'saved'), teacher_id = VALUES(teacher_id), class_id = VALUES(class_id), course_id = VALUES(course_id), semester = VALUES(semester), semester_id = VALUES(semester_id), academic_year = VALUES(academic_year)`;
       await conn.execute(batchQuery, studentResultValues);
     }
 
-    // Now, create or update a grade_submissions record for this class/course/semester batch
-    // Using 0 as course_id for general homeroom grades to support database constraints
-    const targetCourseId = dbCourseId || 0;
+    // Create or update only this teacher's submission.
     await conn.execute(`
       INSERT INTO grade_submissions (teacher_id, course_id, class_id, semester_id, academic_year, status, submitted_by, submitted_at, comments)
       VALUES (?, ?, ?, ?, ?, 'saved', ?, CURRENT_TIMESTAMP, NULL)
@@ -694,23 +920,24 @@ router.post('/grades/save', verifyTeacherAssignment, async (req, res) => {
         rejected_by = NULL,
         rejected_at = NULL,
         comments = NULL
-    `, [ownerTeacherId, targetCourseId, classId, semester, academicYear, req.session.user.id, req.session.user.id]);
+    `, [teacherId, targetCourseId, classId, semester, academicYear, req.session.user.id, req.session.user.id]);
 
     const [existingSub] = await conn.execute(`
       SELECT id FROM grade_submissions 
       WHERE teacher_id = ? AND course_id = ? AND class_id = ? AND semester_id = ? AND academic_year = ?
-    `, [ownerTeacherId, targetCourseId, classId, semester, academicYear]);
+    `, [teacherId, targetCourseId, classId, semester, academicYear]);
     const submissionId = existingSub[0].id;
 
-    // Calculate cumulative course scores for each student and save to student_course_results
-    for (const studentId of Object.keys(studentResults)) {
+    for (const studentId of studentIds) {
       const [categoryScores] = await conn.execute(`
         SELECT 
           SUM((sr.score / ac.max_mark) * ac.weight_percentage) as calculated_score
         FROM student_results sr
         JOIN assessment_categories ac ON sr.category_id = ac.id
-        WHERE sr.student_id = ? AND ac.structure_id = ?
-      `, [studentId, structureId]);
+        WHERE sr.student_id = ? AND sr.teacher_id = ? AND sr.class_id = ?
+          AND ((sr.course_id = ?) OR (sr.course_id IS NULL AND ? = 0))
+          AND ac.structure_id = ?
+      `, [studentId, teacherId, classId, courseId, courseId, structureId]);
 
       const totalScore = categoryScores[0] && categoryScores[0].calculated_score !== null
         ? parseFloat(categoryScores[0].calculated_score)
@@ -736,8 +963,8 @@ router.post('/grades/save', verifyTeacherAssignment, async (req, res) => {
           rejected_at = NULL,
           comments = NULL
       `, [
-        submissionId, studentId, ownerTeacherId, targetCourseId, classId, semester, academicYear, structureId, totalScore, req.session.user.id,
-        submissionId, ownerTeacherId, classId, structureId, totalScore, req.session.user.id
+        submissionId, studentId, teacherId, targetCourseId, classId, semester, academicYear, structureId, totalScore, req.session.user.id,
+        submissionId, teacherId, classId, structureId, totalScore, req.session.user.id
       ]);
     }
 
@@ -748,11 +975,11 @@ router.post('/grades/save', verifyTeacherAssignment, async (req, res) => {
     // Emit real-time update for saved grades
     const io = req.app.get('io');
     if (io) {
-      const studentIds = Object.keys(studentResults);
+      const studentIds = Array.from(new Set(validation.entries.map((entry) => entry.studentId)));
       studentIds.forEach(sid => {
         const payload = {
-          studentId: parseInt(sid),
-          classId: parseInt(classId),
+          studentId: sid,
+          classId,
           courseId: dbCourseId,
           teacherId: teacherId,
           status: 'saved'
@@ -777,30 +1004,53 @@ router.post('/grades/save', verifyTeacherAssignment, async (req, res) => {
 
 // POST /teacher/grades/submit - Final submission for approval
 router.post('/grades/submit', verifyTeacherAssignment, async (req, res) => {
-  const { classId, courseId } = req.body;
+  const classId = req.classId;
+  const courseId = req.courseId;
   const teacherId = req.teacherId;
   try {
     const gradeCtx = await getAcademicContext();
-    const [structures] = await pool.execute(
-      'SELECT teacher_id FROM grading_structures WHERE (course_id = ? OR (course_id IS NULL AND ? = 0)) AND class_id = ? AND semester = ?',
-      [courseId, courseId, classId, gradeCtx.semesterLabel]
+    const structure = await getOwnedGradingStructure(
+      pool,
+      teacherId,
+      classId,
+      courseId,
+      undefined,
+      gradeCtx.semesterLabel
     );
-    const ownerTeacherId = structures.length > 0 ? structures[0].teacher_id : teacherId;
+    if (!structure) {
+      return res.status(403).json({ message: 'No grading structure is assigned to this teacher for the requested course.' });
+    }
+
+    const [classDetails] = await pool.execute(
+      'SELECT academic_year FROM classes WHERE id = ?',
+      [classId]
+    );
+    if (classDetails.length === 0) {
+      return res.status(404).json({ message: 'Class not found.' });
+    }
+
+    const targetCourseId = courseId;
+    const academicYear = classDetails[0].academic_year;
 
     await pool.execute(`
       UPDATE grade_submissions 
       SET status = 'submitted' 
-      WHERE teacher_id = ? AND class_id = ? AND course_id = ?
-    `, [ownerTeacherId, classId, courseId || 0]);
+      WHERE teacher_id = ? AND class_id = ?
+        AND ((course_id = ?) OR (course_id IS NULL AND ? = 0))
+        AND semester_id = ? AND academic_year = ?
+    `, [teacherId, classId, targetCourseId, targetCourseId, structure.semester, academicYear]);
 
     await pool.execute(`
       UPDATE student_course_results 
       SET status = 'submitted' 
-      WHERE teacher_id = ? AND class_id = ? AND course_id = ?
-    `, [ownerTeacherId, classId, courseId || 0]);
+      WHERE teacher_id = ? AND class_id = ?
+        AND ((course_id = ?) OR (course_id IS NULL AND ? = 0))
+        AND semester_id = ? AND academic_year = ?
+    `, [teacherId, classId, targetCourseId, targetCourseId, structure.semester, academicYear]);
 
     res.json({ message: 'Grades submitted for approval' });
   } catch (error) {
+    console.error('Submit grades error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -810,74 +1060,102 @@ router.post('/grades/edit', verifyTeacherAssignment, async (req, res) => {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const { classId, courseId, structureId, studentResults } = req.body;
+    const classId = req.classId;
+    const courseId = req.courseId;
+    const structureId = Number(req.body.structureId);
+    const { studentResults } = req.body;
     const teacherId = req.teacherId;
 
-    // Verify assignment
-    const [assignmentCheck] = await conn.execute(`
-      SELECT id FROM teacher_course_assignments WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status = 'active'
-      UNION
-      SELECT id FROM class_teachers WHERE teacher_id = ? AND class_id = ? AND ? = 0
-    `, [teacherId, classId, courseId, teacherId, classId, courseId]);
-
-    if (assignmentCheck.length === 0) {
+    if (!Number.isSafeInteger(structureId) || structureId <= 0) {
       await conn.rollback();
-      return res.status(403).json({ message: 'Access denied: You are not assigned to this class/course.' });
+      return res.status(400).json({ message: 'A valid grading structure is required.' });
     }
 
-    const dbCourseId = (courseId == 0 || !courseId) ? null : courseId;
-    const targetCourseId = dbCourseId || 0;
-
-    // Get semester and owner teacher ID from grading structure
-    const [structureDetails] = await conn.execute('SELECT semester, teacher_id FROM grading_structures WHERE id = ?', [structureId]);
-    const structureOwner = structureDetails[0];
-    const semester = structureOwner ? structureOwner.semester : 'Semester 1';
-    const ownerTeacherId = structureOwner ? structureOwner.teacher_id : teacherId;
-      // Prevent edits if grades have been submitted or approved
-      const [submissionStatus] = await conn.execute(
-        `SELECT status FROM grade_submissions 
-         WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status != 'saved'`,
-        [ownerTeacherId, classId, targetCourseId]
-      );
-      if (submissionStatus.length > 0) {
-        await conn.rollback();
-        return res.status(403).json({ message: 'Cannot edit: Grades have been submitted for approval.' });
-      }
-
-    // Prevent edits if already submitted/approved
-    const [submissionCheck] = await conn.execute(`
-      SELECT status FROM grade_submissions 
-      WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status != 'saved'
-    `, [ownerTeacherId, classId, targetCourseId]);
-
-    if (submissionCheck.length > 0) {
+    const structure = await getOwnedGradingStructure(
+      conn,
+      teacherId,
+      classId,
+      courseId,
+      structureId
+    );
+    if (!structure || structure.status !== 'approved') {
       await conn.rollback();
-      return res.status(403).json({ message: 'Cannot edit: Grades are already submitted or approved.' });
+      return res.status(403).json({ message: 'You cannot manage grades for this grading structure.' });
     }
 
-    // Get academic year
-    const [classDetails] = await conn.execute('SELECT academic_year FROM classes WHERE id = ?', [classId]);
-    const academicYear = classDetails[0] ? classDetails[0].academic_year : '';
+    const validation = await validateGradeEntries(conn, structureId, classId, studentResults);
+    if (validation.error) {
+      await conn.rollback();
+      return res.status(400).json({ message: validation.error });
+    }
 
-    // Record dynamic grades and audit logs for each student
-    for (const [studentId, categories] of Object.entries(studentResults)) {
-      for (const [categoryId, score] of Object.entries(categories)) {
-        // Query the old value
-        const [oldScoreRecord] = await conn.execute(`
-          SELECT score FROM student_results
-          WHERE student_id = ? AND category_id = ?
-        `, [studentId, categoryId]);
+    const [classDetails] = await conn.execute(
+      'SELECT academic_year FROM classes WHERE id = ?',
+      [classId]
+    );
+    if (classDetails.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ message: 'Class not found.' });
+    }
 
-        const old_value = oldScoreRecord[0] ? parseFloat(oldScoreRecord[0].score) : null;
+    const academicYear = classDetails[0].academic_year;
+    const semester = structure.semester;
+    const dbCourseId = courseId === 0 ? null : courseId;
+    const targetCourseId = courseId;
 
-        let new_value;
-        let comment = null;
-        if (score && typeof score === 'object') {
-          new_value = parseFloat(score.score);
-          comment = score.comment || null;
-        } else {
-          new_value = parseFloat(score);
+    const [submissionStatus] = await conn.execute(
+      `SELECT status FROM grade_submissions
+       WHERE teacher_id = ? AND class_id = ?
+         AND ((course_id = ?) OR (course_id IS NULL AND ? = 0))
+         AND semester_id = ? AND academic_year = ? AND status != 'saved'`,
+      [teacherId, classId, targetCourseId, targetCourseId, semester, academicYear]
+    );
+    if (submissionStatus.length > 0) {
+      await conn.rollback();
+      return res.status(403).json({ message: 'Cannot edit: Grades have been submitted for approval.' });
+    }
+
+    const studentIds = Array.from(new Set(validation.entries.map((entry) => entry.studentId)));
+    const studentPlaceholders = studentIds.map(() => '?').join(', ');
+    const [existingFinalResults] = await conn.execute(
+      `SELECT status FROM student_course_results
+       WHERE teacher_id = ? AND class_id = ?
+         AND ((course_id = ?) OR (course_id IS NULL AND ? = 0))
+         AND semester_id = ? AND academic_year = ? AND assessment_structure_id = ?
+         AND student_id IN (${studentPlaceholders})
+       FOR UPDATE`,
+      [teacherId, classId, targetCourseId, targetCourseId, semester, academicYear, structureId, ...studentIds]
+    );
+    if (existingFinalResults.some((result) => ['pending', 'submitted', 'approved'].includes(result.status))) {
+      await conn.rollback();
+      return res.status(403).json({ message: 'Cannot edit grades that are submitted or finalized.' });
+    }
+
+    for (const entry of validation.entries) {
+        const [oldScoreRecord] = await conn.execute(
+          `SELECT score, teacher_id, class_id, course_id, status
+           FROM student_results
+           WHERE student_id = ? AND category_id = ?
+           FOR UPDATE`,
+          [entry.studentId, entry.categoryId]
+        );
+
+        if (oldScoreRecord.length > 0) {
+          const row = oldScoreRecord[0];
+          const existingCourseId = row.course_id === null ? 0 : Number(row.course_id);
+          if (
+            (row.teacher_id !== null && Number(row.teacher_id) !== teacherId) ||
+            Number(row.class_id) !== classId ||
+            existingCourseId !== courseId ||
+            ['pending', 'submitted', 'approved'].includes(row.status)
+          ) {
+            await conn.rollback();
+            return res.status(403).json({ message: 'This grade is owned by another teacher or is finalized.' });
+          }
         }
+
+        const old_value = oldScoreRecord[0] ? Number(oldScoreRecord[0].score) : null;
+        const new_value = entry.score;
 
         // Only log and update if value has changed
         if (old_value !== new_value) {
@@ -889,24 +1167,25 @@ router.post('/grades/edit', verifyTeacherAssignment, async (req, res) => {
             ON DUPLICATE KEY UPDATE 
               score = ?, graded_by = ?, grade_date = CURDATE(), status = ?, teacher_id = ?, class_id = ?, course_id = ?, semester = ?, semester_id = ?, academic_year = ?
           `, [
-            studentId, categoryId, new_value, teacherId, status, ownerTeacherId, classId, dbCourseId, semester, semester, academicYear,
-            new_value, teacherId, status, ownerTeacherId, classId, dbCourseId, semester, semester, academicYear
+            entry.studentId, entry.categoryId, new_value, teacherId, status, teacherId, classId, dbCourseId, semester, semester, academicYear,
+            new_value, teacherId, status, teacherId, classId, dbCourseId, semester, semester, academicYear
           ]);
 
           // Insert into grade_change_logs
           await conn.execute(`
             INSERT INTO grade_change_logs (student_id, category_id, old_value, new_value, comment, edited_by, change_time)
             VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-          `, [studentId, categoryId, old_value, new_value, comment, teacherId]);
+          `, [entry.studentId, entry.categoryId, old_value, new_value, entry.comment, teacherId]);
         }
-      }
     }
 
-    // Determine target grade submission status
+    // Keep the submission and final result scoped to this teacher and structure.
     const [existingSub] = await conn.execute(`
       SELECT id, status FROM grade_submissions 
-      WHERE teacher_id = ? AND course_id = ? AND class_id = ? AND semester_id = ? AND academic_year = ?
-    `, [ownerTeacherId, targetCourseId, classId, semester, academicYear]);
+      WHERE teacher_id = ? AND class_id = ?
+        AND ((course_id = ?) OR (course_id IS NULL AND ? = 0))
+        AND semester_id = ? AND academic_year = ?
+    `, [teacherId, classId, targetCourseId, targetCourseId, semester, academicYear]);
 
     let submissionId = null;
     if (existingSub.length > 0) {
@@ -921,19 +1200,21 @@ router.post('/grades/edit', verifyTeacherAssignment, async (req, res) => {
       const [insertSub] = await conn.execute(`
         INSERT INTO grade_submissions (teacher_id, course_id, class_id, semester_id, academic_year, status, submitted_by, submitted_at)
         VALUES (?, ?, ?, ?, ?, 'saved', ?, CURRENT_TIMESTAMP)
-      `, [ownerTeacherId, targetCourseId, classId, semester, academicYear, req.session.user.id]);
+      `, [teacherId, targetCourseId, classId, semester, academicYear, req.session.user.id]);
       submissionId = insertSub.insertId;
     }
 
     // Recalculate total weighted score for each student
-    for (const studentId of Object.keys(studentResults)) {
+    for (const studentId of studentIds) {
       const [categoryScores] = await conn.execute(`
         SELECT 
           SUM((sr.score / ac.max_mark) * ac.weight_percentage) as calculated_score
         FROM student_results sr
         JOIN assessment_categories ac ON sr.category_id = ac.id
-        WHERE sr.student_id = ? AND ac.structure_id = ?
-      `, [studentId, structureId]);
+        WHERE sr.student_id = ? AND sr.teacher_id = ? AND sr.class_id = ?
+          AND ((sr.course_id = ?) OR (sr.course_id IS NULL AND ? = 0))
+          AND ac.structure_id = ?
+      `, [studentId, teacherId, classId, courseId, courseId, structureId]);
 
       const totalScore = categoryScores[0] && categoryScores[0].calculated_score !== null
         ? parseFloat(categoryScores[0].calculated_score)
@@ -952,8 +1233,8 @@ router.post('/grades/edit', verifyTeacherAssignment, async (req, res) => {
           total_score = ?,
           status = 'saved'
       `, [
-        submissionId, studentId, ownerTeacherId, targetCourseId, classId, semester, academicYear, structureId, totalScore, req.session.user.id,
-        submissionId, ownerTeacherId, classId, structureId, totalScore
+        submissionId, studentId, teacherId, targetCourseId, classId, semester, academicYear, structureId, totalScore, req.session.user.id,
+        submissionId, teacherId, classId, structureId, totalScore
       ]);
     }
 
@@ -964,7 +1245,13 @@ router.post('/grades/edit', verifyTeacherAssignment, async (req, res) => {
     // Emit real-time update to connected clients
     const io = req.app.get('io');
     if (io) {
-      io.emit('gradeUpdated', { classId, courseId, teacherId });
+      const studentIds = Array.from(new Set(validation.entries.map((entry) => entry.studentId)));
+      const payload = { classId, courseId: dbCourseId, teacherId };
+      studentIds.forEach((studentId) => {
+        io.to(`student_${studentId}`).emit('gradeUpdated', payload);
+        io.to(`parent_${studentId}`).emit('gradeUpdated', payload);
+      });
+      io.to('admin_dashboard').emit('gradeUpdated', payload);
     }
     res.json({ message: 'Grades updated', status: 'saved' });
   } catch (error) {
@@ -976,21 +1263,174 @@ router.post('/grades/edit', verifyTeacherAssignment, async (req, res) => {
   }
 });
 
+// DELETE /teacher/grades/:gradeId - Remove one grade owned by the current teacher.
+router.delete('/grades/:gradeId', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const gradeId = Number(req.params.gradeId);
+    if (!Number.isSafeInteger(gradeId) || gradeId <= 0) {
+      return res.status(400).json({ message: 'A valid grade ID is required.' });
+    }
+
+    await conn.beginTransaction();
+    const teacherId = req.teacherId;
+    const [rows] = await conn.execute(
+      `SELECT sr.id, sr.student_id, sr.teacher_id, sr.class_id, sr.course_id,
+              sr.status, gs.course_id AS structure_course_id, gs.class_id AS structure_class_id,
+              gs.semester, ac.structure_id
+       FROM student_results sr
+       JOIN assessment_categories ac ON ac.id = sr.category_id
+       JOIN grading_structures gs ON gs.id = ac.structure_id
+       WHERE sr.id = ? AND sr.teacher_id = ? AND gs.teacher_id = ?
+       FOR UPDATE`,
+      [gradeId, teacherId, teacherId]
+    );
+    if (rows.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ message: 'Grade not found or access denied.' });
+    }
+
+    const grade = rows[0];
+    const classId = Number(grade.structure_class_id);
+    const courseId = grade.structure_course_id === null ? 0 : Number(grade.structure_course_id);
+    const gradeCourseId = grade.course_id === null ? 0 : Number(grade.course_id);
+    if (
+      Number(grade.class_id) !== classId ||
+      gradeCourseId !== courseId ||
+      !await isTeacherAssigned(conn, teacherId, classId, courseId)
+    ) {
+      await conn.rollback();
+      return res.status(403).json({ message: 'You are not authorized to remove this grade.' });
+    }
+
+    if (['pending', 'submitted', 'approved'].includes(grade.status)) {
+      await conn.rollback();
+      return res.status(403).json({ message: 'Grades submitted for approval or finalized cannot be deleted.' });
+    }
+
+    const [classDetails] = await conn.execute(
+      'SELECT academic_year FROM classes WHERE id = ?',
+      [classId]
+    );
+    if (classDetails.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ message: 'Class not found.' });
+    }
+
+    const academicYear = classDetails[0].academic_year;
+    const [submissionRows] = await conn.execute(
+      `SELECT id, status FROM grade_submissions
+       WHERE teacher_id = ? AND class_id = ?
+         AND ((course_id = ?) OR (course_id IS NULL AND ? = 0))
+         AND semester_id = ? AND academic_year = ?
+       FOR UPDATE`,
+      [teacherId, classId, courseId, courseId, grade.semester, academicYear]
+    );
+    if (submissionRows.some((submission) => ['pending', 'submitted', 'approved'].includes(submission.status))) {
+      await conn.rollback();
+      return res.status(403).json({ message: 'Grades submitted for approval or finalized cannot be deleted.' });
+    }
+
+    const [finalResults] = await conn.execute(
+      `SELECT id, status FROM student_course_results
+       WHERE student_id = ? AND teacher_id = ? AND class_id = ?
+         AND ((course_id = ?) OR (course_id IS NULL AND ? = 0))
+         AND semester_id = ? AND academic_year = ? AND assessment_structure_id = ?
+       FOR UPDATE`,
+      [grade.student_id, teacherId, classId, courseId, courseId, grade.semester, academicYear, grade.structure_id]
+    );
+    if (finalResults.some((result) => ['pending', 'submitted', 'approved'].includes(result.status))) {
+      await conn.rollback();
+      return res.status(403).json({ message: 'Grades submitted for approval or finalized cannot be deleted.' });
+    }
+
+    await conn.execute(
+      'DELETE FROM student_results WHERE id = ? AND teacher_id = ? AND class_id = ?',
+      [gradeId, teacherId, classId]
+    );
+
+    const [remainingScores] = await conn.execute(
+      `SELECT COUNT(*) AS score_count,
+              SUM((sr.score / ac.max_mark) * ac.weight_percentage) AS total_score
+       FROM student_results sr
+       JOIN assessment_categories ac ON ac.id = sr.category_id
+       WHERE sr.student_id = ? AND sr.teacher_id = ? AND sr.class_id = ?
+         AND ((sr.course_id = ?) OR (sr.course_id IS NULL AND ? = 0))
+         AND ac.structure_id = ?`,
+      [grade.student_id, teacherId, classId, courseId, courseId, grade.structure_id]
+    );
+
+    if (Number(remainingScores[0].score_count) === 0) {
+      await conn.execute(
+        `DELETE FROM student_course_results
+         WHERE student_id = ? AND teacher_id = ? AND class_id = ?
+           AND ((course_id = ?) OR (course_id IS NULL AND ? = 0))
+           AND semester_id = ? AND academic_year = ? AND assessment_structure_id = ?`,
+        [grade.student_id, teacherId, classId, courseId, courseId, grade.semester, academicYear, grade.structure_id]
+      );
+    } else {
+      await conn.execute(
+        `UPDATE student_course_results
+         SET total_score = ?, status = 'saved'
+         WHERE student_id = ? AND teacher_id = ? AND class_id = ?
+           AND ((course_id = ?) OR (course_id IS NULL AND ? = 0))
+           AND semester_id = ? AND academic_year = ? AND assessment_structure_id = ?`,
+        [
+          Number(remainingScores[0].total_score),
+          grade.student_id,
+          teacherId,
+          classId,
+          courseId,
+          courseId,
+          grade.semester,
+          academicYear,
+          grade.structure_id,
+        ]
+      );
+    }
+
+    for (const submission of submissionRows) {
+      await conn.execute(
+        `UPDATE grade_submissions
+         SET status = 'saved', submitted_by = ?, submitted_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND teacher_id = ?`,
+        [req.session.user.id, submission.id, teacherId]
+      );
+    }
+
+    await conn.commit();
+    await logActivity(teacherId, 'Grade Deleted', `Removed a grade for student ${grade.student_id}`, classId, courseId);
+    return res.json({ message: 'Grade deleted.' });
+  } catch (error) {
+    await conn.rollback();
+    console.error('Delete grade error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  } finally {
+    conn.release();
+  }
+});
+
 // GET /teacher/grades/history/:classId/:courseId - Fetch change history logs for a course
 router.get('/grades/history/:classId/:courseId', async (req, res) => {
   try {
     const teacherId = req.teacherId;
-    const { classId, courseId } = req.params;
-
-    // Verify assignment
-    const [assignmentCheck] = await pool.execute(`
-      SELECT id FROM teacher_course_assignments WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status = 'active'
-      UNION
-      SELECT id FROM class_teachers WHERE teacher_id = ? AND class_id = ? AND ? = 0
-    `, [teacherId, classId, courseId, teacherId, classId, courseId]);
-
-    if (assignmentCheck.length === 0) {
+    const classId = Number(req.params.classId);
+    const courseId = getCourseId(req.params.courseId);
+    if (courseId === null || !await isTeacherAssigned(pool, teacherId, classId, courseId)) {
       return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const gradeCtx = await getAcademicContext();
+    const structure = await getOwnedGradingStructure(
+      pool,
+      teacherId,
+      classId,
+      courseId,
+      undefined,
+      gradeCtx.semesterLabel
+    );
+    if (!structure) {
+      return res.json([]);
     }
 
     const [logs] = await pool.execute(`
@@ -1003,14 +1443,12 @@ router.get('/grades/history/:classId/:courseId', async (req, res) => {
       JOIN students s ON gcl.student_id = s.id
       JOIN users su ON s.user_id = su.id
       JOIN assessment_categories ac ON gcl.category_id = ac.id
+      JOIN grading_structures gs ON gs.id = ac.structure_id
       JOIN teachers t ON gcl.edited_by = t.id
       JOIN users tu ON t.user_id = tu.id
-      WHERE ac.structure_id = (
-        SELECT id FROM grading_structures 
-        WHERE (course_id = ? OR (course_id IS NULL AND ? = 0)) AND class_id = ? AND semester = 'Semester 1' LIMIT 1
-      )
+      WHERE gs.id = ? AND gs.teacher_id = ? AND gcl.edited_by = ?
       ORDER BY gcl.change_time DESC
-    `, [courseId, courseId, classId]);
+    `, [structure.id, teacherId, teacherId]);
 
     res.json(logs);
   } catch (error) {
@@ -1028,24 +1466,54 @@ router.get('/grades', async (req, res) => {
              gs.status as structure_status, gs.id as structure_id, gs.semester as structure_semester,
              COALESCE(
                (SELECT status FROM grade_submissions WHERE class_id = tca.class_id AND course_id = tca.course_id AND teacher_id = tca.teacher_id AND semester_id = gs.semester LIMIT 1),
-               (SELECT sr.status FROM student_results sr JOIN assessment_categories ac ON sr.category_id = ac.id WHERE ac.structure_id = gs.id LIMIT 1)
+               (SELECT sr.status FROM student_results sr JOIN assessment_categories ac ON sr.category_id = ac.id
+                WHERE ac.structure_id = gs.id AND sr.teacher_id = tca.teacher_id AND sr.class_id = tca.class_id LIMIT 1)
              ) as grades_status
-      FROM teacher_course_assignments tca
+      FROM (
+        SELECT teacher_id, class_id, course_id, status
+        FROM teacher_course_assignments
+        WHERE status = 'active'
+        UNION
+        SELECT teacher_id, class_id, course_id, 'active' AS status
+        FROM class_schedule
+        WHERE teacher_id IS NOT NULL
+        UNION
+        SELECT course_owner.teacher_id, cs.class_id, cs.course_id, 'active' AS status
+        FROM class_schedule cs
+        JOIN courses course_owner ON course_owner.id = cs.course_id
+        WHERE course_owner.teacher_id IS NOT NULL
+      ) tca
       JOIN classes c ON tca.class_id = c.id
       JOIN courses co ON tca.course_id = co.id
       LEFT JOIN grading_structures gs ON (tca.course_id = gs.course_id AND tca.class_id = gs.class_id AND gs.teacher_id = tca.teacher_id)
-      WHERE tca.teacher_id = ? AND tca.status = 'active'
+      WHERE tca.teacher_id = ?
       
       UNION
       
-      SELECT ct.class_id, 0 as course_id, c.name as class_name, c.grade, c.section, 'General Grade' as course_name,
+      SELECT ct.class_id, 0 as course_id, c.name as class_name, c.grade, c.section,
+             COALESCE(gco.course_name, scheduled_course.course_name) as course_name,
              gs.status as structure_status, gs.id as structure_id, gs.semester as structure_semester,
              COALESCE(
                (SELECT status FROM grade_submissions WHERE class_id = ct.class_id AND course_id = 0 AND teacher_id = ct.teacher_id AND semester_id = gs.semester LIMIT 1),
-               (SELECT sr.status FROM student_results sr JOIN assessment_categories ac ON sr.category_id = ac.id WHERE ac.structure_id = gs.id LIMIT 1)
+               (SELECT sr.status FROM student_results sr JOIN assessment_categories ac ON sr.category_id = ac.id
+                WHERE ac.structure_id = gs.id AND sr.teacher_id = ct.teacher_id AND sr.class_id = ct.class_id LIMIT 1)
              ) as grades_status
       FROM class_teachers ct
       JOIN classes c ON ct.class_id = c.id
+      LEFT JOIN teacher_course_assignments gca
+        ON gca.teacher_id = ct.teacher_id
+        AND gca.class_id = ct.class_id
+        AND gca.status = 'active'
+      LEFT JOIN courses gco ON gco.id = gca.course_id
+      LEFT JOIN (
+        SELECT cs.teacher_id, cs.class_id, MIN(co.course_name) AS course_name
+        FROM class_schedule cs
+        JOIN courses co ON co.id = cs.course_id
+        GROUP BY cs.teacher_id, cs.class_id
+        HAVING COUNT(DISTINCT cs.course_id) = 1
+      ) scheduled_course
+        ON scheduled_course.teacher_id = ct.teacher_id
+        AND scheduled_course.class_id = ct.class_id
       LEFT JOIN grading_structures gs ON (gs.course_id IS NULL AND ct.class_id = gs.class_id AND gs.teacher_id = ct.teacher_id)
       WHERE ct.teacher_id = ?
     `, [teacherId, teacherId]);
@@ -1064,30 +1532,22 @@ router.get('/grades', async (req, res) => {
 router.get('/grades/:classId/:courseId', async (req, res) => {
   try {
     const teacherId = req.teacherId;
-    const { classId, courseId } = req.params;
-
-    // Verify assignment
-    const [assignmentCheck] = await pool.execute(`
-      SELECT id FROM teacher_course_assignments WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status = 'active'
-      UNION
-      SELECT id FROM class_teachers WHERE teacher_id = ? AND class_id = ? AND ? = 0
-    `, [teacherId, classId, courseId, teacherId, classId, courseId]);
-
-    if (assignmentCheck.length === 0) {
+    const classId = Number(req.params.classId);
+    const courseId = getCourseId(req.params.courseId);
+    if (courseId === null || !await isTeacherAssigned(pool, teacherId, classId, courseId)) {
       return res.status(403).render('500-modern', { title: 'Access Denied', message: 'You are not assigned to this course/class.' });
     }
 
     const gradeCtx = await getAcademicContext();
-    // Fetch grading structure for active semester (any teacher's structure for this class/course)
-    const [structures] = await pool.execute(
-      'SELECT id, status, teacher_id, semester FROM grading_structures WHERE (course_id = ? OR (course_id IS NULL AND ? = 0)) AND class_id = ? AND semester = ?',
-      [courseId, courseId, classId, gradeCtx.semesterLabel]
+    const structure = await getOwnedGradingStructure(
+      pool,
+      teacherId,
+      classId,
+      courseId,
+      undefined,
+      gradeCtx.semesterLabel
     );
 
-    let structure = structures.length > 0 ? structures[0] : null;
-    const ownerTeacherId = structure && structure.teacher_id ? structure.teacher_id : teacherId;
-
-    // Determine the teacher who owns the grading structure (original creator)
     let teacherName = '';
     if (structure && structure.teacher_id) {
       const [owner] = await pool.execute(
@@ -1121,18 +1581,19 @@ router.get('/grades/:classId/:courseId', async (req, res) => {
 
       // Get existing results
       const [results] = await pool.execute(`
-        SELECT sr.student_id, sr.category_id, sr.score, sr.status 
+        SELECT sr.id, sr.student_id, sr.category_id, sr.score, sr.status
         FROM student_results sr
         JOIN assessment_categories ac ON sr.category_id = ac.id
         WHERE ac.structure_id = ? AND sr.teacher_id = ?
-      `, [structure.id, ownerTeacherId]);
+          AND sr.class_id = ?
+          AND ((sr.course_id = ?) OR (sr.course_id IS NULL AND ? = 0))
+      `, [structure.id, teacherId, classId, courseId, courseId]);
 
       // Calculate overall grades status
-      const targetCourseId = courseId == 0 ? 0 : courseId;
       const [subs] = await pool.execute(`
         SELECT status FROM grade_submissions 
         WHERE class_id = ? AND course_id = ? AND teacher_id = ? AND semester_id = ?
-      `, [classId, targetCourseId, ownerTeacherId, structure.semester || 'Semester 1']);
+      `, [classId, courseId, teacherId, structure.semester || 'Semester 1']);
 
       if (subs.length > 0) {
         gradesStatus = subs[0].status;
@@ -1153,9 +1614,39 @@ router.get('/grades/:classId/:courseId', async (req, res) => {
       });
     }
 
-    let courseName = 'General Grade';
+    let courseName = '';
     if (courseId != 0) {
       const [courseInfo] = await pool.execute('SELECT course_name FROM courses WHERE id = ?', [courseId]);
+      if (courseInfo.length === 0) {
+        return res.status(404).render('500-modern', {
+          title: 'Course Not Found',
+          message: 'The selected course could not be found.',
+        });
+      }
+      courseName = courseInfo[0].course_name;
+    } else {
+      const [courseInfo] = await pool.execute(`
+        SELECT COALESCE(
+          (
+            SELECT co.course_name
+            FROM teacher_course_assignments tca
+            JOIN courses co ON co.id = tca.course_id
+            WHERE tca.teacher_id = ? AND tca.class_id = ? AND tca.status = 'active'
+            LIMIT 1
+          ),
+          (
+            SELECT MIN(co.course_name)
+            FROM class_schedule cs
+            JOIN courses co ON co.id = cs.course_id
+            WHERE (cs.teacher_id = ? OR co.teacher_id = ?)
+              AND cs.class_id = ?
+            HAVING COUNT(DISTINCT cs.course_id) = 1
+            LIMIT 1
+          )
+        ) AS course_name
+        FROM classes c
+        WHERE c.id = ?
+      `, [teacherId, classId, teacherId, teacherId, classId, classId]);
       if (courseInfo.length > 0) courseName = courseInfo[0].course_name;
     }
 
@@ -1193,32 +1684,57 @@ router.get('/grades/:classId/:courseId', async (req, res) => {
 router.get('/grading-structures/:classId/:courseId', async (req, res) => {
   try {
     const teacherId = req.teacherId;
-    const { classId, courseId } = req.params;
-
-    // Verify assignment
-    const [assignmentCheck] = await pool.execute(`
-      SELECT id FROM teacher_course_assignments WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status = 'active'
-      UNION
-      SELECT id FROM class_teachers WHERE teacher_id = ? AND class_id = ? AND ? = 0
-    `, [teacherId, classId, courseId, teacherId, classId, courseId]);
-
-    if (assignmentCheck.length === 0) {
+    const classId = Number(req.params.classId);
+    const courseId = getCourseId(req.params.courseId);
+    if (courseId === null || !await isTeacherAssigned(pool, teacherId, classId, courseId)) {
       return res.status(403).render('500-modern', { title: 'Access Denied', message: 'You are not assigned to this class/course.' });
     }
 
-    let courseName = 'General Grade';
-    if (courseId != 0) {
+    let courseName = '';
+    if (courseId !== 0) {
       const [courseInfo] = await pool.execute('SELECT course_name FROM courses WHERE id = ?', [courseId]);
+      if (courseInfo.length === 0) {
+        return res.status(404).render('500-modern', {
+          title: 'Course Not Found',
+          message: 'The selected course could not be found.',
+        });
+      }
+      courseName = courseInfo[0].course_name;
+    } else {
+      const [courseInfo] = await pool.execute(`
+        SELECT COALESCE(
+          (
+            SELECT co.course_name
+            FROM teacher_course_assignments tca
+            JOIN courses co ON co.id = tca.course_id
+            WHERE tca.teacher_id = ? AND tca.class_id = ? AND tca.status = 'active'
+            LIMIT 1
+          ),
+          (
+            SELECT MIN(co.course_name)
+            FROM class_schedule cs
+            JOIN courses co ON co.id = cs.course_id
+            WHERE (cs.teacher_id = ? OR co.teacher_id = ?)
+              AND cs.class_id = ?
+            HAVING COUNT(DISTINCT cs.course_id) = 1
+            LIMIT 1
+          )
+        ) AS course_name
+        FROM classes c
+        WHERE c.id = ?
+      `, [teacherId, classId, teacherId, teacherId, classId, classId]);
       if (courseInfo.length > 0) courseName = courseInfo[0].course_name;
     }
 
-    // Get existing structure
-    const [structures] = await pool.execute(
-      'SELECT * FROM grading_structures WHERE teacher_id = ? AND course_id = ? AND class_id = ?',
-      [teacherId, courseId, classId]
+    const semester = req.query.semester || 'Semester 1';
+    const structure = await getOwnedGradingStructure(
+      pool,
+      teacherId,
+      classId,
+      courseId,
+      undefined,
+      semester
     );
-
-    let structure = structures.length > 0 ? structures[0] : null;
     let categories = [];
 
     if (structure) {
@@ -1241,7 +1757,7 @@ router.get('/grading-structures/:classId/:courseId', async (req, res) => {
       courseName,
       classGrade,
       classSection,
-      semester: req.query.semester || 'Semester 1',
+      semester,
       semesterOptions: ['Semester 1', 'Semester 2'],
       structure,
       categories
@@ -1258,18 +1774,12 @@ router.post('/grading-structures/:classId/:courseId', async (req, res) => {
   try {
     await conn.beginTransaction();
     const teacherId = req.teacherId;
-    const { classId, courseId } = req.params;
+    const classId = Number(req.params.classId);
+    const courseId = getCourseId(req.params.courseId);
     const { semester, categories, status: reqStatus } = req.body;
     const saveStatus = reqStatus === 'pending' ? 'pending' : 'draft';
 
-    // Verify assignment
-    const [assignmentCheck] = await conn.execute(`
-      SELECT id FROM teacher_course_assignments WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status = 'active'
-      UNION
-      SELECT id FROM class_teachers WHERE teacher_id = ? AND class_id = ? AND ? = 0
-    `, [teacherId, classId, courseId, teacherId, classId, courseId]);
-
-    if (assignmentCheck.length === 0) {
+    if (courseId === null || !await isTeacherAssigned(conn, teacherId, classId, courseId)) {
       await conn.rollback();
       return res.status(403).json({ message: 'Access denied' });
     }
@@ -1308,7 +1818,7 @@ router.post('/grading-structures/:classId/:courseId', async (req, res) => {
       await conn.execute('DELETE FROM assessment_categories WHERE structure_id = ?', [structureId]);
     } else {
       // Create new structure
-      const dbCourseId = courseId == 0 ? null : courseId;
+      const dbCourseId = courseId === 0 ? null : courseId;
       const [result] = await conn.execute(
         'INSERT INTO grading_structures (teacher_id, course_id, class_id, semester, status, total_weight) VALUES (?, ?, ?, ?, ?, ?)',
         [teacherId, dbCourseId, classId, semester || 'Semester 1', saveStatus, totalWeight]

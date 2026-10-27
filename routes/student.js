@@ -20,6 +20,159 @@ function isStudent(req, res, next) {
 // Apply student middleware to all routes
 router.use(isStudent);
 
+async function getVisibleCourseResults(studentId, academicYear, semester) {
+  let academicFilter = '';
+  const params = [studentId];
+
+  if (academicYear !== undefined) {
+    academicFilter += ' AND scr.academic_year = ?';
+    params.push(academicYear);
+  }
+  if (semester !== undefined) {
+    academicFilter += ' AND scr.semester_id = ?';
+    params.push(semester);
+  }
+
+  const [results] = await pool.execute(`
+    SELECT scr.id AS result_id, scr.student_id, scr.teacher_id, scr.course_id,
+           COALESCE(NULLIF(scr.course_id, 0), assigned_course.course_id, scheduled_course.course_id) AS resolved_course_id,
+           scr.class_id, scr.semester_id, scr.academic_year, scr.assessment_structure_id,
+           scr.total_score, co.course_name, co.course_code, cl.name AS class_name,
+           t.first_name AS teacher_fname, t.last_name AS teacher_lname
+    FROM student_course_results scr
+    JOIN students s ON s.id = scr.student_id
+    JOIN classes cl ON cl.id = scr.class_id
+    LEFT JOIN (
+      SELECT teacher_id, class_id, MIN(course_id) AS course_id
+      FROM teacher_course_assignments
+      WHERE status = 'active'
+      GROUP BY teacher_id, class_id
+      HAVING COUNT(DISTINCT course_id) = 1
+    ) assigned_course
+      ON assigned_course.teacher_id = scr.teacher_id
+      AND assigned_course.class_id = scr.class_id
+    LEFT JOIN (
+      SELECT schedule_links.teacher_id, schedule_links.class_id,
+             MIN(schedule_links.course_id) AS course_id
+      FROM (
+        SELECT teacher_id, class_id, course_id
+        FROM class_schedule
+        WHERE teacher_id IS NOT NULL
+        UNION
+        SELECT course_owner.teacher_id, cs.class_id, cs.course_id
+        FROM class_schedule cs
+        JOIN courses course_owner ON course_owner.id = cs.course_id
+        WHERE course_owner.teacher_id IS NOT NULL
+      ) schedule_links
+      GROUP BY schedule_links.teacher_id, schedule_links.class_id
+      HAVING COUNT(DISTINCT course_id) = 1
+    ) scheduled_course
+      ON scheduled_course.teacher_id = scr.teacher_id
+      AND scheduled_course.class_id = scr.class_id
+    LEFT JOIN courses co
+      ON co.id = COALESCE(NULLIF(scr.course_id, 0), assigned_course.course_id, scheduled_course.course_id)
+    JOIN grading_structures gs
+      ON gs.id = scr.assessment_structure_id
+      AND gs.teacher_id = scr.teacher_id
+      AND gs.class_id = scr.class_id
+      AND (
+        ((scr.course_id IS NULL OR scr.course_id = 0) AND gs.course_id IS NULL)
+        OR gs.course_id = scr.course_id
+      )
+    LEFT JOIN teachers t ON t.id = scr.teacher_id
+    WHERE scr.student_id = ?
+      AND scr.status IN ('approved', 'saved')
+      AND (
+        s.class_id = scr.class_id
+        OR (
+          s.class_id IS NULL
+          AND CAST(s.grade_level AS CHAR) = CAST(cl.grade AS CHAR)
+          AND s.section = cl.section
+        )
+      )
+      AND (
+        scr.course_id IS NULL
+        OR scr.course_id = 0
+        OR EXISTS (
+          SELECT 1 FROM enrollments e
+          WHERE e.student_id = scr.student_id
+            AND e.course_id = scr.course_id
+            AND e.status IN ('enrolled', 'completed')
+        )
+      )
+      ${academicFilter}
+    ORDER BY scr.academic_year DESC, scr.semester_id ASC, co.course_name ASC
+  `, params);
+
+  if (results.length === 0) return [];
+
+  const resultIds = results.map((result) => result.result_id);
+  const placeholders = resultIds.map(() => '?').join(', ');
+  const [assessments] = await pool.execute(`
+    SELECT scr.id AS result_id, ac.name AS assessment_name,
+           sr.score, ac.max_mark, ac.weight_percentage
+    FROM student_course_results scr
+    JOIN students s ON s.id = scr.student_id
+    JOIN classes cl ON cl.id = scr.class_id
+    JOIN grading_structures gs
+      ON gs.id = scr.assessment_structure_id
+      AND gs.teacher_id = scr.teacher_id
+      AND gs.class_id = scr.class_id
+      AND (
+        ((scr.course_id IS NULL OR scr.course_id = 0) AND gs.course_id IS NULL)
+        OR gs.course_id = scr.course_id
+      )
+    JOIN student_results sr
+      ON sr.student_id = scr.student_id
+      AND sr.teacher_id = scr.teacher_id
+      AND sr.class_id = scr.class_id
+      AND sr.academic_year = scr.academic_year
+      AND sr.semester_id = scr.semester_id
+      AND (
+        sr.course_id = scr.course_id
+        OR (sr.course_id IS NULL AND (scr.course_id IS NULL OR scr.course_id = 0))
+      )
+      AND sr.status IN ('approved', 'saved')
+    JOIN assessment_categories ac
+      ON ac.id = sr.category_id
+      AND ac.structure_id = scr.assessment_structure_id
+    WHERE scr.student_id = ?
+      AND scr.id IN (${placeholders})
+      AND scr.status IN ('approved', 'saved')
+      AND (
+        s.class_id = scr.class_id
+        OR (
+          s.class_id IS NULL
+          AND CAST(s.grade_level AS CHAR) = CAST(cl.grade AS CHAR)
+          AND s.section = cl.section
+        )
+      )
+    ORDER BY ac.order_index ASC
+  `, [studentId, ...resultIds]);
+
+  const assessmentsByResult = new Map();
+  for (const assessment of assessments) {
+    const courseAssessments = assessmentsByResult.get(assessment.result_id) || [];
+    courseAssessments.push({
+      assessment_name: assessment.assessment_name,
+      score: Number(assessment.score),
+      max_mark: Number(assessment.max_mark),
+      weight_percentage: Number(assessment.weight_percentage),
+    });
+    assessmentsByResult.set(assessment.result_id, courseAssessments);
+  }
+
+  return results.map((result) => ({
+    ...result,
+    course_code: result.course_code || '',
+    teacher_name: result.teacher_fname && result.teacher_lname
+      ? `${result.teacher_fname} ${result.teacher_lname}`
+      : 'Assigned Teacher',
+    total_score: Number(result.total_score),
+    assessments: assessmentsByResult.get(result.result_id) || [],
+  })).filter((result) => result.course_name && result.assessments.length > 0);
+}
+
 // GET /student/dashboard - Student dashboard
 router.get('/dashboard', async (req, res) => {
   try {
@@ -41,77 +194,50 @@ router.get('/dashboard', async (req, res) => {
       });
     }
 
-    // Get ALL approved course results for table display
-    const [approvedCourseResults] = await pool.execute(`
-      SELECT scr.*, 
-             COALESCE(co.course_name, (SELECT course_name FROM courses WHERE teacher_id = scr.teacher_id AND grade = cl.grade LIMIT 1)) as course_name, 
-             COALESCE(co.course_code, (SELECT course_code FROM courses WHERE teacher_id = scr.teacher_id AND grade = cl.grade LIMIT 1)) as course_code, 
-             cl.name as class_name,
-             t.first_name as teacher_fname, t.last_name as teacher_lname
-      FROM approved_results scr
-      LEFT JOIN courses co ON (scr.course_id = co.id AND scr.course_id != 0)
-      JOIN classes cl ON scr.class_id = cl.id
-      LEFT JOIN teachers t ON scr.teacher_id = t.id
-      WHERE scr.student_id = ?
-      ORDER BY scr.academic_year DESC, scr.semester_id ASC, co.course_name ASC
-    `, [studentInfo[0].id]);
-
-    const dashboardCourseResults = approvedCourseResults.map(cr => ({
-      course_name: cr.course_name || 'General Grade',
+    const visibleResults = await getVisibleCourseResults(studentInfo[0].id);
+    const dashboardCourseResults = visibleResults.map((cr) => ({
+      course_name: cr.course_name,
       course_code: cr.course_code || '',
       class_name: cr.class_name,
       semester: cr.semester_id,
       academic_year: cr.academic_year,
-      teacher_name: (cr.teacher_fname && cr.teacher_lname) ? `${cr.teacher_fname} ${cr.teacher_lname}` : 'Assigned Teacher',
-      categories: [],
-      total_weighted: parseFloat(cr.total_score),
-      structure_id: cr.assessment_structure_id
+      teacher_name: cr.teacher_name,
+      categories: cr.assessments.map((assessment) => ({
+        category_name: assessment.assessment_name,
+        score: assessment.score,
+      })),
+      total_weighted: cr.total_score,
     }));
-
-    const [dashboardDetails] = await pool.execute(`
-      SELECT sr.score, ac.name as category_name, ac.weight_percentage, ac.max_mark, gs.id as structure_id
-      FROM student_results sr
-      JOIN assessment_categories ac ON sr.category_id = ac.id
-      JOIN grading_structures gs ON ac.structure_id = gs.id
-      WHERE sr.student_id = ? AND sr.status IN ('approved','saved')
-      ORDER BY ac.order_index ASC
-    `, [studentInfo[0].id]);
-
-    dashboardDetails.forEach(d => {
-      const ws = d.max_mark > 0 ? (parseFloat(d.score) / parseFloat(d.max_mark)) * parseFloat(d.weight_percentage) : 0;
-      const targetCourse = dashboardCourseResults.find(c => c.structure_id === d.structure_id);
-      if (targetCourse) {
-        targetCourse.categories.push({
-          category_name: d.category_name,
-          score: d.score,
-          max_mark: d.max_mark,
-          weight_percentage: d.weight_percentage,
-          weighted_score: ws
-        });
-      }
-    });
 
     const courses = dashboardCourseResults;
 
-    // Calculate Statistics using ONLY approved_results (Single Source of Truth)
-    const [stats] = await pool.execute(`
-      SELECT 
-        AVG(scr.total_score) as average_score,
-        COUNT(*) as approved_count
-      FROM approved_results scr
-      WHERE scr.student_id = ?
-    `, [studentInfo[0].id]);
+    const resultTotal = visibleResults.reduce((total, result) => total + result.total_score, 0);
+    const resultAverage = visibleResults.length > 0 ? resultTotal / visibleResults.length : 0;
+    const stats = [{
+      average_score: visibleResults.length > 0 ? resultAverage : null,
+      approved_count: visibleResults.length,
+      total_score: resultTotal,
+    }];
 
-    const [semesterStats] = await pool.execute(`
-      SELECT 
-        scr.academic_year, 
-        scr.semester_id as semester, 
-        AVG(scr.total_score) as semester_avg
-      FROM approved_results scr
-      WHERE scr.student_id = ?
-      GROUP BY scr.academic_year, scr.semester_id
-      ORDER BY scr.academic_year DESC, scr.semester_id DESC
-    `, [studentInfo[0].id]);
+    const semesterStats = Array.from(
+      visibleResults.reduce((groups, result) => {
+        const key = `${result.academic_year}:${result.semester_id}`;
+        const group = groups.get(key) || {
+          academic_year: result.academic_year,
+          semester: result.semester_id,
+          total: 0,
+          count: 0,
+        };
+        group.total += result.total_score;
+        group.count += 1;
+        groups.set(key, group);
+        return groups;
+      }, new Map()).values()
+    ).map((group) => ({
+      academic_year: group.academic_year,
+      semester: group.semester,
+      semester_avg: group.total / group.count,
+    }));
 
     const average_grade_num = stats[0].average_score ? parseFloat(stats[0].average_score) : 0;
     const average_grade = stats[0].average_score ? parseFloat(stats[0].average_score).toFixed(1) + '%' : 'N/A';
@@ -233,6 +359,37 @@ router.get('/dashboard', async (req, res) => {
       } catch (e) { console.error("Full schedule fetch error:", e); }
     }
 
+    const [enrolledCourses] = await pool.execute(`
+      SELECT DISTINCT c.id AS course_id, c.course_name, c.course_code,
+             CONCAT(u.first_name, ' ', u.last_name) AS teacher_name
+      FROM enrollments e
+      JOIN courses c ON c.id = e.course_id
+      LEFT JOIN teacher_course_assignments tca
+        ON tca.course_id = c.id AND tca.class_id = ? AND tca.status = 'active'
+      LEFT JOIN class_schedule cs
+        ON cs.course_id = c.id AND cs.class_id = ?
+      LEFT JOIN teachers t ON t.id = COALESCE(tca.teacher_id, cs.teacher_id, c.teacher_id)
+      LEFT JOIN users u ON u.id = t.user_id
+      WHERE e.student_id = ? AND e.status IN ('enrolled', 'completed')
+      ORDER BY c.course_name
+    `, [classIdForSchedule || null, classIdForSchedule || null, studentInfo[0].id]);
+    const dashboardCourseMap = new Map(
+      enrolledCourses.map((course) => [course.course_id, { ...course, is_enrolled: true }])
+    );
+    for (const result of visibleResults) {
+      if (result.resolved_course_id && result.course_name && !dashboardCourseMap.has(result.resolved_course_id)) {
+        dashboardCourseMap.set(result.resolved_course_id, {
+          course_id: result.resolved_course_id,
+          course_name: result.course_name,
+          course_code: result.course_code,
+          teacher_name: result.teacher_name,
+          is_enrolled: false,
+        });
+      }
+    }
+    const dashboardCourses = Array.from(dashboardCourseMap.values())
+      .sort((left, right) => left.course_name.localeCompare(right.course_name));
+
     // Get Pending Tasks
     let pending_tasks = 0;
     try {
@@ -275,8 +432,9 @@ router.get('/dashboard', async (req, res) => {
       title: 'Student Dashboard',
       user: req.session.user,
       student: studentInfo[0],
-      courses_count: courses.length,
+      courses_count: dashboardCourses.length,
       courses,
+      dashboardCourses,
       assignments: dashboardAssignments,
       fullSchedule,
       attendance_rate: attendance_rate,
@@ -367,23 +525,44 @@ router.get('/courses', async (req, res) => {
 
     // Get student information
     const [studentInfo] = await pool.execute(`
-      SELECT id FROM students WHERE user_id = ?
+      SELECT id, class_id, grade_level, section FROM students WHERE user_id = ?
     `, [req.session.user.id]);
+    if (!studentInfo[0]) {
+      return res.status(404).render('500-modern', { title: 'Student Not Found' });
+    }
+    let courseClassId = studentInfo[0].class_id;
+    if (!courseClassId && studentInfo[0].grade_level && studentInfo[0].section) {
+      const [classes] = await pool.execute(
+        'SELECT id FROM classes WHERE CAST(grade AS CHAR) = CAST(? AS CHAR) AND section = ? LIMIT 1',
+        [studentInfo[0].grade_level, studentInfo[0].section]
+      );
+      if (classes.length > 0) courseClassId = classes[0].id;
+    }
 
-    // Get enrolled courses with grades
+    // Show active/completed enrollments and only this student's saved course results.
     const [courses] = await pool.execute(`
       SELECT c.*, e.enrollment_date, e.grade, e.status,
              t.first_name as teacher_fname, t.last_name as teacher_lname,
-             (SELECT total_score 
-              FROM student_course_results scr 
-              WHERE scr.course_id = c.id AND scr.student_id = ? AND scr.status = 'approved' 
+             (SELECT scr.total_score
+              FROM student_course_results scr
+              JOIN grading_structures gs
+                ON gs.id = scr.assessment_structure_id
+                AND gs.teacher_id = scr.teacher_id
+                AND gs.class_id = scr.class_id
+                AND gs.course_id = scr.course_id
+              WHERE scr.course_id = c.id AND scr.student_id = ?
+                AND scr.status IN ('approved', 'saved')
+                AND scr.class_id = ?
               ORDER BY scr.academic_year DESC, scr.semester_id DESC LIMIT 1) as average_grade
       FROM courses c
       JOIN enrollments e ON c.id = e.course_id
-      LEFT JOIN teachers t ON c.teacher_id = t.id
-      WHERE e.student_id = ?
+      JOIN students s ON s.id = e.student_id
+      LEFT JOIN teacher_course_assignments tca
+        ON tca.course_id = c.id AND tca.class_id = ? AND tca.status = 'active'
+      LEFT JOIN teachers t ON t.id = COALESCE(tca.teacher_id, c.teacher_id)
+      WHERE e.student_id = ? AND e.status IN ('enrolled', 'completed')
       ORDER BY c.course_name
-    `, [studentInfo[0].id, studentInfo[0].id]);
+    `, [studentInfo[0].id, courseClassId, courseClassId, studentInfo[0].id]);
 
     res.render('student/courses', {
       title: 'My Courses',
@@ -567,46 +746,17 @@ router.get('/announcements', async (req, res) => {
 router.get('/api/grades', async (req, res) => {
   try {
     const [studentInfo] = await pool.execute(
-      'SELECT id, grade_level, section FROM students WHERE user_id = ?',
+      'SELECT id FROM students WHERE user_id = ?',
       [req.session.user.id]
     );
     if (!studentInfo[0]) return res.status(404).json({ error: 'Student not found' });
     const studentId = studentInfo[0].id;
 
     const { academicYear: activeYear, semesterLabel: activeSemSetting } = await getAcademicContext();
+    const courseResults = await getVisibleCourseResults(studentId, activeYear, activeSemSetting);
 
-    const [courseResults] = await pool.execute(`
-      SELECT scr.*, co.course_name, co.course_code, cl.name as class_name,
-             t.first_name as teacher_fname, t.last_name as teacher_lname
-      FROM approved_results scr
-      LEFT JOIN courses co ON (scr.course_id = co.id AND scr.course_id != 0)
-      JOIN classes cl ON scr.class_id = cl.id
-      LEFT JOIN teachers t ON scr.teacher_id = t.id
-      WHERE scr.student_id = ? AND scr.status IN ('approved','saved') AND scr.academic_year = ? AND scr.semester_id = ?
-      ORDER BY co.course_name ASC
-    `, [studentId, activeYear, activeSemSetting]);
-
-    const coursesJson = [];
-
-    for (const cr of courseResults) {
-      const [categories] = await pool.execute(`
-        SELECT ac.name, ac.max_mark, ac.weight_percentage,
-               (SELECT sr.score FROM student_results sr WHERE sr.student_id = ? AND sr.category_id = ac.id AND sr.status IN ('approved','saved') LIMIT 1) as obtained_score
-      FROM assessment_categories ac
-      WHERE ac.structure_id = ?
-    `, [studentId, cr.assessment_structure_id]);
-
-      let max_mark = 0;
-      let student_mark = 0;
-      let weight = 0;
-
-      categories.forEach(cat => {
-        max_mark += parseFloat(cat.max_mark || 0);
-        student_mark += parseFloat(cat.obtained_score || 0);
-        weight += parseFloat(cat.weight_percentage || 0);
-      });
-
-      const final_score = parseFloat(cr.total_score);
+    const coursesJson = courseResults.map((result) => {
+      const final_score = result.total_score;
       let grade = 'F';
       if (final_score >= 90) grade = 'A+';
       else if (final_score >= 85) grade = 'A';
@@ -618,19 +768,17 @@ router.get('/api/grades', async (req, res) => {
       else if (final_score >= 55) grade = 'C';
       else if (final_score >= 50) grade = 'D';
 
-      coursesJson.push({
-        course_name: cr.course_name || 'General Grade',
-        teacher_name: (cr.teacher_fname && cr.teacher_lname) ? `${cr.teacher_fname} ${cr.teacher_lname}` : 'Assigned Teacher',
-        max_mark,
-        student_mark,
-        weight: weight / 100,
+      return {
+        course_name: result.course_name,
+        teacher_name: result.teacher_name,
+        assessments: result.assessments,
+        student_mark: result.assessments.reduce((total, assessment) => total + assessment.score, 0),
         final_score,
         grade
-      });
-    }
+      };
+    });
 
     res.json({
-      student_id: studentId,
       semester: activeSemSetting,
       courses: coursesJson
     });
@@ -645,7 +793,7 @@ router.get('/api/grades', async (req, res) => {
 router.get('/grades', async (req, res) => {
   try {
     const [studentInfo] = await pool.execute(
-      'SELECT id, grade_level, section FROM students WHERE user_id = ?',
+      'SELECT id, class_id, grade_level, section FROM students WHERE user_id = ?',
       [req.session.user.id]
     );
     if (!studentInfo[0]) return res.status(404).render('500-modern', { title: 'Not Found' });
@@ -653,89 +801,17 @@ router.get('/grades', async (req, res) => {
 
     const { academicYear: activeYear, semesterLabel: activeSemSetting } = await getAcademicContext();
 
-    const [courseResults] = await pool.execute(`
-    SELECT 
-        academic_year,
-        semester_id,
-        total_score,
-        assessment_structure_id,
-        course_name,
-        course_code,
-        class_name,
-        teacher_fname,
-        teacher_lname
-    FROM (
-        SELECT 
-            scr.academic_year,
-            scr.semester_id,
-            scr.total_score,
-            scr.assessment_structure_id,
-            COALESCE(co.course_name, (SELECT course_name FROM courses WHERE teacher_id = scr.teacher_id AND grade = cl.grade LIMIT 1)) AS course_name,
-            COALESCE(co.course_code, (SELECT course_code FROM courses WHERE teacher_id = scr.teacher_id AND grade = cl.grade LIMIT 1)) AS course_code,
-            cl.name AS class_name,
-            t.first_name AS teacher_fname,
-            t.last_name AS teacher_lname
-        FROM approved_results scr
-        LEFT JOIN courses co ON (scr.course_id = co.id AND scr.course_id != 0)
-        JOIN classes cl ON scr.class_id = cl.id
-        LEFT JOIN teachers t ON scr.teacher_id = t.id
-        WHERE scr.student_id = ?
-        UNION ALL
-        SELECT 
-            scr2.academic_year,
-            scr2.semester_id,
-            scr2.total_score,
-            scr2.assessment_structure_id,
-            COALESCE(co2.course_name, (SELECT course_name FROM courses WHERE teacher_id = scr2.teacher_id AND grade = cl2.grade LIMIT 1)) AS course_name,
-            COALESCE(co2.course_code, (SELECT course_code FROM courses WHERE teacher_id = scr2.teacher_id AND grade = cl2.grade LIMIT 1)) AS course_code,
-            cl2.name AS class_name,
-            t2.first_name AS teacher_fname,
-            t2.last_name AS teacher_lname
-        FROM student_course_results scr2
-        LEFT JOIN courses co2 ON (scr2.course_id = co2.id AND scr2.course_id != 0)
-        JOIN classes cl2 ON scr2.class_id = cl2.id
-        LEFT JOIN teachers t2 ON scr2.teacher_id = t2.id
-        WHERE scr2.student_id = ? AND scr2.status = 'saved'
-    ) AS combined
-    ORDER BY academic_year DESC, semester_id ASC, course_name ASC
-`, [studentId, studentId]);
-
-    const courseList = courseResults.map(cr => ({
-      course_name: cr.course_name || 'General Grade',
-      course_code: cr.course_code || '',
-      class_name: cr.class_name,
-      semester: cr.semester_id,
-      academic_year: cr.academic_year,
-      class_id: cr.class_id,
-      teacher_name: (cr.teacher_fname && cr.teacher_lname) ? `${cr.teacher_fname} ${cr.teacher_lname}` : 'Assigned Teacher',
-      categories: [],
-      total_weighted: parseFloat(cr.total_score),
-      structure_id: cr.assessment_structure_id
+    const visibleResults = await getVisibleCourseResults(studentId);
+    const courseList = visibleResults.map((result) => ({
+      course_name: result.course_name,
+      course_code: result.course_code,
+      class_name: result.class_name,
+      semester: result.semester_id,
+      academic_year: result.academic_year,
+      teacher_name: result.teacher_name,
+      assessments: result.assessments,
+      total_weighted: result.total_score,
     }));
-
-    // Fetch individual category details
-    const [details] = await pool.execute(`
-      SELECT sr.score, ac.name as category_name, ac.weight_percentage, ac.max_mark, gs.id as structure_id
-      FROM student_results sr
-      JOIN assessment_categories ac ON sr.category_id = ac.id
-      JOIN grading_structures gs ON ac.structure_id = gs.id
-      WHERE sr.student_id = ? AND sr.status IN ('approved','saved')
-      ORDER BY ac.order_index ASC
-    `, [studentId]);
-
-    details.forEach(d => {
-      const ws = d.max_mark > 0 ? (parseFloat(d.score) / parseFloat(d.max_mark)) * parseFloat(d.weight_percentage) : 0;
-      const targetCourse = courseList.find(c => c.structure_id === d.structure_id);
-      if (targetCourse) {
-        targetCourse.categories.push({
-          category_name: d.category_name,
-          score: d.score,
-          max_mark: d.max_mark,
-          weight_percentage: d.weight_percentage,
-          weighted_score: ws
-        });
-      }
-    });
 
     // Group into Current Semester vs Previous Semester
     const currentSemesterResults = [];

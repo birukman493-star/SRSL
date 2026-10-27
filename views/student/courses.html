@@ -102,6 +102,12 @@
                                         <span class="text-secondary small fw-bold">Status</span>
                                         <span class="text-success small fw-800 text-capitalize"><%= course.status %></span>
                                     </div>
+                                    <% if (course.average_grade !== null && course.average_grade !== undefined) { %>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="text-secondary small fw-bold">Saved Grade</span>
+                                            <span class="text-primary small fw-800"><%= Number(course.average_grade).toFixed(1) %>%</span>
+                                        </div>
+                                    <% } %>
                                     <div class="progress" style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 10px;">
                                         <div class="progress-bar bg-primary" role="progressbar" style="width: 100%; border-radius: 10px;"></div>
                                     </div>
@@ -149,4 +155,3 @@
     </script>
 </body>
 </html>
-

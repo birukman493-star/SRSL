@@ -15,15 +15,28 @@
     
 
     <style>
-        .stat-card { background:white; border-radius:24px; padding:1.5rem; box-shadow:0 4px 20px rgba(0,0,0,0.05); }
-        .course-block { background:white; border-radius:24px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.05); margin-bottom:1.5rem; }
-        .course-header { padding:1.5rem 2rem; border-bottom:1px solid #f1f5f9; }
+        .stat-card { position:relative; height:100%; overflow:hidden; background:white; border:1px solid #e8edf5; border-radius:20px; padding:1.5rem; box-shadow:0 8px 24px rgba(15,23,42,0.04); }
+        .stat-icon { width:42px; height:42px; display:inline-flex; align-items:center; justify-content:center; border-radius:13px; font-size:1rem; }
+        .stat-value { font-size:2rem; line-height:1.15; font-weight:900; color:#172033; letter-spacing:-.04em; }
+        .stat-label { color:#64748b; font-size:.82rem; font-weight:700; }
         .cat-bar { height:8px; background:#f1f5f9; border-radius:8px; overflow:hidden; }
         .cat-fill { height:100%; border-radius:8px; transition:width 0.8s ease; }
         .grade-letter { font-size:3rem; font-weight:900; line-height:1; }
-        .pass-dot  { width:10px; height:10px; border-radius:50%; background:#10b981; display:inline-block; }
-        .fail-dot  { width:10px; height:10px; border-radius:50%; background:#ef4444; display:inline-block; }
-        .total-chip { background:linear-gradient(135deg,#667eea,#764ba2); color:white; border-radius:16px; padding:8px 20px; font-weight:900; font-size:1.4rem; }
+        .results-panel { background:#fff; border:1px solid #e8edf5; border-radius:20px; padding:clamp(1rem, 3vw, 2rem); box-shadow:0 8px 24px rgba(15,23,42,0.04); }
+        .results-table { min-width:620px; }
+        .results-table thead th { background:#f8fafc; color:#64748b; font-size:.72rem; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; }
+        .results-table td, .results-table th { padding:1rem 1.1rem; }
+        .results-table .course-heading th { background:#f1f5f9; }
+        .results-table .assessment-row td { border-color:#edf1f7; }
+        .results-table .assessment-row:last-child td { border-bottom-color:transparent; }
+        .course-result-chip { display:inline-flex; align-items:center; gap:.35rem; padding:.45rem .7rem; border-radius:999px; background:#fff; font-size:.82rem; font-weight:800; white-space:nowrap; }
+        .assessment-progress { width:100%; min-width:90px; height:7px; background:#e9eef5; border-radius:99px; overflow:hidden; }
+        .assessment-progress-fill { height:100%; border-radius:inherit; }
+        @media (max-width:575.98px) {
+            .results-panel { padding:1rem; }
+            .results-table td, .results-table th { padding:.8rem; }
+            .course-result-chip { font-size:.75rem; }
+        }
     </style>
 </head>
 <body class="dashboard-body" style="background:#f8fafc">
@@ -31,44 +44,8 @@
     <%- include('partials/sidebar.html') %>
     <main class="main-panel w-100 p-4">
 <%
-const mapCategory = (name) => {
-    const n = name.toLowerCase();
-    if (n.includes('attendance')) return 'attendance';
-    if (n.includes('quiz')) return 'quiz';
-    if (n.includes('assignment') || n.includes('homework')) return 'assignment';
-    if (n.includes('mid') || n.includes('test')) return 'mid';
-    if ((n.includes('final') || n.includes('exam')) && !n.includes('mid')) return 'final';
-    if (n.includes('project')) return 'project';
-    if (n.includes('lab')) return 'lab';
-    if (n.includes('participation')) return 'participation';
-    return 'other';
-};
-
-const getCategoryDisplay = (categories, type) => {
-    const cats = categories || [];
-    const matched = cats.filter(c => mapCategory(c.category_name) === type);
-    if (matched.length === 0) return '—';
-    
-    let totalObtained = 0;
-    let totalMax = 0;
-    matched.forEach(c => {
-        totalObtained += parseFloat(c.score || 0);
-        totalMax += parseFloat(c.max_mark || 0);
-    });
-
-    if (totalMax === 0) return Math.round(totalObtained);
-    return `${Math.round(totalObtained)}/${Math.round(totalMax)}`;
-};
-
 const calculateTotal = (course) => {
-    if (!course.categories || course.categories.length === 0) {
-        return parseFloat(course.total_weighted || 0);
-    }
-    let total = 0;
-    course.categories.forEach(c => {
-        total += parseFloat(c.weighted_score || 0);
-    });
-    return total;
+    return parseFloat(course.total_weighted || 0);
 };
 
 const getLetterGrade = (score) => {
@@ -91,66 +68,70 @@ const getGradeColor = (score) => {
         <!-- Header -->
         <div class="mb-4" style="background:white;border-radius:24px;padding:2rem;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
             <h1 style="font-size:2rem;font-weight:900;margin-bottom:4px;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">My Academic Results</h1>
-            <p class="text-secondary fw-medium m-0">Category-based weighted grade breakdown across all courses</p>
+            <p class="text-secondary fw-medium m-0">Saved assessment results for your courses</p>
         </div>
 
         <% if (hasResults) { %>
         <!-- Summary stats -->
-        <div class="row g-4 mb-4">
+        <div class="row g-3 g-lg-4 mb-4">
             <div class="col-md-4">
-                <div class="stat-card text-center">
+                <div class="stat-card">
                     <%
                         let avg = parseFloat(overallAvg);
                         let letterGrade = avg >= 90 ? 'A+' : avg >= 85 ? 'A' : avg >= 80 ? 'A-' : avg >= 75 ? 'B+' : avg >= 70 ? 'B' : avg >= 65 ? 'B-' : avg >= 60 ? 'C+' : avg >= 55 ? 'C' : avg >= 50 ? 'D' : 'F';
                         let gradeColor = avg >= 70 ? '#10b981' : avg >= 50 ? '#f59e0b' : '#ef4444';
                     %>
-                    <div class="grade-letter mb-1" style="color:<%= gradeColor %>"><%= letterGrade %></div>
-                    <div style="font-size:2rem;font-weight:900;color:#1e293b"><%= overallAvg %>%</div>
-                    <div class="text-secondary fw-medium small">Overall Average</div>
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="stat-icon" style="color:#2563eb;background:#eff6ff"><i class="fas fa-calculator" aria-hidden="true"></i></span>
+                        <span class="badge rounded-pill bg-light text-secondary border">All results</span>
+                    </div>
+                    <div class="stat-value"><%= parseFloat(overallSum).toFixed(1) %></div>
+                    <div class="stat-label mt-1">Total Score</div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="stat-card text-center">
-                    <div style="font-size:2.5rem;font-weight:900;color:#3b82f6"><%= courseResults.length %></div>
-                    <div class="text-secondary fw-medium small mt-1">Courses with Results</div>
-                    <div class="mt-3">
-                        <div class="cat-bar">
-                            <div class="cat-fill" style="width:<%= Math.min(overallAvg,100) %>%;background:<%= gradeColor %>"></div>
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="stat-icon" style="color:<%= gradeColor %>;background:<%= avg >= 70 ? '#ecfdf5' : avg >= 50 ? '#fffbeb' : '#fef2f2' %>"><i class="fas fa-chart-line" aria-hidden="true"></i></span>
+                        <span class="badge rounded-pill" style="color:<%= gradeColor %>;background:<%= avg >= 70 ? '#ecfdf5' : avg >= 50 ? '#fffbeb' : '#fef2f2' %>"><%= letterGrade %> Grade</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-end gap-3">
+                        <div>
+                            <div class="stat-value"><%= parseFloat(overallAvg).toFixed(1) %>%</div>
+                            <div class="stat-label mt-1">Overall Average</div>
+                        </div>
+                        <div class="cat-bar mb-2" style="width:34%">
+                            <div class="cat-fill" style="width:<%= Math.min(Math.max(avg,0),100) %>%;background:<%= gradeColor %>"></div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="stat-card text-center">
-                    <div style="font-size:2.5rem;font-weight:900;color:#8b5cf6"><%= rank %></div>
-                    <div class="text-secondary fw-medium small mt-1">Class Rank</div>
-                    <div class="text-secondary small mt-2">Based on weighted averages</div>
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="stat-icon" style="color:#7c3aed;background:#f5f3ff"><i class="fas fa-ranking-star" aria-hidden="true"></i></span>
+                        <span class="badge rounded-pill bg-light text-secondary border">Your class</span>
+                    </div>
+                    <div class="stat-value">#<%= rank %></div>
+                    <div class="stat-label mt-1">Class Rank</div>
                 </div>
             </div>
         </div>
 
         <!-- Current Semester Results Section -->
-        <div class="mb-5" style="background:white; border-radius:24px; padding:2rem; box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+        <div class="results-panel mb-5">
             <h3 class="fw-bold text-dark mb-4" style="font-size:1.4rem; border-left:4px solid #3b82f6; padding-left:12px">
                 Current Semester Results
             </h3>
             <% if (currentSemesterResults && currentSemesterResults.length > 0) { %>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 text-center grade-table" data-aos="fade-up">
-                    <thead style="background:#f8fafc">
-                        <tr class="text-secondary small fw-bold text-uppercase" style="letter-spacing:.8px">
-                            <th class="px-4 py-3 border-0 text-start">Course</th>
-                            <th class="py-3 border-0">Attendance</th>
-                            <th class="py-3 border-0">Quiz</th>
-                            <th class="py-3 border-0">Assignment</th>
-                            <th class="py-3 border-0">Mid Exam</th>
-                            <th class="py-3 border-0">Final Exam</th>
-                            <th class="py-3 border-0">Project</th>
-                            <th class="py-3 border-0">Lab</th>
-                            <th class="py-3 border-0">Participation</th>
-                            <th class="py-3 border-0">Other</th>
-                            <th class="py-3 border-0">Total</th>
-                            <th class="py-3 border-0 px-4">Grade</th>
+                <table class="table align-middle mb-0 results-table grade-table" data-aos="fade-up">
+                    <thead>
+                        <tr>
+                            <th class="border-0 text-start">Assessment</th>
+                            <th class="border-0 text-center">Marks</th>
+                            <th class="border-0 text-center">Weight</th>
+                            <th class="border-0">Performance</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -159,31 +140,52 @@ const getGradeColor = (score) => {
                             const grade = getLetterGrade(score);
                             const gradeColor = getGradeColor(score);
                         %>
-                        <tr>
-                            <td class="px-4 py-3 border-0 fw-bold text-dark text-start">
-                                <%= course.course_name %>
-                                <% if (course.course_code) { %><small class="text-secondary fw-medium" style="font-size:0.75rem"><br>(<%= course.course_code %>)</small><% } %>
-                            </td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'attendance') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'quiz') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'assignment') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'mid') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'final') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'project') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'lab') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'participation') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'other') %></td>
-                            <td class="py-3 border-0 fw-bold text-primary"><%= Math.round(score) %></td>
-                            <td class="py-3 border-0 px-4 fw-bold" style="color: <%= gradeColor %>"><%= grade %></td>
+                        <tr class="course-heading">
+                            <th colspan="4" class="border-0 text-start" scope="rowgroup">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <div>
+                                        <h4 class="h6 fw-bold text-dark mb-1"><%= course.course_name %></h4>
+                                        <% if (course.course_code) { %><small class="text-secondary fw-medium"><%= course.course_code %></small><% } %>
+                                    </div>
+                                    <span class="course-result-chip" style="color:<%= gradeColor %>">
+                                        <i class="fas fa-chart-line" aria-hidden="true"></i>
+                                        <%= Math.round(score) %>% · <%= grade %>
+                                    </span>
+                                </div>
+                            </th>
                         </tr>
+                        <% course.assessments.forEach(assessment => {
+                            const assessmentPercent = assessment.max_mark > 0
+                                ? Math.min((assessment.score / assessment.max_mark) * 100, 100)
+                                : 0;
+                            const assessmentColor = getGradeColor(assessmentPercent);
+                        %>
+                        <tr class="assessment-row">
+                            <td class="text-start fw-semibold text-dark"><%= assessment.assessment_name %></td>
+                            <td class="text-center fw-bold text-dark"><%= assessment.score %> / <%= assessment.max_mark %></td>
+                            <td class="text-center"><span class="badge rounded-pill bg-light text-secondary border"><%= assessment.weight_percentage %>%</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="assessment-progress" role="progressbar" aria-label="<%= assessment.assessment_name %> score" aria-valuenow="<%= Math.round(assessmentPercent) %>" aria-valuemin="0" aria-valuemax="100">
+                                        <div class="assessment-progress-fill" style="width:<%= assessmentPercent %>%;background:<%= assessmentColor %>"></div>
+                                    </div>
+                                    <span class="small fw-bold" style="color:<%= assessmentColor %>"><%= Math.round(assessmentPercent) %>%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }); %>
                         <% }) %>
                     </tbody>
                     <tfoot style="background:#f8fafc">
                         <tr class="fw-bold text-dark border-0">
-                            <td class="px-4 py-3 border-0 text-start" colspan="10">Total Score / Semester Average</td>
-                            <td class="py-3 text-center border-0 text-primary h6 m-0 fw-bold"><%= parseFloat(currentSum).toFixed(1) %></td>
-                            <td class="py-3 text-center border-0 h6 m-0 fw-bold px-4" style="color:<%= currentAvg >= 70 ? '#10b981' : currentAvg >= 50 ? '#f59e0b' : '#ef4444' %>">
-                                <%= parseFloat(currentAvg).toFixed(1) %>% (<%= currentAvg >= 50 ? 'PASS' : 'FAIL' %>)
+                            <td colspan="2" class="py-3 border-0 text-start">Semester summary</td>
+                            <td class="py-3 text-center border-0 text-primary">
+                                <span class="d-block small text-secondary">Total score</span>
+                                <%= parseFloat(currentSum).toFixed(1) %>
+                            </td>
+                            <td class="py-3 text-center border-0" style="color:<%= currentAvg >= 70 ? '#10b981' : currentAvg >= 50 ? '#f59e0b' : '#ef4444' %>">
+                                <span class="d-block small text-secondary">Average</span>
+                                <%= parseFloat(currentAvg).toFixed(1) %>% · <%= currentAvg >= 50 ? 'PASS' : 'FAIL' %>
                             </td>
                         </tr>
                     </tfoot>
@@ -198,27 +200,19 @@ const getGradeColor = (score) => {
         </div>
 
         <!-- Previous Semesters Results Section -->
-        <div class="mb-5" style="background:white; border-radius:24px; padding:2rem; box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+        <div class="results-panel mb-5">
             <h3 class="fw-bold text-dark mb-4" style="font-size:1.4rem; border-left:4px solid #64748b; padding-left:12px">
                 Previous Semesters Results
             </h3>
             <% if (previousSemesterResults && previousSemesterResults.length > 0) { %>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 text-center">
-                    <thead style="background:#f8fafc">
-                        <tr class="text-secondary small fw-bold text-uppercase" style="letter-spacing:.8px">
-                            <th class="px-4 py-3 border-0 text-start">Course</th>
-                            <th class="py-3 border-0">Attendance</th>
-                            <th class="py-3 border-0">Quiz</th>
-                            <th class="py-3 border-0">Assignment</th>
-                            <th class="py-3 border-0">Mid Exam</th>
-                            <th class="py-3 border-0">Final Exam</th>
-                            <th class="py-3 border-0">Project</th>
-                            <th class="py-3 border-0">Lab</th>
-                            <th class="py-3 border-0">Participation</th>
-                            <th class="py-3 border-0">Other</th>
-                            <th class="py-3 border-0">Total</th>
-                            <th class="py-3 border-0 px-4">Grade</th>
+                <table class="table align-middle mb-0 results-table">
+                    <thead>
+                        <tr>
+                            <th class="border-0 text-start">Assessment</th>
+                            <th class="border-0 text-center">Marks</th>
+                            <th class="border-0 text-center">Weight</th>
+                            <th class="border-0">Performance</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -227,31 +221,52 @@ const getGradeColor = (score) => {
                             const grade = getLetterGrade(score);
                             const gradeColor = getGradeColor(score);
                         %>
-                        <tr>
-                            <td class="px-4 py-3 border-0 fw-bold text-dark text-start">
-                                <%= course.course_name %>
-                                <% if (course.course_code) { %><small class="text-secondary fw-medium" style="font-size:0.75rem"><br>(<%= course.course_code %>)</small><% } %>
-                            </td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'attendance') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'quiz') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'assignment') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'mid') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'final') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'project') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'lab') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'participation') %></td>
-                            <td class="py-3 border-0 text-secondary fw-medium"><%= getCategoryDisplay(course.categories, 'other') %></td>
-                            <td class="py-3 border-0 fw-bold text-primary"><%= Math.round(score) %></td>
-                            <td class="py-3 border-0 px-4 fw-bold" style="color: <%= gradeColor %>"><%= grade %></td>
+                        <tr class="course-heading">
+                            <th colspan="4" class="border-0 text-start" scope="rowgroup">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <div>
+                                        <h4 class="h6 fw-bold text-dark mb-1"><%= course.course_name %></h4>
+                                        <% if (course.course_code) { %><small class="text-secondary fw-medium"><%= course.course_code %></small><% } %>
+                                    </div>
+                                    <span class="course-result-chip" style="color:<%= gradeColor %>">
+                                        <i class="fas fa-chart-line" aria-hidden="true"></i>
+                                        <%= Math.round(score) %>% · <%= grade %>
+                                    </span>
+                                </div>
+                            </th>
                         </tr>
+                        <% course.assessments.forEach(assessment => {
+                            const assessmentPercent = assessment.max_mark > 0
+                                ? Math.min((assessment.score / assessment.max_mark) * 100, 100)
+                                : 0;
+                            const assessmentColor = getGradeColor(assessmentPercent);
+                        %>
+                        <tr class="assessment-row">
+                            <td class="text-start fw-semibold text-dark"><%= assessment.assessment_name %></td>
+                            <td class="text-center fw-bold text-dark"><%= assessment.score %> / <%= assessment.max_mark %></td>
+                            <td class="text-center"><span class="badge rounded-pill bg-light text-secondary border"><%= assessment.weight_percentage %>%</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="assessment-progress" role="progressbar" aria-label="<%= assessment.assessment_name %> score" aria-valuenow="<%= Math.round(assessmentPercent) %>" aria-valuemin="0" aria-valuemax="100">
+                                        <div class="assessment-progress-fill" style="width:<%= assessmentPercent %>%;background:<%= assessmentColor %>"></div>
+                                    </div>
+                                    <span class="small fw-bold" style="color:<%= assessmentColor %>"><%= Math.round(assessmentPercent) %>%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }); %>
                         <% }) %>
                     </tbody>
                     <tfoot style="background:#f8fafc">
                         <tr class="fw-bold text-dark border-0">
-                            <td class="px-4 py-3 border-0 text-start" colspan="10">Total Score / Cumulative Average</td>
-                            <td class="py-3 text-center border-0 text-primary h6 m-0 fw-bold"><%= parseFloat(previousSum).toFixed(1) %></td>
-                            <td class="py-3 text-center border-0 h6 m-0 fw-bold px-4" style="color:<%= previousAvg >= 70 ? '#10b981' : previousAvg >= 50 ? '#f59e0b' : '#ef4444' %>">
-                                <%= parseFloat(previousAvg).toFixed(1) %>% (<%= previousAvg >= 50 ? 'PASS' : 'FAIL' %>)
+                            <td colspan="2" class="py-3 border-0 text-start">Previous semesters summary</td>
+                            <td class="py-3 text-center border-0 text-primary">
+                                <span class="d-block small text-secondary">Total score</span>
+                                <%= parseFloat(previousSum).toFixed(1) %>
+                            </td>
+                            <td class="py-3 text-center border-0" style="color:<%= previousAvg >= 70 ? '#10b981' : previousAvg >= 50 ? '#f59e0b' : '#ef4444' %>">
+                                <span class="d-block small text-secondary">Average</span>
+                                <%= parseFloat(previousAvg).toFixed(1) %>% · <%= previousAvg >= 50 ? 'PASS' : 'FAIL' %>
                             </td>
                         </tr>
                     </tfoot>
@@ -268,21 +283,9 @@ const getGradeColor = (score) => {
         <!-- Summary Section (Bottom of Page) -->
         <div class="mb-5" style="background:white; border-radius:24px; padding:2rem; box-shadow:0 4px 20px rgba(0,0,0,0.05)">
             <h3 class="fw-bold text-dark mb-4" style="font-size:1.4rem; border-left:4px solid #64748b; padding-left:12px">
-                Summary Section
+                Additional Summary
             </h3>
             <div class="row g-4">
-                <div class="col-md-4 col-sm-6">
-                    <div class="p-3 rounded" style="background:#f8fafc; border-left: 4px solid #3b82f6;">
-                        <span class="d-block text-secondary small fw-bold text-uppercase mb-1">Total Score</span>
-                        <span class="h4 m-0 fw-800 text-dark"><%= parseFloat(overallSum).toFixed(1) %></span>
-                    </div>
-                </div>
-                <div class="col-md-4 col-sm-6">
-                    <div class="p-3 rounded" style="background:#f8fafc; border-left: 4px solid #8b5cf6;">
-                        <span class="d-block text-secondary small fw-bold text-uppercase mb-1">Average</span>
-                        <span class="h4 m-0 fw-800 text-dark"><%= parseFloat(overallAvg).toFixed(1) %></span>
-                    </div>
-                </div>
                 <div class="col-md-4 col-sm-6">
                     <% const overallGrade = overallAvg >= 90 ? 'A+' : overallAvg >= 85 ? 'A' : overallAvg >= 80 ? 'A-' : overallAvg >= 75 ? 'B+' : overallAvg >= 70 ? 'B' : overallAvg >= 65 ? 'B-' : overallAvg >= 60 ? 'C+' : overallAvg >= 55 ? 'C' : overallAvg >= 50 ? 'D' : 'F'; %>
                     <div class="p-3 rounded" style="background:#f8fafc; border-left: 4px solid <%= overallAvg >= 70 ? '#10b981' : overallAvg >= 50 ? '#f59e0b' : '#ef4444' %>;">

@@ -531,44 +531,104 @@ router.post('/academic/start', async (req, res) => {
 
   // POST /admin/assignments/add - Add new teacher assignment
   router.post('/assignments/add', async (req, res) => {
+    const teacherId = Number(req.body.teacher_id);
+    const classId = Number(req.body.class_id);
+    const courseId = Number(req.body.course_id);
+    const academicYear = String(req.body.academic_year || DEFAULT_ACADEMIC_YEAR).trim();
+    const redirectToAssignments = () => res.redirect('/admin/classes#pills-assignments');
+
+    if (
+      !Number.isSafeInteger(teacherId) || teacherId <= 0 ||
+      !Number.isSafeInteger(classId) || classId <= 0 ||
+      !Number.isSafeInteger(courseId) || courseId <= 0 ||
+      !academicYear || academicYear.length > 20
+    ) {
+      req.session.flash = { error: 'Select a valid teacher, class, course, and academic year.' };
+      return redirectToAssignments();
+    }
+
+    const connection = await pool.getConnection();
     try {
-      const { teacher_id, class_id, course_id, academic_year } = req.body;
+      await connection.beginTransaction();
 
-      // 1. Check if teacher already has 3 active courses
-      const [courseCount] = await pool.execute(
-        'SELECT COUNT(*) as count FROM teacher_course_assignments WHERE teacher_id = ? AND status = "active"',
-        [teacher_id]
+      const [teachers] = await connection.execute(
+        'SELECT id FROM teachers WHERE id = ? FOR UPDATE',
+        [teacherId]
       );
-
-      if (courseCount[0].count >= 3) {
-        req.session.flash = { error: 'Teacher already has maximum of 3 courses assigned.' };
-        return res.redirect('/admin/classes#pills-assignments');
+      const [classes] = await connection.execute(
+        'SELECT id FROM classes WHERE id = ?',
+        [classId]
+      );
+      const [courses] = await connection.execute(
+        'SELECT id FROM courses WHERE id = ? AND is_active = TRUE',
+        [courseId]
+      );
+      if (!teachers.length || !classes.length || !courses.length) {
+        await connection.rollback();
+        req.session.flash = { error: 'The selected teacher, class, or active course could not be found.' };
+        return redirectToAssignments();
       }
 
-      // 2. Check if teacher already teaches ONE course in this specific class
-      // Requirement 4: "A teacher can teach one class with only one assigned course."
-      const [classAssigned] = await pool.execute(
-        'SELECT id FROM teacher_course_assignments WHERE teacher_id = ? AND class_id = ? AND status = "active"',
-        [teacher_id, class_id]
+      const [existingAssignments] = await connection.execute(
+        `SELECT id, status FROM teacher_course_assignments
+         WHERE teacher_id = ? AND class_id = ? AND course_id = ? LIMIT 1`,
+        [teacherId, classId, courseId]
       );
 
+      if (existingAssignments[0] && existingAssignments[0].status === 'active') {
+        await connection.rollback();
+        req.session.flash = { error: 'This teacher is already assigned to this course and class.' };
+        return redirectToAssignments();
+      }
+
+      const [classAssigned] = await connection.execute(
+        `SELECT id FROM teacher_course_assignments
+         WHERE teacher_id = ? AND class_id = ? AND status = 'active' LIMIT 1`,
+        [teacherId, classId]
+      );
       if (classAssigned.length > 0) {
-        req.session.flash = { error: 'Teacher is already assigned to a course in this class. Each teacher can only teach one course per class.' };
-        return res.redirect('/admin/classes#pills-assignments');
+        await connection.rollback();
+        req.session.flash = { error: 'This teacher is already assigned to a course in this class.' };
+        return redirectToAssignments();
       }
 
-      // 3. Create assignment
-      await pool.execute(
-        'INSERT INTO teacher_course_assignments (teacher_id, class_id, course_id, academic_year) VALUES (?, ?, ?, ?)',
-        [teacher_id, class_id, course_id, academic_year || '2025/2026']
+      const [courseCount] = await connection.execute(
+        `SELECT COUNT(*) AS count FROM teacher_course_assignments
+         WHERE teacher_id = ? AND status = 'active'`,
+        [teacherId]
       );
+      if (Number(courseCount[0].count) >= 3) {
+        await connection.rollback();
+        req.session.flash = { error: 'Teacher already has the maximum of 3 active course assignments.' };
+        return redirectToAssignments();
+      }
 
+      if (existingAssignments[0]) {
+        await connection.execute(
+          `UPDATE teacher_course_assignments
+           SET status = 'active', academic_year = ?
+           WHERE id = ? AND teacher_id = ?`,
+          [academicYear, existingAssignments[0].id, teacherId]
+        );
+      } else {
+        await connection.execute(
+          `INSERT INTO teacher_course_assignments
+           (teacher_id, class_id, course_id, academic_year, status)
+           VALUES (?, ?, ?, ?, 'active')`,
+          [teacherId, classId, courseId, academicYear]
+        );
+      }
+
+      await connection.commit();
       req.session.flash = { success: 'Teacher assignment created successfully.' };
-      res.redirect('/admin/classes#pills-assignments');
+      return redirectToAssignments();
     } catch (error) {
+      await connection.rollback();
       console.error('Add assignment error:', error);
       req.session.flash = { error: 'Failed to create assignment: ' + error.message };
-      res.redirect('/admin/classes#pills-assignments');
+      return redirectToAssignments();
+    } finally {
+      connection.release();
     }
   });
 
@@ -692,8 +752,7 @@ router.post('/academic/start', async (req, res) => {
 
   // --- Transcript Generation Routes ---
 
-  // Helper function to calculate competition rank dynamically
-  async function getStudentRankForClass(conn, studentId, classId, academicYear) {
+  async function getClassRanksForYear(conn, classId, academicYear) {
     const [students] = await conn.execute(`
     SELECT student_id, ROUND(AVG(total_score), 2) as average_score
     FROM approved_results
@@ -702,16 +761,24 @@ router.post('/academic/start', async (req, res) => {
     ORDER BY average_score DESC
   `, [classId, academicYear]);
 
-    let currentRank = 1;
+    const ranks = new Map();
     for (let i = 0; i < students.length; i++) {
-      if (i > 0 && students[i].average_score === students[i - 1].average_score) {
-        students[i].rank = students[i - 1].rank;
-      } else {
-        students[i].rank = i + 1;
-      }
-      if (String(students[i].student_id) === String(studentId)) {
-        return `${students[i].rank}/${students.length}`;
-      }
+      const currentAverage = Number(students[i].average_score);
+      const previousAverage = i > 0 ? Number(students[i - 1].average_score) : null;
+      const rank = i > 0 && currentAverage === previousAverage
+        ? ranks.get(String(students[i - 1].student_id)).rank
+        : i + 1;
+      ranks.set(String(students[i].student_id), { rank, classSize: students.length });
+    }
+    return ranks;
+  }
+
+  // Calculate competition rank from the latest approved results for a class and year.
+  async function getStudentRankForClass(conn, studentId, classId, academicYear) {
+    const ranks = await getClassRanksForYear(conn, classId, academicYear);
+    const studentRank = ranks.get(String(studentId));
+    if (studentRank) {
+      return `${studentRank.rank}/${studentRank.classSize}`;
     }
     return '';
   }
@@ -847,12 +914,28 @@ router.post('/academic/start', async (req, res) => {
       // 7. Get School Name from settings
       const schoolName = await getSetting('schoolName', 'Abdigudina Elementary School');
 
-      // 8. Compute dynamic rank for each academic year
-      for (const hist of history) {
-        const yearGrade = grades.find(g => g.academic_year === hist.academic_year);
-        if (yearGrade && yearGrade.class_id) {
-          hist.rank = await getStudentRankForClass(pool, studentId, yearGrade.class_id, hist.academic_year);
+      // Calculate rank directly from approved results, even if academic history is incomplete.
+      const rankByAcademicYear = {};
+      const yearClassMap = new Map();
+      for (const grade of grades) {
+        if (!yearClassMap.has(grade.academic_year)) {
+          yearClassMap.set(grade.academic_year, grade.class_id);
         }
+      }
+      for (const [academicYear, classId] of yearClassMap) {
+        if (classId) {
+          rankByAcademicYear[academicYear] = await getStudentRankForClass(
+            pool,
+            studentId,
+            classId,
+            academicYear
+          );
+        }
+      }
+
+      // Keep the rank available on the academic history record for existing transcript views.
+      for (const hist of history) {
+        hist.rank = rankByAcademicYear[hist.academic_year] || '';
       }
 
       res.render('admin/transcript-generate', {
@@ -861,6 +944,7 @@ router.post('/academic/start', async (req, res) => {
         student,
         history,
         grades,
+        rankByAcademicYear,
         enrolledCourses,
         hasIncompleteGrades,
         breakdown,
@@ -2621,6 +2705,7 @@ router.post('/academic/start', async (req, res) => {
                tu.first_name AS teacher_first_name,
                tu.last_name AS teacher_last_name,
                scr.course_id,
+               COALESCE(NULLIF(scr.course_id, 0), assigned_course.course_id, scheduled_course.course_id) AS resolved_course_id,
                co.course_name,
                scr.class_id,
                c.name AS class_name,
@@ -2628,6 +2713,7 @@ router.post('/academic/start', async (req, res) => {
                scr.academic_year,
                scr.total_score,
                scr.status,
+               scr.submitted_at AS created_at,
                s.student_id AS student_reg_id,
                u.first_name AS student_first_name,
                u.last_name AS student_last_name,
@@ -2636,7 +2722,35 @@ router.post('/academic/start', async (req, res) => {
         JOIN students s ON scr.student_id = s.id
         JOIN users u ON s.user_id = u.id
         LEFT JOIN classes c ON scr.class_id = c.id
-        LEFT JOIN courses co ON scr.course_id = co.id
+        LEFT JOIN (
+          SELECT teacher_id, class_id, MIN(course_id) AS course_id
+          FROM teacher_course_assignments
+          WHERE status = 'active'
+          GROUP BY teacher_id, class_id
+          HAVING COUNT(DISTINCT course_id) = 1
+        ) assigned_course
+          ON assigned_course.teacher_id = scr.teacher_id
+          AND assigned_course.class_id = scr.class_id
+        LEFT JOIN (
+          SELECT schedule_links.teacher_id, schedule_links.class_id,
+                 MIN(schedule_links.course_id) AS course_id
+          FROM (
+            SELECT teacher_id, class_id, course_id
+            FROM class_schedule
+            WHERE teacher_id IS NOT NULL
+            UNION
+            SELECT course_owner.teacher_id, cs.class_id, cs.course_id
+            FROM class_schedule cs
+            JOIN courses course_owner ON course_owner.id = cs.course_id
+            WHERE course_owner.teacher_id IS NOT NULL
+          ) schedule_links
+          GROUP BY schedule_links.teacher_id, schedule_links.class_id
+          HAVING COUNT(DISTINCT course_id) = 1
+        ) scheduled_course
+          ON scheduled_course.teacher_id = scr.teacher_id
+          AND scheduled_course.class_id = scr.class_id
+        LEFT JOIN courses co
+          ON co.id = COALESCE(NULLIF(scr.course_id, 0), assigned_course.course_id, scheduled_course.course_id)
         LEFT JOIN teachers t ON scr.teacher_id = t.id
         LEFT JOIN users tu ON t.user_id = tu.id
         WHERE 1=1
@@ -2658,7 +2772,123 @@ router.post('/academic/start', async (req, res) => {
       }
 
       query += " ORDER BY scr.status = 'pending' DESC, scr.id DESC LIMIT 500";
-      const [grades] = await pool.execute(query, params);
+      const [gradeResults] = await pool.execute(query, params);
+
+      const resultIds = [...new Set(gradeResults.map((grade) => grade.result_id))];
+      let assessmentsByResult = new Map();
+      if (resultIds.length > 0) {
+        const resultPlaceholders = resultIds.map(() => '?').join(', ');
+        const [assessmentResults] = await pool.execute(`
+          SELECT scr.id AS result_id, ac.name AS assessment_name,
+                 sr.score, ac.max_mark, ac.weight_percentage
+          FROM student_course_results scr
+          JOIN student_results sr
+            ON sr.student_id = scr.student_id
+            AND sr.teacher_id = scr.teacher_id
+            AND sr.class_id = scr.class_id
+            AND sr.academic_year = scr.academic_year
+            AND sr.semester_id = scr.semester_id
+            AND (
+              sr.course_id = scr.course_id
+              OR (sr.course_id IS NULL AND (scr.course_id IS NULL OR scr.course_id = 0))
+            )
+          JOIN assessment_categories ac
+            ON ac.id = sr.category_id
+            AND ac.structure_id = scr.assessment_structure_id
+          WHERE scr.id IN (${resultPlaceholders})
+          ORDER BY ac.order_index ASC, sr.id ASC
+        `, resultIds);
+
+        assessmentsByResult = new Map();
+        for (const assessment of assessmentResults) {
+          const resultAssessments = assessmentsByResult.get(assessment.result_id) || [];
+          resultAssessments.push(assessment);
+          assessmentsByResult.set(assessment.result_id, resultAssessments);
+        }
+      }
+
+      const studentsById = new Map();
+      for (const grade of gradeResults) {
+        let student = studentsById.get(grade.student_id);
+        if (!student) {
+          student = {
+            student_id: grade.student_id,
+            student_reg_id: grade.student_reg_id,
+            student_first_name: grade.student_first_name,
+            student_last_name: grade.student_last_name,
+            grade_level: grade.grade_level,
+            gradeRecords: [],
+          };
+          studentsById.set(grade.student_id, student);
+        }
+
+        if (!student.gradeRecords.some((record) => record.id === grade.result_id)) {
+          const assessments = assessmentsByResult.get(grade.result_id) || [];
+          const assessmentGroups = {
+            assignment: [],
+            midterm: [],
+            final: [],
+            other: [],
+          };
+
+          for (const assessment of assessments) {
+            const name = String(assessment.assessment_name || '').toLowerCase();
+            if (/\b(assignment|homework|coursework)\b/.test(name)) {
+              assessmentGroups.assignment.push(assessment);
+            } else if (/\bmid[\s-]?term\b/.test(name)) {
+              assessmentGroups.midterm.push(assessment);
+            } else if (/\bfinal\b/.test(name)) {
+              assessmentGroups.final.push(assessment);
+            } else {
+              assessmentGroups.other.push(assessment);
+            }
+          }
+
+          const weightedTotal = assessments.length > 0
+            ? assessments.reduce((total, assessment) => {
+              const maxMark = Number(assessment.max_mark);
+              return total + (maxMark > 0
+                ? (Number(assessment.score) / maxMark) * Number(assessment.weight_percentage)
+                : 0);
+            }, 0)
+            : Number(grade.total_score) || 0;
+
+          student.gradeRecords.push({
+            ...grade,
+            id: grade.result_id,
+            assessments,
+            assessmentGroups,
+            weightedTotal: Number(weightedTotal.toFixed(1)),
+          });
+        }
+      }
+      const grades = [...studentsById.values()];
+
+      const classRankPromises = new Map();
+      for (const student of grades) {
+        for (const record of student.gradeRecords) {
+          if (!record.class_id || !record.academic_year) continue;
+          const rankKey = `${record.class_id}_${record.academic_year}`;
+          if (!classRankPromises.has(rankKey)) {
+            classRankPromises.set(
+              rankKey,
+              getClassRanksForYear(pool, record.class_id, record.academic_year)
+            );
+          }
+        }
+      }
+
+      const classRanks = new Map();
+      for (const [rankKey, rankPromise] of classRankPromises) {
+        classRanks.set(rankKey, await rankPromise);
+      }
+      for (const student of grades) {
+        for (const record of student.gradeRecords) {
+          const rankKey = `${record.class_id}_${record.academic_year}`;
+          const rank = classRanks.get(rankKey)?.get(String(student.student_id));
+          record.rank = rank ? `${rank.rank}/${rank.classSize}` : 'N/A';
+        }
+      }
 
       // Fetch teachers for filter
       const [teachers] = await pool.execute(`
@@ -3995,4 +4225,3 @@ router.patch('/sessions/:id/activate', async (req, res) => {
 });
 
 module.exports = router;
-

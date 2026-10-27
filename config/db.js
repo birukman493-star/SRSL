@@ -751,15 +751,29 @@ const { getActiveAcademicYear, getSetting, formatSemesterLabel, DEFAULT_SEMESTER
         FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
         FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL,
         FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL,
-        UNIQUE KEY unique_student_category (student_id, category_id)
+        UNIQUE KEY unique_student_category (student_id, category_id),
+        INDEX idx_student_results_owner_course (teacher_id, class_id, course_id, academic_year, semester)
       )
     `);
 
+    for (const statement of [
+      'ALTER TABLE student_results ADD COLUMN academic_year VARCHAR(20)',
+      'ALTER TABLE student_results ADD COLUMN semester VARCHAR(50)',
+    ]) {
+      try {
+        await dbConnection.execute(statement);
+      } catch (e) {
+        if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+      }
+    }
+
     try {
-      await dbConnection.execute('ALTER TABLE student_results ADD COLUMN academic_year VARCHAR(20)');
-      await dbConnection.execute('ALTER TABLE student_results ADD COLUMN semester VARCHAR(50)');
-      console.log('Added academic fields to student_results');
-    } catch (e) { }
+      await dbConnection.execute(
+        'ALTER TABLE student_results ADD INDEX idx_student_results_owner_course (teacher_id, class_id, course_id, academic_year, semester)'
+      );
+    } catch (e) {
+      if (e.code !== 'ER_DUP_KEYNAME') throw e;
+    }
 
     // Create materials table if missing
     await dbConnection.execute(`

@@ -214,6 +214,531 @@
           border-width: 4px;
         }
       }
+
+      .contact-hero {
+        min-height: 0;
+        padding: clamp(7rem, 11vw, 9rem) 0 clamp(4rem, 7vw, 6rem);
+        background:
+          radial-gradient(ellipse at 86% 20%, rgba(201, 121, 76, 0.18), transparent 30rem),
+          linear-gradient(125deg, #203b30 0%, #142a23 100%);
+        text-align: left;
+      }
+
+      .contact-hero-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
+        align-items: center;
+        gap: clamp(2.5rem, 7vw, 6rem);
+      }
+
+      .contact-hero-copy {
+        max-width: 640px;
+      }
+
+      .contact-eyebrow,
+      .contact-section-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 1.25rem;
+        color: #d7a47e;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .contact-eyebrow::before {
+        content: "";
+        width: 28px;
+        height: 1px;
+        background: currentColor;
+      }
+
+      .contact-hero .hero-title {
+        max-width: 610px;
+        margin-bottom: 1.25rem;
+        color: #fff !important;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(3rem, 7vw, 6.4rem);
+        font-weight: 500;
+        letter-spacing: -0.065em;
+        line-height: 0.98;
+      }
+
+      .contact-hero .hero-subtitle {
+        max-width: 460px;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.72) !important;
+        font-size: clamp(1rem, 1.5vw, 1.15rem);
+        line-height: 1.8;
+      }
+
+      .contact-hero-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .contact-hero-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
+        min-height: 48px;
+        padding: 0.75rem 1.25rem;
+        border: 1px solid #d6a17a;
+        border-radius: 999px;
+        background: #d6a17a;
+        color: #1b3027;
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: transform 0.2s ease, background-color 0.2s ease;
+      }
+
+      .contact-hero-button:hover {
+        transform: translateY(-2px);
+        background: #e5b68f;
+        color: #1b3027;
+      }
+
+      .contact-hero-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        color: rgba(255, 255, 255, 0.84);
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .contact-hero-link:hover {
+        color: #fff;
+      }
+
+      .contact-hero-visual {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+        justify-self: end;
+        padding: 0.8rem 0.8rem 2rem 0;
+      }
+
+      .contact-hero-visual::before {
+        content: "";
+        position: absolute;
+        top: -0.5rem;
+        right: -0.2rem;
+        width: 58%;
+        height: 58%;
+        border: 1px solid rgba(226, 182, 143, 0.55);
+        border-radius: 24px;
+        transform: rotate(5deg);
+      }
+
+      .contact-hero-photo {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: clamp(300px, 36vw, 410px);
+        border: 7px solid rgba(255, 255, 255, 0.94);
+        border-radius: 24px;
+        object-fit: cover;
+        object-position: 58% center;
+        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.24);
+      }
+
+      .contact-photo-detail {
+        position: absolute;
+        z-index: 2;
+        bottom: 0.2rem;
+        left: -1rem;
+        width: 150px;
+        height: 112px;
+        padding: 6px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.85);
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.24);
+        transform: rotate(-4deg);
+      }
+
+      .contact-photo-detail img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 11px;
+        object-fit: cover;
+      }
+
+      .contact-photo-caption {
+        position: absolute;
+        right: -0.25rem;
+        bottom: 1.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        max-width: calc(100% - 120px);
+        padding: 1rem 1.2rem;
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+        color: #263b2d;
+        font-size: 0.85rem;
+        font-weight: 600;
+        line-height: 1.45;
+      }
+
+      .contact-photo-caption i {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+        place-items: center;
+        border-radius: 50%;
+        background: #e8eee5;
+        color: #344b39;
+      }
+
+      .contact-details-section {
+        padding-top: 3.5rem;
+      }
+
+      .contact-section-heading {
+        margin-bottom: 1.5rem;
+      }
+
+      .contact-section-kicker {
+        margin-bottom: 0.55rem;
+        color: #64764b;
+      }
+
+      .contact-section-title {
+        margin: 0;
+        color: var(--dark-text);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+        font-weight: 500;
+        letter-spacing: -0.045em;
+      }
+
+      .bento-grid {
+        grid-template-columns: 1.25fr 1fr 1fr;
+        grid-auto-rows: minmax(230px, auto);
+        gap: 1rem;
+        margin-top: 0;
+      }
+
+      .bento-item,
+      .bento-item.large,
+      .bento-item.tall {
+        grid-column: auto;
+        grid-row: auto;
+        padding: clamp(1.4rem, 2.5vw, 2rem);
+        border: 1px solid var(--panel-border);
+        border-radius: 18px;
+        background: var(--panel-bg);
+        box-shadow: 0 12px 32px rgba(27, 45, 34, 0.06);
+        backdrop-filter: none;
+      }
+
+      .bento-item:hover {
+        transform: translateY(-4px);
+        border-color: rgba(100, 118, 75, 0.35);
+        background: var(--panel-bg);
+        box-shadow: 0 18px 38px rgba(27, 45, 34, 0.1);
+      }
+
+      .bento-icon {
+        width: 44px;
+        height: 44px;
+        margin-bottom: 1.1rem;
+        border-radius: 13px;
+        background: #e8eee5;
+        box-shadow: none;
+        color: #344b39;
+        font-size: 1.1rem;
+      }
+
+      .bento-item hr {
+        border-color: var(--panel-border);
+      }
+
+      .bento-item .d-flex.gap-4 {
+        flex-wrap: wrap;
+        gap: 1rem !important;
+      }
+
+      .contact-map-section {
+        padding: clamp(3.5rem, 7vw, 5.5rem) 0;
+        background: #f1f3eb !important;
+      }
+
+      .contact-map-heading {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        text-align: left;
+      }
+
+      .contact-map-heading .contact-section-kicker {
+        margin-bottom: 0.55rem;
+      }
+
+      .contact-map-heading .contact-section-title {
+        margin-bottom: 0.4rem;
+      }
+
+      .contact-map-heading p {
+        margin: 0;
+        color: var(--gray-text);
+      }
+
+      .map-wrapper {
+        height: 390px;
+        border: 5px solid #fff;
+        border-radius: 20px;
+        box-shadow: 0 18px 48px rgba(27, 45, 34, 0.12);
+      }
+
+      .contact-form-section {
+        padding: clamp(3.5rem, 7vw, 6rem) 0;
+      }
+
+      .contact-form-layout {
+        display: grid;
+        grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.6fr);
+        align-items: stretch;
+        gap: clamp(1.25rem, 3vw, 2.5rem);
+      }
+
+      .contact-form-aside {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100%;
+        padding: clamp(1.75rem, 4vw, 3rem);
+        border-radius: 22px;
+        background: #203b30;
+        color: #fff;
+      }
+
+      .contact-form-aside .contact-section-kicker {
+        color: #d7a47e;
+      }
+
+      .contact-form-aside h2 {
+        margin: 0 0 1rem;
+        color: #fff;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(2rem, 3.5vw, 3.1rem);
+        font-weight: 500;
+        letter-spacing: -0.05em;
+        line-height: 1.05;
+      }
+
+      .contact-form-aside p {
+        color: rgba(255, 255, 255, 0.72);
+        line-height: 1.7;
+      }
+
+      .contact-aside-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-top: 2.5rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.16);
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 0.88rem;
+        line-height: 1.55;
+      }
+
+      .contact-aside-note i {
+        margin-top: 0.2rem;
+        color: #e0ad86;
+      }
+
+      .form-card {
+        padding: clamp(1.5rem, 4vw, 3.25rem);
+        border-radius: 22px;
+        box-shadow: 0 18px 48px rgba(27, 45, 34, 0.08);
+      }
+
+      .contact-form-heading {
+        margin-bottom: 1.5rem;
+        text-align: left;
+      }
+
+      .contact-form-heading .contact-section-kicker {
+        margin-bottom: 0.5rem;
+      }
+
+      .contact-form-heading h2 {
+        margin: 0;
+        color: var(--dark-text);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.7rem, 3vw, 2.3rem);
+        font-weight: 500;
+        letter-spacing: -0.04em;
+      }
+
+      .contact-form-section .form-control {
+        border: 1px solid var(--dark-tertiary);
+        border-radius: 12px;
+        background: var(--bg-soft);
+        box-shadow: none;
+      }
+
+      .contact-form-section .form-control:focus {
+        border-color: #64764b;
+        box-shadow: 0 0 0 3px rgba(100, 118, 75, 0.14);
+      }
+
+      .contact-form-section .form-floating label {
+        color: var(--gray-text);
+      }
+
+      .contact-submit {
+        min-height: 50px;
+        padding: 0.8rem 1.6rem;
+        border: 0;
+        border-radius: 999px;
+        background: #344b39;
+        color: #fff;
+        transition: transform 0.2s ease, background-color 0.2s ease;
+      }
+
+      .contact-submit:hover {
+        transform: translateY(-2px);
+        background: #263b2d;
+        color: #fff;
+      }
+
+      .contact-hero-button:focus-visible,
+      .contact-hero-link:focus-visible,
+      .contact-submit:focus-visible {
+        outline: 3px solid #d6a17a;
+        outline-offset: 4px;
+      }
+
+      @media (max-width: 992px) {
+        .bento-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .bento-item.large {
+          grid-column: span 2;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .contact-hero {
+          padding: 7rem 0 4rem;
+        }
+
+        .contact-hero-layout {
+          grid-template-columns: 1fr;
+          gap: 2.5rem;
+        }
+
+        .contact-hero-copy {
+          margin: 0 auto;
+          text-align: center;
+        }
+
+        .contact-eyebrow,
+        .contact-hero-actions {
+          justify-content: center;
+        }
+
+        .contact-hero .hero-title {
+          margin-right: auto;
+          margin-left: auto;
+        }
+
+        .contact-hero .hero-subtitle {
+          margin: 0 auto;
+        }
+
+        .contact-hero-visual {
+          max-width: 390px;
+          justify-self: center;
+          padding-right: 0;
+        }
+
+        .contact-hero-photo {
+          height: 330px;
+          border-radius: 20px;
+        }
+
+        .contact-photo-detail {
+          left: -0.5rem;
+          width: 125px;
+          height: 96px;
+        }
+
+        .contact-details-section {
+          padding-top: 2.5rem;
+        }
+
+        .bento-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .bento-item.large {
+          grid-column: auto;
+        }
+
+        .contact-form-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .contact-form-aside {
+          min-height: 0;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .contact-hero-actions {
+          flex-direction: column;
+        }
+
+        .contact-map-heading {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .contact-photo-caption {
+          right: 0;
+          bottom: 0.5rem;
+          max-width: calc(100% - 95px);
+          gap: 0.5rem;
+          padding: 0.75rem;
+          font-size: 0.76rem;
+        }
+
+        .contact-photo-caption i {
+          width: 32px;
+          height: 32px;
+          flex-basis: 32px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .bento-item,
+        .contact-hero-button,
+        .contact-submit {
+          transition-duration: 0.01ms !important;
+        }
+      }
     </style>
   </head>
 
@@ -273,25 +798,56 @@
       <!-- Hero Section -->
       <section class="contact-hero">
         <div class="container">
-          <h1
-            class="hero-title animate-on-scroll"
-            data-reveal="top"
-            data-key="nav_contact"
-          >
-            Find Us
-          </h1>
-          <p
-            class="hero-subtitle animate-on-scroll"
-            data-reveal="bottom"
-            data-delay="0.2s"
-          >
-            Ethiopia / Jimma / JiT Campus
-          </p>
+          <div class="contact-hero-layout">
+            <div class="contact-hero-copy">
+              <span class="contact-eyebrow">We'd love to hear from you</span>
+              <h1
+                class="hero-title animate-on-scroll"
+                data-reveal="top"
+              >
+                Let's start a conversation.
+              </h1>
+              <p
+                class="hero-subtitle animate-on-scroll"
+                data-reveal="bottom"
+                data-delay="0.2s"
+              >
+                Questions, ideas, or need a hand? Our school community is here
+                to help you find the right way forward.
+              </p>
+              <div class="contact-hero-actions">
+                <a class="contact-hero-button" href="#contactForm">
+                  Send us a message <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </a>
+                <a class="contact-hero-link" href="mailto:abdigudina@gmail.com">
+                  <i class="far fa-envelope" aria-hidden="true"></i> Email the school
+                </a>
+              </div>
+            </div>
+            <div class="contact-hero-visual animate-on-scroll" data-reveal="right">
+              <img
+                class="contact-hero-photo"
+                src="/image/gallery-7.jpg"
+                alt="Student focused on a classroom project with classmates"
+              />
+              <div class="contact-photo-detail" aria-hidden="true">
+                <img src="/image/gallery-4.jpg" alt="" />
+              </div>
+              <div class="contact-photo-caption">
+                <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                <span>JiT Campus<br />Jimma, Ethiopia</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       <!-- Bento Contact Info -->
-      <section class="container mb-5 pb-5">
+      <section class="container contact-details-section mb-5 pb-5">
+        <div class="contact-section-heading">
+          <span class="contact-section-kicker">Here when you need us</span>
+          <h2 class="contact-section-title">The details, made simple.</h2>
+        </div>
         <div class="bento-grid">
           <!-- Main Contact (Large) -->
           <div class="bento-item large animate-on-scroll" data-reveal="left">
@@ -356,11 +912,14 @@
       </section>
 
       <!-- Map Section -->
-      <section class="py-5" style="background: var(--bg-soft)">
+      <section class="contact-map-section">
         <div class="container">
-          <div class="text-center mb-5">
-            <h2 class="display-6 fw-bold">Find Us on Campus</h2>
-            <p class="text-secondary">Ethiopia / Jimma / JiT Campus</p>
+          <div class="contact-map-heading">
+            <div>
+              <span class="contact-section-kicker">Visit our campus</span>
+              <h2 class="contact-section-title">Find us in Jimma.</h2>
+              <p>Ethiopia / Jimma / JiT Campus</p>
+            </div>
           </div>
           <div class="map-wrapper animate-on-scroll" data-reveal="bottom">
             <iframe
@@ -378,13 +937,27 @@
       </section>
 
       <!-- Contact Form Section -->
-      <section class="py-5" style="background: var(--bg-main)">
+      <section class="contact-form-section">
         <div class="container py-5">
-          <div class="row justify-content-center">
-            <div class="col-xl-8">
+          <div class="contact-form-layout">
+            <aside class="contact-form-aside">
+              <div>
+                <span class="contact-section-kicker">A real person will reply</span>
+                <h2>Tell us what’s on your mind.</h2>
+                <p>
+                  Share a little about what you need, and the right person on
+                  our team will get back to you.
+                </p>
+              </div>
+              <div class="contact-aside-note">
+                <i class="fas fa-clock" aria-hidden="true"></i>
+                <span>Our support team is available Monday through Saturday.</span>
+              </div>
+            </aside>
               <div class="form-card animate-on-scroll" data-reveal="bottom">
-                <div class="text-center mb-5">
-                  <h2 class="display-6 fw-bold">Send us a Message</h2>
+                <div class="contact-form-heading">
+                  <span class="contact-section-kicker">Contact form</span>
+                  <h2>Send us a message</h2>
                 </div>
 
                 <% if (success) { %>
@@ -407,7 +980,7 @@
                   </div>
                 <% } %>
 
-                <form action="/contact" method="POST" class="row g-4">
+                <form id="contactForm" action="/contact" method="POST" class="row g-4">
                   <div class="col-md-6">
                     <div class="form-floating">
                       <input
@@ -476,15 +1049,13 @@
                   <div class="col-md-12 text-center">
                     <button
                       type="submit"
-                      class="btn btn-primary px-5 py-3 rounded-pill fw-bold"
-                      style="background: var(--gradient-1)"
+                      class="btn contact-submit px-5 fw-bold"
                     >
-                      Send Message
+                      Send message <i class="fas fa-arrow-right ms-2" aria-hidden="true"></i>
                     </button>
                   </div>
                 </form>
               </div>
-            </div>
           </div>
         </div>
       </section>

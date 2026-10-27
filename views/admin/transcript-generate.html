@@ -266,7 +266,7 @@
     else if (cntS2 > 0) finalAvg = term2Avg;
 
     const hist = history && history.find(h => h.academic_year === yearObj.year);
-    const rank = hist && hist.rank ? hist.rank : '';
+    const rank = rankByAcademicYear[yearObj.year] || (hist && hist.rank) || '';
     const remark = getRemark(finalAvg);
     const gradeLabel = ordSuffix(yearObj.grade);
     const yearShort = yearObj.year.split('/')[0];

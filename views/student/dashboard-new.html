@@ -116,15 +116,8 @@
         <%- include('partials/sidebar.html') %>
 
             <main class="main-panel w-100 p-4">
-                <%- include('../partials/academic-context.html') %>
-                    <% const getCategoryScore=(categories, names)=> {
-                        const cat = categories.find(c => names.some(n =>
-                        c.category_name.toLowerCase().includes(n.toLowerCase())));
-                        if (cat) return Math.round(parseFloat(cat.score));
-                        return '-';
-                        };
-                        %>
-                        <!-- Header (Admin Style) -->
+        <%- include('../partials/academic-context.html') %>
+                <!-- Header (Admin Style) -->
                         <div class="premium-panel mb-4">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -301,13 +294,43 @@
                                             <div class="row g-4">
                                                 <!-- Academic Center -->
                                                 <div class="col-lg-8">
+                                                    <div class="premium-panel mb-4">
+                                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                                            <h3 class="h5 fw-bold m-0 text-dark">
+                                                                <i class="fas fa-book-open me-2 text-primary"></i>My Courses
+                                                            </h3>
+                                                            <a href="/student/courses" class="btn btn-sm btn-light border fw-bold px-3 rounded-pill">View All</a>
+                                                        </div>
+                                                        <% if (dashboardCourses && dashboardCourses.length > 0) { %>
+                                                            <div class="row g-3">
+                                                                <% dashboardCourses.forEach(course => { %>
+                                                                    <div class="col-md-6">
+                                                                        <div class="p-3 rounded-3 bg-light h-100">
+                                                                            <div class="fw-bold text-dark"><%= course.course_name %></div>
+                                                                            <% if (course.course_code) { %><small class="text-secondary"><%= course.course_code %></small><% } %>
+                                                                            <div class="small text-secondary mt-1">
+                                                                                <i class="fas fa-chalkboard-teacher me-1 text-primary"></i>
+                                                                                <%= course.teacher_name || 'Assigned Faculty' %>
+                                                                            </div>
+                                                                            <% if (!course.is_enrolled) { %>
+                                                                                <span class="badge bg-primary bg-opacity-10 text-primary mt-2">Saved result</span>
+                                                                            <% } %>
+                                                                        </div>
+                                                                    </div>
+                                                                <% }); %>
+                                                            </div>
+                                                        <% } else { %>
+                                                            <p class="text-secondary small mb-0">No enrolled courses are available yet.</p>
+                                                        <% } %>
+                                                    </div>
+
                                                     <!-- Courses Section -->
                                                     <div class="premium-panel mb-4">
                                                         <div
                                                             class="d-flex justify-content-between align-items-center mb-4">
                                                             <h3 class="h5 fw-bold m-0 text-dark"><i
                                                                     class="fas fa-graduation-cap me-2 text-primary"></i>My
-                                                                Approved Courses</h3>
+                                                                My Saved Grades</h3>
                                                             <a href="/student/grades"
                                                                 class="btn btn-sm btn-light border fw-bold px-3 rounded-pill">View
                                                                 Transcripts</a>
@@ -324,15 +347,7 @@
                                                                                 </th>
                                                                                 <th class="py-3 border-0">Teacher</th>
                                                                                 <th class="py-3 border-0 text-center">
-                                                                                    Attendance</th>
-                                                                                <th class="py-3 border-0 text-center">
-                                                                                    Quiz</th>
-                                                                                <th class="py-3 border-0 text-center">
-                                                                                    Assignment</th>
-                                                                                <th class="py-3 border-0 text-center">
-                                                                                    Mid Exam</th>
-                                                                                <th class="py-3 border-0 text-center">
-                                                                                    Final Exam</th>
+                                                                                    Assessment Results</th>
                                                                                 <th class="py-3 border-0 text-center">
                                                                                     Total</th>
                                                                                 <th class="py-3 border-0 text-center">
@@ -372,32 +387,13 @@
                                                                                         class="py-3 border-0 text-secondary fw-medium">
                                                                                         <%= course.teacher_name %>
                                                                                     </td>
-                                                                                    <td
-                                                                                        class="py-3 border-0 text-center fw-medium">
-                                                                                        <%= getCategoryScore(course.categories,
-                                                                                            ['attendance', 'participation'
-                                                                                            ]) %>
-                                                                                    </td>
-                                                                                    <td
-                                                                                        class="py-3 border-0 text-center fw-medium">
-                                                                                        <%= getCategoryScore(course.categories,
-                                                                                            ['quiz']) %>
-                                                                                    </td>
-                                                                                    <td
-                                                                                        class="py-3 border-0 text-center fw-medium">
-                                                                                        <%= getCategoryScore(course.categories,
-                                                                                            ['assignment', 'project' ])
-                                                                                            %>
-                                                                                    </td>
-                                                                                    <td
-                                                                                        class="py-3 border-0 text-center fw-medium">
-                                                                                        <%= getCategoryScore(course.categories,
-                                                                                            ['mid']) %>
-                                                                                    </td>
-                                                                                    <td
-                                                                                        class="py-3 border-0 text-center fw-medium">
-                                                                                        <%= getCategoryScore(course.categories,
-                                                                                            ['final']) %>
+                                                                                    <td class="py-3 border-0">
+                                                                                        <% course.categories.forEach(assessment => { %>
+                                                                                            <div class="d-flex justify-content-between gap-3 text-secondary fw-medium">
+                                                                                                <span><%= assessment.category_name %></span>
+                                                                                                <span class="fw-bold text-dark"><%= assessment.score %></span>
+                                                                                            </div>
+                                                                                        <% }); %>
                                                                                     </td>
                                                                                     <td
                                                                                         class="py-3 border-0 text-center fw-bold text-primary">
@@ -412,7 +408,7 @@
                                                                                         <span
                                                                                             class="badge rounded-pill fw-bold px-3"
                                                                                             style="background:rgba(16,185,129,0.12);color:#065f46"><i
-                                                                                                class="fas fa-check me-1"></i>Approved</span>
+                                                                                                class="fas fa-check me-1"></i>Available</span>
                                                                                     </td>
                                                                                 </tr>
                                                                                 <% }) %>
@@ -424,8 +420,8 @@
                                                                         <div class="text-secondary opacity-30 mb-3"><i
                                                                                 class="fas fa-folder-open fa-4x"></i>
                                                                         </div>
-                                                                        <div class="text-secondary fw-bold">No approved
-                                                                            courses found</div>
+                                                                        <div class="text-secondary fw-bold">No saved
+                                                                            assessment results found</div>
                                                                     </div>
                                                                     <% } %>
                                                         </div>

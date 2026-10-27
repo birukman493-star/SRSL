@@ -9,9 +9,17 @@
     <link rel="stylesheet" href="/css/all.min.css">
     <link href="/css/inter-font.css" rel="stylesheet">
 <style>
-<style>
-  /* Removed custom admin-grades-table CSS. Bootstrap default table styling will be used. */
-</style></style>
+  .admin-student-grades { min-width:1050px; }
+  .admin-student-grades thead th { background:#f8fafc; color:#64748b; font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; }
+  .admin-student-grades th, .admin-student-grades td { padding:.9rem .75rem; vertical-align:top; }
+  .course-grade-group { padding:.65rem 0; border-bottom:1px solid #edf1f7; }
+  .course-grade-group:first-child { padding-top:0; }
+  .course-grade-group:last-child { padding-bottom:0; border-bottom:0; }
+  .assessment-value { display:inline-block; margin:.1rem .25rem .1rem 0; padding:.25rem .5rem; border-radius:.5rem; background:#f8fafc; color:#334155; font-size:.78rem; font-weight:700; white-space:nowrap; }
+  .grade-view-details { min-width:230px; padding:.75rem; border:1px solid #e8edf5; border-radius:.75rem; background:#fff; box-shadow:0 8px 22px rgba(15,23,42,.08); }
+  .grade-view-details .detail-record + .detail-record { margin-top:.75rem; padding-top:.75rem; border-top:1px solid #edf1f7; }
+  @media (max-width:767.98px) { .admin-student-grades th, .admin-student-grades td { padding:.75rem .6rem; } }
+</style>
     <link rel="stylesheet" href="/css/brocode-style.css">
 </head>
 
@@ -123,75 +131,107 @@
 
                     <div class="glass-panel" style="background: white !important; border-radius: 24px;">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0 table-striped">
+                            <table class="table table-hover align-middle mb-0 admin-student-grades">
                                 <colgroup>
-                                    <col style="width: 20%;">
-                                    <col style="width: 30%;">
-                                    <col style="width: 10%;">
-                                    <col style="width: 10%;">
-                                    <col style="width: 20%;">
-                                    <col style="width: 10%;">
+                                    <col style="width: 9%;">
+                                    <col style="width: 14%;">
+                                    <col style="width: 13%;">
+                                    <col style="width: 13%;">
+                                    <col style="width: 11%;">
+                                    <col style="width: 11%;">
+                                    <col style="width: 12%;">
+                                    <col style="width: 8%;">
+                                    <col style="width: 5%;">
+                                    <col style="width: 7%;">
                                 </colgroup>
-                                <thead style="background:#f8fafc">
+                                <thead>
                                     <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 0.05em;">
-                                        <th class="border-0 py-3 text-start">Student Profile</th>
-                                        <th class="border-0 py-3 text-start">Subject &amp; Task</th>
-                                        <th class="border-0 py-3 text-center">Score</th>
-                                        <th class="border-0 py-3 text-center">Status</th>
-                                        <th class="border-0 py-3 text-start">Evaluation Date</th>
-                                        <th class="border-0 py-3 text-end pe-4">Management</th>
+                                        <th class="border-0 text-start">Student ID</th>
+                                        <th class="border-0 text-start">Student Name</th>
+                                        <th class="border-0 text-start">Course</th>
+                                        <th class="border-0 text-start">Assignment</th>
+                                        <th class="border-0 text-start">Midterm</th>
+                                        <th class="border-0 text-start">Final</th>
+                                        <th class="border-0 text-start">Other Assessments</th>
+                                        <th class="border-0 text-center">Total</th>
+                                        <th class="border-0 text-center">Rank</th>
+                                        <th class="border-0 text-end">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <% if (typeof grades !== 'undefined' && grades && grades.length > 0) { %>
-                                        <% for (let grade of grades) { %>
-                                            <tr class="<%= grade.status === 'pending' ? 'bg-light bg-opacity-50' : '' %>">
-                                                <td class="border-0 py-3">
-                                                    <div class="d-flex align-items-center gap-3">
-                                                        <div class="avatar-initials avatar-blue" style="width: 38px; height: 38px; font-size: 0.9rem;">
-                                                            <%= (grade.first_name ? grade.first_name.charAt(0) : '?' ) %>
+                                        <% for (let student of grades) { %>
+                                            <tr class="<%= student.gradeRecords.some(record => record.status === 'pending') ? 'bg-light bg-opacity-50' : '' %>">
+                                                <td class="fw-bold text-secondary"><%= student.student_reg_id || '—' %></td>
+                                                <td>
+                                                    <div class="fw-bold text-dark"><%= student.student_first_name %> <%= student.student_last_name %></div>
+                                                    <small class="text-secondary">Grade <%= student.grade_level || '—' %></small>
+                                                </td>
+                                                <% ['course_name', 'assignment', 'midterm', 'final', 'other', 'total', 'rank'].forEach(column => { %>
+                                                    <td class="<%= column === 'total' || column === 'rank' ? 'text-center' : '' %>">
+                                                        <% student.gradeRecords.forEach(record => { %>
+                                                            <div class="course-grade-group">
+                                                                <% if (column === 'course_name') { %>
+                                                                    <div class="fw-bold text-dark"><%= record.course_name || 'Course not assigned' %></div>
+                                                                    <small class="text-secondary"><%= record.academic_year || '' %><%= record.semester_id ? ` · ${record.semester_id}` : '' %></small>
+                                                                <% } else if (column === 'total') { %>
+                                                                    <span class="badge rounded-pill bg-primary-subtle text-primary fw-bold"><%= record.weightedTotal.toFixed(1) %>%</span>
+                                                                <% } else if (column === 'rank') { %>
+                                                                    <span class="badge rounded-pill bg-light text-dark border fw-bold"><%= record.rank %></span>
+                                                                <% } else { %>
+                                                                    <% const selectedAssessments = column === 'other'
+                                                                        ? record.assessmentGroups.other
+                                                                        : record.assessmentGroups[column]; %>
+                                                                    <% if (selectedAssessments.length > 0) { %>
+                                                                        <% selectedAssessments.forEach(assessment => { %>
+                                                                            <span class="assessment-value" title="<%= assessment.assessment_name %> · Weight <%= assessment.weight_percentage %>%">
+                                                                                <% if (column === 'other') { %><span class="text-secondary"><%= assessment.assessment_name %>:</span> <% } %><%= assessment.score %>/<%= assessment.max_mark %>
+                                                                            </span>
+                                                                        <% }); %>
+                                                                    <% } else { %>
+                                                                        <span class="text-secondary">—</span>
+                                                                    <% } %>
+                                                                <% } %>
+                                                            </div>
+                                                        <% }); %>
+                                                    </td>
+                                                <% }); %>
+                                                <td class="text-end">
+                                                    <details class="text-end">
+                                                        <summary class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">View</summary>
+                                                        <div class="grade-view-details text-start mt-2">
+                                                            <% student.gradeRecords.forEach(record => { %>
+                                                                <div class="detail-record">
+                                                                    <div class="d-flex justify-content-between gap-2">
+                                                                        <strong><%= record.course_name || 'Course not assigned' %></strong>
+                                                                        <span class="badge bg-light text-secondary"><%= record.status %></span>
+                                                                    </div>
+                                                                    <div class="small text-secondary mb-2"><%= record.academic_year || '' %><%= record.semester_id ? ` · ${record.semester_id}` : '' %> · <%= record.created_at ? new Date(record.created_at).toLocaleDateString() : 'Date unavailable' %></div>
+                                                                    <% record.assessments.forEach(assessment => { %>
+                                                                        <div class="d-flex justify-content-between gap-2 small">
+                                                                            <span><%= assessment.assessment_name %></span>
+                                                                            <span class="fw-bold"><%= assessment.score %>/<%= assessment.max_mark %> · <%= assessment.weight_percentage %>%</span>
+                                                                        </div>
+                                                                    <% }); %>
+                                                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                                                        <strong>Total: <%= record.weightedTotal.toFixed(1) %>%</strong>
+                                                                        <div class="d-flex gap-1">
+                                                                            <% if (record.status === 'pending') { %>
+                                                                                <button class="btn btn-sm btn-light text-success" onclick="updateGradeStatus('<%= record.id %>', 'approve')" title="Approve"><i class="fas fa-check"></i></button>
+                                                                                <button class="btn btn-sm btn-light text-warning" onclick="updateGradeStatus('<%= record.id %>', 'reject')" title="Reject"><i class="fas fa-times"></i></button>
+                                                                            <% } %>
+                                                                            <button class="btn btn-sm btn-light text-danger" onclick="deleteGrade('<%= record.id %>')" title="Delete"><i class="fas fa-trash"></i></button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            <% }); %>
                                                         </div>
-                                                        <div>
-                                                            <div class="fw-bold"><%= grade.first_name %> <%= grade.last_name %></div>
-                                                            <div class="text-secondary small">ID: #<%= grade.student_reg_id || '---' %></div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="border-0 py-3">
-                                                    <div class="fw-bold small"><%= grade.course_name %></div>
-                                                    <div class="text-secondary small"><%= grade.assignment_name %></div>
-                                                </td>
-                                                <td class="border-0 text-center py-3">
-                                                    <div class="fw-bold"><%= grade.score %> <span class="text-secondary small">/ <%= grade.max_score %></span></div>
-                                                    <% let perc=(grade.score / grade.max_score) * 100; %>
-                                                    <div class="progress mt-2" style="height: 5px; background: #f1f5f9; border-radius: 10px;">
-                                                        <div class="progress-bar <%= perc >= 50 ? 'bg-success' : 'bg-danger' %>" style="width: <%= perc %>%; border-radius: 10px;"></div>
-                                                    </div>
-                                                </td>
-                                                <td class="border-0 text-center py-3">
-                                                    <% let badgeColor='#64748b' ; let badgeBg='rgba(100,116,139,0.1)' ; if (grade.status==='approved' ) { badgeColor='#10b981' ; badgeBg='rgba(16,185,129,0.1)' ; } else if (grade.status==='rejected' ) { badgeColor='#ef4444' ; badgeBg='rgba(239,68,68,0.1)' ; } else if (grade.status==='pending' ) { badgeColor='#f59e0b' ; badgeBg='rgba(245,158,11,0.1)' ; } %>
-                                                    <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase" style="background: <%= badgeBg %>; color: <%= badgeColor %>; font-size: 0.7rem;">
-                                                        <%= grade.status %>
-                                                    </span>
-                                                </td>
-                                                <td class="border-0 py-3">
-                                                    <span class="text-secondary small fw-medium">
-                                                        <%= new Date(grade.created_at).toLocaleDateString() %>
-                                                    </span>
-                                                </td>
-                                                <td class="border-0 text-end py-3 pe-4">
-                                                    <div class="d-flex justify-content-end gap-2">
-                                                        <% if (grade.status==='pending' ) { %>
-                                                            <button class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3 text-success" onclick="updateGradeStatus('<%= grade.id %>', 'approve')" title="Approve"><i class="fas fa-check"></i></button>
-                                                            <button class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3 text-warning" onclick="updateGradeStatus('<%= grade.id %>', 'reject')" title="Reject"><i class="fas fa-times"></i></button>
-                                                        <% } %>
-                                                        <button class="btn btn-sm rounded-3 fw-bold px-3" onclick="deleteGrade('<%= grade.id %>')" title="Delete" style="background: rgba(239,68,68,0.08); color: #ef4444; border: none;"><i class="fas fa-trash"></i></button>
-                                                    </div>
+                                                    </details>
                                                 </td>
                                             </tr>
                                         <% } %>
                                     <% } else { %>
-                                        <tr><td colspan="6" class="text-center py-5">No records found.</td></tr>
+                                        <tr><td colspan="10" class="text-center py-5">No records found.</td></tr>
                                     <% } %>
                                 </tbody>
                             </table>
