@@ -178,12 +178,12 @@ router.get('/dashboard', async (req, res) => {
     
     // Get recent activities
     const [announcements] = await pool.execute(`
-      SELECT 'announcement' as type, title, 
+      SELECT 'announcement' as type, title, COALESCE(message, content, '') as message,
              DATE_FORMAT(created_at, '%Y-%m-%d') as date
       FROM announcements
-      WHERE audience IN ('all', 'students')
+      WHERE audience IN ('all', 'parents')
       UNION ALL
-      SELECT 'grade' as type, CONCAT(s.first_name, ' ', s.last_name, ' - New grade: ', ac.name) as title,
+      SELECT 'grade' as type, CONCAT(s.first_name, ' ', s.last_name, ' - New grade: ', ac.name) as title, '' as message,
              DATE_FORMAT(sr.grade_date, '%Y-%m-%d') as date
       FROM student_results sr
       JOIN assessment_categories ac ON sr.category_id = ac.id
@@ -593,10 +593,11 @@ router.get('/attendance/:studentId', async (req, res) => {
 router.get('/announcements', async (req, res) => {
   try {
     const [announcements] = await pool.execute(`
-      SELECT a.*, u.username as author_name
+      SELECT a.*, a.message as content,
+             COALESCE(CONCAT(u.first_name, ' ', u.last_name), u.username, 'Administration') as author_name
       FROM announcements a
       LEFT JOIN users u ON a.created_by = u.id
-      WHERE a.audience IN ('all', 'students')
+      WHERE a.audience IN ('all', 'parents')
       ORDER BY a.created_at DESC
     `);
     
@@ -608,6 +609,84 @@ router.get('/announcements', async (req, res) => {
   } catch (error) {
     console.error('Parent announcements error:', error);
     res.status(500).render('500-modern', { title: 'Server Error' });
+  }
+});
+
+// GET /parent/schedule/:childId - View child's class schedule
+router.get('/schedule/:childId', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const childId = req.params.childId;
+
+    // Get parent record
+    const [parents] = await pool.execute('SELECT id FROM parents WHERE user_id = ?', [userId]);
+    if (parents.length === 0) {
+      return res.status(403).render('500-modern', { title: 'Access Denied', message: 'Parent profile not found.' });
+    }
+    const parentId = parents[0].id;
+
+    // Verify parent-student relation
+    const [relation] = await pool.execute(
+      'SELECT * FROM parent_student_relations WHERE parent_id = ? AND student_id = ?',
+      [parentId, childId]
+    );
+
+    if (relation.length === 0) {
+      return res.status(403).render('500-modern', { title: 'Access Denied', message: 'You do not have access to this student.' });
+    }
+
+    // Get child profile and class
+    const [children] = await pool.execute(`
+      SELECT s.*, u.first_name, u.last_name, c.name as class_name, c.grade as class_grade, c.section as class_section
+      FROM students s
+      JOIN users u ON s.user_id = u.id
+      LEFT JOIN classes c ON s.class_id = c.id
+      WHERE s.id = ?
+    `, [childId]);
+
+    if (children.length === 0) {
+      return res.status(404).render('500-modern', { title: 'Not Found', message: 'Student not found.' });
+    }
+
+    const child = children[0];
+    let classId = child.class_id;
+
+    // Fallback: If class_id is missing, look it up by grade and section
+    if (!classId && child.grade_level && child.section) {
+      const [classes] = await pool.execute(
+        'SELECT id, name FROM classes WHERE CAST(grade AS CHAR) = CAST(? AS CHAR) AND section = ? LIMIT 1',
+        [child.grade_level, child.section]
+      );
+      if (classes.length > 0) {
+        classId = classes[0].id;
+        if (!child.class_name) child.class_name = classes[0].name;
+      }
+    }
+
+    let schedule = [];
+    if (classId) {
+      const [schedRows] = await pool.execute(`
+        SELECT cs.*, c.course_name, c.course_code,
+               CONCAT(u.first_name, ' ', u.last_name) as teacher_name
+        FROM class_schedule cs
+        JOIN courses c ON cs.course_id = c.id
+        LEFT JOIN teachers t ON cs.teacher_id = t.id
+        LEFT JOIN users u ON t.user_id = u.id
+        WHERE cs.class_id = ?
+        ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), start_time
+      `, [classId]);
+      schedule = schedRows;
+    }
+
+    res.render('parent/schedule', {
+      title: `${child.first_name}'s Timetable`,
+      user: req.session.user,
+      child,
+      schedule
+    });
+  } catch (error) {
+    console.error('Parent view child schedule error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
   }
 });
 

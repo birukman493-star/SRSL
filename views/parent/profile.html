@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -14,96 +14,143 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
-        .premium-panel {
-            background: white !important;
-            border-radius: 28px;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        .profile-hero-card {
+            background: #ffffff;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            position: relative;
         }
-        .profile-avatar-wrap {
-            width: 130px;
-            height: 130px;
-            margin: 0 auto 1.5rem;
-            background: var(--gradient-1);
-            border-radius: 40px;
+        .profile-hero-cover {
+            height: 120px;
+            background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #ef4444 100%);
+            position: relative;
+        }
+        .profile-avatar-wrapper {
+            position: relative;
+            margin-top: -60px;
+            display: inline-block;
+        }
+        .profile-avatar-circle {
+            width: 124px;
+            height: 124px;
+            border-radius: 36px;
+            border: 4px solid #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: 800;
-            color: white;
-            box-shadow: 0 15px 35px rgba(37,99,235,0.2);
+            color: #ffffff;
+            overflow: hidden;
         }
-        .premium-input {
-            background: #f8fafc !important;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 14px;
-            padding: 0.8rem 1.2rem;
-            font-weight: 700;
-            color: var(--dark-text) !important;
+        .info-pill {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 0.85rem 1rem;
+            transition: border-color 0.2s ease;
         }
-        .info-label {
-            font-size: 0.7rem;
+        .info-pill:hover {
+            border-color: #cbd5e1;
+        }
+        .field-label {
+            font-size: 0.68rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
+            letter-spacing: 0.6px;
+            color: #64748b;
+            margin-bottom: 0.35rem;
             display: block;
+        }
+        .field-input {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: #0f172a;
+            transition: all 0.2s ease;
+        }
+        .field-input:focus {
+            background: #ffffff;
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+            outline: none;
         }
     </style>
 </head>
-<body class="dashboard-body" style="background: #f8fafc;">
+<body class="dashboard-body" style="background: #f8fafc; color: #0f172a;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="dashboard-header mb-4 p-4 rounded-4 shadow-sm" style="background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05);">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
-                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
-                            Guardian Profile
-                        </h1>
-                        <p class="text-secondary m-0" style="font-weight: 500;">Manage your administrative details and contact channels</p>
+                        <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-1 rounded-pill fw-bold text-uppercase small mb-2">
+                            Guardian Identity
+                        </span>
+                        <h1 class="h3 fw-bold mb-1 text-dark">Guardian Profile</h1>
+                        <p class="text-secondary small m-0">Manage your administrative details, contact channels, and student relationships</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center gap-1">
+                            <i class="fas fa-heart small"></i>
+                            <span>Active Family Link</span>
+                        </span>
                     </div>
                 </div>
             </div>
 
             <!-- Alerts -->
             <% if (success) { %>
-                <div class="alert alert-success border-0 rounded-4 shadow-sm p-4 mb-4" style="background: #ecfdf5; color: #065f46;">
-                    <i class="fas fa-check-circle me-2"></i> <span class="fw-bold"><%= success %></span>
+                <div class="alert alert-success border-0 rounded-4 shadow-sm p-3 mb-4 d-flex align-items-center gap-2" style="background: #ecfdf5; color: #065f46;">
+                    <i class="fas fa-check-circle fs-5"></i>
+                    <span class="fw-bold"><%= success %></span>
                 </div>
             <% } %>
 
             <div class="row g-4">
-                <!-- Overview -->
+                <!-- Overview Card -->
                 <div class="col-lg-4">
-                    <div class="premium-panel p-5 text-center h-100">
-                        <div class="profile-avatar-wrap">
-                            <%= parent.first_name[0] %><%= parent.last_name[0] %>
-                        </div>
-                        <h2 class="fw-bold mb-1" style="color: var(--dark-text); font-size: 1.8rem;"><%= parent.first_name %> <%= parent.last_name %></h2>
-                        <div class="text-primary fw-800 text-uppercase mb-4" style="font-size: 0.75rem; letter-spacing: 1px;">Official Guardian</div>
-                        
-                        <div class="d-grid gap-3 text-start">
-                            <div class="p-3 rounded-4 bg-light d-flex align-items-center gap-3 border">
-                                <div class="bg-white shadow-sm rounded-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; color: var(--primary-color);">
-                                    <i class="fas fa-briefcase"></i>
-                                </div>
-                                <div>
-                                    <div class="info-label mb-0">Occupation</div>
-                                    <div class="fw-bold" style="color: var(--dark-text);"><%= parent.occupation || 'N/A' %></div>
+                    <div class="profile-hero-card text-center pb-4 h-100">
+                        <div class="profile-hero-cover"></div>
+                        <div class="px-4">
+                            <div class="profile-avatar-wrapper mb-3">
+                                <div class="profile-avatar-circle">
+                                    <%= parent.first_name[0] %><%= parent.last_name[0] %>
                                 </div>
                             </div>
-                            <div class="p-3 rounded-4 bg-light d-flex align-items-center gap-3 border">
-                                <div class="bg-white shadow-sm rounded-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; color: #10b981;">
-                                    <i class="fas fa-heart"></i>
+
+                            <h2 class="h5 fw-bold text-dark mb-1"><%= parent.first_name %> <%= parent.last_name %></h2>
+                            <p class="text-warning fw-bold small mb-4">Official Registered Guardian</p>
+                            
+                            <div class="d-flex flex-column gap-2 text-start">
+                                <div class="info-pill">
+                                    <span class="field-label">Professional Occupation</span>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                        <i class="fas fa-briefcase text-warning"></i>
+                                        <span><%= parent.occupation || 'Not specified' %></span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="info-label mb-0" style="color: #10b981;">Relationship</div>
-                                    <div class="fw-bold" style="color: var(--dark-text);"><%= parent.relationship || 'Guardian' %></div>
+                                <div class="info-pill">
+                                    <span class="field-label">Relationship to Student</span>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                        <i class="fas fa-user-friends text-primary"></i>
+                                        <span><%= parent.relationship || 'Guardian' %></span>
+                                    </div>
+                                </div>
+                                <div class="info-pill">
+                                    <span class="field-label">Registered Phone</span>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                        <i class="fas fa-phone-alt text-success"></i>
+                                        <span><%= parent.phone || 'No phone registered' %></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -112,35 +159,40 @@
 
                 <!-- Edit Form -->
                 <div class="col-lg-8">
-                    <div class="premium-panel p-5 h-100">
-                        <h3 class="fw-bold mb-4" style="color: var(--dark-text);"><i class="fas fa-id-card me-2 text-primary opacity-50"></i> Guardian Details</h3>
+                    <div class="p-4 p-lg-5 rounded-4 shadow-sm h-100" style="background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05);">
+                        <div class="d-flex align-items-center gap-2 mb-4">
+                            <div class="rounded-3 p-2 bg-warning bg-opacity-10 text-warning">
+                                <i class="fas fa-id-card"></i>
+                            </div>
+                            <h3 class="h5 fw-bold text-dark mb-0">Guardian Contact Details</h3>
+                        </div>
                         
                         <form action="/parent/profile/update" method="POST">
-                            <div class="row g-4">
+                            <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="info-label">First Name</label>
-                                    <input type="text" name="first_name" class="form-control premium-input" value="<%= parent.first_name %>" required>
+                                    <label class="field-label">First Name</label>
+                                    <input type="text" name="first_name" class="form-control field-input" value="<%= parent.first_name %>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="info-label">Last Name</label>
-                                    <input type="text" name="last_name" class="form-control premium-input" value="<%= parent.last_name %>" required>
+                                    <label class="field-label">Last Name</label>
+                                    <input type="text" name="last_name" class="form-control field-input" value="<%= parent.last_name %>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="info-label">Email Address</label>
-                                    <input type="email" class="form-control premium-input opacity-75" value="<%= parent.email %>" readonly>
-                                    <small class="text-secondary fw-bold" style="font-size: 0.6rem;">Contact Admin to change email</small>
+                                    <label class="field-label">Email Address</label>
+                                    <input type="email" class="form-control field-input bg-light" value="<%= parent.email %>" readonly>
+                                    <small class="text-secondary" style="font-size: 0.7rem;">Contact administration to change registered email</small>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="info-label">Phone Number</label>
-                                    <input type="tel" name="phone" class="form-control premium-input" value="<%= parent.phone || '' %>" required>
+                                    <label class="field-label">Phone Number</label>
+                                    <input type="tel" name="phone" class="form-control field-input" value="<%= parent.phone || '' %>" required placeholder="e.g. +251 900 000000">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="info-label">Professional Occupation</label>
-                                    <input type="text" name="occupation" class="form-control premium-input" value="<%= parent.occupation || '' %>">
+                                    <label class="field-label">Professional Occupation</label>
+                                    <input type="text" name="occupation" class="form-control field-input" value="<%= parent.occupation || '' %>" placeholder="e.g. Engineer, Doctor, Teacher">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="info-label">Relationship to Student</label>
-                                    <select name="relationship" class="form-select premium-input">
+                                    <label class="field-label">Relationship to Student</label>
+                                    <select name="relationship" class="form-select field-input">
                                         <option value="Father" <%= parent.relationship === 'Father' ? 'selected' : '' %>>Father</option>
                                         <option value="Mother" <%= parent.relationship === 'Mother' ? 'selected' : '' %>>Mother</option>
                                         <option value="Guardian" <%= parent.relationship === 'Guardian' ? 'selected' : '' %>>Guardian</option>
@@ -148,12 +200,13 @@
                                     </select>
                                 </div>
                                 <div class="col-12">
-                                    <label class="info-label">Residential Address</label>
-                                    <textarea name="address" class="form-control premium-input" rows="3"><%= parent.address || '' %></textarea>
+                                    <label class="field-label">Residential Address</label>
+                                    <textarea name="address" class="form-control field-input" rows="3" placeholder="Full permanent address"><%= parent.address || '' %></textarea>
                                 </div>
-                                <div class="col-12 mt-5">
-                                    <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-sm transition hover-up">
-                                        <i class="fas fa-save me-2"></i> Update Guardian Profile
+                                <div class="col-12 mt-4">
+                                    <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                                        <i class="fas fa-save"></i>
+                                        <span>Update Guardian Profile</span>
                                     </button>
                                 </div>
                             </div>
@@ -166,11 +219,5 @@
 
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
-    <style>
-        .fw-900 { font-weight: 900; }
-        .fw-800 { font-weight: 800; }
-        .hover-up:hover { transform: translateY(-3px); }
-    </style>
 </body>
 </html>
-

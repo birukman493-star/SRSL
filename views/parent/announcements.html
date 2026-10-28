@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -75,12 +75,12 @@
                                     <i class="far fa-calendar-alt me-2"></i> <%= new Date(a.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) %>
                                 </div>
                                 <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase" style="background: rgba(37,99,235,0.08); color: var(--primary-color); font-size: 0.65rem;">
-                                    Public Notice
+                                    <%= a.category ? a.category.toUpperCase() : 'PUBLIC NOTICE' %>
                                 </span>
                             </div>
                             <h3 class="fw-900 mb-3" style="color: var(--dark-text); font-size: 1.8rem;"><%= a.title %></h3>
                             <div class="text-secondary fw-medium fs-5" style="line-height: 1.7; opacity: 0.85;">
-                                <%= a.content %>
+                                <%= a.message || a.content %>
                             </div>
                             <div class="mt-4 pt-4 border-top d-flex align-items-center gap-3">
                                 <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">

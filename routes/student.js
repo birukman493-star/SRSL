@@ -1,5 +1,8 @@
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const { pool } = require('../config/db');
+const { streamSecureFile } = require('../middleware/upload');
 const {
   getSetting,
   getAcademicContext,
@@ -428,6 +431,45 @@ router.get('/dashboard', async (req, res) => {
       sessions: attendedCount
     };
 
+    // Fetch Recent Course Materials for student's classes
+    let recentMaterials = [];
+    try {
+      const studentClassIds = [];
+      if (classIdForSchedule) studentClassIds.push(classIdForSchedule);
+      if (studentInfo[0].class_id && !studentClassIds.includes(studentInfo[0].class_id)) {
+        studentClassIds.push(studentInfo[0].class_id);
+      }
+      if (studentClassIds.length > 0) {
+        const matHolders = studentClassIds.map(() => '?').join(', ');
+        const [matRes] = await pool.execute(`
+          SELECT m.id, m.title, m.description, m.file_name, m.file_path, m.file_size, m.mime_type, m.created_at,
+                 cr.course_name, cr.course_code,
+                 t.first_name as teacher_fname, t.last_name as teacher_lname
+          FROM materials m
+          JOIN classes c ON m.class_id = c.id
+          LEFT JOIN teachers t ON m.teacher_id = t.id
+          LEFT JOIN courses cr ON m.course_id = cr.id
+          WHERE m.class_id IN (${matHolders})
+          ORDER BY m.created_at DESC
+          LIMIT 4
+        `, studentClassIds);
+        recentMaterials = matRes;
+      }
+    } catch (e) { console.error("Dashboard materials error:", e); }
+
+    // Fetch Recent Announcements for Student
+    let recentAnnouncements = [];
+    try {
+      const [annRes] = await pool.execute(`
+        SELECT id, title, message, category, created_at
+        FROM announcements
+        WHERE audience IN ('all', 'students')
+        ORDER BY created_at DESC
+        LIMIT 3
+      `);
+      recentAnnouncements = annRes;
+    } catch (e) { console.error("Dashboard announcements error:", e); }
+
     res.render('student/dashboard-new', {
       title: 'Student Dashboard',
       user: req.session.user,
@@ -435,6 +477,8 @@ router.get('/dashboard', async (req, res) => {
       courses_count: dashboardCourses.length,
       courses,
       dashboardCourses,
+      recentMaterials,
+      recentAnnouncements,
       assignments: dashboardAssignments,
       fullSchedule,
       attendance_rate: attendance_rate,
@@ -709,33 +753,238 @@ router.get('/attendance', async (req, res) => {
   }
 });
 
-// GET /student/assignments - Student assignments
+// Helpers for student class and access resolution
+async function getStudentClassIds(studentId) {
+  const [studentRows] = await pool.execute(
+    'SELECT id, class_id, grade_level, section FROM students WHERE id = ?',
+    [studentId]
+  );
+  if (studentRows.length === 0) return [];
+  const s = studentRows[0];
+
+  const [classes] = await pool.execute(`
+    SELECT DISTINCT c.id
+    FROM classes c
+    LEFT JOIN class_students cs ON (cs.class_id = c.id AND cs.student_id = ?)
+    WHERE cs.class_id = c.id
+       OR (? IS NOT NULL AND c.id = ?)
+       OR (c.grade = ? AND c.section = ?)
+  `, [s.id, s.class_id, s.class_id, s.grade_level, s.section]);
+
+  return classes.map((c) => c.id);
+}
+
+function calculateAssignmentStatus(dueDateStr) {
+  if (!dueDateStr) {
+    return { key: 'upcoming', label: 'Upcoming', badgeClass: 'bg-primary' };
+  }
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const due = new Date(dueDateStr);
+  const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+
+  const diffTime = dueDay.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return { key: 'overdue', label: 'Overdue', badgeClass: 'bg-danger text-white' };
+  } else if (diffDays <= 3) {
+    return { key: 'due_soon', label: 'Due Soon', badgeClass: 'bg-warning text-dark' };
+  } else {
+    return { key: 'upcoming', label: 'Upcoming', badgeClass: 'bg-info text-dark' };
+  }
+}
+
+async function canStudentAccessRecord(studentId, classId, courseId) {
+  const classIds = await getStudentClassIds(studentId);
+  if (!classIds.includes(Number(classId))) {
+    return false;
+  }
+  if (courseId && Number(courseId) > 0) {
+    const [enrollments] = await pool.execute(
+      'SELECT id FROM enrollments WHERE student_id = ? AND course_id = ? AND status IN ("enrolled", "completed")',
+      [studentId, courseId]
+    );
+    if (enrollments.length > 0) return true;
+
+    const [anyEnrollments] = await pool.execute(
+      'SELECT id FROM enrollments WHERE student_id = ? AND status IN ("enrolled", "completed") LIMIT 1',
+      [studentId]
+    );
+    if (anyEnrollments.length > 0) {
+      const [classCourse] = await pool.execute(`
+        SELECT id FROM teacher_course_assignments WHERE class_id = ? AND course_id = ? AND status = 'active'
+        UNION
+        SELECT id FROM class_schedule WHERE class_id = ? AND course_id = ?
+      `, [classId, courseId, classId, courseId]);
+      return classCourse.length > 0;
+    }
+  }
+  return true;
+}
+
+// GET /student/assignments - Student assignments with status, course filter, and working attachments
 router.get('/assignments', async (req, res) => {
   try {
-    const [studentInfo] = await pool.execute(`
-      SELECT id FROM students WHERE user_id = ?
-    `, [req.session.user.id]);
+    const [studentProfile] = await pool.execute(
+      'SELECT id, grade_level, section FROM students WHERE user_id = ?',
+      [req.session.user.id]
+    );
 
-    const [assignments] = await pool.execute(`
-      SELECT a.*, c.name as class_name, t.first_name as teacher_fname, t.last_name as teacher_lname
+    if (studentProfile.length === 0) {
+      return res.status(404).render('500-modern', { title: 'Not Found', message: 'Student profile not found.' });
+    }
+
+    const studentId = studentProfile[0].id;
+    const classIds = await getStudentClassIds(studentId);
+
+    if (classIds.length === 0) {
+      return res.render('student/assignments', {
+        title: 'My Assignments',
+        user: req.session.user,
+        assignments: [],
+        courses: [],
+        counts: { total: 0, upcoming: 0, due_soon: 0, overdue: 0 },
+        activeStatus: 'all',
+        activeCourseId: 'all',
+      });
+    }
+
+    const placeholders = classIds.map(() => '?').join(', ');
+    const [rawAssignments] = await pool.execute(`
+      SELECT a.*, c.name as class_name, c.grade, c.section,
+             co.course_name, co.course_code,
+             t.first_name as teacher_fname, t.last_name as teacher_lname
       FROM assignments a
       JOIN classes c ON a.class_id = c.id
-      JOIN class_students cs ON c.id = cs.class_id
-      LEFT JOIN teachers t ON a.created_by = t.id
-      WHERE cs.student_id = ?
-      ORDER BY a.due_date ASC
-    `, [studentInfo[0].id]);
+      LEFT JOIN courses co ON a.course_id = co.id
+      LEFT JOIN teachers t ON COALESCE(a.teacher_id, a.created_by) = t.id
+      WHERE a.class_id IN (${placeholders})
+        AND (a.is_published = 1 OR a.is_published IS NULL)
+        AND (a.visible_to_students = 1 OR a.visible_to_students IS NULL)
+      ORDER BY a.due_date ASC, a.created_at DESC
+    `, classIds);
+
+    // Compute status and collect course list
+    const courseMap = new Map();
+    const counts = { total: 0, upcoming: 0, due_soon: 0, overdue: 0 };
+
+    const mappedAssignments = rawAssignments.map((a) => {
+      const statusObj = calculateAssignmentStatus(a.due_date);
+      counts.total++;
+      if (counts[statusObj.key] !== undefined) counts[statusObj.key]++;
+
+      if (a.course_id && a.course_name) {
+        courseMap.set(a.course_id, { id: a.course_id, name: a.course_name, code: a.course_code });
+      }
+
+      return {
+        ...a,
+        statusKey: statusObj.key,
+        statusLabel: statusObj.label,
+        statusBadgeClass: statusObj.badgeClass,
+      };
+    });
+
+    const activeStatus = req.query.status || 'all';
+    const activeCourseId = req.query.courseId || 'all';
+
+    const filteredAssignments = mappedAssignments.filter((a) => {
+      if (activeStatus !== 'all' && a.statusKey !== activeStatus) return false;
+      if (activeCourseId !== 'all' && String(a.course_id) !== String(activeCourseId)) return false;
+      return true;
+    });
 
     res.render('student/assignments', {
       title: 'My Assignments',
       user: req.session.user,
-      assignments
+      assignments: filteredAssignments,
+      courses: Array.from(courseMap.values()),
+      counts,
+      activeStatus,
+      activeCourseId,
     });
-
   } catch (error) {
     console.error('Student assignments error:', error);
-    res.status(500).render('500-modern', { title: 'Server Error' });
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
   }
+});
+
+// GET /student/assignments/download/:id - Download assignment attachment
+router.get('/assignments/download/:id', async (req, res) => {
+  try {
+    const [studentProfile] = await pool.execute(
+      'SELECT id FROM students WHERE user_id = ?',
+      [req.session.user.id]
+    );
+    if (studentProfile.length === 0) {
+      return res.status(403).render('500-modern', { title: 'Access Denied', message: 'Student profile not found.' });
+    }
+
+    const studentId = studentProfile[0].id;
+    const assignmentId = req.params.id;
+
+    const [rows] = await pool.execute(
+      'SELECT * FROM assignments WHERE id = ? AND (is_published = 1 OR is_published IS NULL) AND (visible_to_students = 1 OR visible_to_students IS NULL)',
+      [assignmentId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).render('500-modern', { title: 'Not Found', message: 'Assignment attachment not found or not published.' });
+    }
+
+    const assignment = rows[0];
+    const hasAccess = await canStudentAccessRecord(studentId, assignment.class_id, assignment.course_id);
+    if (!hasAccess) {
+      return res.status(403).render('500-modern', { title: 'Access Denied', message: 'You are not enrolled in this course or class.' });
+    }
+
+    streamSecureFile(res, assignment.file_path, assignment.file_name, assignment.mime_type, false);
+  } catch (error) {
+    console.error('Download assignment error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
+  }
+});
+
+// GET /student/assignments/view/:id - Inline view assignment attachment
+router.get('/assignments/view/:id', async (req, res) => {
+  try {
+    const [studentProfile] = await pool.execute(
+      'SELECT id FROM students WHERE user_id = ?',
+      [req.session.user.id]
+    );
+    if (studentProfile.length === 0) {
+      return res.status(403).render('500-modern', { title: 'Access Denied', message: 'Student profile not found.' });
+    }
+
+    const studentId = studentProfile[0].id;
+    const assignmentId = req.params.id;
+
+    const [rows] = await pool.execute(
+      'SELECT * FROM assignments WHERE id = ? AND (is_published = 1 OR is_published IS NULL) AND (visible_to_students = 1 OR visible_to_students IS NULL)',
+      [assignmentId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).render('500-modern', { title: 'Not Found', message: 'Assignment attachment not found or not published.' });
+    }
+
+    const assignment = rows[0];
+    const hasAccess = await canStudentAccessRecord(studentId, assignment.class_id, assignment.course_id);
+    if (!hasAccess) {
+      return res.status(403).render('500-modern', { title: 'Access Denied', message: 'You are not enrolled in this course or class.' });
+    }
+
+    streamSecureFile(res, assignment.file_path, assignment.file_name, assignment.mime_type, true);
+  } catch (error) {
+    console.error('View assignment error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
+  }
+});
+
+// GET /student/schedule - Alias for timetable
+router.get('/schedule', (req, res) => {
+  res.redirect('/student/timetable');
 });
 
 // GET /student/timetable - Student timetable
@@ -771,9 +1020,12 @@ router.get('/timetable', async (req, res) => {
     }
 
     const [schedule] = await pool.execute(`
-      SELECT cs.*, c.course_name, c.course_code
+      SELECT cs.*, c.course_name, c.course_code,
+             CONCAT(u.first_name, ' ', u.last_name) as teacher_name
       FROM class_schedule cs
       JOIN courses c ON cs.course_id = c.id
+      LEFT JOIN teachers t ON cs.teacher_id = t.id
+      LEFT JOIN users u ON t.user_id = u.id
       WHERE cs.class_id = ?
       ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), start_time
     `, [classId]);
@@ -794,7 +1046,7 @@ router.get('/timetable', async (req, res) => {
 router.get('/announcements', async (req, res) => {
   try {
     const [announcements] = await pool.execute(`
-      SELECT a.*, u.first_name as creator_fname, u.last_name as creator_lname
+      SELECT a.*, a.message as content, u.first_name as creator_fname, u.last_name as creator_lname
       FROM announcements a
       LEFT JOIN users u ON a.created_by = u.id
       WHERE a.audience IN ('all', 'students')
@@ -972,12 +1224,11 @@ router.get('/grades', async (req, res) => {
   }
 });
 
-// GET /student/materials - View course materials
+// GET /student/materials - View course materials for enrolled classes/courses
 router.get('/materials', async (req, res) => {
   try {
     const studentUserId = req.session.user.id;
 
-    // Get student profile ID
     const [studentProfile] = await pool.execute(
       'SELECT id, grade_level, section FROM students WHERE user_id = ?',
       [studentUserId]
@@ -988,28 +1239,121 @@ router.get('/materials', async (req, res) => {
     }
 
     const studentId = studentProfile[0].id;
+    const classIds = await getStudentClassIds(studentId);
 
-    // Fetch materials for all classes the student belongs to
-    const [materials] = await pool.execute(`
-        SELECT m.*, c.name as class_name, cr.course_name as course_name, t.first_name as teacher_fname, t.last_name as teacher_lname
-        FROM materials m
-        JOIN classes c ON m.class_id = c.id
-        JOIN class_students cs ON c.id = cs.class_id
-        LEFT JOIN teachers t ON m.teacher_id = t.id
-        LEFT JOIN courses cr ON m.course_id = cr.id
-        WHERE cs.student_id = ?
-        ORDER BY m.created_at DESC
-    `, [studentId]);
+    if (classIds.length === 0) {
+      return res.render('student/materials', {
+        title: 'Course Materials',
+        user: req.session.user,
+        materials: [],
+        courses: [],
+        activeCourseId: 'all',
+      });
+    }
+
+    const placeholders = classIds.map(() => '?').join(', ');
+    const [rawMaterials] = await pool.execute(`
+      SELECT m.*, c.name as class_name, c.grade, c.section,
+             cr.course_name as course_name, cr.course_code,
+             t.first_name as teacher_fname, t.last_name as teacher_lname
+      FROM materials m
+      JOIN classes c ON m.class_id = c.id
+      LEFT JOIN teachers t ON m.teacher_id = t.id
+      LEFT JOIN courses cr ON m.course_id = cr.id
+      WHERE m.class_id IN (${placeholders})
+      ORDER BY m.created_at DESC
+    `, classIds);
+
+    // Collect courses for filtering
+    const courseMap = new Map();
+    for (const m of rawMaterials) {
+      if (m.course_id && m.course_name) {
+        courseMap.set(m.course_id, { id: m.course_id, name: m.course_name, code: m.course_code });
+      }
+    }
+
+    const activeCourseId = req.query.courseId || 'all';
+    const filteredMaterials = rawMaterials.filter((m) => {
+      if (activeCourseId !== 'all' && String(m.course_id) !== String(activeCourseId)) {
+        return false;
+      }
+      return true;
+    });
 
     res.render('student/materials', {
       title: 'Course Materials',
       user: req.session.user,
-      materials
+      materials: filteredMaterials,
+      courses: Array.from(courseMap.values()),
+      activeCourseId,
     });
-
   } catch (error) {
     console.error('Student materials error:', error);
-    res.status(500).render('500-modern', { title: 'Server Error' });
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
+  }
+});
+
+// GET /student/materials/download/:id - Secure download material
+router.get('/materials/download/:id', async (req, res) => {
+  try {
+    const [studentProfile] = await pool.execute(
+      'SELECT id FROM students WHERE user_id = ?',
+      [req.session.user.id]
+    );
+    if (studentProfile.length === 0) {
+      return res.status(403).render('500-modern', { title: 'Access Denied', message: 'Student profile not found.' });
+    }
+
+    const studentId = studentProfile[0].id;
+    const materialId = req.params.id;
+
+    const [rows] = await pool.execute('SELECT * FROM materials WHERE id = ?', [materialId]);
+    if (rows.length === 0) {
+      return res.status(404).render('500-modern', { title: 'Not Found', message: 'Material not found.' });
+    }
+
+    const material = rows[0];
+    const hasAccess = await canStudentAccessRecord(studentId, material.class_id, material.course_id);
+    if (!hasAccess) {
+      return res.status(403).render('500-modern', { title: 'Access Denied', message: 'You are not enrolled in this course or class.' });
+    }
+
+    streamSecureFile(res, material.file_path, material.file_name, material.mime_type, false);
+  } catch (error) {
+    console.error('Download material error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
+  }
+});
+
+// GET /student/materials/view/:id - Secure inline view material
+router.get('/materials/view/:id', async (req, res) => {
+  try {
+    const [studentProfile] = await pool.execute(
+      'SELECT id FROM students WHERE user_id = ?',
+      [req.session.user.id]
+    );
+    if (studentProfile.length === 0) {
+      return res.status(403).render('500-modern', { title: 'Access Denied', message: 'Student profile not found.' });
+    }
+
+    const studentId = studentProfile[0].id;
+    const materialId = req.params.id;
+
+    const [rows] = await pool.execute('SELECT * FROM materials WHERE id = ?', [materialId]);
+    if (rows.length === 0) {
+      return res.status(404).render('500-modern', { title: 'Not Found', message: 'Material not found.' });
+    }
+
+    const material = rows[0];
+    const hasAccess = await canStudentAccessRecord(studentId, material.class_id, material.course_id);
+    if (!hasAccess) {
+      return res.status(403).render('500-modern', { title: 'Access Denied', message: 'You are not enrolled in this course or class.' });
+    }
+
+    streamSecureFile(res, material.file_path, material.file_name, material.mime_type, true);
+  } catch (error) {
+    console.error('View material error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
   }
 });
 

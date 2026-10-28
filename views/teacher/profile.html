@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -14,175 +14,250 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
-        .premium-panel {
-            background: white !important;
-            border-radius: 28px;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-        }
-        .profile-avatar-wrap {
-            width: 140px;
-            height: 140px;
-            margin: 0 auto 1.5rem;
+        .profile-hero-card {
+            background: #ffffff;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
             position: relative;
-            border-radius: 40px;
-            padding: 5px;
-            background: var(--gradient-1);
-            box-shadow: 0 10px 25px rgba(37,99,235,0.15);
         }
-        .profile-avatar-inner {
-            width: 100%;
-            height: 100%;
-            background: white;
-            border-radius: 35px;
+        .profile-hero-cover {
+            height: 120px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 50%, #3b82f6 100%);
+            position: relative;
+        }
+        .profile-avatar-wrapper {
+            position: relative;
+            margin-top: -60px;
+            display: inline-block;
+        }
+        .profile-avatar-circle {
+            width: 124px;
+            height: 124px;
+            border-radius: 36px;
+            border: 4px solid #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #10b981, #2563eb);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: 800;
-            color: var(--primary-color);
+            color: #ffffff;
             overflow: hidden;
         }
-        .premium-input {
-            background: #f8fafc !important;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 14px;
-            padding: 0.8rem 1.2rem;
-            font-weight: 700;
-            color: var(--dark-text) !important;
+        .profile-avatar-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-        .info-label {
-            font-size: 0.7rem;
+        .avatar-upload-overlay {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 38px;
+            height: 38px;
+            background: #10b981;
+            color: #ffffff;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+            transition: transform 0.2s ease;
+        }
+        .avatar-upload-overlay:hover {
+            transform: scale(1.08);
+        }
+        .info-pill {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 0.85rem 1rem;
+            transition: border-color 0.2s ease;
+        }
+        .info-pill:hover {
+            border-color: #cbd5e1;
+        }
+        .field-label {
+            font-size: 0.68rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
+            letter-spacing: 0.6px;
+            color: #64748b;
+            margin-bottom: 0.35rem;
             display: block;
+        }
+        .field-input {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: #0f172a;
+            transition: all 0.2s ease;
+        }
+        .field-input:focus {
+            background: #ffffff;
+            border-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08);
+            outline: none;
         }
         .expertise-badge {
             background: #f8fafc;
-            border: 1px solid rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
             padding: 0.75rem 1.25rem;
             border-radius: 16px;
-            font-weight: 800;
-            color: var(--dark-text);
-            display: flex;
+            font-weight: 700;
+            color: #0f172a;
+            display: inline-flex;
             align-items: center;
-            gap: 10px;
-            transition: all 0.3s ease;
+            gap: 8px;
+            transition: all 0.2s ease;
         }
         .expertise-badge:hover {
-            border-color: var(--primary-color);
-            background: white;
-            transform: translateY(-3px);
+            border-color: #10b981;
+            background: #ffffff;
+            transform: translateY(-2px);
         }
     </style>
 </head>
-<body class="dashboard-body" style="background: #f8fafc;">
+<body class="dashboard-body" style="background: #f8fafc; color: #0f172a;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
         <main class="main-panel w-100 p-4">
             <!-- Header -->
-            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="dashboard-header mb-4 p-4 rounded-4 shadow-sm" style="background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05);">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
-                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
-                            Faculty Profile
-                        </h1>
-                        <p class="text-secondary m-0" style="font-weight: 500;">Manage your professional identity and academic credentials</p>
+                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill fw-bold text-uppercase small mb-2">
+                            Faculty Identity
+                        </span>
+                        <h1 class="h3 fw-bold mb-1 text-dark">Faculty Profile</h1>
+                        <p class="text-secondary small m-0">Manage your professional credentials, institutional contact, and academic expertise</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center gap-1">
+                            <i class="fas fa-chalkboard-teacher small"></i>
+                            <span>Institutional Faculty</span>
+                        </span>
                     </div>
                 </div>
             </div>
 
             <div class="row g-4">
-                <!-- Overview -->
+                <!-- Overview Card -->
                 <div class="col-lg-4">
-                    <div class="premium-panel p-5 text-center h-100">
-                        <div class="profile-avatar-wrap">
-                            <div class="profile-avatar-inner">
-                                <% if (user.profile_picture) { %>
-                                    <img src="<%= user.profile_picture %>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
-                                <% } else { %>
-                                    <%= teacher.first_name[0] %>
-                                <% } %>
-                                <form action="/auth/profile/upload-picture" method="POST" enctype="multipart/form-data" id="profilePicForm" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;">
-                                    <input type="file" name="profile_picture" onchange="document.getElementById('profilePicForm').submit()" style="width: 100%; height: 100%; cursor: pointer;">
+                    <div class="profile-hero-card text-center pb-4 h-100">
+                        <div class="profile-hero-cover"></div>
+                        <div class="px-4">
+                            <div class="profile-avatar-wrapper mb-3">
+                                <div class="profile-avatar-circle">
+                                    <% if (user.profile_picture) { %>
+                                        <img src="<%= user.profile_picture %>" alt="Profile">
+                                    <% } else { %>
+                                        <%= teacher.first_name[0] %>
+                                    <% } %>
+                                </div>
+                                <form action="/auth/profile/upload-picture" method="POST" enctype="multipart/form-data" id="profilePicForm">
+                                    <label for="profilePicInput" class="avatar-upload-overlay" title="Upload new photo">
+                                        <i class="fas fa-camera small"></i>
+                                    </label>
+                                    <input type="file" name="profile_picture" id="profilePicInput" onchange="document.getElementById('profilePicForm').submit()" class="d-none" accept="image/*">
                                 </form>
                             </div>
-                        </div>
-                        <h2 class="fw-900 mb-1" style="color: var(--dark-text); font-size: 1.8rem;"><%= teacher.first_name %> <%= teacher.last_name %></h2>
-                        <div class="text-primary fw-800 text-uppercase mb-4" style="font-size: 0.75rem; letter-spacing: 1px;">Institutional Faculty</div>
-                        
-                        <div class="d-grid gap-3 text-start">
-                            <div class="p-3 rounded-4 bg-light d-flex align-items-center gap-3">
-                                <div class="icon-box bg-white shadow-sm rounded-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; color: var(--primary-color);">
-                                    <i class="fas fa-fingerprint"></i>
+
+                            <h2 class="h5 fw-bold text-dark mb-1"><%= teacher.first_name %> <%= teacher.last_name %></h2>
+                            <p class="text-success fw-semibold small mb-4">Certified Faculty Educator</p>
+                            
+                            <div class="d-flex flex-column gap-2 text-start">
+                                <div class="info-pill">
+                                    <span class="field-label">Faculty Identification</span>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                        <i class="fas fa-fingerprint text-primary"></i>
+                                        <span>FAC-<%= teacher.employee_id %></span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="info-label mb-0">Faculty ID</div>
-                                    <div class="fw-900" style="color: var(--dark-text);">FAC-<%= teacher.employee_id %></div>
+                                <div class="info-pill">
+                                    <span class="field-label">Department</span>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                        <i class="fas fa-briefcase text-success"></i>
+                                        <span><%= teacher.department || 'General Academics' %></span>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="p-3 rounded-4 bg-light d-flex align-items-center gap-3">
-                                <div class="icon-box bg-white shadow-sm rounded-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; color: #10b981;">
-                                    <i class="fas fa-briefcase"></i>
-                                </div>
-                                <div>
-                                    <div class="info-label mb-0" style="color: #10b981;">Department</div>
-                                    <div class="fw-900" style="color: var(--dark-text);"><%= teacher.department || 'General Academics' %></div>
+                                <div class="info-pill">
+                                    <span class="field-label">Institutional Status</span>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                        <i class="fas fa-check-circle text-primary"></i>
+                                        <span>Active Teaching Staff</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Edit Form -->
+                <!-- Edit Form & Subject Expertise -->
                 <div class="col-lg-8">
-                    <div class="premium-panel p-5 h-100">
-                        <h3 class="fw-900 mb-4" style="color: var(--dark-text);"><i class="fas fa-user-edit me-2 text-primary opacity-50"></i> Personal Information</h3>
+                    <div class="p-4 p-lg-5 rounded-4 shadow-sm h-100" style="background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05);">
+                        <div class="d-flex align-items-center gap-2 mb-4">
+                            <div class="rounded-3 p-2 bg-success bg-opacity-10 text-success">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <h3 class="h5 fw-bold text-dark mb-0">Personal & Contact Information</h3>
+                        </div>
                         
                         <form action="/teacher/profile/update" method="POST">
-                            <div class="row g-4">
+                            <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="info-label">First Name</label>
-                                    <input type="text" name="first_name" class="form-control premium-input" value="<%= teacher.first_name %>" required>
+                                    <label class="field-label">First Name</label>
+                                    <input type="text" name="first_name" class="form-control field-input" value="<%= teacher.first_name %>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="info-label">Last Name</label>
-                                    <input type="text" name="last_name" class="form-control premium-input" value="<%= teacher.last_name %>" required>
+                                    <label class="field-label">Last Name</label>
+                                    <input type="text" name="last_name" class="form-control field-input" value="<%= teacher.last_name %>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="info-label">Institutional Email</label>
-                                    <input type="email" name="email" class="form-control premium-input" value="<%= teacher.email %>" required>
+                                    <label class="field-label">Institutional Email</label>
+                                    <input type="email" name="email" class="form-control field-input" value="<%= teacher.email %>" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="info-label">Phone Contact</label>
-                                    <input type="tel" name="phone" class="form-control premium-input" value="<%= teacher.phone || '' %>" placeholder="Not provided">
+                                    <label class="field-label">Phone Contact</label>
+                                    <input type="tel" name="phone" class="form-control field-input" value="<%= teacher.phone || '' %>" placeholder="e.g. +251 900 000000">
                                 </div>
-                                <div class="col-12 mt-5">
-                                    <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-900 shadow-sm">
-                                        <i class="fas fa-save me-2"></i> Update Profile Information
+                                <div class="col-12 mt-4">
+                                    <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                                        <i class="fas fa-save"></i>
+                                        <span>Update Profile Information</span>
                                     </button>
                                 </div>
                             </div>
                         </form>
 
                         <div class="mt-5 pt-4 border-top">
-                            <h3 class="fw-900 mb-4" style="color: var(--dark-text);"><i class="fas fa-graduation-cap me-2 text-warning opacity-50"></i> Academic Expertise</h3>
-                            <div class="d-flex flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-2 mb-4">
+                                <div class="rounded-3 p-2 bg-warning bg-opacity-10 text-warning">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                                <h3 class="h5 fw-bold text-dark mb-0">Academic Expertise</h3>
+                            </div>
+                            
+                            <div class="d-flex flex-wrap gap-2">
                                 <% if (typeof subjects !== 'undefined' && subjects.length > 0) { %>
                                     <% subjects.forEach(subject => { %>
-                                        <div class="expertise-badge shadow-xs">
-                                            <i class="fas fa-check-circle text-success"></i>
+                                        <div class="expertise-badge">
+                                            <i class="fas fa-check-circle text-success small"></i>
                                             <span><%= subject.name %></span>
-                                            <small class="opacity-50 fw-bold">(<%= subject.code %>)</small>
+                                            <span class="text-secondary small">(<%= subject.code %>)</span>
                                         </div>
                                     <% }); %>
                                 <% } else { %>
                                     <div class="p-4 rounded-4 bg-light text-center w-100">
-                                        <p class="text-secondary fw-bold m-0">No subject expertise records assigned to this profile.</p>
+                                        <p class="text-secondary small fw-semibold m-0">No subject expertise records assigned to this profile yet.</p>
                                     </div>
                                 <% } %>
                             </div>
@@ -195,11 +270,5 @@
     
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
-    <style>
-        .fw-900 { font-weight: 900; }
-        .fw-800 { font-weight: 800; }
-        .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-    </style>
 </body>
 </html>
-

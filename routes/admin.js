@@ -2781,15 +2781,98 @@ router.post('/academic/start', async (req, res) => {
   // POST /admin/announcements/add
   router.post('/announcements/add', async (req, res) => {
     try {
-      const { title, message, audience } = req.body;
-      await pool.execute(
-        'INSERT INTO announcements (title, message, audience, created_by) VALUES (?, ?, ?, ?)',
-        [title, message, audience, req.session.user.id]
+      const { title, message, audience, category } = req.body;
+      const targetAudience = audience && ['all', 'students', 'teachers', 'parents'].includes(audience) ? audience : 'all';
+      const targetCategory = category || 'general';
+
+      const [result] = await pool.execute(
+        'INSERT INTO announcements (title, message, audience, category, created_by) VALUES (?, ?, ?, ?, ?)',
+        [title ? title.trim() : 'Announcement', message ? message.trim() : '', targetAudience, targetCategory, req.session.user.id]
       );
+
+      // Real-time broadcast
+      const io = req.app.get('io');
+      if (io) {
+        const payload = {
+          id: result.insertId,
+          title: title ? title.trim() : '',
+          message: message ? message.trim() : '',
+          audience: targetAudience,
+          category: targetCategory,
+          created_at: new Date()
+        };
+        io.emit('newAnnouncement', payload);
+      }
+
       req.session.flash = { success: 'Announcement published successfully' };
       res.redirect('/admin/announcements');
     } catch (error) {
       console.error('Add announcement error:', error);
+      res.redirect('back');
+    }
+  });
+
+  // POST /admin/announcements/edit/:id
+  router.post('/announcements/edit/:id', async (req, res) => {
+    try {
+      const announcementId = req.params.id;
+      const { title, message, audience, category } = req.body;
+      const targetAudience = audience && ['all', 'students', 'teachers', 'parents'].includes(audience) ? audience : 'all';
+      const targetCategory = category || 'general';
+
+      await pool.execute(
+        'UPDATE announcements SET title = ?, message = ?, audience = ?, category = ? WHERE id = ?',
+        [title ? title.trim() : '', message ? message.trim() : '', targetAudience, targetCategory, announcementId]
+      );
+
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('updateAnnouncement', {
+          id: Number(announcementId),
+          title: title ? title.trim() : '',
+          message: message ? message.trim() : '',
+          audience: targetAudience,
+          category: targetCategory
+        });
+      }
+
+      if (req.xhr || req.headers.accept?.includes('application/json')) {
+        return res.json({ success: true, message: 'Announcement updated successfully' });
+      }
+
+      req.session.flash = { success: 'Announcement updated successfully' };
+      res.redirect('/admin/announcements');
+    } catch (error) {
+      console.error('Edit announcement error:', error);
+      if (req.xhr || req.headers.accept?.includes('application/json')) {
+        return res.status(500).json({ success: false, message: error.message });
+      }
+      res.redirect('back');
+    }
+  });
+
+  // POST /admin/announcements/delete/:id
+  router.post('/announcements/delete/:id', async (req, res) => {
+    try {
+      const announcementId = req.params.id;
+      await pool.execute('DELETE FROM announcements WHERE id = ?', [announcementId]);
+
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('deleteAnnouncement', { id: Number(announcementId) });
+      }
+
+      if (req.xhr || req.headers.accept?.includes('application/json')) {
+        return res.json({ success: true, message: 'Announcement deleted successfully' });
+      }
+
+      req.session.flash = { success: 'Announcement deleted successfully' };
+      res.redirect('/admin/announcements');
+    } catch (error) {
+      console.error('Delete announcement error:', error);
+      if (req.xhr || req.headers.accept?.includes('application/json')) {
+        return res.status(500).json({ success: false, message: error.message });
+      }
       res.redirect('back');
     }
   });
@@ -3425,14 +3508,28 @@ router.post('/grades/delete', isAdmin, async (req, res) => {
       if (classInfo.length === 0) return res.status(404).render('500-modern', { title: '404', message: 'Class not found' });
 
       const [schedule] = await pool.execute(`
-      SELECT cs.*, c.course_name, c.course_code, c.credits
-      FROM class_schedule cs
-      JOIN courses c ON cs.course_id = c.id
-      WHERE cs.class_id = ?
-      ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), start_time
-    `, [classId]);
+        SELECT cs.*, c.course_name, c.course_code, c.credits,
+               CONCAT(u.first_name, ' ', u.last_name) as teacher_name
+        FROM class_schedule cs
+        JOIN courses c ON cs.course_id = c.id
+        LEFT JOIN teachers t ON cs.teacher_id = t.id
+        LEFT JOIN users u ON t.user_id = u.id
+        WHERE cs.class_id = ?
+        ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), start_time
+      `, [classId]);
 
-      const [courses] = await pool.execute('SELECT id, course_name, course_code FROM courses WHERE is_active = TRUE AND grade = ? ORDER BY course_name', [classInfo[0].grade]);
+      const [courses] = await pool.execute(
+        'SELECT id, course_name, course_code FROM courses WHERE is_active = TRUE AND grade = ? ORDER BY course_name',
+        [classInfo[0].grade]
+      );
+
+      const [teachers] = await pool.execute(`
+        SELECT t.id, CONCAT(u.first_name, ' ', u.last_name) as teacher_name, t.department
+        FROM teachers t
+        JOIN users u ON t.user_id = u.id
+        WHERE t.is_active = TRUE
+        ORDER BY u.last_name, u.first_name
+      `);
 
       res.render('admin/class-schedule', {
         title: `Schedule: ${classInfo[0].name}`,
@@ -3440,6 +3537,7 @@ router.post('/grades/delete', isAdmin, async (req, res) => {
         classInfo: classInfo[0],
         schedule,
         courses,
+        teachers,
         success: req.session.flash ? req.session.flash.success : null
       });
       if (req.session.flash) delete req.session.flash;
@@ -3453,10 +3551,40 @@ router.post('/grades/delete', isAdmin, async (req, res) => {
   router.post('/classes/schedule/add', async (req, res) => {
     try {
       const { class_id, course_id, day_of_week, start_time, end_time, room, period } = req.body;
+      let teacher_id = req.body.teacher_id ? Number(req.body.teacher_id) : null;
+
+      // Auto-resolve teacher if not manually selected
+      if (!teacher_id) {
+        const [tca] = await pool.execute(
+          "SELECT teacher_id FROM teacher_course_assignments WHERE class_id = ? AND course_id = ? AND status = 'active' LIMIT 1",
+          [class_id, course_id]
+        );
+        if (tca.length > 0) {
+          teacher_id = tca[0].teacher_id;
+        } else {
+          const [co] = await pool.execute('SELECT teacher_id FROM courses WHERE id = ? LIMIT 1', [course_id]);
+          if (co.length > 0 && co[0].teacher_id) {
+            teacher_id = co[0].teacher_id;
+          }
+        }
+      }
+
+      const [classDetails] = await pool.execute('SELECT academic_year, semester FROM classes WHERE id = ?', [class_id]);
+      const academicYear = (classDetails[0] && classDetails[0].academic_year) || '2025-2026';
+      const semester = (classDetails[0] && classDetails[0].semester) || 'Semester 1';
+
       await pool.execute(
-        'INSERT INTO class_schedule (class_id, course_id, day_of_week, start_time, end_time, room, period) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [class_id, course_id, day_of_week, start_time, end_time, room, period]
+        `INSERT INTO class_schedule 
+          (class_id, course_id, teacher_id, academic_year, semester, day_of_week, start_time, end_time, room, period) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [class_id, course_id, teacher_id, academicYear, semester, day_of_week, start_time, end_time, room, period]
       );
+
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('scheduleUpdated', { classId: Number(class_id), teacherId: teacher_id });
+      }
+
       req.session.flash = { success: 'Period added successfully' };
       res.redirect(`/admin/classes/schedule/${class_id}`);
     } catch (error) {
@@ -3468,10 +3596,17 @@ router.post('/grades/delete', isAdmin, async (req, res) => {
   // POST /admin/classes/schedule/delete/:id
   router.post('/classes/schedule/delete/:id', async (req, res) => {
     try {
-      const [period] = await pool.execute('SELECT class_id FROM class_schedule WHERE id = ?', [req.params.id]);
+      const [period] = await pool.execute('SELECT class_id, teacher_id FROM class_schedule WHERE id = ?', [req.params.id]);
       if (period.length > 0) {
         const classId = period[0].class_id;
+        const teacherId = period[0].teacher_id;
         await pool.execute('DELETE FROM class_schedule WHERE id = ?', [req.params.id]);
+
+        const io = req.app.get('io');
+        if (io) {
+          io.emit('scheduleUpdated', { classId, teacherId });
+        }
+
         req.session.flash = { success: 'Period removed' };
         res.redirect(`/admin/classes/schedule/${classId}`);
       } else {

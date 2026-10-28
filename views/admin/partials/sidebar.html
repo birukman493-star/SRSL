@@ -10,14 +10,21 @@
     </div>
 
     <div class="sidebar-user-section mb-4 text-center">
-        <div class="sidebar-user-avatar mb-2 mx-auto"
-            style="width: 70px; height: 70px; font-size: 1.8rem; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary-color);">
-            <%= (user && user.first_name ? user.first_name.charAt(0).toUpperCase() : 'A' ) %>
-        </div>
-        <div class="fw-bold text-light">
-            <%= user && user.first_name ? user.first_name : 'Admin' %>
-                <%= user && user.last_name ? user.last_name : '' %>
-        </div>
+        <a href="/admin/profile" class="text-decoration-none d-block group" title="View & Edit Admin Profile">
+            <div class="sidebar-user-avatar mb-2 mx-auto transition-transform"
+                style="width: 70px; height: 70px; font-size: 1.8rem; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary-color); overflow: hidden;">
+                <% if (user && user.profile_picture) { %>
+                    <img src="<%= user.profile_picture %>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                <% } else { %>
+                    <%= (user && user.first_name ? user.first_name.charAt(0).toUpperCase() : 'A' ) %>
+                <% } %>
+            </div>
+            <div class="fw-bold text-light">
+                <%= user && user.first_name ? user.first_name : 'Admin' %>
+                    <%= user && user.last_name ? user.last_name : '' %>
+            </div>
+            <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill px-2 py-0 small mt-1" style="font-size: 0.65rem;">View Profile</span>
+        </a>
     </div>
 
     <nav class="sidebar-nav">
@@ -133,6 +140,12 @@
                 <a href="/admin/settings" class="sidebar-nav-link <%= title === 'System Settings' ? 'active' : '' %>">
                     <i class="fas fa-cog"></i>
                     <span data-key="nav_settings">Settings</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/admin/profile" class="sidebar-nav-link <%= title === 'Admin Profile' ? 'active' : '' %>">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Profile</span>
                 </a>
             </li>
 

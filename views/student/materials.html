@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Materials - Student Dashboard</title>
+    <title><%= title %> - Student Dashboard</title>
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -13,61 +13,194 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
-        .material-card { background: white; border-radius: 24px; padding: 2rem; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; transition: all 0.3s ease; }
-        .material-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
+        .premium-card {
+            background: white;
+            border-radius: 24px;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+        .material-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.6rem;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.25s ease;
+        }
+        .material-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 28px rgba(0,0,0,0.07);
+            border-color: rgba(37,99,235,0.25);
+        }
+        .filter-pill {
+            padding: 0.5rem 1.25rem;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .filter-pill.active {
+            background: var(--primary-color);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+        .filter-pill:not(.active) {
+            background: white;
+            color: var(--secondary-color);
+            border: 1px solid #e2e8f0;
+        }
+        .filter-pill:not(.active):hover {
+            background: #f1f5f9;
+            color: var(--dark-text);
+        }
+        .icon-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
     </style>
 </head>
 <body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
         <main class="main-panel w-100 p-4">
-            <div class="premium-card mb-4">
-                <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Course Materials</h1>
-                <p class="text-secondary m-0 fw-medium"><i class="fas fa-folder-open me-2"></i>Materials shared by your teachers.</p>
+            <!-- Header Banner -->
+            <div class="premium-card p-4 p-md-5 mb-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-primary bg-opacity-10 text-primary small fw-bold mb-2">
+                            <i class="fas fa-graduation-cap"></i> Student Learning Portal
+                        </div>
+                        <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Course Materials</h1>
+                        <p class="text-secondary m-0 fw-medium">Access and download approved study guides, lecture slides, and reference resources from your teachers.</p>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;">
+                            <i class="fas fa-folder me-1"></i> <%= materials.length %> Materials Available
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Course Filter Tabs -->
+                <% if (courses && courses.length > 0) { %>
+                    <div class="d-flex flex-wrap gap-2 mt-4 pt-3 border-top">
+                        <a href="/student/materials" class="filter-pill <%= activeCourseId === 'all' ? 'active' : '' %>">
+                            <i class="fas fa-th-large"></i> All Courses
+                        </a>
+                        <% courses.forEach(c => { %>
+                            <a href="/student/materials?courseId=<%= c.id %>" class="filter-pill <%= String(activeCourseId) === String(c.id) ? 'active' : '' %>">
+                                <i class="fas fa-book"></i> <%= c.name %>
+                            </a>
+                        <% }); %>
+                    </div>
+                <% } %>
             </div>
-            <div class="row g-4">
+
+            <!-- Toast / Notification Container -->
+            <div id="liveAlertContainer"></div>
+
+            <!-- Materials Grid -->
+            <div class="row g-4" id="materialsGrid">
                 <% if (materials && materials.length > 0) { %>
                     <% materials.forEach(m => { %>
                     <div class="col-12 col-md-6 col-xl-4">
-                        <div class="material-card p-4">
-                            <div class="d-flex align-items-center gap-3 mb-4">
-                                <div class="bg-primary bg-opacity-10 text-primary rounded-4 d-flex align-items-center justify-content-center" style="width:55px;height:55px;font-size:1.4rem;">
+                        <div class="material-card">
+                            <!-- Card Header -->
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="icon-circle bg-primary bg-opacity-10 text-primary">
                                     <% if (m.material_type === 'reading') { %>
                                         <i class="fas fa-book-open"></i>
-                                    <% } else if (m.material_type === 'video') { %>
-                                        <i class="fas fa-video"></i>
-                                    <% } else if (m.material_type === 'link') { %>
-                                        <i class="fas fa-link"></i>
+                                    <% } else if (m.material_type === 'presentation') { %>
+                                        <i class="fas fa-file-powerpoint text-warning"></i>
+                                    <% } else if (m.material_type === 'worksheet') { %>
+                                        <i class="fas fa-tasks text-success"></i>
+                                    <% } else if (m.mime_type && m.mime_type.includes('image')) { %>
+                                        <i class="fas fa-file-image text-info"></i>
                                     <% } else { %>
-                                        <i class="fas fa-file-pdf"></i>
+                                        <i class="fas fa-file-pdf text-danger"></i>
                                     <% } %>
                                 </div>
-                                <div>
-                                    <h5 class="text-dark m-0 fw-bold"><%= m.title %></h5>
-                                    <div class="text-secondary small fw-bold text-uppercase" style="font-size:0.65rem;letter-spacing:0.5px;"><%= m.class_name %></div>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <h5 class="text-dark fw-bold mb-1 text-truncate" title="<%= m.title %>"><%= m.title %></h5>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <span class="badge bg-primary bg-opacity-10 text-primary fw-bold" style="font-size: 0.65rem;">
+                                            <i class="fas fa-book me-1"></i><%= m.course_name || 'General Course' %>
+                                        </span>
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary fw-bold" style="font-size: 0.65rem;">
+                                            <%= m.class_name %> (<%= m.grade %>-<%= m.section %>)
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <p class="text-secondary small mb-4 flex-grow-1 fw-medium" style="line-height:1.6;"><%= m.description || 'Study resource provided by your teacher.' %></p>
-                            <div class="mt-auto pt-4 border-top">
-                                <div class="d-flex justify-content-between align-items-center mb-3 text-secondary small fw-bold">
-                                    <span><i class="fas fa-user-tie me-1 text-primary"></i> <%= m.teacher_fname %> <%= m.teacher_lname %></span>
-                                    <span><i class="far fa-calendar-alt me-1 text-primary"></i> <%= new Date(m.created_at).toLocaleDateString() %></span>
-                                </div>
-                                <% if (m.file_url) { %>
-                                    <a href="<%= m.file_url %>" target="_blank" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm"><i class="fas fa-cloud-download-alt me-2"></i> Access Material</a>
-                                <% } else { %>
-                                    <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" disabled>No Link Provided</button>
+
+                            <!-- Description -->
+                            <p class="text-secondary small mb-3 flex-grow-1" style="line-height: 1.5; min-height: 40px;">
+                                <%= m.description || 'Educational resource uploaded by your teacher for class study.' %>
+                            </p>
+
+                            <!-- Attachment Info Box -->
+                            <div class="p-2 px-3 rounded-3 bg-light mb-3 d-flex align-items-center justify-content-between small text-secondary">
+                                <span class="text-truncate me-2 fw-medium" title="<%= m.file_name || 'Resource File' %>">
+                                    <i class="fas fa-paperclip text-primary me-1"></i> <%= m.file_name || 'Course File' %>
+                                </span>
+                                <% if (m.file_size) { %>
+                                    <span class="badge bg-white text-secondary border fw-bold">
+                                        <%= (m.file_size / (1024 * 1024)).toFixed(2) %> MB
+                                    </span>
                                 <% } %>
+                            </div>
+
+                            <!-- Card Footer -->
+                            <div class="mt-auto pt-3 border-top">
+                                <div class="d-flex justify-content-between align-items-center mb-3 text-secondary" style="font-size: 0.75rem;">
+                                    <span><i class="fas fa-chalkboard-teacher text-primary me-1"></i> <%= m.teacher_fname %> <%= m.teacher_lname %></span>
+                                    <span><i class="far fa-calendar-alt text-primary me-1"></i> <%= new Date(m.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <% if (m.file_path || m.file_url) { %>
+                                        <a href="/student/materials/download/<%= m.id %>" class="btn btn-primary flex-grow-1 rounded-pill fw-bold py-2 small shadow-sm d-inline-flex align-items-center justify-content-center gap-2">
+                                            <i class="fas fa-download"></i> Download File
+                                        </a>
+                                        <a href="/student/materials/view/<%= m.id %>" target="_blank" class="btn btn-light rounded-pill fw-bold px-3 py-2 small text-secondary d-inline-flex align-items-center justify-content-center gap-1" title="Open in browser">
+                                            <i class="fas fa-external-link-alt"></i> Preview
+                                        </a>
+                                    <% } else { %>
+                                        <button class="btn btn-light w-100 rounded-pill fw-bold small text-muted py-2" disabled>No file available</button>
+                                    <% } %>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <% }); %>
                 <% } else { %>
                     <div class="col-12 text-center py-5">
-                        <div class="premium-panel p-5">
-                            <i class="fas fa-folder-open fa-6x text-secondary opacity-20"></i>
-                            <h3 class="fw-900" style="color: var(--dark-text);">Repository Empty</h3>
-                            <p class="text-secondary fw-medium px-5">Your teachers haven't uploaded any study materials for your classes yet.</p>
+                        <div class="premium-card p-5">
+                            <i class="fas fa-folder-open fa-5x text-secondary opacity-25 mb-3"></i>
+                            <h3 class="fw-800 text-dark">No Materials Available</h3>
+                            <p class="text-secondary fw-medium mx-auto" style="max-width: 500px;">
+                                <% if (activeCourseId !== 'all') { %>
+                                    No study materials found for the selected course. Try selecting another course or checking back later.
+                                <% } else { %>
+                                    Your teachers have not uploaded any study materials for your enrolled classes yet.
+                                <% } %>
+                            </p>
+                            <% if (activeCourseId !== 'all') { %>
+                                <a href="/student/materials" class="btn btn-outline-primary px-4 py-2 rounded-pill fw-bold mt-2">
+                                    <i class="fas fa-arrow-left me-1"></i> View All Courses
+                                </a>
+                            <% } %>
                         </div>
                     </div>
                 <% } %>
@@ -75,6 +208,7 @@
         </main>
     </div>
 
+    <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/translations.js"></script>
@@ -82,8 +216,16 @@
     <script>
         const socket = io({ query: { userId: '<%= user.id %>', role: 'student' } });
         socket.on('newMaterial', data => {
-            // Simple refresh to display new material; can be replaced by DOM injection for smoother UX.
-            location.reload();
+            const container = document.getElementById('liveAlertContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div class="alert alert-info alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4" role="alert">
+                        <i class="fas fa-bell me-2"></i> <strong>New Material Published!</strong> ${data.teacherName} just uploaded <strong>${data.title}</strong> for ${data.courseName || data.className}.
+                        <a href="/student/materials" class="alert-link ms-2">Click to refresh</a>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+            }
         });
     </script>
 </body>

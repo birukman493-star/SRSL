@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -171,6 +171,18 @@
                             </div>
 
                             <div class="mb-3">
+                                <label class="text-secondary small mb-1 fw-800 text-uppercase" style="letter-spacing: 0.5px;">Assigned Teacher (Optional)</label>
+                                <select name="teacher_id" class="form-select bg-light border-0 rounded-3 py-2 fw-bold" style="font-size: 0.85rem;">
+                                    <option value="">Auto-assign / Unassigned</option>
+                                    <% if (typeof teachers !== 'undefined' && teachers) { %>
+                                        <% teachers.forEach(t => { %>
+                                            <option value="<%= t.id %>"><%= t.teacher_name %></option>
+                                        <% }) %>
+                                    <% } %>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
                                 <label class="text-secondary small mb-1 fw-800 text-uppercase" style="letter-spacing: 0.5px;">Day</label>
                                 <select name="day_of_week" class="form-select bg-light border-0 rounded-3 py-2 fw-bold" required style="font-size: 0.85rem;">
                                     <option value="Monday">Monday</option>
@@ -253,8 +265,13 @@
                                                     %>
                                                         <div class="schedule-slot shadow-xs">
                                                             <div class="slot-title"><%= slot.course_name %></div>
-                                                            <div class="slot-footer">
+                                                            <div class="slot-footer d-flex flex-column gap-1">
                                                                 <span><i class="fas fa-map-marker-alt me-1"></i><%= slot.room || 'TBD' %></span>
+                                                                <% if (slot.teacher_name) { %>
+                                                                    <span class="text-primary fw-bold text-truncate" title="<%= slot.teacher_name %>" style="font-size: 0.6rem;">
+                                                                        <i class="fas fa-user-tie me-1"></i><%= slot.teacher_name %>
+                                                                    </span>
+                                                                <% } %>
                                                             </div>
                                                             <div class="delete-btn-overlay">
                                                                 <form action="/admin/classes/schedule/delete/<%= slot.id %>" method="POST" onsubmit="return confirm('Remove slot?')">

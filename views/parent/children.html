@@ -353,11 +353,15 @@
                                     <!-- Action Buttons -->
                                     <div class="action-buttons mt-auto">
                                         <a href="/parent/grades/<%= child.id %>" class="btn-action-primary w-100 mb-2">
-                                            <span>Academic Performance</span>
+                                            <span><i class="fas fa-chart-line me-2"></i>Academic Performance</span>
                                             <i class="fas fa-chevron-right transition-arrow"></i>
                                         </a>
-                                        <a href="/parent/attendance/<%= child.id %>" class="btn-action-secondary w-100">
-                                            <span>Attendance History</span>
+                                        <a href="/parent/attendance/<%= child.id %>" class="btn-action-secondary w-100 mb-2">
+                                            <span><i class="fas fa-calendar-check me-2 text-success"></i>Attendance History</span>
+                                            <i class="fas fa-chevron-right transition-arrow"></i>
+                                        </a>
+                                        <a href="/parent/schedule/<%= child.id %>" class="btn-action-secondary w-100">
+                                            <span><i class="fas fa-calendar-alt me-2 text-primary"></i>Class Timetable</span>
                                             <i class="fas fa-chevron-right transition-arrow"></i>
                                         </a>
                                     </div>

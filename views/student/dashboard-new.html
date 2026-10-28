@@ -197,6 +197,38 @@
                                     <% } %>
                                         <% } %>
 
+                                            <!-- Campus Announcements Pulse Banner -->
+                                            <% if (typeof recentAnnouncements !== 'undefined' && recentAnnouncements && recentAnnouncements.length > 0) { %>
+                                                <div class="premium-panel mb-4 shadow-sm" style="background: linear-gradient(135deg, rgba(37,99,235,0.06) 0%, rgba(139,92,246,0.06) 100%); border-left: 5px solid var(--primary-color);">
+                                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <div class="position-relative" style="width: 48px; height: 48px; background: rgba(37, 99, 235, 0.12); color: var(--primary-color); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                                                                <i class="fas fa-bullhorn"></i>
+                                                            </div>
+                                                            <div>
+                                                                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                                                    <span class="badge bg-primary rounded-pill px-2 py-1 text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                                                                        <%= recentAnnouncements[0].category || 'Notice' %>
+                                                                    </span>
+                                                                    <% if (recentAnnouncements[0].category) { %>
+                                                                        <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 text-capitalize" style="font-size: 0.65rem;">
+                                                                            <%= recentAnnouncements[0].category %>
+                                                                        </span>
+                                                                    <% } %>
+                                                                    <h6 class="fw-bold mb-0 text-dark"><%= recentAnnouncements[0].title %></h6>
+                                                                </div>
+                                                                <p class="text-secondary small m-0 fw-medium text-truncate" style="max-width: 650px;">
+                                                                    <%= recentAnnouncements[0].message || recentAnnouncements[0].content %>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <a href="/student/announcements" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">
+                                                            View All Notices (<%= recentAnnouncements.length %>) <i class="fas fa-arrow-right ms-1"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            <% } %>
+
                                             <!-- Stats Grid -->
                                             <div class="row g-4 mb-4">
                                                 <div class="col-md-3">
@@ -434,6 +466,9 @@
                                                             <h3 class="h5 fw-bold m-0 text-dark"><i
                                                                     class="fas fa-tasks me-2 text-primary"></i>Recent
                                                                 Assignments</h3>
+                                                            <a href="/student/assignments" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">
+                                                                View All <i class="fas fa-arrow-right ms-1"></i>
+                                                            </a>
                                                         </div>
                                                         <div class="assignments-list">
                                                             <% if (typeof assignments !=='undefined' &&
@@ -484,15 +519,81 @@
                                                                             <% } %>
                                                         </div>
                                                     </div>
+
+                                                    <!-- Course Materials Section -->
+                                                    <div class="premium-panel mt-4">
+                                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                                            <h3 class="h5 fw-bold m-0 text-dark"><i class="fas fa-folder-open me-2 text-primary"></i>Recent Study Materials</h3>
+                                                            <a href="/student/materials" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">
+                                                                View All Materials <i class="fas fa-arrow-right ms-1"></i>
+                                                            </a>
+                                                        </div>
+                                                        <div class="materials-list">
+                                                            <% if (typeof recentMaterials !== 'undefined' && recentMaterials && recentMaterials.length > 0) { %>
+                                                                <div class="row g-3">
+                                                                    <% recentMaterials.forEach(mat => { 
+                                                                        const ext = (mat.file_name ? mat.file_name.split('.').pop().toLowerCase() : '');
+                                                                        const isPdf = ext === 'pdf';
+                                                                        const isWord = ['doc', 'docx'].includes(ext);
+                                                                        const isPpt = ['ppt', 'pptx'].includes(ext);
+                                                                        const isImg = ['jpg', 'jpeg', 'png', 'gif'].includes(ext);
+                                                                        const iconClass = isPdf ? 'fa-file-pdf text-danger' : isWord ? 'fa-file-word text-primary' : isPpt ? 'fa-file-powerpoint text-warning' : isImg ? 'fa-file-image text-success' : 'fa-file-alt text-secondary';
+                                                                        const bgClass = isPdf ? 'rgba(239, 68, 68, 0.1)' : isWord ? 'rgba(37, 99, 235, 0.1)' : isPpt ? 'rgba(245, 158, 11, 0.1)' : isImg ? 'rgba(16, 185, 129, 0.1)' : 'rgba(100, 116, 139, 0.1)';
+                                                                    %>
+                                                                        <div class="col-md-6">
+                                                                            <div class="course-item-modern p-3 h-100 d-flex flex-column justify-content-between">
+                                                                                <div>
+                                                                                    <div class="d-flex align-items-start gap-3 mb-2">
+                                                                                        <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: <%= bgClass %>; font-size: 1.25rem;">
+                                                                                            <i class="fas <%= iconClass %>"></i>
+                                                                                        </div>
+                                                                                        <div class="flex-grow-1 overflow-hidden">
+                                                                                            <div class="fw-bold text-dark text-truncate" title="<%= mat.title %>"><%= mat.title %></div>
+                                                                                            <div class="text-secondary small fw-medium text-truncate"><%= mat.course_name || 'Class Resource' %></div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <% if (mat.description) { %>
+                                                                                        <p class="text-secondary small mb-2 text-truncate" style="font-size: 0.8rem;"><%= mat.description %></p>
+                                                                                    <% } %>
+                                                                                </div>
+                                                                                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                                                                    <span class="text-secondary smaller fw-bold text-uppercase" style="font-size: 0.65rem;">
+                                                                                        <%= mat.created_at ? new Date(mat.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '' %>
+                                                                                    </span>
+                                                                                    <div class="d-flex gap-1">
+                                                                                        <a href="/student/materials/view/<%= mat.id %>" target="_blank" class="btn btn-sm btn-light py-1 px-2 rounded-pill fw-bold text-secondary" style="font-size: 0.75rem;" title="Preview">
+                                                                                            <i class="fas fa-eye"></i>
+                                                                                        </a>
+                                                                                        <a href="/student/materials/download/<%= mat.id %>" class="btn btn-sm btn-primary py-1 px-3 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                                                                                            <i class="fas fa-download me-1"></i> Get
+                                                                                        </a>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    <% }); %>
+                                                                </div>
+                                                            <% } else { %>
+                                                                <div class="text-center py-4 text-secondary opacity-50">
+                                                                    <i class="fas fa-folder-open fa-3x mb-2"></i>
+                                                                    <p class="fw-bold small m-0">No study materials published yet.</p>
+                                                                </div>
+                                                            <% } %>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
                                                 <!-- Daily Schedule & Progress -->
                                                 <div class="col-lg-4">
                                                     <!-- Today's Schedule -->
                                                     <div class="premium-panel mb-4">
-                                                        <h3 class="h5 fw-bold mb-4 text-dark"><i
-                                                                class="fas fa-calendar-day me-2 text-primary"></i>Today's
-                                                            Schedule</h3>
+                                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                                            <h3 class="h5 fw-bold m-0 text-dark"><i
+                                                                    class="fas fa-calendar-day me-2 text-primary"></i>Today's Schedule</h3>
+                                                            <a href="/student/schedule" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">
+                                                                Full Timetable <i class="fas fa-arrow-right ms-1"></i>
+                                                            </a>
+                                                        </div>
                                                         <div class="schedule-list">
                                                             <% if (typeof todaySchedule !=='undefined' &&
                                                                 todaySchedule.length> 0) { %>
@@ -570,6 +671,29 @@
                                                                 style="letter-spacing: 1px;">
                                                                 VIEW DETAILED REPORT <i
                                                                     class="fas fa-arrow-right ms-2"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Quick Tools -->
+                                                    <div class="premium-panel mt-4">
+                                                        <h3 class="h5 fw-bold mb-3 text-dark"><i class="fas fa-bolt me-2 text-warning"></i>Quick Shortcuts</h3>
+                                                        <div class="d-grid gap-2">
+                                                            <a href="/student/schedule" class="btn btn-light border text-dark py-2 px-3 rounded-3 d-flex align-items-center justify-content-between fw-bold small transition hover-up">
+                                                                <span><i class="fas fa-calendar-alt me-2 text-primary"></i>My Timetable</span>
+                                                                <i class="fas fa-chevron-right text-muted small"></i>
+                                                            </a>
+                                                            <a href="/student/materials" class="btn btn-light border text-dark py-2 px-3 rounded-3 d-flex align-items-center justify-content-between fw-bold small transition hover-up">
+                                                                <span><i class="fas fa-folder-open me-2 text-info"></i>Study Materials</span>
+                                                                <i class="fas fa-chevron-right text-muted small"></i>
+                                                            </a>
+                                                            <a href="/student/grades" class="btn btn-light border text-dark py-2 px-3 rounded-3 d-flex align-items-center justify-content-between fw-bold small transition hover-up">
+                                                                <span><i class="fas fa-award me-2 text-success"></i>Academic Transcripts</span>
+                                                                <i class="fas fa-chevron-right text-muted small"></i>
+                                                            </a>
+                                                            <a href="/student/announcements" class="btn btn-light border text-dark py-2 px-3 rounded-3 d-flex align-items-center justify-content-between fw-bold small transition hover-up">
+                                                                <span><i class="fas fa-bullhorn me-2 text-warning"></i>Campus Notices</span>
+                                                                <i class="fas fa-chevron-right text-muted small"></i>
                                                             </a>
                                                         </div>
                                                     </div>

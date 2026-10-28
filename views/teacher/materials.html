@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Materials - Teacher Dashboard</title>
+    <title><%= title %> - Abdigudina Faculty</title>
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -13,65 +13,219 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
-        .premium-card { background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.3s ease; }
-        .premium-card:hover { transform: translateY(-8px); border-color: var(--primary-color); }
-        .material-card { background: white; border-radius: 24px; padding: 2rem; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: 100%; display: flex; flex-direction: column; transition: all 0.3s ease; }
-        .material-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
+        .premium-card {
+            background: white;
+            border-radius: 24px;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+        .material-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.6rem;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.25s ease;
+        }
+        .material-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 28px rgba(0,0,0,0.07);
+            border-color: rgba(37,99,235,0.25);
+        }
+        .premium-input {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: var(--dark-text) !important;
+        }
+        .premium-input:focus {
+            background: white !important;
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+        .icon-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
     </style>
 </head>
 <body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
         <main class="main-panel w-100 p-4">
-            <div class="premium-card mb-4">
-                <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Course Materials</h1>
-                <p class="text-secondary m-0 fw-medium"><i class="fas fa-folder-open me-2"></i>Upload and share resources with your students.</p>
-                <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm mt-3" data-bs-toggle="modal" data-bs-target="#newMaterialModal"><i class="fas fa-plus-circle me-2"></i> Add Material</button>
+            <!-- Header & Stats Banner -->
+            <div class="premium-card p-4 p-md-5 mb-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-primary bg-opacity-10 text-primary small fw-bold mb-2">
+                            <i class="fas fa-layer-group"></i> Academic Repository
+                        </div>
+                        <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Course Materials</h1>
+                        <p class="text-secondary m-0 fw-medium">Upload, organize, and distribute approved learning resources for your courses and classes.</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary px-4 py-3 rounded-pill fw-bold shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#newMaterialModal">
+                            <i class="fas fa-cloud-upload-alt"></i> Upload New Material
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Metrics Row -->
+                <div class="row g-3 mt-3 pt-3 border-top">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded-4 bg-light">
+                            <div class="text-secondary small fw-bold text-uppercase">Total Uploads</div>
+                            <div class="h3 fw-800 text-dark mb-0"><%= materials.length %></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded-4 bg-light">
+                            <div class="text-secondary small fw-bold text-uppercase">Courses Covered</div>
+                            <div class="h3 fw-800 text-primary mb-0">
+                                <%= new Set(materials.map(m => m.course_name).filter(Boolean)).size %>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded-4 bg-light">
+                            <div class="text-secondary small fw-bold text-uppercase">Target Classes</div>
+                            <div class="h3 fw-800 text-success mb-0">
+                                <%= new Set(materials.map(m => m.class_name).filter(Boolean)).size %>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded-4 bg-light">
+                            <div class="text-secondary small fw-bold text-uppercase">Authorized Courses</div>
+                            <div class="h3 fw-800 text-info mb-0"><%= courses.length %></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="row g-4">
+
+            <!-- Material Alert Container -->
+            <div id="alertContainer"></div>
+
+            <!-- Materials Grid -->
+            <div class="row g-4" id="materialsList">
                 <% if (materials && materials.length > 0) { %>
                     <% materials.forEach(m => { %>
-                    <div class="col-12 col-md-6 col-xl-4">
-                        <div class="material-card p-4">
-                            <div class="d-flex align-items-center gap-3 mb-4">
-                                <div class="bg-primary bg-opacity-10 text-primary rounded-4 d-flex align-items-center justify-content-center" style="width:55px;height:55px;font-size:1.4rem;">
-                                    <% if (m.material_type === 'reading') { %>
-                                        <i class="fas fa-book-open"></i>
-                                    <% } else if (m.material_type === 'video') { %>
-                                        <i class="fas fa-video"></i>
-                                    <% } else if (m.material_type === 'link') { %>
-                                        <i class="fas fa-link"></i>
-                                    <% } else { %>
-                                        <i class="fas fa-file-pdf"></i>
-                                    <% } %>
+                    <div class="col-12 col-md-6 col-xl-4 material-item" id="material-card-<%= m.id %>">
+                        <div class="material-card">
+                            <!-- Card Header -->
+                            <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="icon-circle bg-primary bg-opacity-10 text-primary">
+                                        <% if (m.material_type === 'reading') { %>
+                                            <i class="fas fa-book-open"></i>
+                                        <% } else if (m.material_type === 'presentation') { %>
+                                            <i class="fas fa-file-powerpoint text-warning"></i>
+                                        <% } else if (m.material_type === 'worksheet') { %>
+                                            <i class="fas fa-tasks text-success"></i>
+                                        <% } else if (m.mime_type && m.mime_type.includes('image')) { %>
+                                            <i class="fas fa-file-image text-info"></i>
+                                        <% } else { %>
+                                            <i class="fas fa-file-pdf text-danger"></i>
+                                        <% } %>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-dark fw-bold mb-1 text-truncate" style="max-width: 210px;" title="<%= m.title %>"><%= m.title %></h5>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <span class="badge bg-primary bg-opacity-10 text-primary fw-bold" style="font-size: 0.65rem;">
+                                                <i class="fas fa-book me-1"></i><%= m.course_name || 'General' %>
+                                            </span>
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary fw-bold" style="font-size: 0.65rem;">
+                                                <i class="fas fa-chalkboard me-1"></i><%= m.class_name %> (<%= m.grade %>-<%= m.section %>)
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h5 class="text-dark m-0 fw-bold"><%= m.title %></h5>
-                                    <div class="text-secondary small fw-bold text-uppercase" style="font-size:0.65rem;letter-spacing:0.5px;"><%= m.class_name %></div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width:32px;height:32px;padding:0;">
+                                        <i class="fas fa-ellipsis-v text-secondary"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                                        <li>
+                                            <button class="dropdown-item py-2 edit-material-btn"
+                                                data-id="<%= m.id %>"
+                                                data-title="<%= m.title %>"
+                                                data-description="<%= m.description || '' %>"
+                                                data-class-id="<%= m.class_id %>"
+                                                data-course-id="<%= m.course_id %>"
+                                                data-type="<%= m.material_type %>">
+                                                <i class="fas fa-edit text-primary me-2"></i> Edit Details
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item py-2 text-danger delete-material-btn" data-id="<%= m.id %>" data-title="<%= m.title %>">
+                                                <i class="fas fa-trash-alt me-2"></i> Delete
+                                            </button>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
-                            <p class="text-secondary small mb-4 flex-grow-1 fw-medium" style="line-height:1.6;"><%= m.description || 'Study resource provided by your faculty.' %></p>
-                            <div class="mt-auto pt-4 border-top">
-                                <div class="d-flex justify-content-between align-items-center mb-3 text-secondary small fw-bold">
-                                    <span><i class="fas fa-user-tie me-1 text-primary"></i> <%= m.teacher_fname %> <%= m.teacher_lname %></span>
-                                    <span><i class="far fa-calendar-alt me-1 text-primary"></i> <%= new Date(m.created_at).toLocaleDateString() %></span>
-                                </div>
-                                <% if (m.file_url) { %>
-                                    <a href="<%= m.file_url %>" target="_blank" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm"><i class="fas fa-cloud-download-alt me-2"></i> Access Material</a>
-                                <% } else { %>
-                                    <button class="btn btn-light w-100 py-3 rounded-pill fw-bold" disabled>No Link Provided</button>
+
+                            <!-- Description -->
+                            <p class="text-secondary small mb-3 flex-grow-1" style="line-height: 1.5; min-height: 42px;">
+                                <%= m.description || 'Curriculum resource uploaded for classroom and self-study instruction.' %>
+                            </p>
+
+                            <!-- File Details Info Box -->
+                            <div class="p-2 px-3 rounded-3 bg-light mb-3 d-flex align-items-center justify-content-between small text-secondary">
+                                <span class="text-truncate me-2 fw-medium" title="<%= m.file_name || 'Attachment' %>">
+                                    <i class="fas fa-paperclip text-primary me-1"></i> <%= m.file_name || 'Attached Resource' %>
+                                </span>
+                                <% if (m.file_size) { %>
+                                    <span class="badge bg-white text-secondary border fw-bold">
+                                        <%= (m.file_size / (1024 * 1024)).toFixed(2) %> MB
+                                    </span>
                                 <% } %>
+                            </div>
+
+                            <!-- Card Footer -->
+                            <div class="mt-auto pt-3 border-top">
+                                <div class="d-flex justify-content-between align-items-center mb-3 text-secondary" style="font-size: 0.75rem;">
+                                    <span><i class="fas fa-user-tie text-primary me-1"></i> <%= m.teacher_fname %> <%= m.teacher_lname %></span>
+                                    <span><i class="far fa-calendar-alt text-primary me-1"></i> <%= new Date(m.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <% if (m.file_path || m.file_url) { %>
+                                        <a href="/teacher/materials/download/<%= m.id %>" class="btn btn-outline-primary flex-grow-1 rounded-pill fw-bold py-2 small d-inline-flex align-items-center justify-content-center gap-2">
+                                            <i class="fas fa-download"></i> Download
+                                        </a>
+                                        <a href="/teacher/materials/view/<%= m.id %>" target="_blank" class="btn btn-light rounded-pill fw-bold px-3 py-2 small text-secondary d-inline-flex align-items-center justify-content-center gap-1" title="Open preview in new tab">
+                                            <i class="fas fa-external-link-alt"></i> View
+                                        </a>
+                                    <% } else { %>
+                                        <button class="btn btn-light w-100 rounded-pill fw-bold small text-muted py-2" disabled>No file attached</button>
+                                    <% } %>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <% }); %>
                 <% } else { %>
                     <div class="col-12 text-center py-5">
-                        <div class="premium-panel p-5">
-                            <i class="fas fa-folder-open fa-6x text-secondary opacity-20"></i>
-                            <h3 class="fw-900" style="color: var(--dark-text);">Repository Empty</h3>
-                            <p class="text-secondary fw-medium px-5">You haven't uploaded any study materials yet. Start building your academic repository to support student learning.</p>
-                            <button class="btn btn-primary px-5 mt-3 rounded-pill fw-bold shadow" data-bs-toggle="modal" data-bs-target="#newMaterialModal">Add Your First Material</button>
+                        <div class="premium-card p-5">
+                            <i class="fas fa-folder-open fa-5x text-secondary opacity-25 mb-3"></i>
+                            <h3 class="fw-800 text-dark">No Course Materials Yet</h3>
+                            <p class="text-secondary fw-medium mx-auto" style="max-width: 500px;">
+                                You haven't uploaded any study materials yet. Select one of your authorized courses and classes to share lesson notes, presentation slides, or practice guides with your students.
+                            </p>
+                            <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm mt-2" data-bs-toggle="modal" data-bs-target="#newMaterialModal">
+                                <i class="fas fa-plus-circle me-1"></i> Upload First Material
+                            </button>
                         </div>
                     </div>
                 <% } %>
@@ -79,100 +233,394 @@
         </main>
     </div>
 
-    <!-- Upload Modal -->
+    <!-- Upload Material Modal -->
     <div class="modal fade" id="newMaterialModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content" style="border-radius:28px;border:none;box-shadow:0 25px 50px rgba(0,0,0,0.15);">
-                <div class="modal-header border-0 p-4">
-                    <h5 class="modal-title fw-900" style="color:var(--dark-text);font-size:1.5rem;"><i class="fas fa-cloud-upload-alt text-primary me-2"></i>Share Material</h5>
+            <div class="modal-content" style="border-radius: 28px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+                <div class="modal-header border-0 p-4 pb-2">
+                    <div>
+                        <h5 class="modal-title fw-800" style="color: var(--dark-text); font-size: 1.4rem;">
+                            <i class="fas fa-cloud-upload-alt text-primary me-2"></i>Upload Course Material
+                        </h5>
+                        <p class="text-secondary small m-0">Select an authorized course and class/section to distribute resources.</p>
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4 pt-0">
-                    <form id="materialForm">
-                        <div class="row g-4">
-                            <div class="col-md-8">
-                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing:1px;">Material Title</label>
-                                <input type="text" class="form-control premium-input" name="title" placeholder="e.g. Calculus Basics PDF" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing:1px;">Resource Type</label>
-                                <select class="form-select premium-input" name="materialType" required>
-                                    <option value="reading">Reading (PDF/Doc)</option>
-                                    <option value="video">Video Lesson</option>
-                                    <option value="link">External Link</option>
-                                    <option value="other">General Resource</option>
-                                </select>
-                            </div>
-                            <div class="col-md-12">
-                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing:1px;">Target Class</label>
-                                <select class="form-select premium-input" name="classId" required>
-                                    <% classes.forEach(c => { %>
-                                        <option value="<%= c.id %>"><%= c.name %> (<%= c.grade %>-<%= c.section %>)</option>
+                <div class="modal-body p-4 pt-2">
+                    <form id="materialForm" enctype="multipart/form-data">
+                        <div class="row g-3">
+                            <!-- Course Selection -->
+                            <div class="col-md-6">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">1. Authorized Course</label>
+                                <select class="form-select premium-input" id="newCourseSelect" name="courseId" required>
+                                    <option value="" disabled selected>-- Select an authorized course --</option>
+                                    <% courses.forEach(co => { %>
+                                        <option value="<%= co.id %>"><%= co.name %> (<%= co.code %>)</option>
                                     <% }); %>
                                 </select>
                             </div>
-                            <div class="col-md-12">
-                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing:1px;">Direct Access Link (URL)</label>
-                                <input type="text" class="form-control premium-input" name="fileUrl" placeholder="https://example.com/resource.pdf">
-                                <input type="file" class="form-control premium-input mt-2" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.mp4,.avi" />
+
+                            <!-- Class Selection -->
+                            <div class="col-md-6">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">2. Class / Section</label>
+                                <select class="form-select premium-input" id="newClassSelect" name="classId" required>
+                                    <option value="" disabled selected>-- Select class/section --</option>
+                                    <% classes.forEach(cl => { %>
+                                        <option value="<%= cl.id %>"><%= cl.name %> (Grade <%= cl.grade %> - <%= cl.section %>)</option>
+                                    <% }); %>
+                                </select>
                             </div>
+
+                            <!-- Material Title -->
+                            <div class="col-md-8">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Material Title</label>
+                                <input type="text" class="form-control premium-input" name="title" placeholder="e.g. Chapter 4: Photosynthesis & Respiration" required>
+                            </div>
+
+                            <!-- Resource Category -->
+                            <div class="col-md-4">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Resource Type</label>
+                                <select class="form-select premium-input" name="materialType">
+                                    <option value="reading">Lecture Notes / Reading</option>
+                                    <option value="presentation">Slide Presentation</option>
+                                    <option value="worksheet">Practice Worksheet</option>
+                                    <option value="guide">Study Guide</option>
+                                    <option value="other">General Resource</option>
+                                </select>
+                            </div>
+
+                            <!-- File Upload -->
                             <div class="col-12">
-                                <label class="form-label text-secondary small fw-800 text-uppercase" style="letter-spacing:1px;">Brief Description</label>
-                                <textarea class="form-control premium-input" name="description" rows="3" placeholder="Explain what students should focus on this material..."></textarea>
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Upload File</label>
+                                <input type="file" class="form-control premium-input" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.txt" required>
+                                <div class="form-text small text-secondary mt-1">
+                                    <i class="fas fa-info-circle text-primary me-1"></i> Approved formats: PDF, Word (DOC/DOCX), PowerPoint (PPT/PPTX), Excel (XLS/XLSX), Images (PNG/JPG/WEBP), and Text. Maximum file size: <strong>25MB</strong>.
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="col-12">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Description / Study Guidance</label>
+                                <textarea class="form-control premium-input" name="description" rows="3" placeholder="Provide instructions, key focus points, or review topics for students..."></textarea>
                             </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">
-                    <button type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" data-bs-dismiss="modal">Discard</button>
-                    <button type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" id="submitMaterial"><i class="fas fa-share-square me-2"></i>Publish Material</button>
+                    <button type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" id="submitMaterialBtn">
+                        <i class="fas fa-share-square me-2"></i> Publish Material
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Edit Material Modal -->
+    <div class="modal fade" id="editMaterialModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 28px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+                <div class="modal-header border-0 p-4 pb-2">
+                    <div>
+                        <h5 class="modal-title fw-800" style="color: var(--dark-text); font-size: 1.4rem;">
+                            <i class="fas fa-edit text-primary me-2"></i>Edit Course Material
+                        </h5>
+                        <p class="text-secondary small m-0">Update title, description, course/class assignment, or replace the attached file.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 pt-2">
+                    <form id="editMaterialForm" enctype="multipart/form-data">
+                        <input type="hidden" name="materialId" id="editMaterialId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Course</label>
+                                <select class="form-select premium-input" id="editCourseSelect" name="courseId" required>
+                                    <% courses.forEach(co => { %>
+                                        <option value="<%= co.id %>"><%= co.name %> (<%= co.code %>)</option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Class / Section</label>
+                                <select class="form-select premium-input" id="editClassSelect" name="classId" required>
+                                    <% classes.forEach(cl => { %>
+                                        <option value="<%= cl.id %>"><%= cl.name %> (Grade <%= cl.grade %> - <%= cl.section %>)</option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Material Title</label>
+                                <input type="text" class="form-control premium-input" id="editMaterialTitle" name="title" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Resource Type</label>
+                                <select class="form-select premium-input" id="editMaterialType" name="materialType">
+                                    <option value="reading">Lecture Notes / Reading</option>
+                                    <option value="presentation">Slide Presentation</option>
+                                    <option value="worksheet">Practice Worksheet</option>
+                                    <option value="guide">Study Guide</option>
+                                    <option value="other">General Resource</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Replace File (Optional)</label>
+                                <input type="file" class="form-control premium-input" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.txt">
+                                <div class="form-text small text-secondary">Leave blank to retain current file attachment.</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-secondary small fw-bold text-uppercase">Description</label>
+                                <textarea class="form-control premium-input" id="editMaterialDescription" name="description" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm" id="updateMaterialBtn">
+                        <i class="fas fa-check-circle me-2"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteMaterialModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 24px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+                <div class="modal-body p-4 text-center">
+                    <div class="icon-circle bg-danger bg-opacity-10 text-danger mx-auto mb-3" style="width:64px;height:64px;font-size:1.6rem;">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                    <h5 class="fw-800 text-dark mb-2">Delete Course Material?</h5>
+                    <p class="text-secondary small mb-4">
+                        Are you sure you want to remove <strong id="deleteMaterialTitle" class="text-dark"></strong>? The database record and attached file will be safely deleted.
+                    </p>
+                    <input type="hidden" id="deleteMaterialId">
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger px-4 py-2 rounded-pill fw-bold" id="confirmDeleteBtn">
+                            <i class="fas fa-trash me-1"></i> Yes, Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/translations.js"></script>
     <script src="/js/brocode-script.js"></script>
     <script>
-        // Submit material via AJAX
-        document.getElementById('submitMaterial').addEventListener('click', async () => {
+        const authorizedPairs = <%- JSON.stringify(authorizedPairs || []) %>;
+
+        // Dynamic pairing: when course is chosen, show only matching classes
+        function filterClassesForCourse(courseSelectId, classSelectId) {
+            const courseSelect = document.getElementById(courseSelectId);
+            const classSelect = document.getElementById(classSelectId);
+            if (!courseSelect || !classSelect) return;
+
+            const selectedCourseId = courseSelect.value;
+            if (!selectedCourseId) return;
+
+            const matchingPairs = authorizedPairs.filter(p => String(p.course_id) === String(selectedCourseId));
+            if (matchingPairs.length > 0) {
+                const currentVal = classSelect.value;
+                classSelect.innerHTML = '<option value="" disabled selected>-- Select class/section --</option>';
+                matchingPairs.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.class_id;
+                    opt.textContent = `${p.class_name} (Grade ${p.grade} - ${p.section})`;
+                    if (String(p.class_id) === String(currentVal)) {
+                        opt.selected = true;
+                    }
+                    classSelect.appendChild(opt);
+                });
+                if (matchingPairs.length === 1) {
+                    classSelect.value = matchingPairs[0].class_id;
+                }
+            }
+        }
+
+        document.getElementById('newCourseSelect').addEventListener('change', () => {
+            filterClassesForCourse('newCourseSelect', 'newClassSelect');
+        });
+
+        document.getElementById('editCourseSelect').addEventListener('change', () => {
+            filterClassesForCourse('editCourseSelect', 'editClassSelect');
+        });
+
+        function showAlert(type, message) {
+            const container = document.getElementById('alertContainer');
+            container.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            setTimeout(() => {
+                const alertEl = container.querySelector('.alert');
+                if (alertEl) {
+                    bootstrap.Alert.getOrCreateInstance(alertEl).close();
+                }
+            }, 6000);
+        }
+
+        // Submit new material via AJAX
+        document.getElementById('submitMaterialBtn').addEventListener('click', async () => {
             const form = document.getElementById('materialForm');
-            const formData = new FormData(form);
-            const btn = document.getElementById('submitMaterial');
-            const original = btn.innerHTML;
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const btn = document.getElementById('submitMaterialBtn');
+            const originalText = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Publishing...';
+
+            const formData = new FormData(form);
+
             try {
                 const response = await fetch('/teacher/materials/create', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
                 });
                 const result = await response.json();
+
                 if (response.ok) {
                     form.reset();
-                    const modalEl = document.getElementById('newMaterialModal');
-                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('newMaterialModal'));
                     if (modal) modal.hide();
-                    // Optionally refresh material list
-                    location.reload();
+                    showAlert('success', result.message || 'Material published successfully!');
+                    setTimeout(() => location.reload(), 1000);
                 } else {
-                    alert(result.message || 'Failed to upload material');
+                    showAlert('danger', result.message || 'Failed to publish material');
                 }
-            } catch (e) {
-                console.error(e);
-                alert('Network error while uploading');
+            } catch (err) {
+                console.error(err);
+                showAlert('danger', 'Network error while uploading material.');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = original;
+                btn.innerHTML = originalText;
             }
         });
-        // Real‑time updates for teachers (optional visual cue)
+
+        // Setup Edit Buttons
+        document.querySelectorAll('.edit-material-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                const title = btn.dataset.title;
+                const desc = btn.dataset.description;
+                const classId = btn.dataset.classId;
+                const courseId = btn.dataset.courseId;
+                const type = btn.dataset.type;
+
+                document.getElementById('editMaterialId').value = id;
+                document.getElementById('editMaterialTitle').value = title;
+                document.getElementById('editMaterialDescription').value = desc;
+                document.getElementById('editCourseSelect').value = courseId;
+                filterClassesForCourse('editCourseSelect', 'editClassSelect');
+                document.getElementById('editClassSelect').value = classId;
+                document.getElementById('editMaterialType').value = type || 'reading';
+
+                const modal = new bootstrap.Modal(document.getElementById('editMaterialModal'));
+                modal.show();
+            });
+        });
+
+        // Update material via AJAX
+        document.getElementById('updateMaterialBtn').addEventListener('click', async () => {
+            const form = document.getElementById('editMaterialForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const id = document.getElementById('editMaterialId').value;
+            const btn = document.getElementById('updateMaterialBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Saving...';
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(`/teacher/materials/edit/${id}`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editMaterialModal'));
+                    if (modal) modal.hide();
+                    showAlert('success', result.message || 'Material updated successfully!');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert('danger', result.message || 'Failed to update material');
+                }
+            } catch (err) {
+                console.error(err);
+                showAlert('danger', 'Network error while updating material.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+
+        // Setup Delete Buttons
+        document.querySelectorAll('.delete-material-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                const title = btn.dataset.title;
+                document.getElementById('deleteMaterialId').value = id;
+                document.getElementById('deleteMaterialTitle').textContent = `"${title}"`;
+
+                const modal = new bootstrap.Modal(document.getElementById('deleteMaterialModal'));
+                modal.show();
+            });
+        });
+
+        // Confirm Delete via AJAX
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+            const id = document.getElementById('deleteMaterialId').value;
+            const btn = document.getElementById('confirmDeleteBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Deleting...';
+
+            try {
+                const response = await fetch(`/teacher/materials/delete/${id}`, {
+                    method: 'POST',
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteMaterialModal'));
+                    if (modal) modal.hide();
+                    const card = document.getElementById(`material-card-${id}`);
+                    if (card) card.remove();
+                    showAlert('success', result.message || 'Material deleted successfully');
+                } else {
+                    showAlert('danger', result.message || 'Failed to delete material');
+                }
+            } catch (err) {
+                console.error(err);
+                showAlert('danger', 'Network error while deleting material.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+
+        // Socket.io for live updates
         const socket = io({ query: { userId: '<%= user.id %>', role: 'teacher' } });
         socket.on('newMaterial', data => {
-            // Simple reload; replace with fine‑grained DOM update if desired
-            location.reload();
+            console.log('Realtime new material received:', data);
         });
     </script>
 </body>

@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-        <%= title %> - Abdigudina
-    </title>
+    <title><%= title %> - Student Dashboard</title>
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -16,176 +13,346 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
-        body {
-            background: #f8fafc;
-            color: #0f172a;
-        }
-
-        .main-panel {
-            background: #f8fafc;
-        }
-
-        .premium-panel {
+        .premium-card {
             background: white;
             border-radius: 24px;
-            padding: 2rem;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
         }
-
         .assignment-card {
             background: white;
             border-radius: 20px;
-            padding: 1.5rem;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            margin-bottom: 1rem;
+            padding: 1.6rem;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            transition: all 0.25s ease;
+            margin-bottom: 1.25rem;
         }
-
         .assignment-card:hover {
-            transform: scale(1.01);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+            border-color: rgba(37,99,235,0.25);
+        }
+        .filter-pill {
+            padding: 0.5rem 1.25rem;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .filter-pill.active {
+            background: var(--primary-color);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+        .filter-pill:not(.active) {
+            background: white;
+            color: var(--secondary-color);
+            border: 1px solid #e2e8f0;
+        }
+        .filter-pill:not(.active):hover {
+            background: #f1f5f9;
+            color: var(--dark-text);
+        }
+        .icon-circle {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
         }
     </style>
 </head>
-
-<body class="dashboard-body">
+<body class="dashboard-body" style="background: #f8fafc;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-
-            <main class="main-panel w-100 p-4">
-                <!-- Header -->
-                <div class="premium-panel mb-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="fw-800 mb-1"
-                                style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                                My Assignments</h1>
-                            <p class="text-secondary m-0 fw-medium"><i class="fas fa-tasks me-2"></i>Track your homework
-                                and project deadlines</p>
+        <main class="main-panel w-100 p-4">
+            <!-- Header Banner -->
+            <div class="premium-card p-4 p-md-5 mb-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-primary bg-opacity-10 text-primary small fw-bold mb-2">
+                            <i class="fas fa-tasks"></i> My Course Work
                         </div>
-                        <div>
-                            <span
-                                class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill fw-bold text-uppercase"
-                                style="font-size: 0.7rem;">
-                                <i class="fas fa-clock me-1"></i>
-                                <%= assignments.filter(a=> !a.is_submitted).length %> Pending
-                            </span>
-                        </div>
+                        <h1 class="fw-800 mb-1" style="font-size: 2.2rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">My Assignments</h1>
+                        <p class="text-secondary m-0 fw-medium">Track your homework deadlines, project submissions, and download assignment materials.</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-warning bg-opacity-15 text-warning px-3 py-2 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                            <i class="fas fa-hourglass-half me-1"></i> <%= (counts && counts.due_soon) || 0 %> Due Soon
+                        </span>
+                        <span class="badge bg-danger bg-opacity-15 text-danger px-3 py-2 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                            <i class="fas fa-exclamation-triangle me-1"></i> <%= (counts && counts.overdue) || 0 %> Overdue
+                        </span>
                     </div>
                 </div>
 
-                <!-- Assignments Grid -->
-                <div class="row g-3">
-                    <% if (assignments && assignments.length> 0) { %>
-                        <% assignments.forEach(assignment=> { %>
-                            <div class="col-12">
-                                <div class="assignment-card">
-                                    <div class="row align-items-center">
-                                        <div class="col-md-1 d-none d-md-block text-center">
-                                            <div class="rounded-3 bg-primary bg-opacity-10 text-primary mx-auto"
-                                                style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                                                <i class="fas fa-file-alt"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-5">
-                                            <h5 class="text-dark m-0 fw-bold">
-                                                <%= assignment.title %>
-                                            </h5>
-                                            <div class="text-secondary small fw-medium mt-1">
-                                                <i class="fas fa-book me-1 text-primary"></i>
-                                                <%= assignment.class_name %> &bull;
-                                                    <i class="fas fa-user-tie me-1 text-primary"></i>
-                                                    <%= assignment.teacher_fname %>
-                                                        <%= assignment.teacher_lname %>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="text-secondary small fw-bold text-uppercase"
-                                                style="font-size: 0.6rem; letter-spacing: 0.5px;">Due Date</div>
-                                            <div
-                                                class="text-<%= (new Date(assignment.due_date) < new Date()) ? 'danger' : 'dark' %> fw-bold small">
-                                                <i class="far fa-calendar-alt me-1"></i>
-                                                <%= assignment.due_date ? new
-                                                    Date(assignment.due_date).toLocaleDateString(undefined, {
-                                                    month: 'short' , day: 'numeric' , year: 'numeric' }) : 'No Due Date'
-                                                    %>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3 text-md-end mt-3 mt-md-0">
-                                            <span
-                                                class="badge rounded-pill bg-<%= assignment.is_submitted ? 'success' : 'warning' %> bg-opacity-10 text-<%= assignment.is_submitted ? 'success' : 'warning' %> px-3 py-2 fw-bold text-uppercase me-2"
-                                                style="font-size: 0.65rem;">
-                                                <%= assignment.is_submitted ? 'SUBMITTED' : 'PENDING' %>
-                                            </span>
-                                            <button
-                                                class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">View</button>
-                                        </div>
+                <!-- Status Filter Pills -->
+                <div class="d-flex flex-wrap gap-2 mt-4 pt-3 border-top">
+                    <a href="/student/assignments<%= activeCourseId !== 'all' ? '?courseId=' + activeCourseId : '' %>"
+                       class="filter-pill <%= activeStatus === 'all' ? 'active' : '' %>">
+                        <i class="fas fa-layer-group"></i> All (<%= (counts && counts.total) || 0 %>)
+                    </a>
+                    <a href="/student/assignments?status=due_soon<%= activeCourseId !== 'all' ? '&courseId=' + activeCourseId : '' %>"
+                       class="filter-pill <%= activeStatus === 'due_soon' ? 'active' : '' %>">
+                        <i class="fas fa-clock text-warning"></i> Due Soon (<%= (counts && counts.due_soon) || 0 %>)
+                    </a>
+                    <a href="/student/assignments?status=upcoming<%= activeCourseId !== 'all' ? '&courseId=' + activeCourseId : '' %>"
+                       class="filter-pill <%= activeStatus === 'upcoming' ? 'active' : '' %>">
+                        <i class="fas fa-calendar-alt text-info"></i> Upcoming (<%= (counts && counts.upcoming) || 0 %>)
+                    </a>
+                    <a href="/student/assignments?status=overdue<%= activeCourseId !== 'all' ? '&courseId=' + activeCourseId : '' %>"
+                       class="filter-pill <%= activeStatus === 'overdue' ? 'active' : '' %>">
+                        <i class="fas fa-exclamation-circle text-danger"></i> Overdue (<%= (counts && counts.overdue) || 0 %>)
+                    </a>
+
+                    <!-- Course Dropdown Filter -->
+                    <% if (courses && courses.length > 0) { %>
+                        <div class="ms-md-auto d-flex align-items-center gap-2">
+                            <span class="small fw-bold text-secondary text-uppercase" style="font-size:0.7rem;">Course:</span>
+                            <select class="form-select form-select-sm rounded-pill fw-bold" style="width: auto;" onchange="location = this.value;">
+                                <option value="/student/assignments<%= activeStatus !== 'all' ? '?status=' + activeStatus : '' %>" <%= activeCourseId === 'all' ? 'selected' : '' %>>All Courses</option>
+                                <% courses.forEach(c => { %>
+                                    <option value="/student/assignments?courseId=<%= c.id %><%= activeStatus !== 'all' ? '&status=' + activeStatus : '' %>" <%= String(activeCourseId) === String(c.id) ? 'selected' : '' %>>
+                                        <%= c.name %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Live Alert Container -->
+            <div id="liveAlertContainer"></div>
+
+            <!-- Assignments List -->
+            <div class="row g-3" id="assignmentsContainer">
+                <% if (assignments && assignments.length > 0) { %>
+                    <% assignments.forEach(a => { %>
+                    <div class="col-12 assignment-item">
+                        <div class="assignment-card">
+                            <div class="row align-items-center g-3">
+                                <!-- Icon -->
+                                <div class="col-auto d-none d-md-block">
+                                    <div class="icon-circle bg-primary bg-opacity-10 text-primary">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Title, Class, Course -->
+                                <div class="col-12 col-md-5">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <h5 class="fw-bold text-dark m-0"><%= a.title %></h5>
+                                        <span class="badge <%= a.statusBadgeClass %> rounded-pill px-3 py-1 fw-bold text-uppercase" style="font-size: 0.65rem;">
+                                            <% if (a.statusKey === 'overdue') { %>
+                                                <i class="fas fa-exclamation-circle me-1"></i> OVERDUE
+                                            <% } else if (a.statusKey === 'due_soon') { %>
+                                                <i class="fas fa-hourglass-half me-1"></i> DUE SOON
+                                            <% } else { %>
+                                                <i class="fas fa-calendar-check me-1"></i> UPCOMING
+                                            <% } %>
+                                        </span>
+                                    </div>
+                                    <div class="text-secondary small d-flex flex-wrap align-items-center gap-2">
+                                        <span><i class="fas fa-book text-primary me-1"></i><strong><%= a.course_name || 'Course' %></strong></span>
+                                        <span class="text-muted">&bull;</span>
+                                        <span><i class="fas fa-graduation-cap text-primary me-1"></i><%= a.class_name %></span>
+                                        <span class="text-muted">&bull;</span>
+                                        <span><i class="fas fa-user-tie text-primary me-1"></i><%= a.teacher_fname %> <%= a.teacher_lname %></span>
+                                    </div>
+                                    <% if (a.description) { %>
+                                        <p class="text-secondary small m-0 mt-2 text-truncate" style="max-width: 480px;"><%= a.description %></p>
+                                    <% } %>
+                                </div>
+
+                                <!-- Schedule Dates -->
+                                <div class="col-6 col-md-3">
+                                    <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Due Date</div>
+                                    <div class="small fw-bold <%= a.statusKey === 'overdue' ? 'text-danger' : (a.statusKey === 'due_soon' ? 'text-warning' : 'text-dark') %>">
+                                        <i class="far fa-calendar-alt me-1"></i>
+                                        <%= a.due_date ? new Date(a.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Due Date' %>
+                                    </div>
+                                    <div class="text-muted small mt-1" style="font-size: 0.72rem;">
+                                        Issued: <%= a.issue_date ? new Date(a.issue_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently' %> &bull; <%= a.max_points %> PTS
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons & Attachment -->
+                                <div class="col-6 col-md-3 text-end">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-end gap-2">
+                                        <% if (a.file_path || a.file_url) { %>
+                                            <a href="/student/assignments/download/<%= a.id %>" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-1">
+                                                <i class="fas fa-download"></i> Attachment
+                                            </a>
+                                            <a href="/student/assignments/view/<%= a.id %>" target="_blank" class="btn btn-sm btn-light rounded-pill px-2 fw-bold text-secondary" title="Preview attachment">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </a>
+                                        <% } else { %>
+                                            <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill small">No file attachment</span>
+                                        <% } %>
+                                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold view-details-btn"
+                                            data-title="<%= a.title %>"
+                                            data-course="<%= a.course_name || 'Course' %>"
+                                            data-class="<%= a.class_name %>"
+                                            data-teacher="<%= a.teacher_fname %> <%= a.teacher_lname %>"
+                                            data-due="<%= a.due_date ? new Date(a.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A' %>"
+                                            data-issue="<%= a.issue_date ? new Date(a.issue_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A' %>"
+                                            data-points="<%= a.max_points %>"
+                                            data-status="<%= a.statusLabel %>"
+                                            data-desc="<%= a.description || 'No detailed instructions provided.' %>"
+                                            data-file="<%= a.file_name || '' %>"
+                                            data-download-url="<%= (a.file_path || a.file_url) ? '/student/assignments/download/' + a.id : '' %>"
+                                            data-view-url="<%= (a.file_path || a.file_url) ? '/student/assignments/view/' + a.id : '' %>">
+                                            Instructions
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                            <% }); %>
+                        </div>
+                    </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="col-12 text-center py-5">
+                        <div class="premium-card p-5">
+                            <i class="fas fa-check-double fa-5x text-success opacity-30 mb-3"></i>
+                            <h3 class="fw-800 text-dark">All Caught Up!</h3>
+                            <p class="text-secondary fw-medium mx-auto" style="max-width: 500px;">
+                                <% if (activeStatus !== 'all' || activeCourseId !== 'all') { %>
+                                    No assignments match the selected filter. Try clearing the filter or viewing all tasks.
                                 <% } else { %>
-                                    <div class="col-12">
-                                        <div class="premium-panel text-center py-5">
-                                            <div class="mb-4">
-                                                <i class="fas fa-check-double fa-4x text-success opacity-30"></i>
-                                            </div>
-                                            <h4 class="text-dark fw-bold">All caught up!</h4>
-                                            <p class="text-secondary fw-medium">No pending assignments at the moment.
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <% } %>
-                </div>
-            </main>
+                                    You have no published assignments for your enrolled courses right now.
+                                <% } %>
+                            </p>
+                            <% if (activeStatus !== 'all' || activeCourseId !== 'all') { %>
+                                <a href="/student/assignments" class="btn btn-outline-primary px-4 py-2 rounded-pill fw-bold mt-2">
+                                    <i class="fas fa-undo me-1"></i> View All Assignments
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </main>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io({ query: { userId: '<%= user.id %>', role: 'student' } });
-        socket.on('newAssignment', (data) => {
-            // Build assignment card HTML
-            const card = document.createElement('div');
-            card.className = 'col-12';
-            card.innerHTML = `
-      <div class="assignment-card">
-        <div class="row align-items-center">
-          <div class="col-md-1 d-none d-md-block text-center">
-            <div class="rounded-3 bg-primary bg-opacity-10 text-primary mx-auto" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-              <i class="fas fa-file-alt"></i>
-            </div>
-          </div>
-          <div class="col-md-5">
-            <h5 class="text-dark m-0 fw-bold">${data.title}</h5>
-                <div class="text-secondary small fw-medium mt-1">
-                  <i class="fas fa-book me-1 text-primary"></i> ${data.className} &bull; ${data.courseName ? data.courseName + ' • ' : ''}<i class="fas fa-user-tie me-1 text-primary"></i> ${data.teacherName}
+    <!-- Assignment Details & Instructions Modal -->
+    <div class="modal fade" id="assignmentDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 28px; border: none; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+                <div class="modal-header border-0 p-4 pb-2">
+                    <div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary fw-bold mb-2" id="modalCourseBadge">Course</span>
+                        <h4 class="modal-title fw-800 text-dark" id="modalTitle">Assignment Title</h4>
+                        <div class="text-secondary small mt-1">
+                            <span id="modalClass"></span> &bull; Teacher: <strong id="modalTeacher"></strong>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-          </div>
-          <div class="col-md-3">
-            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Due Date</div>
-            <div class="text-${data.dueDate && new Date(data.dueDate) < new Date() ? 'danger' : 'dark'} fw-bold small">
-              <i class="far fa-calendar-alt me-1"></i> ${data.dueDate ? new Date(data.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Due Date'}
+                <div class="modal-body p-4 pt-3">
+                    <div class="row g-3 p-3 bg-light rounded-4 mb-4">
+                        <div class="col-4">
+                            <div class="text-secondary small fw-bold text-uppercase">Status</div>
+                            <div class="fw-bold text-dark" id="modalStatus">Pending</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-secondary small fw-bold text-uppercase">Due Date</div>
+                            <div class="fw-bold text-dark" id="modalDue">Due Date</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-secondary small fw-bold text-uppercase">Max Points</div>
+                            <div class="fw-bold text-dark" id="modalPoints">100 PTS</div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-dark mb-2"><i class="fas fa-align-left text-primary me-2"></i>Instructions & Guidance</h6>
+                    <div class="p-3 rounded-3 border bg-white small text-secondary mb-4" id="modalDescription" style="white-space: pre-wrap; line-height: 1.6;">
+                    </div>
+
+                    <div id="modalAttachmentSection" style="display: none;">
+                        <h6 class="fw-bold text-dark mb-2"><i class="fas fa-paperclip text-primary me-2"></i>Attached File</h6>
+                        <div class="p-3 rounded-4 bg-light d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-file-alt text-primary fa-2x"></i>
+                                <div>
+                                    <div class="fw-bold text-dark" id="modalFileName">file.pdf</div>
+                                    <div class="text-secondary small">Course material resource</div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="#" id="modalDownloadLink" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">
+                                    <i class="fas fa-download me-1"></i> Download
+                                </a>
+                                <a href="#" id="modalViewLink" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold">
+                                    <i class="fas fa-external-link-alt me-1"></i> Preview
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light px-4 py-2 rounded-pill fw-bold" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
-          </div>
-          <div class="col-md-3 text-md-end mt-3 mt-md-0">
-            <span class="badge rounded-pill bg-${data.isSubmitted ? 'success' : 'warning'} bg-opacity-10 text-${data.isSubmitted ? 'success' : 'warning'} px-3 py-2 fw-bold text-uppercase me-2" style="font-size: 0.65rem;">
-              ${data.isSubmitted ? 'SUBMITTED' : 'PENDING'}
-            </span>
-            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">View</button>
-          </div>
         </div>
-      </div>`;
-            const container = document.querySelector('.row.g-3');
-            if (container) {
-                container.prepend(card);
-            }
-        });
-    </script>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/translations.js"></script>
     <script src="/js/brocode-script.js"></script>
-</body>
+    <script>
+        // Details Modal Setup
+        document.querySelectorAll('.view-details-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const d = btn.dataset;
+                document.getElementById('modalTitle').textContent = d.title;
+                document.getElementById('modalCourseBadge').textContent = d.course;
+                document.getElementById('modalClass').textContent = d.class;
+                document.getElementById('modalTeacher').textContent = d.teacher;
+                document.getElementById('modalStatus').textContent = d.status;
+                document.getElementById('modalDue').textContent = d.due;
+                document.getElementById('modalPoints').textContent = `${d.points} PTS`;
+                document.getElementById('modalDescription').textContent = d.desc;
 
+                const attachmentSection = document.getElementById('modalAttachmentSection');
+                if (d.downloadUrl) {
+                    attachmentSection.style.display = 'block';
+                    document.getElementById('modalFileName').textContent = d.file || 'Assignment Resource File';
+                    document.getElementById('modalDownloadLink').href = d.downloadUrl;
+                    document.getElementById('modalViewLink').href = d.viewUrl || d.downloadUrl;
+                } else {
+                    attachmentSection.style.display = 'none';
+                }
+
+                const modal = new bootstrap.Modal(document.getElementById('assignmentDetailsModal'));
+                modal.show();
+            });
+        });
+
+        // Socket.IO for real-time assignment notifications
+        const socket = io({ query: { userId: '<%= user.id %>', role: 'student' } });
+        socket.on('newAssignment', data => {
+            const container = document.getElementById('liveAlertContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div class="alert alert-warning alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4" role="alert">
+                        <i class="fas fa-bell me-2"></i> <strong>New Assignment Published!</strong> "${data.title}" has been issued for ${data.courseName || data.className}. Due date: ${data.dueDate}.
+                        <a href="/student/assignments" class="alert-link ms-2">Click to refresh</a>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
 </html>

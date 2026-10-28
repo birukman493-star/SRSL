@@ -9,6 +9,12 @@ const {
 } = require('../middleware/verifyTeacherAssignment');
 const upload = require('../middleware/upload');
 const {
+  uploadMaterial,
+  uploadAssignment,
+  handleUpload,
+  safelyDeleteFile,
+} = require('../middleware/upload');
+const {
   getAcademicContext,
   formatSemesterLabel,
   DEFAULT_ACADEMIC_YEAR,
@@ -386,6 +392,29 @@ router.get('/dashboard', async (req, res) => {
 
     const academicContext = await getAcademicContext();
 
+    // Materials uploaded by this teacher
+    let materialsCount = 0;
+    try {
+      const [matCount] = await pool.execute(
+        'SELECT COUNT(*) as count FROM materials WHERE teacher_id = ?',
+        [teacherId]
+      );
+      materialsCount = (matCount[0] && matCount[0].count) || 0;
+    } catch (e) { console.error('Teacher materials count error:', e); }
+
+    // Recent announcements targeted to teachers
+    let recentAnnouncements = [];
+    try {
+      const [annRes] = await pool.execute(`
+        SELECT id, title, message, category, created_at
+        FROM announcements
+        WHERE audience IN ('all', 'teachers')
+        ORDER BY created_at DESC
+        LIMIT 3
+      `);
+      recentAnnouncements = annRes;
+    } catch (e) { console.error('Teacher dashboard announcements error:', e); }
+
     res.render('teacher/dashboard', {
       title: 'Teacher Dashboard',
       user: req.session.user,
@@ -395,12 +424,14 @@ router.get('/dashboard', async (req, res) => {
         pendingGrades: 0, // Placeholder or actual pending grades count
         attendanceRate: Math.round((attendanceRate[0] && attendanceRate[0].rate) || 0),
         academicProgress,
-        passingGradeAvg
+        passingGradeAvg,
+        materialsCount
       },
       classes,
       assignedCourses,
       activities,
       todaySchedule,
+      recentAnnouncements,
       academicContext,
     });
 
@@ -1858,148 +1889,521 @@ router.post('/grading-structures/:classId/:courseId', async (req, res) => {
   }
 });
 
-// 4. Upload assignments or materials
-router.post('/assignments/create', async (req, res) => {
+// Helper to get teacher's authorized course and class combinations
+async function getTeacherAuthorizedPairs(teacherId) {
+  const [pairs] = await pool.execute(`
+    SELECT DISTINCT
+      c.id as class_id,
+      c.name as class_name,
+      c.grade,
+      c.section,
+      co.id as course_id,
+      co.course_name,
+      co.course_code
+    FROM (
+      SELECT teacher_id, class_id, course_id FROM teacher_course_assignments WHERE status = 'active'
+      UNION
+      SELECT teacher_id, class_id, course_id FROM class_schedule WHERE teacher_id IS NOT NULL
+      UNION
+      SELECT ct.teacher_id, ct.class_id, co.id AS course_id
+      FROM class_teachers ct
+      JOIN courses co ON (co.teacher_id = ct.teacher_id OR co.is_active = 1)
+      UNION
+      SELECT courses.teacher_id, cs.class_id, cs.course_id
+      FROM class_schedule cs
+      JOIN courses ON courses.id = cs.course_id
+      WHERE courses.teacher_id IS NOT NULL
+    ) auth_map
+    JOIN classes c ON auth_map.class_id = c.id
+    JOIN courses co ON auth_map.course_id = co.id
+    WHERE auth_map.teacher_id = ?
+    ORDER BY co.course_name, c.grade, c.section
+  `, [teacherId]);
+
+  return pairs;
+}
+
+// Helper to calculate student access count for an assignment/class/course
+async function getAssignmentStudentCount(classId, courseId) {
   try {
+    const [rows] = await pool.execute(`
+      SELECT COUNT(DISTINCT s.id) as student_count
+      FROM students s
+      JOIN classes c ON c.id = ?
+      LEFT JOIN class_students cs ON (cs.student_id = s.id AND cs.class_id = c.id)
+      WHERE (
+        cs.class_id = c.id 
+        OR s.class_id = c.id 
+        OR (s.grade_level = c.grade AND s.section = c.section)
+      )
+      AND s.is_active = 1
+    `, [classId]);
+    return rows[0] ? rows[0].student_count : 0;
+  } catch (err) {
+    console.error('Error calculating student count:', err);
+    return 0;
+  }
+}
+
+// Helper to securely stream files preventing path traversal and execution
+function streamSecureFile(res, filePath, originalName, mimeType, isView = false) {
+  if (!filePath) {
+    return res.status(404).render('500-modern', { title: 'File Missing', message: 'No file associated with this record.' });
+  }
+
+  let fullPath = filePath;
+  if (!path.isAbsolute(fullPath)) {
+    fullPath = path.join(__dirname, '..', filePath.replace(/^\//, ''));
+  }
+
+  const uploadsRoot = path.resolve(__dirname, '..', 'uploads');
+  const resolvedPath = path.resolve(fullPath);
+
+  // Prevent path traversal outside uploads directory
+  if (!resolvedPath.startsWith(uploadsRoot)) {
+    return res.status(403).render('500-modern', { title: 'Access Denied', message: 'Invalid file request.' });
+  }
+
+  if (!fs.existsSync(resolvedPath)) {
+    return res.status(404).render('500-modern', { title: 'File Not Found', message: 'The requested file could not be found on the server.' });
+  }
+
+  const disposition = isView ? 'inline' : 'attachment';
+  const cleanName = originalName || path.basename(resolvedPath);
+  res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(cleanName)}"`);
+  res.setHeader('Content-Type', mimeType || 'application/octet-stream');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  const stream = fs.createReadStream(resolvedPath);
+  stream.on('error', (streamErr) => {
+    console.error('File stream error:', streamErr);
+    if (!res.headersSent) {
+      res.status(500).render('500-modern', { title: 'Server Error', message: 'Error streaming file.' });
+    }
+  });
+  stream.pipe(res);
+}
+
+// GET /teacher/authorized-pairs - JSON endpoint for courses and classes teacher can teach
+router.get('/authorized-pairs', async (req, res) => {
+  try {
+    const teacherId = req.teacherId;
+    const pairs = await getTeacherAuthorizedPairs(teacherId);
+    res.json(pairs);
+  } catch (error) {
+    console.error('Get authorized pairs error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ==========================================
+// ASSIGNMENTS ROUTES
+// ==========================================
+
+// GET /teacher/assignments - View teacher assignments
+router.get('/assignments', async (req, res) => {
+  try {
+    const teacherId = req.teacherId;
+
+    const [assignments] = await pool.execute(`
+      SELECT a.*, c.name as class_name, c.grade, c.section, co.course_name as course_name, co.course_code
+      FROM assignments a
+      JOIN classes c ON a.class_id = c.id
+      LEFT JOIN courses co ON a.course_id = co.id
+      WHERE a.teacher_id = ? OR a.created_by = ?
+      ORDER BY a.created_at DESC
+    `, [teacherId, teacherId]);
+
+    // Attach student reach count to each assignment
+    for (const a of assignments) {
+      a.student_count = await getAssignmentStudentCount(a.class_id, a.course_id);
+    }
+
+    const authorizedPairs = await getTeacherAuthorizedPairs(teacherId);
+
+    // Extract unique courses and unique classes for dropdowns
+    const courseMap = new Map();
+    const classMap = new Map();
+    for (const pair of authorizedPairs) {
+      if (!courseMap.has(pair.course_id)) {
+        courseMap.set(pair.course_id, { id: pair.course_id, name: pair.course_name, code: pair.course_code });
+      }
+      if (!classMap.has(pair.class_id)) {
+        classMap.set(pair.class_id, { id: pair.class_id, name: pair.class_name, grade: pair.grade, section: pair.section });
+      }
+    }
+
+    res.render('teacher/assignments', {
+      title: 'My Assignments',
+      user: req.session.user,
+      assignments,
+      authorizedPairs,
+      courses: Array.from(courseMap.values()),
+      classes: Array.from(classMap.values()),
+    });
+  } catch (error) {
+    console.error('Get assignments error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
+  }
+});
+
+// POST /teacher/assignments/create - Create assignment with optional attachment
+router.post('/assignments/create', handleUpload(uploadAssignment.single('file')), async (req, res) => {
+  try {
+    const teacherId = req.teacherId;
     const {
       classId,
       courseId,
       assignmentType,
       title,
       dueDate,
+      issueDate,
       maxPoints,
-      timeLimit,
-      attemptsAllowed,
       description,
-      learningObjectives,
-      additionalLinks,
-      visibleToStudents
+      isPublished,
+      visibleToStudents,
     } = req.body;
-    const teacherId = req.teacherId;
 
-    // Verify teacher has access to this class
-    const [classCheck] = await pool.execute(`
-      SELECT id FROM classes WHERE id = ? AND id IN (
-        SELECT class_id FROM class_teachers WHERE teacher_id = ?
-        UNION
-        SELECT class_id FROM teacher_course_assignments WHERE teacher_id = ? AND status = 'active'
-      )
-    `, [classId, teacherId, teacherId]);
-
-    if (classCheck.length === 0) {
-      return res.status(403).json({ message: 'Access denied' });
+    if (!title || !title.trim()) {
+      if (req.file) safelyDeleteFile(req.file.path);
+      return res.status(400).json({ message: 'Assignment title is required' });
+    }
+    if (!classId || !courseId) {
+      if (req.file) safelyDeleteFile(req.file.path);
+      return res.status(400).json({ message: 'Please select both an authorized course and class' });
+    }
+    if (!dueDate) {
+      if (req.file) safelyDeleteFile(req.file.path);
+      return res.status(400).json({ message: 'Due date is required' });
     }
 
-    // Get academic year
-    const [classDetails] = await pool.execute('SELECT academic_year FROM classes WHERE id = ?', [classId]);
-    const academicYear = classDetails[0] ? classDetails[0].academic_year : '';
+    const parsedClassId = Number(classId);
+    const parsedCourseId = Number(courseId);
 
-    // Get semester
-    const [structureDetails] = await pool.execute(
-      'SELECT semester FROM grading_structures WHERE class_id = ? AND teacher_id = ? LIMIT 1',
-      [classId, teacherId]
-    );
-    const semester = structureDetails[0] ? structureDetails[0].semester : 'Semester 1';
+    // Validate teacher assignment permissions
+    const authorized = await isTeacherAssigned(pool, teacherId, parsedClassId, parsedCourseId);
+    if (!authorized) {
+      if (req.file) safelyDeleteFile(req.file.path);
+      return res.status(403).json({ message: 'Access denied: You are not authorized to teach this course/class.' });
+    }
 
-    // Insert assignment and capture insertId
+    // Validate dates
+    const effectiveIssueDate = issueDate ? issueDate : new Date().toISOString().slice(0, 10);
+    if (new Date(dueDate) < new Date(effectiveIssueDate)) {
+      if (req.file) safelyDeleteFile(req.file.path);
+      return res.status(400).json({ message: 'Due date cannot be before the issue date' });
+    }
+
+    // Academic year & semester
+    const [classDetails] = await pool.execute('SELECT academic_year, semester FROM classes WHERE id = ?', [parsedClassId]);
+    const academicYear = (classDetails[0] && classDetails[0].academic_year) || '2025-2026';
+    const semester = (classDetails[0] && classDetails[0].semester) || '1';
+
+    const published = isPublished === 'false' || isPublished === false || isPublished === '0' || visibleToStudents === 'off' ? 0 : 1;
+
+    // File metadata
+    const fileName = req.file ? req.file.originalname : null;
+    const filePath = req.file ? req.file.path : null;
+    const fileSize = req.file ? req.file.size : null;
+    const mimeType = req.file ? req.file.mimetype : null;
+
     const [result] = await pool.execute(`
       INSERT INTO assignments (
-        class_id, course_id, assignment_type, title, description, learning_objectives, additional_links, due_date, max_points, time_limit, 
-        attempts_allowed, visible_to_students, created_by, teacher_id, academic_year, semester, semester_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        class_id, course_id, assignment_type, title, description,
+        due_date, issue_date, max_points, visible_to_students, is_published,
+        created_by, teacher_id, academic_year, semester, semester_id,
+        file_name, file_path, file_size, mime_type, file_url
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      classId, courseId || null, assignmentType, title, description, learningObjectives, additionalLinks, dueDate || null, maxPoints || 100.00, timeLimit || null,
-      attemptsAllowed || 'unlimited', visibleToStudents === 'on' ? 1 : 0, teacherId, teacherId, academicYear, semester, semester
+      parsedClassId,
+      parsedCourseId,
+      assignmentType || 'homework',
+      title.trim(),
+      description || '',
+      dueDate,
+      effectiveIssueDate,
+      Number(maxPoints) > 0 ? Number(maxPoints) : 100.00,
+      published,
+      published,
+      teacherId,
+      teacherId,
+      academicYear,
+      semester,
+      semester,
+      fileName,
+      filePath,
+      fileSize,
+      mimeType,
+      null,
     ]);
 
-    // Emit real-time update to students of the class via Socket.IO
+    const assignmentId = result.insertId;
+    if (req.file) {
+      await pool.execute('UPDATE assignments SET file_url = ? WHERE id = ?', [
+        `/teacher/assignments/download/${assignmentId}`,
+        assignmentId,
+      ]);
+    }
+
+    // Emit Socket.IO notification if published
     const io = req.app.get('io');
-    if (io) {
-      // Fetch all student user IDs for the class
+    if (io && published) {
       const [students] = await pool.execute(`
         SELECT s.id as student_id, u.id as user_id
         FROM students s
         JOIN users u ON s.user_id = u.id
-        WHERE s.class_id = ?
-      `, [classId]);
+        WHERE s.class_id = ? OR s.id IN (SELECT student_id FROM class_students WHERE class_id = ?)
+      `, [parsedClassId, parsedClassId]);
 
-      // Fetch class name and course name for payload
-      const [classInfo] = await pool.execute(`SELECT name FROM classes WHERE id = ?`, [classId]);
-      const className = classInfo.length ? classInfo[0].name : '';
-      let courseName = '';
-      if (courseId) {
-        const [courseInfo] = await pool.execute(`SELECT name FROM courses WHERE id = ?`, [courseId]);
-        courseName = courseInfo.length ? courseInfo[0].name : '';
-      }
+      const [classInfo] = await pool.execute('SELECT name FROM classes WHERE id = ?', [parsedClassId]);
+      const [courseInfo] = await pool.execute('SELECT course_name FROM courses WHERE id = ?', [parsedCourseId]);
 
       const payload = {
-        assignmentId: result.insertId,
-        title,
-        classId,
-        className,
-        courseId: courseId || null,
-        courseName,
-        assignmentType,
+        assignmentId,
+        title: title.trim(),
+        classId: parsedClassId,
+        className: classInfo[0] ? classInfo[0].name : '',
+        courseId: parsedCourseId,
+        courseName: courseInfo[0] ? courseInfo[0].course_name : '',
+        assignmentType: assignmentType || 'homework',
         dueDate,
+        issueDate: effectiveIssueDate,
         maxPoints,
         description,
-        teacherId,
-        teacherName: `${req.session.user.first_name || ''} ${req.session.user.last_name || ''}`
+        hasAttachment: !!req.file,
+        fileName,
+        teacherName: `${req.session.user.first_name || ''} ${req.session.user.last_name || ''}`.trim(),
       };
-      // Emit to each student in the class
+
       students.forEach(st => {
         io.to(`student_${st.user_id}`).emit('newAssignment', payload);
       });
-      // Also emit to the class room
-      io.to(`class_${classId}`).emit('newAssignment', payload);
+      io.to(`class_${parsedClassId}`).emit('newAssignment', payload);
     }
 
-    res.json({ message: 'Assignment created successfully' });
+    await logActivity(teacherId, 'Assignment Created', `Created assignment: ${title.trim()}`, parsedClassId, parsedCourseId);
 
+    res.json({ success: true, message: 'Assignment created successfully', assignmentId });
   } catch (error) {
+    if (req.file) safelyDeleteFile(req.file.path);
     console.error('Create assignment error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 });
 
-
-// Get assignments for a teacher
-router.get('/assignments', async (req, res) => {
+// POST /teacher/assignments/edit/:id - Edit assignment details
+router.post('/assignments/edit/:id', handleUpload(uploadAssignment.single('file')), async (req, res) => {
   try {
     const teacherId = req.teacherId;
+    const assignmentId = req.params.id;
+    const {
+      classId,
+      courseId,
+      assignmentType,
+      title,
+      dueDate,
+      issueDate,
+      maxPoints,
+      description,
+      isPublished,
+    } = req.body;
 
-    const [assignments] = await pool.execute(`
-      SELECT a.*, c.name as class_name, c.grade, c.section, co.course_name as course_name
-      FROM assignments a
-      JOIN classes c ON a.class_id = c.id
-      LEFT JOIN courses co ON a.course_id = co.id
-      WHERE a.teacher_id = ?
-      ORDER BY a.created_at DESC
-    `, [teacherId]);
+    const [existing] = await pool.execute(
+      'SELECT * FROM assignments WHERE id = ? AND (teacher_id = ? OR created_by = ?)',
+      [assignmentId, teacherId, teacherId]
+    );
 
-    const [classes] = await pool.execute(`
-      SELECT id, name, grade, section FROM classes 
-      WHERE id IN (
-        SELECT class_id FROM class_teachers WHERE teacher_id = ?
-        UNION
-        SELECT class_id FROM teacher_course_assignments WHERE teacher_id = ? AND status = 'active'
-      )
-    `, [teacherId, teacherId]);
+    if (existing.length === 0) {
+      if (req.file) safelyDeleteFile(req.file.path);
+      return res.status(403).json({ message: 'Access denied or assignment not found' });
+    }
 
-    res.render('teacher/assignments', {
-      title: 'My Assignments',
-      user: req.session.user,
-      assignments,
-      classes
-    });
+    const current = existing[0];
+    const targetClassId = classId ? Number(classId) : current.class_id;
+    const targetCourseId = courseId ? Number(courseId) : current.course_id;
 
+    if (classId || courseId) {
+      const authorized = await isTeacherAssigned(pool, teacherId, targetClassId, targetCourseId);
+      if (!authorized) {
+        if (req.file) safelyDeleteFile(req.file.path);
+        return res.status(403).json({ message: 'Access denied: You are not authorized for the selected course/class' });
+      }
+    }
+
+    const newTitle = title ? title.trim() : current.title;
+    const newDueDate = dueDate || current.due_date;
+    const newIssueDate = issueDate || current.issue_date || new Date().toISOString().slice(0, 10);
+
+    if (new Date(newDueDate) < new Date(newIssueDate)) {
+      if (req.file) safelyDeleteFile(req.file.path);
+      return res.status(400).json({ message: 'Due date cannot be before issue date' });
+    }
+
+    let fileName = current.file_name;
+    let filePath = current.file_path;
+    let fileSize = current.file_size;
+    let mimeType = current.mime_type;
+    let fileUrl = current.file_url;
+
+    if (req.file) {
+      // Safely delete old attachment if one exists
+      if (current.file_path) {
+        safelyDeleteFile(current.file_path);
+      }
+      fileName = req.file.originalname;
+      filePath = req.file.path;
+      fileSize = req.file.size;
+      mimeType = req.file.mimetype;
+      fileUrl = `/teacher/assignments/download/${assignmentId}`;
+    }
+
+    const published = isPublished !== undefined
+      ? (isPublished === 'true' || isPublished === '1' || isPublished === true || isPublished === 'on' ? 1 : 0)
+      : current.is_published;
+
+    await pool.execute(`
+      UPDATE assignments
+      SET class_id = ?, course_id = ?, assignment_type = ?, title = ?, description = ?,
+          due_date = ?, issue_date = ?, max_points = ?, visible_to_students = ?, is_published = ?,
+          file_name = ?, file_path = ?, file_size = ?, mime_type = ?, file_url = ?
+      WHERE id = ?
+    `, [
+      targetClassId,
+      targetCourseId,
+      assignmentType || current.assignment_type,
+      newTitle,
+      description !== undefined ? description : current.description,
+      newDueDate,
+      newIssueDate,
+      maxPoints ? Number(maxPoints) : current.max_points,
+      published,
+      published,
+      fileName,
+      filePath,
+      fileSize,
+      mimeType,
+      fileUrl,
+      assignmentId,
+    ]);
+
+    await logActivity(teacherId, 'Assignment Updated', `Updated assignment: ${newTitle}`, targetClassId, targetCourseId);
+
+    res.json({ success: true, message: 'Assignment updated successfully' });
   } catch (error) {
-    console.error('Get assignments error:', error);
+    if (req.file) safelyDeleteFile(req.file.path);
+    console.error('Edit assignment error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+});
+
+// POST /teacher/assignments/toggle-publish/:id - Quick toggle publish/unpublish
+router.post('/assignments/toggle-publish/:id', async (req, res) => {
+  try {
+    const teacherId = req.teacherId;
+    const assignmentId = req.params.id;
+
+    const [existing] = await pool.execute(
+      'SELECT id, is_published, visible_to_students, title FROM assignments WHERE id = ? AND (teacher_id = ? OR created_by = ?)',
+      [assignmentId, teacherId, teacherId]
+    );
+
+    if (existing.length === 0) {
+      return res.status(403).json({ message: 'Access denied or assignment not found' });
+    }
+
+    const newStatus = existing[0].is_published ? 0 : 1;
+    await pool.execute(
+      'UPDATE assignments SET is_published = ?, visible_to_students = ? WHERE id = ?',
+      [newStatus, newStatus, assignmentId]
+    );
+
+    res.json({
+      success: true,
+      isPublished: newStatus === 1,
+      message: `Assignment "${existing[0].title}" ${newStatus ? 'published' : 'unpublished'} successfully`,
+    });
+  } catch (error) {
+    console.error('Toggle publish error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// --- COURSE MATERIALS ROUTES ---
+// POST /teacher/assignments/delete/:id - Delete assignment
+router.post('/assignments/delete/:id', async (req, res) => {
+  try {
+    const teacherId = req.teacherId;
+    const assignmentId = req.params.id;
+
+    const [existing] = await pool.execute(
+      'SELECT id, file_path, title FROM assignments WHERE id = ? AND (teacher_id = ? OR created_by = ?)',
+      [assignmentId, teacherId, teacherId]
+    );
+
+    if (existing.length === 0) {
+      return res.status(403).json({ message: 'Access denied or assignment not found' });
+    }
+
+    if (existing[0].file_path) {
+      safelyDeleteFile(existing[0].file_path);
+    }
+
+    await pool.execute('DELETE FROM assignments WHERE id = ?', [assignmentId]);
+    await logActivity(teacherId, 'Assignment Deleted', `Deleted assignment: ${existing[0].title}`);
+
+    res.json({ success: true, message: 'Assignment deleted successfully' });
+  } catch (error) {
+    console.error('Delete assignment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET /teacher/assignments/download/:id - Download assignment attachment
+router.get('/assignments/download/:id', async (req, res) => {
+  try {
+    const teacherId = req.teacherId;
+    const assignmentId = req.params.id;
+
+    const [rows] = await pool.execute(
+      'SELECT * FROM assignments WHERE id = ? AND (teacher_id = ? OR created_by = ?)',
+      [assignmentId, teacherId, teacherId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).render('500-modern', { title: 'Not Found', message: 'Assignment attachment not found.' });
+    }
+
+    streamSecureFile(res, rows[0].file_path, rows[0].file_name, rows[0].mime_type, false);
+  } catch (error) {
+    console.error('Download assignment error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
+  }
+});
+
+// GET /teacher/assignments/view/:id - Inline view assignment attachment
+router.get('/assignments/view/:id', async (req, res) => {
+  try {
+    const teacherId = req.teacherId;
+    const assignmentId = req.params.id;
+
+    const [rows] = await pool.execute(
+      'SELECT * FROM assignments WHERE id = ? AND (teacher_id = ? OR created_by = ?)',
+      [assignmentId, teacherId, teacherId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).render('500-modern', { title: 'Not Found', message: 'Assignment attachment not found.' });
+    }
+
+    streamSecureFile(res, rows[0].file_path, rows[0].file_name, rows[0].mime_type, true);
+  } catch (error) {
+    console.error('View assignment error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
+  }
+});
+
+// ==========================================
+// COURSE MATERIALS ROUTES
+// ==========================================
 
 // GET /teacher/materials - View and manage course materials
 router.get('/materials', async (req, res) => {
@@ -2007,29 +2411,37 @@ router.get('/materials', async (req, res) => {
     const teacherId = req.teacherId;
 
     const [materials] = await pool.execute(`
-        SELECT m.*, c.name as class_name, cr.course_name as course_name, t.first_name as teacher_fname, t.last_name as teacher_lname
-        FROM materials m
-        JOIN classes c ON m.class_id = c.id
-        LEFT JOIN teachers t ON m.teacher_id = t.id
-        LEFT JOIN courses cr ON m.course_id = cr.id
+      SELECT m.*, c.name as class_name, c.grade, c.section,
+             cr.course_name as course_name, cr.course_code,
+             t.first_name as teacher_fname, t.last_name as teacher_lname
+      FROM materials m
+      JOIN classes c ON m.class_id = c.id
+      LEFT JOIN teachers t ON m.teacher_id = t.id
+      LEFT JOIN courses cr ON m.course_id = cr.id
       WHERE m.teacher_id = ?
       ORDER BY m.created_at DESC
     `, [teacherId]);
 
-    const [classes] = await pool.execute(`
-      SELECT id, name, grade, section FROM classes 
-      WHERE id IN (
-        SELECT class_id FROM class_teachers WHERE teacher_id = ?
-        UNION
-        SELECT class_id FROM teacher_course_assignments WHERE teacher_id = ? AND status = 'active'
-      )
-    `, [teacherId, teacherId]);
+    const authorizedPairs = await getTeacherAuthorizedPairs(teacherId);
+
+    const courseMap = new Map();
+    const classMap = new Map();
+    for (const pair of authorizedPairs) {
+      if (!courseMap.has(pair.course_id)) {
+        courseMap.set(pair.course_id, { id: pair.course_id, name: pair.course_name, code: pair.course_code });
+      }
+      if (!classMap.has(pair.class_id)) {
+        classMap.set(pair.class_id, { id: pair.class_id, name: pair.class_name, grade: pair.grade, section: pair.section });
+      }
+    }
 
     res.render('teacher/materials', {
       title: 'Course Materials',
       user: req.session.user,
       materials,
-      classes
+      authorizedPairs,
+      courses: Array.from(courseMap.values()),
+      classes: Array.from(classMap.values()),
     });
   } catch (error) {
     console.error('Get materials error:', error);
@@ -2037,78 +2449,185 @@ router.get('/materials', async (req, res) => {
   }
 });
 
-// POST /teacher/materials/create - Create new material
-router.post('/materials/create', upload.single('file'), async (req, res) => {
-  console.log('Create material request body:', req.body);
-  console.log('Uploaded file info:', req.file);
+// POST /teacher/materials/create - Upload course material
+router.post('/materials/create', handleUpload(uploadMaterial.single('file')), async (req, res) => {
   try {
-    const { classId, courseId, title, description, materialType } = req.body;
-    const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
     const teacherId = req.teacherId;
+    const { classId, courseId, title, description, materialType } = req.body;
 
-    // Verify class belongs to teacher
-    const [classCheck] = await pool.execute(`
-      SELECT id FROM classes WHERE id = ? AND id IN (
-        SELECT class_id FROM class_teachers WHERE teacher_id = ?
-        UNION
-        SELECT class_id FROM teacher_course_assignments WHERE teacher_id = ? AND status = 'active'
-      )
-    `, [classId, teacherId, teacherId]);
-
-    if (classCheck.length === 0) {
-      return res.status(403).json({ message: 'Access denied' });
+    if (!title || !title.trim()) {
+      if (req.file) safelyDeleteFile(req.file.path);
+      return res.status(400).json({ message: 'Material title is required' });
+    }
+    if (!classId || !courseId) {
+      if (req.file) safelyDeleteFile(req.file.path);
+      return res.status(400).json({ message: 'Please select both an authorized course and class' });
     }
 
-    // Get academic year and semester for materials
-    const [classDetails] = await pool.execute('SELECT academic_year FROM classes WHERE id = ?', [classId]);
-    const academicYear = classDetails[0] ? classDetails[0].academic_year : '';
+    const parsedClassId = Number(classId);
+    const parsedCourseId = Number(courseId);
 
-    // Get semester
-    const [structureDetails] = await pool.execute(
-      'SELECT semester FROM grading_structures WHERE class_id = ? AND teacher_id = ? LIMIT 1',
-      [classId, teacherId]
-    );
-    const semester = structureDetails[0] ? structureDetails[0].semester : 'Semester 1';
+    const authorized = await isTeacherAssigned(pool, teacherId, parsedClassId, parsedCourseId);
+    if (!authorized) {
+      if (req.file) safelyDeleteFile(req.file.path);
+      return res.status(403).json({ message: 'Access denied: You are not authorized to teach this course/class.' });
+    }
+
+    const [classDetails] = await pool.execute('SELECT academic_year, semester FROM classes WHERE id = ?', [parsedClassId]);
+    const academicYear = (classDetails[0] && classDetails[0].academic_year) || '2025-2026';
+    const semester = (classDetails[0] && classDetails[0].semester) || '1';
+
+    const fileName = req.file ? req.file.originalname : null;
+    const filePath = req.file ? req.file.path : null;
+    const fileSize = req.file ? req.file.size : null;
+    const mimeType = req.file ? req.file.mimetype : null;
 
     const [result] = await pool.execute(`
-      INSERT INTO materials (class_id, teacher_id, course_id, title, description, file_url, material_type, academic_year, semester)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [classId, teacherId, courseId || null, title || '', description || '', fileUrl, materialType || 'reading', academicYear || '', semester || 'Semester 1']);
+      INSERT INTO materials (
+        class_id, teacher_id, course_id, title, description,
+        file_name, file_path, file_size, mime_type, file_url,
+        material_type, academic_year, semester
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      parsedClassId,
+      teacherId,
+      parsedCourseId,
+      title.trim(),
+      description || '',
+      fileName,
+      filePath,
+      fileSize,
+      mimeType,
+      null,
+      materialType || 'reading',
+      academicYear,
+      semester,
+    ]);
 
-    // Emit real-time update to students of the class via Socket.IO
+    const materialId = result.insertId;
+    if (req.file) {
+      await pool.execute('UPDATE materials SET file_url = ? WHERE id = ?', [
+        `/teacher/materials/download/${materialId}`,
+        materialId,
+      ]);
+    }
+
+    // Socket.io real-time update to students
     const io = req.app.get('io');
     if (io) {
       const [students] = await pool.execute(`
         SELECT s.id as student_id, u.id as user_id
         FROM students s
         JOIN users u ON s.user_id = u.id
-        WHERE s.class_id = ?
-      `, [classId]);
+        WHERE s.class_id = ? OR s.id IN (SELECT student_id FROM class_students WHERE class_id = ?)
+      `, [parsedClassId, parsedClassId]);
+
+      const [courseInfo] = await pool.execute('SELECT course_name FROM courses WHERE id = ?', [parsedCourseId]);
+      const [classInfo] = await pool.execute('SELECT name FROM classes WHERE id = ?', [parsedClassId]);
 
       const payload = {
-        materialId: result.insertId,
-        title,
-        classId,
-        courseId: courseId || null,
+        materialId,
+        title: title.trim(),
+        classId: parsedClassId,
+        className: classInfo[0] ? classInfo[0].name : '',
+        courseId: parsedCourseId,
+        courseName: courseInfo[0] ? courseInfo[0].course_name : '',
         materialType: materialType || 'reading',
         description,
-        fileUrl,
-        teacherId,
-        teacherName: `${req.session.user.first_name || ''} ${req.session.user.last_name || ''}`
+        hasFile: !!req.file,
+        fileName,
+        teacherName: `${req.session.user.first_name || ''} ${req.session.user.last_name || ''}`.trim(),
       };
+
       students.forEach(st => {
         io.to(`student_${st.user_id}`).emit('newMaterial', payload);
-        io.to(`class_${classId}`).emit('newMaterial', payload);
       });
+      io.to(`class_${parsedClassId}`).emit('newMaterial', payload);
     }
-    // Log activity
-    await logActivity(teacherId, 'Material Uploaded', `Uploaded ${materialType || 'resource'}: ${title}`, classId, courseId || null);
 
-    console.log('Material insert result:', result);
-    res.json({ message: 'Material added successfully' });
+    await logActivity(teacherId, 'Material Uploaded', `Uploaded ${materialType || 'resource'}: ${title.trim()}`, parsedClassId, parsedCourseId);
+
+    res.json({ success: true, message: 'Material published successfully', materialId });
   } catch (error) {
+    if (req.file) safelyDeleteFile(req.file.path);
     console.error('Create material error:', error);
-    console.error('Create material error details:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
+  }
+});
+
+// POST /teacher/materials/edit/:id - Edit material details & optional file replacement
+router.post('/materials/edit/:id', handleUpload(uploadMaterial.single('file')), async (req, res) => {
+  try {
+    const teacherId = req.teacherId;
+    const materialId = req.params.id;
+    const { classId, courseId, title, description, materialType } = req.body;
+
+    const [existing] = await pool.execute(
+      'SELECT * FROM materials WHERE id = ? AND teacher_id = ?',
+      [materialId, teacherId]
+    );
+
+    if (existing.length === 0) {
+      if (req.file) safelyDeleteFile(req.file.path);
+      return res.status(403).json({ message: 'Access denied or material not found' });
+    }
+
+    const current = existing[0];
+    const targetClassId = classId ? Number(classId) : current.class_id;
+    const targetCourseId = courseId ? Number(courseId) : current.course_id;
+
+    if (classId || courseId) {
+      const authorized = await isTeacherAssigned(pool, teacherId, targetClassId, targetCourseId);
+      if (!authorized) {
+        if (req.file) safelyDeleteFile(req.file.path);
+        return res.status(403).json({ message: 'Access denied: You are not authorized for the selected course/class' });
+      }
+    }
+
+    let fileName = current.file_name;
+    let filePath = current.file_path;
+    let fileSize = current.file_size;
+    let mimeType = current.mime_type;
+    let fileUrl = current.file_url;
+
+    if (req.file) {
+      if (current.file_path) {
+        safelyDeleteFile(current.file_path);
+      }
+      fileName = req.file.originalname;
+      filePath = req.file.path;
+      fileSize = req.file.size;
+      mimeType = req.file.mimetype;
+      fileUrl = `/teacher/materials/download/${materialId}`;
+    }
+
+    const newTitle = title ? title.trim() : current.title;
+
+    await pool.execute(`
+      UPDATE materials
+      SET class_id = ?, course_id = ?, title = ?, description = ?,
+          material_type = ?, file_name = ?, file_path = ?, file_size = ?, mime_type = ?, file_url = ?
+      WHERE id = ?
+    `, [
+      targetClassId,
+      targetCourseId,
+      newTitle,
+      description !== undefined ? description : current.description,
+      materialType || current.material_type,
+      fileName,
+      filePath,
+      fileSize,
+      mimeType,
+      fileUrl,
+      materialId,
+    ]);
+
+    await logActivity(teacherId, 'Material Updated', `Updated material: ${newTitle}`, targetClassId, targetCourseId);
+
+    res.json({ success: true, message: 'Material updated successfully' });
+  } catch (error) {
+    if (req.file) safelyDeleteFile(req.file.path);
+    console.error('Edit material error:', error);
     res.status(500).json({ message: error.message || 'Server error' });
   }
 });
@@ -2119,22 +2638,70 @@ router.post('/materials/delete/:id', async (req, res) => {
     const materialId = req.params.id;
     const teacherId = req.teacherId;
 
-    // Verify material belongs to teacher
-    const [materialCheck] = await pool.execute(
-      'SELECT id FROM materials WHERE id = ? AND teacher_id = ?',
+    const [existing] = await pool.execute(
+      'SELECT id, file_path, title FROM materials WHERE id = ? AND teacher_id = ?',
       [materialId, teacherId]
     );
 
-    if (materialCheck.length === 0) {
-      return res.status(403).json({ message: 'Access denied' });
+    if (existing.length === 0) {
+      return res.status(403).json({ message: 'Access denied or material not found' });
+    }
+
+    if (existing[0].file_path) {
+      safelyDeleteFile(existing[0].file_path);
     }
 
     await pool.execute('DELETE FROM materials WHERE id = ?', [materialId]);
+    await logActivity(teacherId, 'Material Deleted', `Deleted material: ${existing[0].title}`);
 
-    res.json({ message: 'Material deleted successfully' });
+    res.json({ success: true, message: 'Material deleted successfully' });
   } catch (error) {
     console.error('Delete material error:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET /teacher/materials/download/:id - Secure download material
+router.get('/materials/download/:id', async (req, res) => {
+  try {
+    const teacherId = req.teacherId;
+    const materialId = req.params.id;
+
+    const [rows] = await pool.execute(
+      'SELECT * FROM materials WHERE id = ? AND teacher_id = ?',
+      [materialId, teacherId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).render('500-modern', { title: 'Not Found', message: 'Material not found.' });
+    }
+
+    streamSecureFile(res, rows[0].file_path, rows[0].file_name, rows[0].mime_type, false);
+  } catch (error) {
+    console.error('Download material error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
+  }
+});
+
+// GET /teacher/materials/view/:id - Secure inline view material
+router.get('/materials/view/:id', async (req, res) => {
+  try {
+    const teacherId = req.teacherId;
+    const materialId = req.params.id;
+
+    const [rows] = await pool.execute(
+      'SELECT * FROM materials WHERE id = ? AND teacher_id = ?',
+      [materialId, teacherId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).render('500-modern', { title: 'Not Found', message: 'Material not found.' });
+    }
+
+    streamSecureFile(res, rows[0].file_path, rows[0].file_name, rows[0].mime_type, true);
+  } catch (error) {
+    console.error('View material error:', error);
+    res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
   }
 });
 
@@ -2232,7 +2799,7 @@ router.get('/schedule', async (req, res) => {
     const teacherId = req.teacherId;
 
     const [schedule] = await pool.execute(`
-      SELECT DISTINCT cs.*, c.course_name, c.course_code, cl.name as class_name
+      SELECT DISTINCT cs.*, c.course_name, c.course_code, cl.name as class_name, cl.grade, cl.section
       FROM class_schedule cs
       JOIN courses c ON cs.course_id = c.id
       JOIN classes cl ON cs.class_id = cl.id
@@ -2240,8 +2807,10 @@ router.get('/schedule', async (req, res) => {
       LEFT JOIN class_teachers ct ON cs.class_id = ct.class_id
       WHERE (tca.teacher_id = ? AND tca.status = 'active')
          OR (ct.teacher_id = ?)
+         OR (cs.teacher_id = ?)
+         OR (c.teacher_id = ?)
       ORDER BY FIELD(cs.day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), cs.start_time
-    `, [teacherId, teacherId]);
+    `, [teacherId, teacherId, teacherId, teacherId]);
 
     res.render('teacher/schedule', {
       title: 'My Schedule',
@@ -2340,7 +2909,7 @@ router.post('/profile/update', async (req, res) => {
 router.get('/announcements', async (req, res) => {
   try {
     const [announcements] = await pool.execute(`
-      SELECT a.*, u.first_name, u.last_name
+      SELECT a.*, u.first_name, u.last_name, a.message as content
       FROM announcements a
       LEFT JOIN users u ON a.created_by = u.id
       WHERE a.audience IN ('all', 'teachers')

@@ -1,4 +1,4 @@
-﻿<!-- Student Sidebar Partial -->
+<!-- Student Sidebar Partial -->
 <aside class="glass-sidebar" id="sidebar">
     <!-- Mobile Close Button -->
     <button class="sidebar-close-btn d-lg-none" id="sidebar-close" aria-label="Close sidebar">
@@ -49,10 +49,24 @@
                 </a>
             </li>
             <li class="sidebar-nav-item">
+                <a href="/student/assignments"
+                    class="sidebar-nav-link <%= title === 'My Assignments' ? 'active' : '' %>">
+                    <i class="fas fa-tasks"></i>
+                    <span>Assignments</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
                 <a href="/student/materials"
                     class="sidebar-nav-link <%= title === 'Course Materials' ? 'active' : '' %>">
                     <i class="fas fa-file-pdf"></i>
                     <span>Course Materials</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="/student/schedule"
+                    class="sidebar-nav-link <%= (title === 'My Timetable' || title === 'Class Schedule' || title === 'Academic Timetable') ? 'active' : '' %>">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Class Schedule</span>
                 </a>
             </li>
             <li class="sidebar-nav-item">

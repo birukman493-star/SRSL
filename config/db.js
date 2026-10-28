@@ -561,6 +561,28 @@ const { getActiveAcademicYear, getSetting, formatSemesterLabel, DEFAULT_SEMESTER
       await dbConnection.execute('ALTER TABLE assignments ADD COLUMN semester VARCHAR(50)');
       console.log('Added academic fields to assignments');
     } catch (e) { }
+
+    try {
+      await dbConnection.execute('ALTER TABLE assignments ADD COLUMN file_url VARCHAR(512)');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
+    try {
+      await dbConnection.execute('ALTER TABLE assignments ADD COLUMN file_name VARCHAR(255)');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
+    try {
+      await dbConnection.execute('ALTER TABLE assignments ADD COLUMN file_path VARCHAR(512)');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
+    try {
+      await dbConnection.execute('ALTER TABLE assignments ADD COLUMN file_size INT');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
+    try {
+      await dbConnection.execute('ALTER TABLE assignments ADD COLUMN mime_type VARCHAR(100)');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
+    try {
+      await dbConnection.execute('ALTER TABLE assignments ADD COLUMN issue_date DATE');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
+    try {
+      await dbConnection.execute('ALTER TABLE assignments ADD COLUMN is_published BOOLEAN DEFAULT TRUE');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
     await dbConnection.execute(`
       CREATE TABLE IF NOT EXISTS course_prerequisites (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -855,6 +877,19 @@ const { getActiveAcademicYear, getSetting, formatSemesterLabel, DEFAULT_SEMESTER
       )
     `);
 
+    try {
+      await dbConnection.execute('ALTER TABLE materials ADD COLUMN file_name VARCHAR(255)');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
+    try {
+      await dbConnection.execute('ALTER TABLE materials ADD COLUMN file_path VARCHAR(512)');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
+    try {
+      await dbConnection.execute('ALTER TABLE materials ADD COLUMN file_size INT');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
+    try {
+      await dbConnection.execute('ALTER TABLE materials ADD COLUMN mime_type VARCHAR(100)');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
+
     // Create teacher_activities table
     await dbConnection.execute(`
       CREATE TABLE IF NOT EXISTS teacher_activities (
@@ -983,6 +1018,12 @@ const { getActiveAcademicYear, getSetting, formatSemesterLabel, DEFAULT_SEMESTER
       )
     `);
     console.log('Verified announcements table');
+
+    try {
+      await dbConnection.execute("ALTER TABLE announcements ADD COLUMN category VARCHAR(50) DEFAULT 'general'");
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+    }
 
     // Create national_exams table
     await dbConnection.execute(`

@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Abdigudina</title>
+    <title><%= title %> - Abdigudina Student</title>
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -13,148 +13,263 @@
     <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
     <style>
-        body { background: #f8fafc; color: #0f172a; }
-        .main-panel { background: #f8fafc; }
-        .premium-panel {
-            background: white;
+        .profile-hero-card {
+            background: #ffffff;
             border-radius: 24px;
-            padding: 2rem;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            position: relative;
         }
-        .form-label-custom {
-            font-size: 0.65rem;
+        .profile-hero-cover {
+            height: 120px;
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #8b5cf6 100%);
+            position: relative;
+        }
+        .profile-avatar-wrapper {
+            position: relative;
+            margin-top: -60px;
+            display: inline-block;
+        }
+        .profile-avatar-circle {
+            width: 124px;
+            height: 124px;
+            border-radius: 36px;
+            border: 4px solid #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #2563eb, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 800;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        .profile-avatar-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-upload-overlay {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 38px;
+            height: 38px;
+            background: #2563eb;
+            color: #ffffff;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+            transition: transform 0.2s ease;
+        }
+        .avatar-upload-overlay:hover {
+            transform: scale(1.08);
+        }
+        .info-pill {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 0.85rem 1rem;
+            transition: border-color 0.2s ease;
+        }
+        .info-pill:hover {
+            border-color: #cbd5e1;
+        }
+        .field-label {
+            font-size: 0.68rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.6px;
             color: #64748b;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.35rem;
             display: block;
         }
-        .form-control-premium {
-            background: #f1f5f9;
-            border: 1px solid transparent;
-            border-radius: 12px;
+        .field-input {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
             padding: 0.75rem 1rem;
             font-weight: 600;
             color: #0f172a;
             transition: all 0.2s ease;
         }
-        .form-control-premium:focus {
-            background: white;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        .field-input:focus {
+            background: #ffffff;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
             outline: none;
-        }
-        .profile-header-card {
-            background: white;
-            border-radius: 24px;
-            padding: 2.5rem;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: var(--shadow-md);
-            margin-bottom: 2rem;
         }
     </style>
 </head>
-<body class="dashboard-body">
+<body class="dashboard-body" style="background: #f8fafc; color: #0f172a;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
         <main class="main-panel w-100 p-4">
-            <!-- Profile Header -->
-            <div class="profile-header-card text-center">
-                <div class="position-relative d-inline-block mb-3">
-                    <div class="avatar-circle mx-auto" style="width: 120px; height: 120px; background: var(--gradient-1); border-radius: 40px; display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem; font-weight: 800; box-shadow: 0 15px 30px rgba(37, 99, 235, 0.2); overflow: hidden; transform: rotate(-5deg);">
-                        <% if (user.profile_picture) { %>
-                            <img src="<%= user.profile_picture %>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; transform: rotate(5deg);">
-                        <% } else { %>
-                            <span style="transform: rotate(5deg);"><%= student.first_name.charAt(0) %></span>
-                        <% } %>
+            <!-- Header -->
+            <div class="dashboard-header mb-4 p-4 rounded-4 shadow-sm" style="background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05);">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill fw-bold text-uppercase small mb-2">
+                            Student Identity
+                        </span>
+                        <h1 class="h3 fw-bold mb-1 text-dark">Student Profile</h1>
+                        <p class="text-secondary small m-0">View and update your student registration records and personal contact information</p>
                     </div>
-                    <form action="/auth/profile/upload-picture" method="POST" enctype="multipart/form-data" id="profilePicForm" class="position-absolute" style="bottom: -5px; right: -5px;">
-                        <label for="profilePicInput" class="btn btn-primary rounded-circle shadow-sm" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid white;">
-                            <i class="fas fa-camera"></i>
-                        </label>
-                        <input type="file" name="profile_picture" id="profilePicInput" onchange="document.getElementById('profilePicForm').submit()" class="d-none">
-                    </form>
-                </div>
-                <h2 class="fw-800 mb-1" style="color: #0f172a;"><%= student.first_name %> <%= student.last_name %></h2>
-                <div class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold text-uppercase" style="font-size: 0.7rem;">
-                    Student ID: <%= student.student_id %>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center gap-1">
+                            <i class="fas fa-id-badge small"></i>
+                            <span>ID: <%= student.student_id %></span>
+                        </span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Profile Form -->
-            <div class="premium-panel">
-                <h4 class="fw-bold mb-4" style="color: #0f172a;"><i class="fas fa-user-edit me-2 text-primary"></i>Personal Information</h4>
-                <form action="/student/profile/update" method="POST">
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <label class="form-label-custom">First Name</label>
-                            <input type="text" name="first_name" class="form-control-premium w-100" value="<%= student.first_name %>" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label-custom">Last Name</label>
-                            <input type="text" name="last_name" class="form-control-premium w-100" value="<%= student.last_name %>" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label-custom">Email Address</label>
-                            <input type="email" name="email" class="form-control-premium w-100" value="<%= student.email %>" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label-custom">Phone Number</label>
-                            <input type="tel" name="phone" class="form-control-premium w-100" value="<%= student.phone || '' %>" placeholder="Phone number">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label-custom">Gender</label>
-                            <select name="gender" class="form-control-premium w-100">
-                                <option value="male" <%= student.gender === 'male' ? 'selected' : '' %>>Male</option>
-                                <option value="female" <%= student.gender === 'female' ? 'selected' : '' %>>Female</option>
-                                <option value="other" <%= student.gender === 'other' ? 'selected' : '' %>>Other</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label-custom">Date of Birth</label>
-                            <input type="date" name="date_of_birth" class="form-control-premium w-100" value="<%= new Date(student.date_of_birth).toISOString().split('T')[0] %>" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label-custom">Parent/Guardian</label>
-                            <input type="text" name="parent_guardian_name" class="form-control-premium w-100" value="<%= student.parent_guardian_name %>">
-                        </div>
-                        <div class="col-md-8">
-                            <label class="form-label-custom">Permanent Address</label>
-                            <input type="text" name="address" class="form-control-premium w-100" value="<%= student.address || '' %>" placeholder="Full Address">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label-custom">Previous School</label>
-                            <input type="text" name="previous_school" class="form-control-premium w-100" value="<%= student.previous_school || '' %>" placeholder="School Name">
-                        </div>
-                    </div>
-
-                    <div class="mt-5 pt-4 border-top">
-                        <h4 class="fw-bold mb-4" style="color: #0f172a;"><i class="fas fa-graduation-cap me-2 text-primary"></i>Academic Placement</h4>
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <div class="p-3 bg-light rounded-3">
-                                    <label class="form-label-custom mb-1">Grade Level</label>
-                                    <div class="fw-bold text-dark"><%= student.grade_level %></div>
+            <div class="row g-4">
+                <!-- Profile Avatar Card -->
+                <div class="col-lg-4">
+                    <div class="profile-hero-card text-center pb-4 h-100">
+                        <div class="profile-hero-cover"></div>
+                        <div class="px-4">
+                            <div class="profile-avatar-wrapper mb-3">
+                                <div class="profile-avatar-circle">
+                                    <% if (user.profile_picture) { %>
+                                        <img src="<%= user.profile_picture %>" alt="Profile">
+                                    <% } else { %>
+                                        <%= student.first_name.charAt(0) %>
+                                    <% } %>
                                 </div>
+                                <form action="/auth/profile/upload-picture" method="POST" enctype="multipart/form-data" id="profilePicForm">
+                                    <label for="profilePicInput" class="avatar-upload-overlay" title="Upload new avatar">
+                                        <i class="fas fa-camera small"></i>
+                                    </label>
+                                    <input type="file" name="profile_picture" id="profilePicInput" onchange="document.getElementById('profilePicForm').submit()" class="d-none" accept="image/*">
+                                </form>
                             </div>
-                            <div class="col-md-6">
-                                <div class="p-3 bg-light rounded-3">
-                                    <label class="form-label-custom mb-1">Assigned Section</label>
-                                    <div class="fw-bold text-dark"><%= student.section %></div>
+
+                            <h2 class="h5 fw-bold text-dark mb-1"><%= student.first_name %> <%= student.last_name %></h2>
+                            <p class="text-primary fw-semibold small mb-4">Enrolled Scholar</p>
+
+                            <div class="d-flex flex-column gap-2 text-start">
+                                <div class="info-pill">
+                                    <span class="field-label">Student ID</span>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                        <i class="fas fa-fingerprint text-primary"></i>
+                                        <span><%= student.student_id %></span>
+                                    </div>
+                                </div>
+                                <div class="info-pill">
+                                    <span class="field-label">Current Academic Level</span>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                        <i class="fas fa-layer-group text-success"></i>
+                                        <span>Grade <%= student.grade_level %> &bull; Section <%= student.section %></span>
+                                    </div>
+                                </div>
+                                <div class="info-pill">
+                                    <span class="field-label">Parent / Guardian</span>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                        <i class="fas fa-users text-primary"></i>
+                                        <span><%= student.parent_guardian_name || 'Registered Guardian' %></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="text-center mt-5">
-                        <button type="submit" class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-premium transition-up">
-                            <i class="fas fa-save me-2"></i>Update Profile
-                        </button>
+                <!-- Profile Form -->
+                <div class="col-lg-8">
+                    <div class="p-4 p-lg-5 rounded-4 shadow-sm h-100" style="background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05);">
+                        <div class="d-flex align-items-center gap-2 mb-4">
+                            <div class="rounded-3 p-2 bg-primary bg-opacity-10 text-primary">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <h3 class="h5 fw-bold text-dark mb-0">Personal Information</h3>
+                        </div>
+
+                        <form action="/student/profile/update" method="POST">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="field-label">First Name</label>
+                                    <input type="text" name="first_name" class="form-control field-input" value="<%= student.first_name %>" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Last Name</label>
+                                    <input type="text" name="last_name" class="form-control field-input" value="<%= student.last_name %>" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Email Address</label>
+                                    <input type="email" name="email" class="form-control field-input" value="<%= student.email %>" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Phone Number</label>
+                                    <input type="tel" name="phone" class="form-control field-input" value="<%= student.phone || '' %>" placeholder="Phone number">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Gender</label>
+                                    <select name="gender" class="form-select field-input">
+                                        <option value="male" <%= student.gender === 'male' ? 'selected' : '' %>>Male</option>
+                                        <option value="female" <%= student.gender === 'female' ? 'selected' : '' %>>Female</option>
+                                        <option value="other" <%= student.gender === 'other' ? 'selected' : '' %>>Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Date of Birth</label>
+                                    <input type="date" name="date_of_birth" class="form-control field-input" value="<%= new Date(student.date_of_birth).toISOString().split('T')[0] %>" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Parent / Guardian</label>
+                                    <input type="text" name="parent_guardian_name" class="form-control field-input" value="<%= student.parent_guardian_name %>">
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="field-label">Permanent Address</label>
+                                    <input type="text" name="address" class="form-control field-input" value="<%= student.address || '' %>" placeholder="Full residential address">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Previous School</label>
+                                    <input type="text" name="previous_school" class="form-control field-input" value="<%= student.previous_school || '' %>" placeholder="Previous school name">
+                                </div>
+                            </div>
+
+                            <div class="mt-5 pt-4 border-top">
+                                <div class="d-flex align-items-center gap-2 mb-4">
+                                    <div class="rounded-3 p-2 bg-success bg-opacity-10 text-success">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </div>
+                                    <h3 class="h5 fw-bold text-dark mb-0">Academic Placement</h3>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-light rounded-3 border">
+                                            <label class="field-label mb-1">Grade Level</label>
+                                            <div class="fw-bold text-dark fs-5">Grade <%= student.grade_level %></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-light rounded-3 border">
+                                            <label class="field-label mb-1">Assigned Section</label>
+                                            <div class="fw-bold text-dark fs-5">Section <%= student.section %></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-2">
+                                <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                                    <i class="fas fa-save"></i>
+                                    <span>Update Profile</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
         </main>
     </div>
@@ -163,4 +278,3 @@
     <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
 </body>
 </html>
-

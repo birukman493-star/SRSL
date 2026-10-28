@@ -230,16 +230,28 @@ body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.stagger-1 { animation-delay: 0.1s; }
-.stagger-2 { animation-delay: 0.2s; }
-.stagger-3 { animation-delay: 0.3s; }
-.stagger-4 { animation-delay: 0.4s; }
+.stagger-1 {
+  animation-delay: 0.1s;
+}
+
+.stagger-2 {
+  animation-delay: 0.2s;
+}
+
+.stagger-3 {
+  animation-delay: 0.3s;
+}
+
+.stagger-4 {
+  animation-delay: 0.4s;
+}
 
 /* ===== GLOBAL STYLES ===== */
 
@@ -3436,7 +3448,9 @@ html {
   .dashboard-mobile-nav {
     display: flex;
     position: fixed;
-    top: 0; left: 0; right: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 75px;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(25px) saturate(200%);
@@ -3592,28 +3606,34 @@ html {
 .search-group-modern:focus-within {
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
   border-color: var(--primary-color);
-}/* ===== APPLE-STYLE RESPONSIVE MOTION ===== */
+}
+
+/* ===== APPLE-STYLE RESPONSIVE MOTION ===== */
 .transition-hover {
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease !important;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease !important;
 }
+
 .transition-hover:hover {
-    transform: translateY(-5px) scale(1.02) !important;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.08) !important;
+  transform: translateY(-5px) scale(1.02) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08) !important;
 }
+
 .apple-card {
-    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease;
 }
+
 .apple-card:hover {
-    transform: scale(1.03);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+  transform: scale(1.03);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
 }
+
 /* ===== SMOOTH THEME TRANSITIONS ===== */
 html.theme-transition,
 html.theme-transition *,
 html.theme-transition *:before,
 html.theme-transition *:after {
-    transition: background-color 0.5s ease-in-out, background 0.5s ease-in-out, color 0.5s ease-in-out, border-color 0.5s ease-in-out, box-shadow 0.5s ease-in-out !important;
-    transition-delay: 0s !important;
+  transition: background-color 0.5s ease-in-out, background 0.5s ease-in-out, color 0.5s ease-in-out, border-color 0.5s ease-in-out, box-shadow 0.5s ease-in-out !important;
+  transition-delay: 0s !important;
 }
 
 /* Shared floating glass navigation for the public pages. */
@@ -3733,6 +3753,7 @@ html.theme-transition *:after {
 }
 
 @media (max-width: 991.98px) {
+
   .navbar.public-modern-nav,
   .navbar.public-modern-nav.home-modern-nav {
     top: 10px;

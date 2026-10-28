@@ -1,10 +1,13 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-    
+    <title>
+        <%= title %> - Abdigudina Admin
+    </title>
+
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -12,112 +15,284 @@
     <!-- Google Fonts -->
     <link href="/css/inter-font.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/brocode-style.css">
+    <style>
+        .profile-hero-card {
+            background: #ffffff;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .profile-hero-cover {
+            height: 120px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #4f46e5 100%);
+            position: relative;
+        }
+
+        .profile-avatar-wrapper {
+            position: relative;
+            margin-top: -60px;
+            display: inline-block;
+        }
+
+        .profile-avatar-circle {
+            width: 124px;
+            height: 124px;
+            border-radius: 36px;
+            border: 4px solid #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 800;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .profile-avatar-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-upload-overlay {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 38px;
+            height: 38px;
+            background: #2563eb;
+            color: #ffffff;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .avatar-upload-overlay:hover {
+            transform: scale(1.08);
+        }
+
+        .info-pill {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 0.85rem 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .info-pill:hover {
+            border-color: #cbd5e1;
+        }
+
+        .field-label {
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #64748b;
+            margin-bottom: 0.35rem;
+            display: block;
+        }
+
+        .field-input {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: #0f172a;
+            transition: all 0.2s ease;
+        }
+
+        .field-input:focus {
+            background: #ffffff;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+            outline: none;
+        }
+    </style>
 </head>
-<body>
+
+<body class="dashboard-body" style="background: #f8fafc; color: #0f172a;">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
-        
-        <!-- Main Content -->
-        <main class="main-panel w-100 p-4">
-            <!-- Header -->
-            <div class="dashboard-header mb-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="dashboard-title">Administrator Profile</h1>
-                        <p class="text-secondary m-0">Manage your administrative account and security settings</p>
+
+            <!-- Main Content -->
+            <main class="main-panel w-100 p-4">
+                <!-- Header -->
+                <div class="dashboard-header mb-4 p-4 rounded-4 shadow-sm"
+                    style="background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05);">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <span
+                                class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill fw-bold text-uppercase small mb-2">
+                                Administrative Identity
+                            </span>
+                            <h1 class="h3 fw-bold mb-1 text-dark">Administrator Profile</h1>
+                            <p class="text-secondary small m-0">Oversee system credentials, personal information, and
+                                access control</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span
+                                class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center gap-1">
+                                <i class="fas fa-check-circle small"></i>
+                                <span>Full System Access</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="row g-4">
-                <!-- Profile Avatar Card -->
-                <div class="col-lg-4">
-                    <div class="glass-panel text-center h-100 p-4">
-                        <div class="sidebar-user-avatar mx-auto mb-4" style="position: relative; width: 150px; height: 150px; font-size: 4rem; background: rgba(255,255,255,0.05); border: 2px solid var(--primary-color); border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                            <% if (user.profile_picture) { %>
-                                <img src="<%= user.profile_picture %>" alt="Profile Picture" style="width: 100%; height: 100%; object-fit: cover;">
-                            <% } else { %>
-                                <%= user.first_name ? user.first_name.charAt(0).toUpperCase() : 'A' %>
-                            <% } %>
-                            <form action="/auth/profile/upload-picture" method="POST" enctype="multipart/form-data" id="profilePicForm" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
-                                <input type="file" name="profile_picture" id="profilePicInput" onchange="document.getElementById('profilePicForm').submit()" style="position: absolute; width: 100%; height: 100%; cursor: pointer;">
+                <div class="row g-4">
+                    <!-- Profile Identity Card -->
+                    <div class="col-lg-4">
+                        <div class="profile-hero-card text-center pb-4 h-100">
+                            <div class="profile-hero-cover"></div>
+                            <div class="px-4">
+                                <div class="profile-avatar-wrapper mb-3">
+                                    <div class="profile-avatar-circle">
+                                        <% if (user.profile_picture) { %>
+                                            <img src="<%= user.profile_picture %>" alt="Profile Picture">
+                                            <% } else { %>
+                                                <%= user.first_name ? user.first_name.charAt(0).toUpperCase() : 'A' %>
+                                                    <% } %>
+                                    </div>
+                                    <form action="/auth/profile/upload-picture" method="POST"
+                                        enctype="multipart/form-data" id="profilePicForm">
+                                        <label for="profilePicInput" class="avatar-upload-overlay"
+                                            title="Upload new avatar">
+                                            <i class="fas fa-camera small"></i>
+                                        </label>
+                                        <input type="file" name="profile_picture" id="profilePicInput"
+                                            onchange="document.getElementById('profilePicForm').submit()" class="d-none"
+                                            accept="image/*">
+                                    </form>
+                                </div>
+
+                                <h2 class="h5 fw-bold text-dark mb-1">
+                                    <%= user.first_name %>
+                                        <%= user.last_name %>
+                                </h2>
+                                <p class="text-primary fw-semibold small mb-4">System Administrator</p>
+
+                                <div class="d-flex flex-column gap-2 text-start">
+                                    <div class="info-pill">
+                                        <span class="field-label">Username</span>
+                                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                            <i class="fas fa-user-shield text-primary"></i>
+                                            <span>
+                                                <%= user.username %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="info-pill">
+                                        <span class="field-label">System Role</span>
+                                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                            <i class="fas fa-shield-alt text-success"></i>
+                                            <span class="text-capitalize">
+                                                <%= user.role || 'Administrator' %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="info-pill">
+                                        <span class="field-label">Account Security</span>
+                                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                            <i class="fas fa-lock text-warning"></i>
+                                            <span>Protected by Session Guard</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Details & Security Forms -->
+                    <div class="col-lg-8">
+                        <div class="p-4 p-lg-5 rounded-4 shadow-sm h-100"
+                            style="background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05);">
+                            <!-- Personal Information Form -->
+                            <div class="d-flex align-items-center gap-2 mb-4">
+                                <div class="rounded-3 p-2 bg-primary bg-opacity-10 text-primary">
+                                    <i class="fas fa-user-edit"></i>
+                                </div>
+                                <h3 class="h5 fw-bold text-dark mb-0">Personal Information</h3>
+                            </div>
+
+                            <form action="/admin/profile/update" method="POST" class="mb-5">
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="field-label">First Name</label>
+                                        <input type="text" name="first_name" class="form-control field-input"
+                                            value="<%= user.first_name %>" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="field-label">Last Name</label>
+                                        <input type="text" name="last_name" class="form-control field-input"
+                                            value="<%= user.last_name %>" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="field-label">Email Address</label>
+                                        <input type="email" name="email" class="form-control field-input"
+                                            value="<%= user.email %>" required>
+                                    </div>
+                                </div>
+                                <button type="submit"
+                                    class="btn btn-primary rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 shadow-sm">
+                                    <i class="fas fa-save"></i>
+                                    <span>Save General Information</span>
+                                </button>
                             </form>
-                            <div style="position: absolute; bottom: 0; background: rgba(0,0,0,0.5); width: 100%; text-align: center; font-size: 0.9rem; padding: 5px 0; color: white; pointer-events: none;">
-                                <i class="fas fa-camera me-2"></i>Change Photo
+
+                            <!-- Security Settings Form -->
+                            <div class="pt-4 border-top">
+                                <div class="d-flex align-items-center gap-2 mb-4">
+                                    <div class="rounded-3 p-2 bg-warning bg-opacity-10 text-warning">
+                                        <i class="fas fa-key"></i>
+                                    </div>
+                                    <h3 class="h5 fw-bold text-dark mb-0">Security Settings</h3>
+                                </div>
+
+                                <form action="/auth/update-password" method="POST">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="field-label">New Password</label>
+                                            <input type="password" name="newPassword" class="form-control field-input"
+                                                placeholder="Enter new password" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="field-label">Confirm New Password</label>
+                                            <input type="password" name="confirmPassword"
+                                                class="form-control field-input" placeholder="Confirm new password"
+                                                required>
+                                        </div>
+                                        <div class="col-12 mt-3">
+                                            <button type="submit"
+                                                class="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2">
+                                                <i class="fas fa-shield-alt text-warning"></i>
+                                                <span>Update Password</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
-                        </div>
-                        <h2 class="h4 fw-bold text-light mb-1"><%= user.first_name %> <%= user.last_name %></h2>
-                        <p class="text-primary small mb-4">System Administrator</p>
-                        
-                        <div class="glass-card p-3 text-start mb-3">
-                            <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size: 0.65rem;">Username</div>
-                            <div class="text-light"><i class="fas fa-user-shield me-2 text-primary"></i><%= user.username %></div>
-                        </div>
-                        <div class="glass-card p-3 text-start">
-                            <div class="text-secondary small fw-bold text-uppercase mb-1" style="font-size: 0.65rem;">Permissions</div>
-                            <div class="text-light"><i class="fas fa-check-circle me-2 text-success"></i>Full System Access</div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Admin Details -->
-                <div class="col-lg-8">
-                    <div class="glass-panel h-100 p-4">
-                        <h3 class="h5 fw-bold text-light mb-4"><i class="fas fa-info-circle me-2 text-primary"></i>Personal Information</h3>
-                        
-                        <form action="/admin/profile/update" method="POST" class="mb-5">
-                            <div class="row g-4 mb-4">
-                                <div class="col-md-6">
-                                    <div class="glass-card p-3">
-                                        <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;">First Name</label>
-                                        <input type="text" name="first_name" class="form-control bg-transparent border-0 text-light p-0" value="<%= user.first_name %>" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="glass-card p-3">
-                                        <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;">Last Name</label>
-                                        <input type="text" name="last_name" class="form-control bg-transparent border-0 text-light p-0" value="<%= user.last_name %>" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <div class="glass-card p-3">
-                                        <label class="text-secondary small fw-bold text-uppercase mb-2" style="font-size: 0.65rem;">Email Address</label>
-                                        <input type="email" name="email" class="form-control bg-transparent border-0 text-light p-0" value="<%= user.email %>" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary rounded-pill px-5">
-                                <i class="fas fa-save me-2"></i>Save General Information
-                            </button>
-                        </form>
-
-                        <h3 class="h5 fw-bold text-light mb-4 border-top border-white border-opacity-10 pt-4"><i class="fas fa-key me-2 text-warning"></i>Security Settings</h3>
-                        <form action="/auth/update-password" method="POST">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="text-secondary small mb-1">New Password</label>
-                                    <input type="password" name="newPassword" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-4" placeholder="Enter new password" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="text-secondary small mb-1">Confirm New Password</label>
-                                    <input type="password" name="confirmPassword" class="form-control bg-dark bg-opacity-25 border-secondary border-opacity-25 text-light rounded-pill px-4" placeholder="Confirm new password" required>
-                                </div>
-                                <div class="col-12 mt-4">
-                                    <button type="submit" class="btn btn-warning text-dark fw-bold rounded-pill px-5">
-                                        <i class="fas fa-shield-alt me-2"></i>Update Password
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </main>
+            </main>
     </div>
 
     <!-- Bootstrap JS -->
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
+    <script src="/js/translations.js"></script>
+    <script src="/js/brocode-script.js"></script>
 </body>
-</html>
 
+</html>
