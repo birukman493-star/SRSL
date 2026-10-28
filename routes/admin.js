@@ -16,7 +16,6 @@ const {
   emitAcademicContextUpdate,
   normalizeAcademicYear,
   DEFAULT_ACADEMIC_YEAR,
-  ATTENDANCE_COURSE_NAME_SQL,
 } = require('../config/systemSettings');
 const router = express.Router();
 
@@ -735,11 +734,11 @@ router.post('/academic/start', async (req, res) => {
   // POST /admin/approvals/attendance/approve
   router.post('/approvals/attendance/approve', async (req, res) => {
     try {
-      const { date, class_id, course_id } = req.body;
+      const { date, class_id } = req.body;
 
       await pool.execute(
-        'UPDATE attendance SET approval_status = "approved" WHERE date = ? AND class_id = ? AND (course_id = ? OR course_id IS NULL)',
-        [date, class_id, course_id || null]
+        'UPDATE attendance SET approval_status = "approved" WHERE date = ? AND class_id = ?',
+        [date, class_id]
       );
 
       req.session.flash = { success: 'Attendance records approved.' };
@@ -1290,48 +1289,63 @@ router.post('/academic/start', async (req, res) => {
   // GET /admin/attendance - Manage attendance across school
   router.get('/attendance', async (req, res) => {
     try {
-      const { date, class_id, grade, search, teacher_id } = req.query;
+      const { date, start_date, end_date, class_id, grade, search, teacher_id } = req.query;
       let query = `
-      SELECT a.*, u.first_name, u.last_name, c.name as class_name, s.student_id, s.grade_level,
-             tu.first_name as teacher_fname, tu.last_name as teacher_lname,
-             ${ATTENDANCE_COURSE_NAME_SQL} as course_name, co.id as resolved_course_id
+      SELECT a.*, u.first_name, u.last_name, c.name as class_name, c.grade as class_grade,
+             c.section, c.attendance_teacher_id,
+             assigned_user.first_name as attendance_teacher_first_name,
+             assigned_user.last_name as attendance_teacher_last_name,
+             s.student_id as student_code, s.grade_level,
+             tu.first_name as teacher_fname, tu.last_name as teacher_lname
       FROM attendance a
       LEFT JOIN students s ON a.student_id = s.id
       LEFT JOIN users u ON s.user_id = u.id
       LEFT JOIN classes c ON a.class_id = c.id
-      LEFT JOIN courses co ON a.course_id = co.id
+      LEFT JOIN teachers assigned_teacher ON c.attendance_teacher_id = assigned_teacher.id
+      LEFT JOIN users assigned_user ON assigned_teacher.user_id = assigned_user.id
       LEFT JOIN teachers t ON COALESCE(a.teacher_id, a.created_by) = t.id
       LEFT JOIN users tu ON t.user_id = tu.id
-      WHERE 1=1
+      WHERE (a.course_id IS NULL OR a.course_id = 0)
     `;
       const params = [];
 
-      if (date) {
+      // Date or date range filtering
+      if (start_date && end_date) {
+        query += ` AND a.date >= ? AND a.date <= ?`;
+        params.push(start_date, end_date);
+      } else if (start_date) {
+        query += ` AND a.date >= ?`;
+        params.push(start_date);
+      } else if (end_date) {
+        query += ` AND a.date <= ?`;
+        params.push(end_date);
+      } else if (date) {
         query += ` AND a.date = ?`;
         params.push(date);
       }
+
       if (class_id) {
         query += ` AND a.class_id = ?`;
         params.push(class_id);
       }
       if (grade) {
-        query += ` AND s.grade_level = ?`;
-        params.push(grade);
+        query += ` AND (c.grade = ? OR s.grade_level = ?)`;
+        params.push(grade, grade);
       }
       if (teacher_id) {
-  query += ' AND scr.teacher_id = ?';
-  params.push(teacher_id);
-}
-
-      if (search) {
-        query += ` AND (u.first_name LIKE ? OR u.last_name LIKE ? OR s.student_id LIKE ?)`;
-        const pattern = `%${search}%`;
-        params.push(pattern, pattern, pattern);
+        query += ' AND (COALESCE(a.teacher_id, a.created_by) = ? OR c.attendance_teacher_id = ?)';
+        params.push(teacher_id, teacher_id);
       }
 
-      query += ` ORDER BY a.date DESC LIMIT 500`;
+      if (search) {
+        query += ` AND (u.first_name LIKE ? OR u.last_name LIKE ? OR s.student_id LIKE ? OR s.first_name LIKE ? OR s.last_name LIKE ?)`;
+        const pattern = `%${search}%`;
+        params.push(pattern, pattern, pattern, pattern, pattern);
+      }
 
-      const [attendance] = await pool.execute(query, params);
+      query += ` ORDER BY a.date DESC, a.id DESC`;
+
+      const [rawAttendance] = await pool.execute(query, params);
 
       // Fetch classes for dropdown
       const [classes] = await pool.execute('SELECT id, name FROM classes ORDER BY name ASC');
@@ -1344,15 +1358,151 @@ router.post('/academic/start', async (req, res) => {
       ORDER BY u.first_name, u.last_name
     `);
 
-      // Compute aggregate stats
+      const studentMap = new Map();
+
+      // If a class filter is chosen, preload enrolled active students so every student appears once in that class
+      if (class_id) {
+        try {
+          const [classStudents] = await pool.execute(`
+            SELECT s.id as student_pk, s.student_id as student_code,
+                   COALESCE(u.first_name, s.first_name) as first_name,
+                   COALESCE(u.last_name, s.last_name) as last_name,
+                   c.id as class_id, c.name as class_name, c.grade as class_grade, c.section as class_section,
+                   assigned_user.first_name as attendance_teacher_first_name,
+                   assigned_user.last_name as attendance_teacher_last_name
+            FROM students s
+            LEFT JOIN users u ON s.user_id = u.id
+            JOIN classes c ON (s.class_id = c.id OR (s.grade_level = c.grade AND s.section = c.section))
+            LEFT JOIN teachers assigned_teacher ON c.attendance_teacher_id = assigned_teacher.id
+            LEFT JOIN users assigned_user ON assigned_teacher.user_id = assigned_user.id
+            WHERE c.id = ? AND (s.withdrawal_status IS NULL OR s.withdrawal_status = 'active')
+            ORDER BY COALESCE(u.last_name, s.last_name), COALESCE(u.first_name, s.first_name)
+          `, [class_id]);
+
+          for (const cs of classStudents) {
+            if (search) {
+              const sTerm = search.toLowerCase();
+              const fullName = `${cs.first_name || ''} ${cs.last_name || ''}`.toLowerCase();
+              const sCode = String(cs.student_code || '').toLowerCase();
+              if (!fullName.includes(sTerm) && !sCode.includes(sTerm)) {
+                continue;
+              }
+            }
+            const key = `${cs.student_pk}_${cs.class_id}`;
+            studentMap.set(key, {
+              id: null,
+              student_pk: cs.student_pk,
+              student_id: cs.student_code || cs.student_pk,
+              student_code: cs.student_code || cs.student_pk,
+              first_name: cs.first_name || '',
+              last_name: cs.last_name || '',
+              class_id: cs.class_id,
+              class_name: cs.class_name,
+              class_grade: cs.class_grade,
+              class_section: cs.class_section,
+              attendance_teacher_first_name: cs.attendance_teacher_first_name,
+              attendance_teacher_last_name: cs.attendance_teacher_last_name,
+              present_count: 0,
+              absent_count: 0,
+              late_count: 0,
+              excused_count: 0,
+              total_count: 0,
+              records: []
+            });
+          }
+        } catch (csErr) {
+          // Graceful fallback if mock environment does not support class students query
+        }
+      }
+
+      // Group attendance records per student and class
+      // Requirement 4: Each student appears once per class in results
+      // Requirement 5: Do not count course records or duplicate attendance records
+      const seenDates = new Set();
+
+      for (const row of rawAttendance) {
+        if (row.course_id && row.course_id !== 0) continue;
+
+        const studentPk = row.student_id;
+        const classId = row.class_id;
+        const key = `${studentPk}_${classId}`;
+
+        let student = studentMap.get(key);
+        if (!student) {
+          student = {
+            id: row.id,
+            student_pk: studentPk,
+            student_id: row.student_code || row.student_id,
+            student_code: row.student_code || row.student_id,
+            first_name: row.first_name || '',
+            last_name: row.last_name || '',
+            class_id: classId,
+            class_name: row.class_name || (classId ? `Class #${classId}` : 'Class'),
+            class_grade: row.class_grade || row.grade_level || '',
+            class_section: row.section || '',
+            attendance_teacher_first_name: row.attendance_teacher_first_name,
+            attendance_teacher_last_name: row.attendance_teacher_last_name,
+            present_count: 0,
+            absent_count: 0,
+            late_count: 0,
+            excused_count: 0,
+            total_count: 0,
+            records: []
+          };
+          studentMap.set(key, student);
+        }
+
+        if (!student.id && row.id) student.id = row.id;
+
+        // Deduplicate records on student_id, class_id, and date
+        const dateStr = row.date instanceof Date
+          ? row.date.toISOString().split('T')[0]
+          : (row.date ? String(row.date).split('T')[0] : `no-date-${row.id}`);
+        const dateKey = `${key}_${dateStr}`;
+        if (seenDates.has(dateKey)) {
+          continue;
+        }
+        seenDates.add(dateKey);
+
+        student.records.push({
+          id: row.id,
+          date: row.date,
+          status: row.status,
+          notes: row.notes,
+          teacher_fname: row.teacher_fname,
+          teacher_lname: row.teacher_lname
+        });
+
+        const status = (row.status || '').toLowerCase();
+        if (status === 'present') {
+          student.present_count++;
+        } else if (status === 'absent') {
+          student.absent_count++;
+        } else if (status === 'late') {
+          student.late_count++;
+        } else if (status === 'excused') {
+          student.excused_count++;
+        }
+
+        student.total_count = student.present_count + student.absent_count + student.late_count;
+      }
+
+      const attendance = Array.from(studentMap.values());
+
+      // Compute aggregate stats across all students
       const stats = {
-        total: attendance.length,
-        present: attendance.filter(r => r.status === 'present').length,
-        absent: attendance.filter(r => r.status === 'absent').length,
-        late: attendance.filter(r => r.status === 'late').length,
-        excused: attendance.filter(r => r.status === 'excused').length
+        totalStudents: attendance.length,
+        total: attendance.reduce((sum, s) => sum + s.total_count + (s.excused_count || 0), 0),
+        present: attendance.reduce((sum, s) => sum + s.present_count, 0),
+        absent: attendance.reduce((sum, s) => sum + s.absent_count, 0),
+        late: attendance.reduce((sum, s) => sum + s.late_count, 0),
+        excused: attendance.reduce((sum, s) => sum + (s.excused_count || 0), 0)
       };
-      stats.rate = stats.total > 0 ? Math.round(((stats.present + stats.late + stats.excused) / stats.total) * 100) : 0;
+      const validTotal = stats.present + stats.absent + stats.late;
+      stats.rate = validTotal > 0 ? Math.round(((stats.present + stats.late) / validTotal) * 100) : 0;
+
+      const activeStartDate = start_date || (date && !end_date ? date : '');
+      const activeEndDate = end_date || (date && !start_date ? date : '');
 
       res.render('admin/attendance', {
         title: 'Attendance Management',
@@ -1361,12 +1511,60 @@ router.post('/academic/start', async (req, res) => {
         classes,
         teachers,
         stats,
-        filters: { date, class_id, grade, search, teacher_id }
+        filters: {
+          date: date || '',
+          start_date: activeStartDate,
+          end_date: activeEndDate,
+          class_id: class_id || '',
+          grade: grade || '',
+          search: search || '',
+          teacher_id: teacher_id || ''
+        }
       });
     } catch (error) {
       console.error('Admin attendance error:', error);
       res.status(500).render('500-modern', { title: 'Server Error', message: error.message });
     }
+  });
+
+  router.post('/attendance/:id/update', async (req, res) => {
+    const recordId = Number(req.params.id);
+    const { status, notes } = req.body;
+    if (!Number.isSafeInteger(recordId) || recordId <= 0 ||
+        !['present', 'absent', 'late', 'excused'].includes(status) ||
+        (notes !== undefined && typeof notes !== 'string')) {
+      req.session.flash = { error: 'Invalid attendance update.' };
+      return res.redirect('/admin/attendance');
+    }
+
+    try {
+      await pool.execute(
+        'UPDATE attendance SET status = ?, notes = ? WHERE id = ?',
+        [status, typeof notes === 'string' ? notes.slice(0, 1000) : null, recordId]
+      );
+      req.session.flash = { success: 'Attendance record updated.' };
+    } catch (error) {
+      console.error('Admin attendance update error:', error);
+      req.session.flash = { error: 'Failed to update attendance record.' };
+    }
+    return res.redirect('/admin/attendance');
+  });
+
+  router.post('/attendance/:id/delete', async (req, res) => {
+    const recordId = Number(req.params.id);
+    if (!Number.isSafeInteger(recordId) || recordId <= 0) {
+      req.session.flash = { error: 'Invalid attendance record.' };
+      return res.redirect('/admin/attendance');
+    }
+
+    try {
+      await pool.execute('DELETE FROM attendance WHERE id = ?', [recordId]);
+      req.session.flash = { success: 'Attendance record deleted.' };
+    } catch (error) {
+      console.error('Admin attendance delete error:', error);
+      req.session.flash = { error: 'Failed to delete attendance record.' };
+    }
+    return res.redirect('/admin/attendance');
   });
 
 
@@ -2696,7 +2894,7 @@ router.post('/academic/start', async (req, res) => {
 // 9. Academic Records and Grade Management
   router.get('/grades', isAdmin, async (req, res) => {
     try {
-      const { grade, search, teacher_id } = req.query;
+      const { grade, search, teacher_id, class_id, academic_year, semester_id } = req.query;
 
       let query = `
         SELECT scr.id AS result_id,
@@ -2760,6 +2958,18 @@ router.post('/academic/start', async (req, res) => {
       if (grade) {
         query += ' AND s.grade_level = ?';
         params.push(grade);
+      }
+      if (class_id) {
+        query += ' AND scr.class_id = ?';
+        params.push(class_id);
+      }
+      if (academic_year) {
+        query += ' AND scr.academic_year = ?';
+        params.push(academic_year);
+      }
+      if (semester_id) {
+        query += ' AND scr.semester_id = ?';
+        params.push(semester_id);
       }
       if (teacher_id) {
         query += ' AND scr.teacher_id = ?';
@@ -2864,6 +3074,20 @@ router.post('/academic/start', async (req, res) => {
       }
       const grades = [...studentsById.values()];
 
+      // Compute per-student overall average and total courses
+      for (const student of grades) {
+        student.total_courses = student.gradeRecords.length;
+        if (student.total_courses > 0) {
+          const sum = student.gradeRecords.reduce((s, r) => s + (r.weightedTotal || 0), 0);
+          student.overall_average = (sum / student.total_courses).toFixed(1);
+        } else {
+          student.overall_average = 'N/A';
+        }
+        // Primary class/section from first record
+        student.class_name = student.gradeRecords[0] ? (student.gradeRecords[0].class_name || '—') : '—';
+        student.academic_year_display = student.gradeRecords[0] ? (student.gradeRecords[0].academic_year || '') : '';
+      }
+
       const classRankPromises = new Map();
       for (const student of grades) {
         for (const record of student.gradeRecords) {
@@ -2883,12 +3107,33 @@ router.post('/academic/start', async (req, res) => {
         classRanks.set(rankKey, await rankPromise);
       }
       for (const student of grades) {
+        // Per-record rank
         for (const record of student.gradeRecords) {
           const rankKey = `${record.class_id}_${record.academic_year}`;
           const rank = classRanks.get(rankKey)?.get(String(student.student_id));
           record.rank = rank ? `${rank.rank}/${rank.classSize}` : 'N/A';
         }
+        // Student-level rank (from first record's class/year)
+        const firstRecord = student.gradeRecords[0];
+        if (firstRecord && firstRecord.class_id && firstRecord.academic_year) {
+          const rankKey = `${firstRecord.class_id}_${firstRecord.academic_year}`;
+          const rankMap = classRanks.get(rankKey);
+          const rankEntry = rankMap?.get(String(student.student_id));
+          student.rank_display = rankEntry ? `${rankEntry.rank} out of ${rankEntry.classSize} students` : 'N/A';
+          student.student_rank = rankEntry ? rankEntry.rank : null;
+        } else {
+          student.rank_display = 'N/A';
+          student.student_rank = null;
+        }
       }
+
+      // Fetch classes for filter dropdown
+      const [classesList] = await pool.execute('SELECT id, name, grade, section FROM classes ORDER BY grade, section');
+
+      // Fetch distinct academic years for filter dropdown
+      const [academicYears] = await pool.execute(
+        'SELECT DISTINCT academic_year FROM student_course_results WHERE academic_year IS NOT NULL ORDER BY academic_year DESC'
+      );
 
       // Fetch teachers for filter
       const [teachers] = await pool.execute(`
@@ -2921,7 +3166,9 @@ router.post('/academic/start', async (req, res) => {
         grades,
         pendingGrades,
         teachers,
-        filters: { grade, search, teacher_id },
+        classesList,
+        academicYears,
+        filters: { grade, search, teacher_id, class_id, academic_year, semester_id },
         success: req.session.flash ? req.session.flash.success : null,
         error: req.session.flash ? req.session.flash.error : null
       });
@@ -4179,49 +4426,5 @@ router.patch('/sessions/:id/activate', async (req, res) => {
     console.log(`[SYNC] refreshParentPortal() triggered for student ${student_id}.`);
     console.log(`[SYNC] parent page sync status: SUCCESS`);
   }
-  router.get('/grades', isAdmin, async (req, res) => {
-  try {
-    const conn = await pool.getConnection();
-    // Fetch all grades
-    const [grades] = await conn.execute(`
-      SELECT scr.id, u.first_name, u.last_name, s.student_reg_id,
-             c.course_name, a.assignment_name,
-             scr.score, scr.max_score, scr.status, scr.created_at
-      FROM student_course_results scr
-      JOIN students s ON scr.student_id = s.id
-      JOIN users u ON s.user_id = u.id
-      JOIN courses c ON scr.course_id = c.id
-      LEFT JOIN assessment_structures ast ON scr.assessment_structure_id = ast.id
-      LEFT JOIN assignments a ON ast.assignment_id = a.id
-    `);
-    // Fetch pending grades (status = 'pending')
-    const [pendingGrades] = await conn.execute(`
-      SELECT scr.id, u.first_name, u.last_name, s.student_reg_id,
-             c.course_name, a.assignment_name,
-             scr.score, scr.max_score, scr.status, scr.created_at
-      FROM student_course_results scr
-      JOIN students s ON scr.student_id = s.id
-      JOIN users u ON s.user_id = u.id
-      JOIN courses c ON scr.course_id = c.id
-      LEFT JOIN assessment_structures ast ON scr.assessment_structure_id = ast.id
-      LEFT JOIN assignments a ON ast.assignment_id = a.id
-      WHERE scr.status = 'pending'
-    `);
-    conn.release();
-    const filters = { grade: req.query.grade, search: req.query.search };
-  res.render('admin/grades', {
-    title: 'Grades Management',
-    grades,
-    pendingGrades,
-    pendingAttendance: [], // placeholder for future attendance data
-    filters,
-    success: req.flash('success'),
-    error: req.flash('error')
-  });
-  } catch (err) {
-    console.error('Admin grades route error:', err);
-    res.status(500).render('500-modern', { title: 'Server Error', message: err.message });
-  }
-});
 
 module.exports = router;

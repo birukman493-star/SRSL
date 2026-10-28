@@ -4,222 +4,668 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-        <%= title %>
-    </title>
+    <title><%= title %></title>
 
     <!-- CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/all.min.css">
     <link href="/css/inter-font.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/brocode-style.css">
+
+    <style>
+        :root {
+            --badge-present-bg: rgba(16, 185, 129, 0.12);
+            --badge-present-color: #059669;
+            --badge-absent-bg: rgba(239, 68, 68, 0.12);
+            --badge-absent-color: #dc2626;
+            --badge-late-bg: rgba(245, 158, 11, 0.14);
+            --badge-late-color: #d97706;
+            --badge-excused-bg: rgba(100, 116, 139, 0.12);
+            --badge-excused-color: #475569;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 18px;
+            padding: 1.25rem 1.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .count-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            height: 32px;
+            padding: 0 12px;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .count-pill-present {
+            background: var(--badge-present-bg);
+            color: var(--badge-present-color);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .count-pill-absent {
+            background: var(--badge-absent-bg);
+            color: var(--badge-absent-color);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .count-pill-late {
+            background: var(--badge-late-bg);
+            color: var(--badge-late-color);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        .count-pill-total {
+            background: rgba(99, 102, 241, 0.1);
+            color: #4f46e5;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .history-row {
+            background: #f8fafc;
+            border-top: 1px dashed rgba(0, 0, 0, 0.08);
+        }
+
+        .history-container {
+            border-radius: 14px;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .quick-preset-btn {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: white;
+            color: var(--dark-text);
+            transition: all 0.15s ease;
+        }
+
+        .quick-preset-btn:hover, .quick-preset-btn.active {
+            background: #0f172a;
+            color: white;
+            border-color: #0f172a;
+        }
+
+        @media print {
+            .dashboard-header .btn,
+            .filter-panel,
+            .quick-grade-badges,
+            .history-toggle-btn,
+            .management-col,
+            .pagination-container,
+            #realtime-toast {
+                display: none !important;
+            }
+            .dashboard-wrapper {
+                display: block !important;
+            }
+            .main-panel {
+                width: 100% !important;
+                padding: 0 !important;
+            }
+            .table-responsive {
+                overflow: visible !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
-            <!-- Main Content -->
-            <main class="main-panel w-100 p-4">
-                <!-- Header -->
-                <div class="dashboard-header mb-4 notranslate"
-                    style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="dashboard-title"
-                                style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                                Attendance Management
-                            </h1>
-                            <p class="text-secondary m-0" style="font-weight: 500;">Monitor daily presence and tracking
-                                records across all grades</p>
+        <!-- Main Content -->
+        <main class="main-panel w-100 p-4">
+            <!-- Toast Notification for Real-Time Updates -->
+            <div id="realtime-toast" class="alert alert-info shadow-lg position-fixed top-0 end-0 m-4 text-white bg-primary notranslate d-none"
+                style="z-index: 1050; border-radius: 14px;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fas fa-sync-alt fa-spin"></i>
+                    <span id="toast-message">Attendance updated by teacher. Refreshing...</span>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <div class="dashboard-header mb-4 notranslate"
+                style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge rounded-pill bg-primary-subtle text-primary fw-bold text-uppercase px-3 py-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">
+                                Class-Based Attendance
+                            </span>
+                            <% if (typeof filters !== 'undefined' && (filters.start_date || filters.end_date || filters.date)) { %>
+                                <span class="badge rounded-pill bg-light text-secondary border fw-medium px-3 py-1" style="font-size: 0.7rem;">
+                                    <i class="fas fa-calendar-alt me-1 text-primary"></i>
+                                    <% if (filters.start_date && filters.end_date && filters.start_date === filters.end_date) { %>
+                                        Date: <%= filters.start_date %>
+                                    <% } else if (filters.start_date && filters.end_date) { %>
+                                        <%= filters.start_date %> to <%= filters.end_date %>
+                                    <% } else if (filters.start_date) { %>
+                                        From <%= filters.start_date %>
+                                    <% } else if (filters.end_date) { %>
+                                        Until <%= filters.end_date %>
+                                    <% } else { %>
+                                        Date: <%= filters.date %>
+                                    <% } %>
+                                </span>
+                            <% } else { %>
+                                <span class="badge rounded-pill bg-light text-secondary border fw-medium px-3 py-1" style="font-size: 0.7rem;">
+                                    <i class="fas fa-calendar-alt me-1 text-primary"></i> All-Time Records
+                                </span>
+                            <% } %>
                         </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-light px-3 py-2 border-0 fw-bold rounded-3" onclick="window.print()"
-                                style="color: var(--dark-text);">
-                                <i class="fas fa-print me-2"></i> Print Report
-                            </button>
-                        </div>
+                        <h1 class="dashboard-title m-0"
+                            style="font-size: 2rem; font-weight: 800; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            Attendance Management
+                        </h1>
+                        <p class="text-secondary m-0 mt-1" style="font-weight: 500;">
+                            Per-student attendance counts & daily logs across assigned classes and sections
+                        </p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light px-3 py-2 border fw-bold rounded-3 shadow-xs" onclick="window.location.reload()" title="Refresh latest counts">
+                            <i class="fas fa-sync-alt me-2 text-primary"></i> Refresh
+                        </button>
+                        <button type="button" class="btn btn-light px-3 py-2 border fw-bold rounded-3 shadow-xs" onclick="window.print()">
+                            <i class="fas fa-print me-2 text-secondary"></i> Print Report
+                        </button>
                     </div>
                 </div>
+            </div>
 
-                <!-- Quick Grade Badges -->
-                <div class="mb-4 d-flex flex-wrap gap-2">
-                    <% for(let i=1; i<=8; i++) { %>
-                        <button type="button"
-                            onclick="document.getElementById('gradeInput').value='<%= i %>'; document.getElementById('filterForm').submit();"
-                            class="btn btn-light filter-badge <%= (typeof filters !== 'undefined' && filters.grade == i) ? 'active' : '' %> rounded-pill px-3 py-1 fw-bold small shadow-sm border"
-                            style="font-size: 0.75rem;">
-                            Grade <%= i %>
-                        </button>
-                        <% } %>
-                </div>
-
-                <!-- Filter Panel -->
-                <div class="glass-panel mb-4 p-3 shadow-sm"
-                    style="background: white !important; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05);">
-                    <form id="filterForm" action="/admin/attendance" method="GET" class="row g-2 align-items-center">
-                        <input type="hidden" name="grade" id="gradeInput"
-                            value="<%= (typeof filters !== 'undefined') ? filters.grade : '' %>">
-                        <div class="col-md-4">
-                            <div class="search-bar position-relative">
-                                <i
-                                    class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary small"></i>
-                                <input type="text" name="search"
-                                    class="form-control form-control-sm bg-light border-0 ps-5 py-2 fw-bold"
-                                    placeholder="Search Student ID or Name..."
-                                    value="<%= (typeof filters !== 'undefined') ? filters.search : '' %>"
-                                    style="border-radius: 8px;">
+            <!-- Stats Overview Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="stat-card d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                                Students Tracked
+                            </div>
+                            <div class="fs-3 fw-bold mt-1" style="color: var(--dark-text);">
+                                <%= (typeof stats !== 'undefined' && stats.totalStudents != null) ? stats.totalStudents : (typeof attendance !== 'undefined' ? attendance.length : 0) %>
                             </div>
                         </div>
-                        <div class="col-md-2">
-                            <input type="date" name="date"
-                                class="form-control form-control-sm border-0 bg-light fw-bold py-2"
-                                onchange="this.form.submit()"
-                                value="<%= (typeof filters !== 'undefined') ? filters.date : '' %>"
-                                style="border-radius: 8px;">
+                        <div class="avatar-initials" style="background: rgba(99, 102, 241, 0.1); color: #4f46e5; width: 44px; height: 44px; border-radius: 12px;">
+                            <i class="fas fa-user-graduate"></i>
                         </div>
-                        <div class="col-md-2">
-                            <select class="form-select form-select-sm border-0 bg-light fw-bold"
-                                onchange="document.getElementById('gradeInput').value=this.value; this.form.submit()"
-                                style="border-radius: 8px;">
-                                <option value="">All Elementary Grades</option>
-                                <% for(let i=1; i<=8; i++) { %>
-                                    <option value="<%= i %>" <%=(typeof filters !=='undefined' && filters.grade==i)
-                                        ? 'selected' : '' %>>Grade <%= i %>
-                                    </option>
-                                    <% } %>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select name="teacher_id" class="form-select form-select-sm border-0 bg-light fw-bold"
-                                onchange="this.form.submit()" style="border-radius: 8px;">
-                                <option value="">All Teachers</option>
-                                <% if (typeof teachers !== 'undefined') { %>
-                                    <% teachers.forEach(t => { %>
-                                        <option value="<%= t.id %>" <%= (typeof filters !== 'undefined' && filters.teacher_id == t.id) ? 'selected' : '' %>>
-                                            <%= t.first_name %> <%= t.last_name %>
-                                        </option>
-                                    <% }) %>
-                                <% } %>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold rounded-2">Apply
-                                Filters</button>
-                        </div>
-                        <div class="col-md-2">
-                            <a href="/admin/attendance"
-                                class="btn btn-light btn-sm w-100 fw-bold rounded-2 border">Clear</a>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Attendance Table -->
-                <div class="glass-panel" style="background: white !important; border-radius: 24px;">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead style="background: rgba(0,0,0,0.02)">
-                                <tr class="text-secondary small fw-bold"
-                                    style="text-transform: uppercase; letter-spacing: 0.05em;">
-                                    <th class="border-0 py-3 ps-4">Student Profile</th>
-                                    <th class="border-0 py-3">Course</th>
-                                    <th class="border-0 py-3">Class / Level</th>
-                                    <th class="border-0 py-3 text-center">Status</th>
-                                    <th class="border-0 py-3">Date</th>
-                                    <th class="border-0 py-3">Recorded By</th>
-                                    <th class="border-0 py-3">Notes</th>
-                                    <th class="border-0 py-3 text-end pe-4">Management</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% if (typeof attendance !=='undefined' && attendance && attendance.length> 0) { %>
-                                    <% for (let record of attendance) { %>
-                                        <tr>
-                                            <td class="border-0 py-3 ps-4">
-                                                <div class="d-flex align-items-center gap-3">
-                                                    <div class="avatar-initials avatar-blue"
-                                                        style="width: 38px; height: 38px; font-size: 0.9rem;">
-                                                        <%= (record.first_name ? record.first_name.charAt(0) : '?' ) %>
-                                                    </div>
-                                                    <div>
-                                                        <div class="fw-bold" style="color: var(--dark-text);">
-                                                            <%= record.first_name %>
-                                                                <%= record.last_name %>
-                                                        </div>
-                                                        <div class="text-secondary small">ID: #<%= record.student_id
-                                                                || '---' %>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="border-0 py-3">
-                                                <span class="fw-bold small text-primary"><%= record.course_name || 'Homeroom' %></span>
-                                            </td>
-                                            <td class="border-0 py-3">
-                                                <div class="fw-bold small" style="color: var(--dark-text);">
-                                                    <%= record.class_name %>
-                                                </div>
-                                                <div class="text-secondary small">Grade <%= record.grade_level %>
-                                                </div>
-                                            </td>
-                                            <td class="border-0 text-center py-3">
-                                                <% let badgeColor='#64748b' ; let badgeBg='rgba(100,116,139,0.1)' ; if
-                                                    (record.status==='present' ) { badgeColor='#10b981' ;
-                                                    badgeBg='rgba(16,185,129,0.1)' ; } else if (record.status==='absent'
-                                                    ) { badgeColor='#ef4444' ; badgeBg='rgba(239,68,68,0.1)' ; } else if
-                                                    (record.status==='late' ) { badgeColor='#f59e0b' ;
-                                                    badgeBg='rgba(245,158,11,0.1)' ; } %>
-                                                    <span class="badge rounded-pill px-3 py-2 fw-bold text-uppercase"
-                                                        style="background: <%= badgeBg %>; color: <%= badgeColor %>; font-size: 0.7rem;">
-                                                        <%= record.status %>
-                                                    </span>
-                                            </td>
-                                            <td class="border-0 py-3">
-                                                <span class="text-secondary small fw-medium">
-                                                    <%= new Date(record.date).toLocaleDateString(undefined, {
-                                                        year: 'numeric' , month: 'short' , day: 'numeric' }) %>
-                                                </span>
-                                            </td>
-                                            <td class="border-0 py-3">
-                                                <div class="fw-bold small" style="color: var(--primary-color);">
-                                                    <%= record.teacher_fname %> <%= record.teacher_lname %>
-                                                </div>
-                                                <div class="text-secondary small opacity-75">Faculty</div>
-                                            </td>
-                                            <td class="border-0 py-3">
-                                                <span class="text-secondary small">
-                                                    <%= record.notes || 'â€”' %>
-                                                </span>
-                                            </td>
-                                            <td class="border-0 text-end py-3 pe-4">
-                                                <button
-                                                    class="btn btn-sm btn-light border-0 rounded-3 fw-bold px-3 text-primary"
-                                                    title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <% } %>
-                                            <% } else { %>
-                                                <tr>
-                                                    <td colspan="6" class="border-0 text-center py-5">
-                                                        <div class="text-secondary opacity-30 mb-3">
-                                                            <i class="fas fa-calendar-times fa-4x"></i>
-                                                        </div>
-                                                        <div class="fw-bold text-secondary">No attendance logs found for
-                                                            the selected criteria.</div>
-                                                    </td>
-                                                </tr>
-                                                <% } %>
-                            </tbody>
-                        </table>
                     </div>
                 </div>
-            </main>
+                <div class="col-6 col-md-3">
+                    <div class="stat-card d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                                Total Present
+                            </div>
+                            <div class="fs-3 fw-bold text-success mt-1">
+                                <%= (typeof stats !== 'undefined' && stats.present != null) ? stats.present : 0 %>
+                            </div>
+                        </div>
+                        <div class="avatar-initials" style="background: var(--badge-present-bg); color: var(--badge-present-color); width: 44px; height: 44px; border-radius: 12px;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-card d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                                Total Absent
+                            </div>
+                            <div class="fs-3 fw-bold text-danger mt-1">
+                                <%= (typeof stats !== 'undefined' && stats.absent != null) ? stats.absent : 0 %>
+                            </div>
+                        </div>
+                        <div class="avatar-initials" style="background: var(--badge-absent-bg); color: var(--badge-absent-color); width: 44px; height: 44px; border-radius: 12px;">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-card d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                                Total Late
+                            </div>
+                            <div class="fs-3 fw-bold mt-1" style="color: #d97706;">
+                                <%= (typeof stats !== 'undefined' && stats.late != null) ? stats.late : 0 %>
+                            </div>
+                        </div>
+                        <div class="avatar-initials" style="background: var(--badge-late-bg); color: var(--badge-late-color); width: 44px; height: 44px; border-radius: 12px;">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Grade Badges -->
+            <div class="quick-grade-badges mb-3 d-flex flex-wrap align-items-center gap-2">
+                <span class="text-secondary small fw-bold me-1">Grade:</span>
+                <button type="button"
+                    onclick="document.getElementById('gradeInput').value=''; document.getElementById('filterForm').submit();"
+                    class="btn btn-light filter-badge <%= (typeof filters === 'undefined' || !filters.grade) ? 'active' : '' %> rounded-pill px-3 py-1 fw-bold small shadow-xs border"
+                    style="font-size: 0.75rem;">
+                    All Grades
+                </button>
+                <% for(let i=1; i<=8; i++) { %>
+                    <button type="button"
+                        onclick="document.getElementById('gradeInput').value='<%= i %>'; document.getElementById('filterForm').submit();"
+                        class="btn btn-light filter-badge <%= (typeof filters !== 'undefined' && filters.grade == i) ? 'active' : '' %> rounded-pill px-3 py-1 fw-bold small shadow-xs border"
+                        style="font-size: 0.75rem;">
+                        Grade <%= i %>
+                    </button>
+                <% } %>
+            </div>
+
+            <!-- Filter Panel -->
+            <div class="glass-panel filter-panel mb-4 p-3 shadow-sm"
+                style="background: white !important; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                <form id="filterForm" action="/admin/attendance" method="GET" class="row g-2 align-items-end">
+                    <input type="hidden" name="grade" id="gradeInput"
+                        value="<%= (typeof filters !== 'undefined') ? filters.grade : '' %>">
+
+                    <!-- Search -->
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label text-secondary small fw-bold mb-1">Search Student</label>
+                        <div class="search-bar position-relative">
+                            <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary small"></i>
+                            <input type="text" name="search" id="searchInput"
+                                class="form-control form-control-sm bg-light border-0 ps-5 py-2 fw-semibold"
+                                placeholder="Student ID or Name..."
+                                value="<%= (typeof filters !== 'undefined') ? filters.search : '' %>"
+                                style="border-radius: 10px;">
+                        </div>
+                    </div>
+
+                    <!-- Date Range: From Date -->
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label class="form-label text-secondary small fw-bold mb-1">From Date</label>
+                        <input type="date" name="start_date" id="startDateInput"
+                            class="form-control form-control-sm border-0 bg-light fw-bold py-2"
+                            value="<%= (typeof filters !== 'undefined' && filters.start_date) ? filters.start_date : ((typeof filters !== 'undefined' && filters.date) ? filters.date : '') %>"
+                            style="border-radius: 10px;">
+                    </div>
+
+                    <!-- Date Range: To Date -->
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label class="form-label text-secondary small fw-bold mb-1">To Date</label>
+                        <input type="date" name="end_date" id="endDateInput"
+                            class="form-control form-control-sm border-0 bg-light fw-bold py-2"
+                            value="<%= (typeof filters !== 'undefined' && filters.end_date) ? filters.end_date : ((typeof filters !== 'undefined' && filters.date) ? filters.date : '') %>"
+                            style="border-radius: 10px;">
+                    </div>
+
+                    <!-- Class / Section Select -->
+                    <div class="col-lg-2 col-md-4">
+                        <label class="form-label text-secondary small fw-bold mb-1">Class / Section</label>
+                        <select name="class_id" id="classSelect" class="form-select form-select-sm border-0 bg-light fw-bold py-2"
+                            onchange="this.form.submit()" style="border-radius: 10px;">
+                            <option value="">All Classes / Sections</option>
+                            <% if (typeof classes !== 'undefined' && classes) { %>
+                                <% classes.forEach(c => { %>
+                                    <option value="<%= c.id %>" <%= (typeof filters !== 'undefined' && filters.class_id == c.id) ? 'selected' : '' %>>
+                                        <%= c.name %><%= c.section ? ' (Sec ' + c.section + ')' : '' %>
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <!-- Teacher Select -->
+                    <div class="col-lg-2 col-md-4">
+                        <label class="form-label text-secondary small fw-bold mb-1">Teacher</label>
+                        <select name="teacher_id" id="teacherSelect" class="form-select form-select-sm border-0 bg-light fw-bold py-2"
+                            onchange="this.form.submit()" style="border-radius: 10px;">
+                            <option value="">All Teachers</option>
+                            <% if (typeof teachers !== 'undefined' && teachers) { %>
+                                <% teachers.forEach(t => { %>
+                                    <option value="<%= t.id %>" <%= (typeof filters !== 'undefined' && filters.teacher_id == t.id) ? 'selected' : '' %>>
+                                        <%= t.first_name %> <%= t.last_name %>
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <!-- Filter Action Buttons -->
+                    <div class="col-lg-1 col-md-4 d-flex gap-1">
+                        <button type="submit" id="applyFiltersBtn" class="btn btn-primary btn-sm w-100 fw-bold py-2 rounded-3 shadow-xs" title="Apply Filters">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        <a href="/admin/attendance" id="clearFiltersBtn" class="btn btn-light btn-sm fw-bold py-2 rounded-3 border" title="Clear Filters">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </div>
+                </form>
+
+                <!-- Quick Date Presets -->
+                <div class="mt-2 pt-2 border-top d-flex flex-wrap align-items-center gap-2">
+                    <span class="text-secondary small fw-bold me-1" style="font-size: 0.72rem;">Date Presets:</span>
+                    <button type="button" class="quick-preset-btn" onclick="applyDatePreset('today')">Today</button>
+                    <button type="button" class="quick-preset-btn" onclick="applyDatePreset('week')">This Week</button>
+                    <button type="button" class="quick-preset-btn" onclick="applyDatePreset('month')">This Month</button>
+                    <button type="button" class="quick-preset-btn" onclick="applyDatePreset('all')">All Time</button>
+                </div>
+            </div>
+
+            <!-- Attendance Table: One Row Per Student Per Class -->
+            <div class="glass-panel" style="background: white !important; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; box-shadow: var(--shadow-sm);">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="attendanceTable">
+                        <thead style="background: rgba(0,0,0,0.02)">
+                            <tr class="text-secondary small fw-bold"
+                                style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                <th class="border-0 py-3 ps-4" style="width: 140px;">Student ID</th>
+                                <th class="border-0 py-3">Student Name</th>
+                                <th class="border-0 py-3">Class / Section</th>
+                                <th class="border-0 py-3 text-center" style="width: 110px;">Present</th>
+                                <th class="border-0 py-3 text-center" style="width: 110px;">Absent</th>
+                                <th class="border-0 py-3 text-center" style="width: 110px;">Late</th>
+                                <th class="border-0 py-3 text-center" style="width: 110px;">Total</th>
+                                <th class="border-0 py-3 text-center" style="width: 110px;">Rate</th>
+                                <th class="border-0 py-3 text-end pe-4 management-col" style="width: 140px;">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (typeof attendance !== 'undefined' && attendance && attendance.length > 0) { %>
+                                <% attendance.forEach((student, index) => { %>
+                                    <% 
+                                        const present = Number(student.present_count || 0);
+                                        const absent = Number(student.absent_count || 0);
+                                        const late = Number(student.late_count || 0);
+                                        const validTotal = present + absent + late;
+                                        const rate = validTotal > 0 ? Math.round(((present + late) / validTotal) * 100) : 0;
+                                        const studentDisplayId = student.student_code || student.student_id || ('STU-' + (student.student_pk || student.id));
+                                        const studentName = ((student.first_name || '') + ' ' + (student.last_name || '')).trim() || 'Student #' + (student.student_pk || student.id);
+                                        const initial = (student.first_name && student.first_name.charAt(0)) || (studentName.charAt(0)) || '?';
+                                        const collapseId = 'collapse-student-' + index;
+                                    %>
+                                    <tr id="student-row-<%= student.student_pk || student.id %>" data-student-id="<%= student.student_pk || student.id %>" data-class-id="<%= student.class_id %>">
+                                        <!-- Student ID -->
+                                        <td class="border-0 py-3 ps-4">
+                                            <span class="badge bg-light text-dark border px-2 py-1 fw-bold font-monospace" style="font-size: 0.8rem;">
+                                                <%= studentDisplayId %>
+                                            </span>
+                                        </td>
+
+                                        <!-- Student Name -->
+                                        <td class="border-0 py-3">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="avatar-initials avatar-blue"
+                                                    style="width: 38px; height: 38px; font-size: 0.9rem; flex-shrink: 0;">
+                                                    <%= initial.toUpperCase() %>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold" style="color: var(--dark-text);">
+                                                        <%= studentName %>
+                                                    </div>
+                                                    <div class="text-secondary small">
+                                                        PK: #<%= student.student_pk || student.id || '---' %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <!-- Class / Section -->
+                                        <td class="border-0 py-3">
+                                            <div class="fw-bold small" style="color: var(--dark-text);">
+                                                <%= student.class_name || ('Class #' + (student.class_id || '---')) %>
+                                            </div>
+                                            <div class="text-secondary small">
+                                                Grade <%= student.class_grade || '---' %> / Section <%= student.class_section || student.section || '---' %>
+                                            </div>
+                                            <% if (student.attendance_teacher_first_name) { %>
+                                                <div class="text-secondary small" style="font-size: 0.72rem;">
+                                                    <i class="fas fa-chalkboard-teacher me-1 text-primary"></i>
+                                                    <%= student.attendance_teacher_first_name %> <%= student.attendance_teacher_last_name %>
+                                                </div>
+                                            <% } %>
+                                        </td>
+
+                                        <!-- Present Count -->
+                                        <td class="border-0 py-3 text-center">
+                                            <span class="count-pill count-pill-present" title="Present days">
+                                                <%= present %>
+                                            </span>
+                                        </td>
+
+                                        <!-- Absent Count -->
+                                        <td class="border-0 py-3 text-center">
+                                            <span class="count-pill count-pill-absent" title="Absent days">
+                                                <%= absent %>
+                                            </span>
+                                        </td>
+
+                                        <!-- Late Count -->
+                                        <td class="border-0 py-3 text-center">
+                                            <span class="count-pill count-pill-late" title="Late days">
+                                                <%= late %>
+                                            </span>
+                                        </td>
+
+                                        <!-- Total Count (Present + Absent + Late) -->
+                                        <td class="border-0 py-3 text-center">
+                                            <span class="count-pill count-pill-total" title="Total Valid Records (Present + Absent + Late)">
+                                                <%= validTotal %>
+                                            </span>
+                                        </td>
+
+                                        <!-- Attendance Rate -->
+                                        <td class="border-0 py-3 text-center">
+                                            <% let rateColor = rate >= 85 ? 'text-success' : (rate >= 70 ? 'text-warning' : 'text-danger'); %>
+                                            <div class="fw-bold small <%= rateColor %>">
+                                                <%= rate %>%
+                                            </div>
+                                            <div class="progress mt-1" style="height: 4px; background: rgba(0,0,0,0.06); width: 60px; margin: 0 auto;">
+                                                <div class="progress-bar <%= rate >= 85 ? 'bg-success' : (rate >= 70 ? 'bg-warning' : 'bg-danger') %>"
+                                                    style="width: <%= rate %>%"></div>
+                                            </div>
+                                        </td>
+
+                                        <!-- Details / History Toggle -->
+                                        <td class="border-0 text-end py-3 pe-4 management-col">
+                                            <button class="btn btn-sm btn-light border fw-bold rounded-2 px-2 py-1 history-toggle-btn"
+                                                type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#<%= collapseId %>"
+                                                aria-expanded="false"
+                                                aria-controls="<%= collapseId %>"
+                                                title="View individual date records">
+                                                <i class="fas fa-list-ul me-1 text-primary"></i>
+                                                Logs (<%= (student.records && student.records.length) || 0 %>)
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Collapsible Breakdown of Individual Attendance Days -->
+                                    <tr class="collapse history-row" id="<%= collapseId %>">
+                                        <td colspan="9" class="p-3">
+                                            <div class="history-container p-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="fw-bold small text-secondary">
+                                                        <i class="fas fa-history me-1 text-primary"></i> Attendance Log History for <%= studentName %>
+                                                    </span>
+                                                    <span class="badge bg-light text-secondary border">
+                                                        <%= (student.records && student.records.length) || 0 %> Recorded Session(s)
+                                                    </span>
+                                                </div>
+
+                                                <% if (student.records && student.records.length > 0) { %>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm table-bordered align-middle mb-0 bg-white" style="font-size: 0.8rem;">
+                                                            <thead class="table-light">
+                                                                <tr class="text-secondary small fw-bold">
+                                                                    <th style="width: 140px;">Date</th>
+                                                                    <th style="width: 110px;" class="text-center">Status</th>
+                                                                    <th>Teacher / Recorded By</th>
+                                                                    <th>Notes</th>
+                                                                    <th style="width: 220px;" class="text-end">Manage Record</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <% student.records.forEach(rec => { %>
+                                                                    <tr>
+                                                                        <td class="fw-semibold">
+                                                                            <%= rec.date ? new Date(rec.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '---' %>
+                                                                        </td>
+                                                                        <td class="text-center">
+                                                                            <% 
+                                                                                let recBadgeClass = 'bg-secondary-subtle text-secondary';
+                                                                                if (rec.status === 'present') recBadgeClass = 'bg-success-subtle text-success';
+                                                                                else if (rec.status === 'absent') recBadgeClass = 'bg-danger-subtle text-danger';
+                                                                                else if (rec.status === 'late') recBadgeClass = 'bg-warning-subtle text-warning';
+                                                                            %>
+                                                                            <span class="badge rounded-pill text-uppercase <%= recBadgeClass %> px-2 py-1" style="font-size: 0.7rem;">
+                                                                                <%= rec.status %>
+                                                                            </span>
+                                                                        </td>
+                                                                        <td>
+                                                                            <%= rec.teacher_fname ? (rec.teacher_fname + ' ' + rec.teacher_lname) : 'Faculty' %>
+                                                                        </td>
+                                                                        <td class="text-secondary">
+                                                                            <%= rec.notes || '—' %>
+                                                                        </td>
+                                                                        <td class="text-end">
+                                                                            <div class="d-flex justify-content-end align-items-center gap-2">
+                                                                                <form action="/admin/attendance/<%= rec.id %>/update" method="POST" class="d-flex gap-1 align-items-center">
+                                                                                    <select name="status" class="form-select form-select-sm py-0 px-2" style="font-size: 0.75rem; width: 95px;">
+                                                                                        <% ['present', 'absent', 'late', 'excused'].forEach(st => { %>
+                                                                                            <option value="<%= st %>" <%= rec.status === st ? 'selected' : '' %>><%= st %></option>
+                                                                                        <% }) %>
+                                                                                    </select>
+                                                                                    <input type="hidden" name="notes" value="<%= rec.notes || '' %>">
+                                                                                    <button class="btn btn-sm btn-primary py-0 px-2" style="font-size: 0.75rem;" type="submit">Save</button>
+                                                                                </form>
+                                                                                <form action="/admin/attendance/<%= rec.id %>/delete" method="POST" onsubmit="return confirm('Delete this attendance record?');">
+                                                                                    <button class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size: 0.75rem;" type="submit">
+                                                                                        <i class="fas fa-trash-alt"></i>
+                                                                                    </button>
+                                                                                </form>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                <% }) %>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                <% } else { %>
+                                                    <div class="text-center py-3 text-secondary small">
+                                                        <i class="fas fa-info-circle me-1"></i> No individual attendance logs recorded for this student in the selected period.
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="9" class="border-0 text-center py-5">
+                                        <div class="text-secondary opacity-30 mb-3">
+                                            <i class="fas fa-user-clock fa-4x"></i>
+                                        </div>
+                                        <div class="fw-bold text-secondary fs-5">No students or attendance records found</div>
+                                        <p class="text-secondary small mt-1">Try adjusting your date range, class selection, or search criteria.</p>
+                                        <a href="/admin/attendance" class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3 mt-2">
+                                            Reset Filters
+                                        </a>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
 
     <!-- Scripts -->
     <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Real-Time Socket.io Connection to reflect attendance updates immediately
+        if (typeof io !== 'undefined') {
+            const socket = io();
+            socket.emit('joinRoom', 'admin_dashboard');
+
+            let updateDebounceTimer;
+            function triggerRealtimeUpdate(message) {
+                const toast = document.getElementById('realtime-toast');
+                const toastMsg = document.getElementById('toast-message');
+                if (toast && toastMsg) {
+                    toastMsg.textContent = message || 'Attendance updated by teacher. Refreshing...';
+                    toast.classList.remove('d-none');
+                }
+                clearTimeout(updateDebounceTimer);
+                updateDebounceTimer = setTimeout(() => {
+                    window.location.reload();
+                }, 1200);
+            }
+
+            // Listen for attendance updates emitted when teachers save attendance
+            socket.on('studentAttendanceUpdated', () => {
+                triggerRealtimeUpdate('New student attendance recorded by teacher. Updating counts...');
+            });
+            socket.on('attendanceUpdated', () => {
+                triggerRealtimeUpdate('Attendance record updated. Updating counts...');
+            });
+            socket.on('attendanceHistoryUpdated', () => {
+                triggerRealtimeUpdate('Class attendance submitted. Updating counts...');
+            });
+        }
+
+        // Date Range Preset Helper
+        function applyDatePreset(preset) {
+            const startInput = document.getElementById('startDateInput');
+            const endInput = document.getElementById('endDateInput');
+            const form = document.getElementById('filterForm');
+
+            const now = new Date();
+            const formatDate = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            if (preset === 'today') {
+                const todayStr = formatDate(now);
+                startInput.value = todayStr;
+                endInput.value = todayStr;
+            } else if (preset === 'week') {
+                const dayOfWeek = now.getDay() || 7;
+                const monday = new Date(now);
+                monday.setDate(now.getDate() - dayOfWeek + 1);
+                startInput.value = formatDate(monday);
+                endInput.value = formatDate(now);
+            } else if (preset === 'month') {
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                startInput.value = formatDate(firstDay);
+                endInput.value = formatDate(now);
+            } else if (preset === 'all') {
+                startInput.value = '';
+                endInput.value = '';
+            }
+
+            form.submit();
+        }
+    </script>
 </body>
 
 </html>

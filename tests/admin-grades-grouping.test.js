@@ -77,6 +77,8 @@ const db = {
     if (sql.includes('SELECT scr.id AS result_id')) return [gradeResults, []];
     if (sql.includes('FROM teachers t') && sql.includes('ORDER BY u.first_name')) return [[], []];
     if (sql.includes('FROM student_results sr')) return [[], []];
+    if (sql.includes('FROM classes ORDER BY')) return [[], []];
+    if (sql.includes('DISTINCT academic_year FROM student_course_results')) return [[], []];
     throw new Error(`Unexpected admin grades query: ${sql}`);
   },
 };

@@ -36,12 +36,14 @@
                     <span>My Students</span>
                 </a>
             </li>
-            <li class="sidebar-nav-item">
-                <a href="/teacher/attendance" class="sidebar-nav-link <%= title === 'Attendance Management' || title === 'Class Attendance' ? 'active' : '' %>">
-                    <i class="fas fa-clipboard-list"></i>
-                    <span>Attendance</span>
-                </a>
-            </li>
+            <% if (typeof canTakeAttendance !== 'undefined' && canTakeAttendance) { %>
+                <li class="sidebar-nav-item">
+                    <a href="/teacher/attendance" class="sidebar-nav-link <%= title === 'Attendance Management' || title === 'Class Attendance' ? 'active' : '' %>">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Attendance</span>
+                    </a>
+                </li>
+            <% } %>
             <li class="sidebar-nav-item">
                 <a href="/teacher/grades" class="sidebar-nav-link <%= title === 'Grade Management' || title === 'Class Grades' ? 'active' : '' %>">
                     <i class="fas fa-star"></i>
@@ -88,4 +90,3 @@
         </ul>
     </nav>
 </aside>
-

@@ -232,20 +232,70 @@ router.get('/children', async (req, res) => {
     
     for (let child of children) {
       const [attendance] = await pool.execute(`
-        SELECT 
-               SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present,
-               SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent,
-               SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late,
-               COUNT(*) as total
+        SELECT \
+               COUNT(DISTINCT CASE WHEN status = 'present' THEN date END) as present,
+               COUNT(DISTINCT CASE WHEN status = 'absent' THEN date END) as absent,
+               COUNT(DISTINCT CASE WHEN status = 'late' THEN date END) as late,
+               COUNT(DISTINCT CASE WHEN status IN ('present', 'absent', 'late') THEN date END) as total
         FROM attendance 
-        WHERE student_id = ? AND approval_status = 'approved'
+        WHERE student_id = ? AND (course_id IS NULL OR course_id = 0)
       `, [child.id]);
       
-      const total = attendance[0].total || 0;
-      child.present = attendance[0].present || 0;
-      child.absent = attendance[0].absent || 0;
-      child.late = attendance[0].late || 0;
-      child.attendance_rate = total > 0 ? (((child.present + child.late) / total) * 100).toFixed(1) : '100.0';
+      const present = parseInt(attendance[0].present || 0, 10);
+      const absent = parseInt(attendance[0].absent || 0, 10);
+      const late = parseInt(attendance[0].late || 0, 10);
+      const total = present + absent + late;
+      child.present = present;
+      child.absent = absent;
+      child.late = late;
+      child.total_attendance = total;
+      child.attendance_rate = total > 0 ? (((present + late) / total) * 100).toFixed(1) : '100.0';
+
+      // Calculate class rank for this child (competition ranking)
+      const [childAvgRows] = await pool.execute(`
+        SELECT ROUND(AVG(total_score), 2) as avg_score
+        FROM approved_results
+        WHERE student_id = ?
+      `, [child.id]);
+      const childAvgScore = (childAvgRows[0] && childAvgRows[0].avg_score) ? parseFloat(childAvgRows[0].avg_score) : 0;
+
+      let childClassId = child.class_id || null;
+      if (!childClassId && child.grade_level && child.section) {
+        const [clsRows] = await pool.execute(
+          'SELECT id FROM classes WHERE CAST(grade AS CHAR) = CAST(? AS CHAR) AND section = ? LIMIT 1',
+          [child.grade_level, child.section]
+        );
+        if (clsRows.length > 0) childClassId = clsRows[0].id;
+      }
+
+      const { academicYear: activeYearForChild } = await getAcademicContext();
+
+      if (childClassId) {
+        const [childRankRows] = await pool.execute(`
+          SELECT COUNT(*) + 1 as child_rank
+          FROM (
+            SELECT scr2.student_id, AVG(scr2.total_score) as avg_score
+            FROM approved_results scr2
+            WHERE scr2.class_id = ?
+              AND (? = '' OR scr2.academic_year = ?)
+            GROUP BY scr2.student_id
+          ) as class_ranks
+          WHERE avg_score > ?
+        `, [childClassId, activeYearForChild, activeYearForChild, childAvgScore]);
+        child.rank = (childRankRows[0] && childRankRows[0].child_rank) || 'N/A';
+      } else {
+        child.rank = 'N/A';
+      }
+
+      const [totalInClass] = await pool.execute(`
+        SELECT COUNT(*) as total
+        FROM students
+        WHERE grade_level = ? AND section = ?
+      `, [child.grade_level, child.section]);
+      child.total_in_class = (totalInClass[0] && totalInClass[0].total) || 0;
+      child.rank_display = (child.rank !== 'N/A' && child.total_in_class > 0)
+        ? `${child.rank} out of ${child.total_in_class} students`
+        : 'N/A';
     }
 
     res.render('parent/children', {
@@ -410,65 +460,126 @@ router.get('/attendance/:studentId', async (req, res) => {
     if (parentData.length === 0) return res.redirect('/parent/dashboard');
 
     const [relation] = await pool.execute(`
-      SELECT s.*, u.first_name, u.last_name
+      SELECT s.*, s.student_id as student_code, u.first_name, u.last_name,
+             c.id as class_id, c.name as class_name, c.grade as class_grade, c.section as class_section,
+             assigned_user.first_name as attendance_teacher_first_name,
+             assigned_user.last_name as attendance_teacher_last_name
       FROM students s
       JOIN users u ON s.user_id = u.id
       JOIN parent_student_relations psr ON s.id = psr.student_id
+      LEFT JOIN classes c ON (s.class_id = c.id OR (s.grade_level = c.grade AND s.section = c.section))
+      LEFT JOIN teachers assigned_teacher ON c.attendance_teacher_id = assigned_teacher.id
+      LEFT JOIN users assigned_user ON assigned_teacher.user_id = assigned_user.id
       WHERE psr.parent_id = ? AND s.id = ?
+      LIMIT 1
     `, [parentData[0].id, studentId]);
     
     if (relation.length === 0) {
       return res.status(403).render('404-modern', { title: 'Access Denied' });
     }
+    const student = relation[0];
     
-    const courseIdFilter = req.query.courseId;
+    const { date, start_date, end_date } = req.query;
     let query = `
-      SELECT a.*, c.name as class_name, ${ATTENDANCE_COURSE_NAME_SQL} as course_name
+      SELECT a.*, c.name as class_name, c.grade as class_grade, c.section as class_section,
+             tu.first_name as teacher_fname, tu.last_name as teacher_lname
       FROM attendance a
       JOIN classes c ON a.class_id = c.id
-      LEFT JOIN courses co ON a.course_id = co.id
+      LEFT JOIN teachers t ON COALESCE(a.teacher_id, a.created_by) = t.id
+      LEFT JOIN users tu ON t.user_id = tu.id
       WHERE a.student_id = ?
+        AND (a.course_id IS NULL OR a.course_id = 0)
     `;
     const params = [studentId];
     
-    if (courseIdFilter) {
-      query += ` AND a.course_id = ?`;
-      params.push(courseIdFilter);
+    if (start_date && end_date) {
+      query += ` AND a.date >= ? AND a.date <= ?`;
+      params.push(start_date, end_date);
+    } else if (start_date) {
+      query += ` AND a.date >= ?`;
+      params.push(start_date);
+    } else if (end_date) {
+      query += ` AND a.date <= ?`;
+      params.push(end_date);
+    } else if (date) {
+      query += ` AND a.date = ?`;
+      params.push(date);
     }
+    query += ` ORDER BY a.date DESC, a.id DESC`;
     
-    query += ` ORDER BY a.date DESC LIMIT 50`;
-    
-    // Get attendance records with class name
-    const [attendance] = await pool.execute(query, params);
+    const [rawAttendance] = await pool.execute(query, params);
 
-    // Fetch enrolled courses for the filter dropdown
-    const [courses] = await pool.execute(`
-      SELECT DISTINCT co.id, co.course_name 
-      FROM enrollments e 
-      JOIN courses co ON e.course_id = co.id 
-      WHERE e.student_id = ? AND e.status = 'enrolled'
-    `, [studentId]);
+    // Deduplicate same-day records and calculate counts
+    const seenDates = new Set();
+    const validRecords = [];
+    let presentCount = 0;
+    let absentCount = 0;
+    let lateCount = 0;
+    let excusedCount = 0;
 
-    
-    // Compute attendance stats (present, late, and excused all count as attended)
+    for (const row of rawAttendance) {
+      if (row.course_id && row.course_id !== 0) continue;
+
+      const dateStr = row.date instanceof Date
+        ? row.date.toISOString().split('T')[0]
+        : (row.date ? String(row.date).split('T')[0] : `no-date-${row.id}`);
+
+      if (seenDates.has(dateStr)) continue;
+      seenDates.add(dateStr);
+
+      validRecords.push(row);
+
+      const st = (row.status || '').toLowerCase();
+      if (st === 'present') presentCount++;
+      else if (st === 'absent') absentCount++;
+      else if (st === 'late') lateCount++;
+      else if (st === 'excused') excusedCount++;
+    }
+
+    // Present + Absent + Late equals total valid records for the 3 statuses
+    const validTotal = presentCount + absentCount + lateCount;
+    const rate = validTotal > 0 ? Math.round(((presentCount + lateCount) / validTotal) * 100) : 100;
+
     const stats = {
-      total: attendance.length,
-      present: attendance.filter(a => a.status === 'present').length,
-      absent: attendance.filter(a => a.status === 'absent').length,
-      late: attendance.filter(a => a.status === 'late').length,
-      excused: attendance.filter(a => a.status === 'excused').length
+      present: presentCount,
+      absent: absentCount,
+      late: lateCount,
+      excused: excusedCount,
+      total: validTotal,
+      rate: rate
     };
-    const attended = stats.present + stats.late + stats.excused;
-    stats.rate = stats.total > 0 ? Math.round((attended / stats.total) * 100) : 100;
-    
+
+    const studentRow = {
+      ...student,
+      student_id: student.student_code || student.student_id || student.id,
+      student_name: `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Student',
+      class_name: student.class_name || (student.class_id ? `Class #${student.class_id}` : `Grade ${student.grade_level || ''} Sec ${student.section || ''}`),
+      class_grade: student.class_grade || student.grade_level,
+      class_section: student.class_section || student.section,
+      attendance_teacher_name: (student.attendance_teacher_first_name && student.attendance_teacher_last_name)
+        ? `${student.attendance_teacher_first_name} ${student.attendance_teacher_last_name}`
+        : 'Assigned Teacher',
+      present_count: presentCount,
+      absent_count: absentCount,
+      late_count: lateCount,
+      total_count: validTotal,
+      rate: rate
+    };
+
+    const activeStartDate = start_date || (date && !end_date ? date : '');
+    const activeEndDate = end_date || (date && !start_date ? date : '');
+
     res.render('parent/student-attendance', {
-      title: `${relation[0].first_name}'s Attendance`,
+      title: `${student.first_name}'s Attendance`,
       user: req.session.user,
-      student: relation[0],
-      attendance: attendance,
+      student: studentRow,
+      attendance: validRecords,
       stats,
-      courses,
-      selectedCourseId: courseIdFilter || ''
+      filters: {
+        date: date || '',
+        start_date: activeStartDate,
+        end_date: activeEndDate
+      }
     });
     
   } catch (error) {

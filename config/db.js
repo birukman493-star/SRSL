@@ -433,7 +433,7 @@ const { getActiveAcademicYear, getSetting, formatSemesterLabel, DEFAULT_SEMESTER
         INDEX idx_student_date (student_id, date),
         INDEX idx_class_date (class_id, date),
         INDEX idx_status (status),
-        UNIQUE KEY unique_attendance (student_id, class_id, course_id, date)
+        UNIQUE KEY unique_class_attendance (student_id, class_id, date)
       )
     `);
 
@@ -452,12 +452,69 @@ const { getActiveAcademicYear, getSetting, formatSemesterLabel, DEFAULT_SEMESTER
       await dbConnection.execute('ALTER TABLE attendance ADD CONSTRAINT fk_attendance_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL');
     } catch (e) { }
 
-    try {
-      // Drop old unique key and add new one
+    // Keep an audit copy of course-based rows and records removed while consolidating
+    // legacy course attendance into a single class/day record.
+    await dbConnection.execute('CREATE TABLE IF NOT EXISTS attendance_course_history LIKE attendance');
+    for (const indexName of ['unique_attendance', 'unique_class_attendance']) {
+      const [archiveIndexes] = await dbConnection.execute(
+        `SELECT INDEX_NAME FROM information_schema.statistics
+         WHERE table_schema = DATABASE() AND table_name = 'attendance_course_history'
+           AND index_name = ? LIMIT 1`,
+        [indexName]
+      );
+      if (archiveIndexes.length > 0) {
+        await dbConnection.execute(`ALTER TABLE attendance_course_history DROP INDEX ${indexName}`);
+      }
+    }
+    await dbConnection.execute(`
+      INSERT IGNORE INTO attendance_course_history
+      SELECT a.*
+      FROM attendance a
+      WHERE a.course_id IS NOT NULL
+         OR EXISTS (
+           SELECT 1
+           FROM attendance newer
+           WHERE newer.student_id = a.student_id
+             AND newer.class_id = a.class_id
+             AND newer.date = a.date
+             AND (
+               newer.updated_at > a.updated_at
+               OR (newer.updated_at = a.updated_at AND newer.id > a.id)
+             )
+         )
+    `);
+    await dbConnection.execute(`
+      DELETE older FROM attendance older
+      JOIN attendance newer
+        ON newer.student_id = older.student_id
+       AND newer.class_id = older.class_id
+       AND newer.date = older.date
+       AND (
+         newer.updated_at > older.updated_at
+         OR (newer.updated_at = older.updated_at AND newer.id > older.id)
+       )
+    `);
+    await dbConnection.execute('UPDATE attendance SET course_id = NULL WHERE course_id IS NOT NULL');
+
+    const [attendanceIndexes] = await dbConnection.execute(
+      `SELECT INDEX_NAME FROM information_schema.statistics
+       WHERE table_schema = DATABASE() AND table_name = 'attendance'
+         AND index_name = 'unique_attendance' LIMIT 1`
+    );
+    if (attendanceIndexes.length > 0) {
       await dbConnection.execute('ALTER TABLE attendance DROP INDEX unique_attendance');
-      await dbConnection.execute('ALTER TABLE attendance ADD UNIQUE KEY unique_attendance (student_id, class_id, course_id, date)');
-      console.log('Updated unique_attendance key');
-    } catch (e) { }
+    }
+    const [classAttendanceIndexes] = await dbConnection.execute(
+      `SELECT INDEX_NAME FROM information_schema.statistics
+       WHERE table_schema = DATABASE() AND table_name = 'attendance'
+         AND index_name = 'unique_class_attendance' LIMIT 1`
+    );
+    if (classAttendanceIndexes.length === 0) {
+      await dbConnection.execute(
+        'ALTER TABLE attendance ADD UNIQUE KEY unique_class_attendance (student_id, class_id, date)'
+      );
+    }
+    console.log('Migrated attendance to one record per student, class, and date');
 
     try {
       await dbConnection.execute('ALTER TABLE attendance ADD COLUMN academic_year VARCHAR(20)');

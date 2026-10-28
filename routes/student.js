@@ -580,56 +580,127 @@ router.get('/courses', async (req, res) => {
 router.get('/attendance', async (req, res) => {
   try {
     const [studentInfo] = await pool.execute(`
-      SELECT id FROM students WHERE user_id = ?
+      SELECT s.id, s.student_id as student_code, s.grade_level, s.section,
+             u.first_name, u.last_name,
+             c.id as class_id, c.name as class_name, c.grade as class_grade, c.section as class_section,
+             assigned_user.first_name as attendance_teacher_first_name,
+             assigned_user.last_name as attendance_teacher_last_name
+      FROM students s
+      JOIN users u ON s.user_id = u.id
+      LEFT JOIN classes c ON (s.class_id = c.id OR (s.grade_level = c.grade AND s.section = c.section))
+      LEFT JOIN teachers assigned_teacher ON c.attendance_teacher_id = assigned_teacher.id
+      LEFT JOIN users assigned_user ON assigned_teacher.user_id = assigned_user.id
+      WHERE s.user_id = ?
+      LIMIT 1
     `, [req.session.user.id]);
 
-    const courseIdFilter = req.query.courseId;
+    if (!studentInfo || studentInfo.length === 0) {
+      return res.status(404).render('404-modern', { title: 'Student Profile Not Found' });
+    }
+    const student = studentInfo[0];
+
+    const { date, start_date, end_date } = req.query;
     let query = `
-      SELECT a.*, c.name as class_name, ${ATTENDANCE_COURSE_NAME_SQL} as course_name
+      SELECT a.*, c.name as class_name, c.grade as class_grade, c.section as class_section,
+             tu.first_name as teacher_fname, tu.last_name as teacher_lname
       FROM attendance a
       JOIN classes c ON a.class_id = c.id
-      LEFT JOIN courses co ON a.course_id = co.id
+      LEFT JOIN teachers t ON COALESCE(a.teacher_id, a.created_by) = t.id
+      LEFT JOIN users tu ON t.user_id = tu.id
       WHERE a.student_id = ?
+        AND (a.course_id IS NULL OR a.course_id = 0)
     `;
-    const params = [studentInfo[0].id];
+    const params = [student.id];
 
-    if (courseIdFilter) {
-      query += ` AND a.course_id = ?`;
-      params.push(courseIdFilter);
+    // Date range filtering
+    if (start_date && end_date) {
+      query += ` AND a.date >= ? AND a.date <= ?`;
+      params.push(start_date, end_date);
+    } else if (start_date) {
+      query += ` AND a.date >= ?`;
+      params.push(start_date);
+    } else if (end_date) {
+      query += ` AND a.date <= ?`;
+      params.push(end_date);
+    } else if (date) {
+      query += ` AND a.date = ?`;
+      params.push(date);
     }
-    query += ` ORDER BY a.date DESC`;
+    query += ` ORDER BY a.date DESC, a.id DESC`;
 
-    const [attendance] = await pool.execute(query, params);
+    const [rawAttendance] = await pool.execute(query, params);
 
-    // Fetch enrolled courses for the filter dropdown
-    const [courses] = await pool.execute(`
-      SELECT DISTINCT co.id, co.course_name 
-      FROM enrollments e 
-      JOIN courses co ON e.course_id = co.id 
-      WHERE e.student_id = ? AND e.status = 'enrolled'
-    `, [studentInfo[0].id]);
+    // Deduplicate same-day records and calculate counts
+    const seenDates = new Set();
+    const validRecords = [];
+    let presentCount = 0;
+    let absentCount = 0;
+    let lateCount = 0;
+    let excusedCount = 0;
 
-    // Calculate stats
+    for (const row of rawAttendance) {
+      if (row.course_id && row.course_id !== 0) continue;
+
+      const dateStr = row.date instanceof Date
+        ? row.date.toISOString().split('T')[0]
+        : (row.date ? String(row.date).split('T')[0] : `no-date-${row.id}`);
+
+      if (seenDates.has(dateStr)) continue;
+      seenDates.add(dateStr);
+
+      validRecords.push(row);
+
+      const st = (row.status || '').toLowerCase();
+      if (st === 'present') presentCount++;
+      else if (st === 'absent') absentCount++;
+      else if (st === 'late') lateCount++;
+      else if (st === 'excused') excusedCount++;
+    }
+
+    // Present + Absent + Late equals total valid records for the 3 statuses
+    const validTotal = presentCount + absentCount + lateCount;
+    const rate = validTotal > 0 ? Math.round(((presentCount + lateCount) / validTotal) * 100) : 100;
+
     const stats = {
-      present: attendance.filter(a => a.status === 'present').length,
-      absent: attendance.filter(a => a.status === 'absent').length,
-      late: attendance.filter(a => a.status === 'late').length,
-      excused: attendance.filter(a => a.status === 'excused').length,
-      total: attendance.length
+      present: presentCount,
+      absent: absentCount,
+      late: lateCount,
+      excused: excusedCount,
+      total: validTotal,
+      percentage: String(rate),
+      rate: String(rate)
     };
-    const attended = stats.present + stats.late + stats.excused;
-    stats.percentage = stats.total > 0 ? ((attended / stats.total) * 100).toFixed(1) : '100';
-    // Alias for template compatibility
-    stats.rate = stats.percentage;
 
+    const studentRow = {
+      student_id: student.student_code || student.id,
+      student_name: `${student.first_name || ''} ${student.last_name || ''}`.trim() || 'Student',
+      class_name: student.class_name || (student.class_id ? `Class #${student.class_id}` : `Grade ${student.grade_level || ''} Sec ${student.section || ''}`),
+      class_grade: student.class_grade || student.grade_level,
+      class_section: student.class_section || student.section,
+      attendance_teacher_name: (student.attendance_teacher_first_name && student.attendance_teacher_last_name)
+        ? `${student.attendance_teacher_first_name} ${student.attendance_teacher_last_name}`
+        : 'Assigned Teacher',
+      present_count: presentCount,
+      absent_count: absentCount,
+      late_count: lateCount,
+      total_count: validTotal,
+      rate: rate
+    };
+
+    const activeStartDate = start_date || (date && !end_date ? date : '');
+    const activeEndDate = end_date || (date && !start_date ? date : '');
 
     res.render('student/attendance', {
       title: 'My Attendance',
       user: req.session.user,
-      attendance,
+      student: studentRow,
+      attendance: validRecords,
       stats,
-      courses,
-      selectedCourseId: courseIdFilter || ''
+      filters: {
+        date: date || '',
+        start_date: activeStartDate,
+        end_date: activeEndDate
+      }
     });
 
   } catch (error) {

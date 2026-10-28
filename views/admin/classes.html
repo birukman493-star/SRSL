@@ -148,16 +148,16 @@
                                             easily</small>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="text-secondary small mb-1 fw-bold">Designated Attendance Teacher</label>
+                                        <label class="text-secondary small mb-1 fw-bold">Section Attendance Teacher</label>
                                         <select name="attendance_teacher_id" class="form-select bg-light border-0 rounded-3 px-3 py-2 fw-medium">
-                                            <option value="">Select Attendance Teacher (Optional)</option>
+                                            <option value="">No attendance teacher assigned</option>
                                             <% if (typeof teachers !== 'undefined' && teachers && teachers.length > 0) { %>
                                                 <% teachers.forEach(t => { %>
                                                     <option value="<%= t.id %>"><%= t.first_name %> <%= t.last_name %> (<%= t.employee_id %>)</option>
                                                 <% }) %>
                                             <% } %>
                                         </select>
-                                        <small class="text-muted" style="font-size: 0.7rem;">Only this teacher will be allowed to take attendance for this class.</small>
+                                        <small class="text-muted" style="font-size: 0.7rem;">Only the selected teacher can access attendance for this section. Assign the same teacher to multiple sections if needed.</small>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="text-secondary small mb-1 fw-bold">Academic Year</label>

@@ -1,60 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - Abdigudina Parent</title>
-    
+    <title><%= title %> - Parent Portal</title>
+
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="/css/inter-font.css" rel="stylesheet">
-    <!-- Core Styling -->
     <link rel="stylesheet" href="/css/brocode-style.css">
-    <script>
-        window.currentUser = {
-            id: <%= user.id %>,
-            role: "<%= user.role %>"
-        };
-    </script>
-    <script src="/socket.io/socket.io.js"></script>
+
     <style>
-        .premium-panel {
-            background: white !important;
-            border-radius: 28px;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        :root {
+            --badge-present-bg: rgba(16, 185, 129, 0.12);
+            --badge-present-color: #059669;
+            --badge-absent-bg: rgba(239, 68, 68, 0.12);
+            --badge-absent-color: #dc2626;
+            --badge-late-bg: rgba(245, 158, 11, 0.14);
+            --badge-late-color: #d97706;
+            --badge-excused-bg: rgba(100, 116, 139, 0.12);
+            --badge-excused-color: #475569;
         }
-        .attendance-stat-card {
+
+        body {
             background: #f8fafc;
+            color: #0f172a;
+        }
+
+        .attendance-stat-card {
+            background: white;
             border-radius: 20px;
             padding: 1.5rem;
-            border: 1px solid rgba(0,0,0,0.03);
-            text-align: center;
-            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.25s ease;
         }
+
         .attendance-stat-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary-color);
-            background: white;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06);
         }
-        .table thead th {
-            background: #f8fafc;
-            color: var(--primary-color);
-            font-weight: 800;
-            text-transform: uppercase;
+
+        .count-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            height: 32px;
+            padding: 0 12px;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .count-pill-present {
+            background: var(--badge-present-bg);
+            color: var(--badge-present-color);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .count-pill-absent {
+            background: var(--badge-absent-bg);
+            color: var(--badge-absent-color);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .count-pill-late {
+            background: var(--badge-late-bg);
+            color: var(--badge-late-color);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        .count-pill-total {
+            background: rgba(99, 102, 241, 0.1);
+            color: #4f46e5;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .quick-preset-btn {
             font-size: 0.75rem;
-            letter-spacing: 1px;
-            padding: 1.25rem 1rem;
-            border: none;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: white;
+            color: var(--dark-text);
+            transition: all 0.15s ease;
         }
-        .table tbody td {
-            padding: 1.25rem 1rem;
-            border-bottom: 1px solid #f1f5f9;
+
+        .quick-preset-btn:hover {
+            background: #0f172a;
+            color: white;
+            border-color: #0f172a;
         }
+
         .status-badge {
             padding: 6px 14px;
             border-radius: 100px;
@@ -63,139 +104,292 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .status-present { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-        .status-absent { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-        .status-late { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-        .status-excused { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+
+        .status-present { background: var(--badge-present-bg); color: var(--badge-present-color); }
+        .status-absent { background: var(--badge-absent-bg); color: var(--badge-absent-color); }
+        .status-late { background: var(--badge-late-bg); color: var(--badge-late-color); }
+        .status-excused { background: var(--badge-excused-bg); color: var(--badge-excused-color); }
     </style>
 </head>
-<body class="dashboard-body" style="background: #f8fafc;">
+
+<body class="dashboard-body">
     <div class="dashboard-wrapper">
         <%- include('partials/sidebar.html') %>
 
         <main class="main-panel w-100 p-4">
+            <!-- Real-time Toast -->
+            <div id="realtime-toast" class="alert alert-info shadow-lg position-fixed top-0 end-0 m-4 text-white bg-primary notranslate d-none"
+                style="z-index: 1050; border-radius: 14px;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fas fa-sync-alt fa-spin"></i>
+                    <span>Attendance updated by teacher. Refreshing...</span>
+                </div>
+            </div>
+
             <!-- Header -->
-            <div class="dashboard-header mb-4 shadow-sm" style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2.5rem;">
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="dashboard-header mb-4 notranslate"
+                style="background: white; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); padding: 2rem; box-shadow: var(--shadow-sm);">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                     <div>
-                        <h1 class="dashboard-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">
-                            Attendance Report
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge rounded-pill bg-primary-subtle text-primary fw-bold text-uppercase px-3 py-1" style="font-size: 0.7rem;">
+                                Class Attendance Report
+                            </span>
+                            <% if (typeof filters !== 'undefined' && (filters.start_date || filters.end_date || filters.date)) { %>
+                                <span class="badge rounded-pill bg-light text-secondary border fw-medium px-3 py-1" style="font-size: 0.7rem;">
+                                    <i class="fas fa-calendar-alt me-1 text-primary"></i>
+                                    <% if (filters.start_date && filters.end_date && filters.start_date === filters.end_date) { %>
+                                        Date: <%= filters.start_date %>
+                                    <% } else if (filters.start_date && filters.end_date) { %>
+                                        <%= filters.start_date %> to <%= filters.end_date %>
+                                    <% } else if (filters.start_date) { %>
+                                        From <%= filters.start_date %>
+                                    <% } else if (filters.end_date) { %>
+                                        Until <%= filters.end_date %>
+                                    <% } else { %>
+                                        Date: <%= filters.date %>
+                                    <% } %>
+                                </span>
+                            <% } else { %>
+                                <span class="badge rounded-pill bg-light text-secondary border fw-medium px-3 py-1" style="font-size: 0.7rem;">
+                                    <i class="fas fa-calendar-alt me-1 text-primary"></i> All-Time Records
+                                </span>
+                            <% } %>
+                        </div>
+                        <h1 class="dashboard-title m-0"
+                            style="font-size: 2rem; font-weight: 800; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            <%= student.student_name %>'s Attendance
                         </h1>
-                        <p class="text-secondary m-0" style="font-weight: 500;">Presence logs for: <span class="text-dark fw-bold"><%= student.first_name %> <%= student.last_name %></span></p>
+                        <p class="text-secondary m-0 mt-1" style="font-weight: 500;">
+                            Class-based attendance summary and presence tracking logs
+                        </p>
                     </div>
-                    <a href="/parent/dashboard" class="btn btn-light px-4 py-2 rounded-pill fw-bold shadow-sm" style="color: var(--dark-text);">
-                        <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
-                    </a>
-                </div>
-            </div>
-
-            <!-- Quick Stats -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-3">
-                    <div class="attendance-stat-card">
-                        <div id="stat-rate" class="h2 fw-bold text-primary mb-0"><%= stats.rate %>%</div>
-                        <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Attendance Rate</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="attendance-stat-card">
-                        <div id="stat-present" class="h2 fw-bold text-success mb-0"><%= stats.present %></div>
-                        <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Present Days</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="attendance-stat-card">
-                        <div id="stat-absent" class="h2 fw-bold text-danger mb-0"><%= stats.absent %></div>
-                        <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Total Absences</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="attendance-stat-card">
-                        <div id="stat-late" class="h2 fw-bold text-warning mb-0"><%= stats.late %></div>
-                        <div class="text-secondary fw-bold text-uppercase" style="font-size: 0.65rem;">Late Arrivals</div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light px-3 py-2 border fw-bold rounded-3 shadow-xs" onclick="window.print()">
+                            <i class="fas fa-print me-2 text-secondary"></i> Print
+                        </button>
+                        <a href="/parent/children" class="btn btn-light px-3 py-2 border fw-bold rounded-3 shadow-xs">
+                            <i class="fas fa-arrow-left me-2 text-primary"></i> All Children
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Dynamic Real-time Attendance Cards -->
-            <div id="attendance-container" class="row g-3 mb-4"></div>
+            <!-- Stats Overview Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="attendance-stat-card d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Present Days</div>
+                            <div class="fs-3 fw-bold text-success mt-1"><%= stats.present %></div>
+                        </div>
+                        <div class="avatar-initials" style="background: var(--badge-present-bg); color: var(--badge-present-color); width: 44px; height: 44px; border-radius: 12px;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="attendance-stat-card d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Total Absences</div>
+                            <div class="fs-3 fw-bold text-danger mt-1"><%= stats.absent %></div>
+                        </div>
+                        <div class="avatar-initials" style="background: var(--badge-absent-bg); color: var(--badge-absent-color); width: 44px; height: 44px; border-radius: 12px;">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="attendance-stat-card d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Late Arrivals</div>
+                            <div class="fs-3 fw-bold mt-1" style="color: #d97706;"><%= stats.late %></div>
+                        </div>
+                        <div class="avatar-initials" style="background: var(--badge-late-bg); color: var(--badge-late-color); width: 44px; height: 44px; border-radius: 12px;">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="attendance-stat-card d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Attendance Rate</div>
+                            <div class="fs-3 fw-bold text-primary mt-1"><%= stats.rate %>%</div>
+                        </div>
+                        <div class="avatar-initials" style="background: rgba(99, 102, 241, 0.1); color: #4f46e5; width: 44px; height: 44px; border-radius: 12px;">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-            <!-- Filter form -->
-            <div class="mb-4">
-                <form action="/parent/attendance/<%= student.id %>" method="GET" class="d-flex align-items-center gap-2">
-                    <select name="courseId" class="form-select border-0 shadow-sm rounded-pill px-4 py-2" style="max-width: 300px; font-weight: 600;">
-                        <option value="">All Courses</option>
-                        <% if (typeof courses !== 'undefined' && courses && courses.length > 0) { %>
-                            <% courses.forEach(course => { %>
-                                <option value="<%= course.id %>" <%= String(typeof selectedCourseId !== 'undefined' ? selectedCourseId : '') === String(course.id) ? 'selected' : '' %>><%= course.course_name %></option>
-                            <% }); %>
-                        <% } %>
-                    </select>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">Filter</button>
-                    <% if (typeof selectedCourseId !== 'undefined' && selectedCourseId) { %>
-                        <a href="/parent/attendance/<%= student.id %>" class="btn btn-light rounded-pill px-4 py-2 fw-bold text-secondary border">Clear</a>
-                    <% } %>
+            <!-- Date Range Filter Panel -->
+            <div class="glass-panel mb-4 p-3 shadow-sm"
+                style="background: white !important; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05);">
+                <form id="parentFilterForm" action="/parent/attendance/<%= student.id %>" method="GET" class="row g-2 align-items-end">
+                    <div class="col-md-4 col-6">
+                        <label class="form-label text-secondary small fw-bold mb-1">From Date</label>
+                        <input type="date" name="start_date" id="startDateInput"
+                            class="form-control form-control-sm border-0 bg-light fw-bold py-2"
+                            value="<%= (typeof filters !== 'undefined' && filters.start_date) ? filters.start_date : '' %>"
+                            style="border-radius: 10px;">
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <label class="form-label text-secondary small fw-bold mb-1">To Date</label>
+                        <input type="date" name="end_date" id="endDateInput"
+                            class="form-control form-control-sm border-0 bg-light fw-bold py-2"
+                            value="<%= (typeof filters !== 'undefined' && filters.end_date) ? filters.end_date : '' %>"
+                            style="border-radius: 10px;">
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold py-2 rounded-3 shadow-xs">
+                            <i class="fas fa-filter me-1"></i> Filter Period
+                        </button>
+                        <a href="/parent/attendance/<%= student.id %>" class="btn btn-light btn-sm fw-bold py-2 rounded-3 border px-3">
+                            Clear
+                        </a>
+                    </div>
                 </form>
+
+                <!-- Quick Date Presets -->
+                <div class="mt-2 pt-2 border-top d-flex flex-wrap align-items-center gap-2">
+                    <span class="text-secondary small fw-bold me-1" style="font-size: 0.72rem;">Presets:</span>
+                    <button type="button" class="quick-preset-btn" onclick="applyDatePreset('today')">Today</button>
+                    <button type="button" class="quick-preset-btn" onclick="applyDatePreset('week')">This Week</button>
+                    <button type="button" class="quick-preset-btn" onclick="applyDatePreset('month')">This Month</button>
+                    <button type="button" class="quick-preset-btn" onclick="applyDatePreset('all')">All Time</button>
+                </div>
             </div>
 
-            <!-- Attendance History -->
-            <div class="premium-panel overflow-hidden">
-                <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-light bg-opacity-50">
-                    <h5 class="m-0 fw-bold text-dark">Recent History</h5>
-                    <button class="btn btn-sm btn-white border px-3 rounded-pill fw-bold shadow-xs">Download Report</button>
+            <!-- Child Attendance Table Row -->
+            <div class="glass-panel mb-4" style="background: white !important; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; box-shadow: var(--shadow-sm);">
+                <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark small text-uppercase" style="letter-spacing: 0.05em;">
+                        <i class="fas fa-id-card me-2 text-primary"></i> Child Attendance Summary
+                    </span>
+                    <span class="badge bg-white text-secondary border fw-bold">Class Section Attendance</span>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead>
+                        <thead style="background: rgba(0,0,0,0.02)">
+                            <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                <th class="border-0 py-3 ps-4">Student ID</th>
+                                <th class="border-0 py-3">Child Name</th>
+                                <th class="border-0 py-3">Class / Section</th>
+                                <th class="border-0 py-3 text-center">Present</th>
+                                <th class="border-0 py-3 text-center">Absent</th>
+                                <th class="border-0 py-3 text-center">Late</th>
+                                <th class="border-0 py-3 text-center">Total Valid</th>
+                                <th class="border-0 py-3 text-center pe-4">Attendance Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                             <tr>
-                                <th>Day</th>
-                                <th>Date of Record</th>
-                                <th>Course Name</th>
-                                <th>Session Status</th>
-                                <th>Observations</th>
+                                <td class="border-0 py-3 ps-4">
+                                    <span class="badge bg-light text-dark border px-2 py-1 fw-bold font-monospace" style="font-size: 0.8rem;">
+                                        <%= student.student_id %>
+                                    </span>
+                                </td>
+                                <td class="border-0 py-3">
+                                    <div class="fw-bold" style="color: var(--dark-text);"><%= student.student_name %></div>
+                                    <div class="text-secondary small">Student Profile</div>
+                                </td>
+                                <td class="border-0 py-3">
+                                    <div class="fw-bold small" style="color: var(--dark-text);"><%= student.class_name %></div>
+                                    <div class="text-secondary small">
+                                        Grade <%= student.class_grade || '---' %> / Section <%= student.class_section || '---' %>
+                                    </div>
+                                    <% if (student.attendance_teacher_name) { %>
+                                        <div class="text-secondary small" style="font-size: 0.72rem;">
+                                            <i class="fas fa-chalkboard-teacher me-1 text-primary"></i>
+                                            <%= student.attendance_teacher_name %>
+                                        </div>
+                                    <% } %>
+                                </td>
+                                <td class="border-0 py-3 text-center">
+                                    <span class="count-pill count-pill-present"><%= student.present_count %></span>
+                                </td>
+                                <td class="border-0 py-3 text-center">
+                                    <span class="count-pill count-pill-absent"><%= student.absent_count %></span>
+                                </td>
+                                <td class="border-0 py-3 text-center">
+                                    <span class="count-pill count-pill-late"><%= student.late_count %></span>
+                                </td>
+                                <td class="border-0 py-3 text-center">
+                                    <span class="count-pill count-pill-total"><%= student.total_count %></span>
+                                </td>
+                                <td class="border-0 py-3 text-center pe-4">
+                                    <span class="fw-bold text-<%= student.rate >= 85 ? 'success' : (student.rate >= 70 ? 'warning' : 'danger') %>">
+                                        <%= student.rate %>%
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Detailed Session Logs -->
+            <div class="glass-panel" style="background: white !important; border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; box-shadow: var(--shadow-sm);">
+                <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 text-dark fw-bold" style="font-size: 1rem;">
+                        <i class="fas fa-history me-2 text-primary"></i> Detailed Session Records
+                    </h5>
+                    <span class="badge bg-white text-secondary border">
+                        <%= (typeof attendance !== 'undefined' && attendance) ? attendance.length : 0 %> Sessions
+                    </span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background: rgba(0,0,0,0.02)">
+                            <tr class="text-secondary small fw-bold" style="text-transform: uppercase; letter-spacing: 0.05em;">
+                                <th class="border-0 py-3 ps-4" style="width: 130px;">Day</th>
+                                <th class="border-0 py-3" style="width: 170px;">Date</th>
+                                <th class="border-0 py-3">Class / Section</th>
+                                <th class="border-0 py-3 text-center" style="width: 120px;">Status</th>
+                                <th class="border-0 py-3">Teacher</th>
+                                <th class="border-0 py-3 pe-4">Notes</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% if (typeof attendance !== 'undefined' && attendance && attendance.length > 0) { %>
                                 <% attendance.forEach(a => { %>
-                                    <tr data-course-id="<%= a.course_id %>">
-                                        <td>
-                                            <div class="fw-bold text-secondary">
-                                                <%= new Date(a.date).toLocaleDateString(undefined, { weekday: 'short' }) %>
-                                            </div>
+                                    <tr>
+                                        <td class="border-0 py-3 ps-4 fw-bold text-secondary">
+                                            <%= new Date(a.date).toLocaleDateString(undefined, { weekday: 'short' }) %>
                                         </td>
-                                        <td>
-                                            <div class="fw-bold" style="color: var(--dark-text);">
-                                                <%= new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
-                                            </div>
-                                            <small class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Recorded: <%= a.created_at ? new Date(a.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'TBD' %></small>
+                                        <td class="border-0 py-3 fw-bold" style="color: var(--dark-text);">
+                                            <%= new Date(a.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) %>
                                         </td>
-                                        <td>
-                                            <div class="fw-bold" style="color: var(--dark-text);">
-                                                <%= a.course_name %>
-                                                <% if(a.course_id) { %>
-                                                    <small class="text-secondary fw-medium">(ID: <%= a.course_id %>)</small>
-                                                <% } %>
-                                            </div>
-                                            <small class="text-secondary"><%= a.class_name %></small>
+                                        <td class="border-0 py-3">
+                                            <div class="fw-bold small" style="color: var(--dark-text);"><%= a.class_name %></div>
+                                            <small class="text-secondary">Grade <%= a.class_grade || '---' %> - Sec <%= a.class_section || '---' %></small>
                                         </td>
-                                        <td>
-                                            <span class="status-badge status-<%= a.status.toLowerCase() %>">
+                                        <td class="border-0 py-3 text-center">
+                                            <span class="status-badge status-<%= (a.status || '').toLowerCase() %>">
                                                 <i class="fas fa-circle me-1" style="font-size: 0.4rem; vertical-align: middle;"></i>
                                                 <%= a.status %>
                                             </span>
                                         </td>
-                                        <td>
-                                            <div class="text-secondary small fw-bold"><%= a.remarks || '--' %></div>
+                                        <td class="border-0 py-3 small text-secondary">
+                                            <%= a.teacher_fname ? (a.teacher_fname + ' ' + a.teacher_lname) : 'Class Teacher' %>
+                                        </td>
+                                        <td class="border-0 py-3 pe-4 text-secondary small">
+                                            <%= a.notes || a.remarks || '—' %>
                                         </td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="4" class="text-center py-5">
-                                        <div class="text-secondary opacity-10 mb-3"><i class="far fa-calendar-times fa-5x"></i></div>
-                                        <h5 class="fw-900" style="color: var(--dark-text);">No Records Logged</h5>
-                                        <p class="text-secondary fw-medium">Attendance records for this child are not yet available for the current term.</p>
+                                    <td colspan="6" class="border-0 text-center py-5">
+                                        <div class="text-secondary opacity-30 mb-3">
+                                            <i class="fas fa-calendar-times fa-4x"></i>
+                                        </div>
+                                        <p class="text-secondary fw-bold fs-5">No attendance records found for this period.</p>
+                                        <a href="/parent/attendance/<%= student.id %>" class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3 mt-2">
+                                            Reset Filter
+                                        </a>
                                     </td>
                                 </tr>
                             <% } %>
@@ -205,170 +399,71 @@
             </div>
         </main>
     </div>
-    
+
+    <!-- Scripts -->
     <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/translations.js"></script><script src="/js/brocode-script.js"></script>
-    
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Store current stats
-        const stats = {
-            total: <%= stats.total %>,
-            present: <%= stats.present %>,
-            absent: <%= stats.absent %>,
-            late: <%= stats.late %>,
-            excused: <%= stats.excused %>,
-            rate: <%= stats.rate %>
-        };
+        // Real-Time Socket.io connection for parent updates
+        if (typeof io !== 'undefined') {
+            const socket = io();
+            const parentUserId = <%= user.id %>;
+            const currentStudentId = <%= student.id %>;
 
-        const studentId = <%= student.id %>;
+            socket.emit('joinRoom', `parent_${parentUserId}`);
 
-        // Initialize socket connection
-        const socket = io();
+            socket.on('studentAttendanceUpdated', (data) => {
+                if (data && data.studentId === currentStudentId) {
+                    const toast = document.getElementById('realtime-toast');
+                    if (toast) toast.classList.remove('d-none');
+                    setTimeout(() => window.location.reload(), 1200);
+                }
+            });
 
-        socket.on('connect', () => {
-            console.log('Parent connected to real-time notification gateway');
-        });
-
-        socket.on('attendanceUpdated', (data) => {
-            console.log('Parent received real-time attendance update:', data);
-            
-            // Check if this attendance is for the currently viewed child studentId
-            if (data.studentId === studentId) {
-                appendAttendanceCard(data);
-                updateStats(data.status);
-            }
-        });
-
-        function appendAttendanceCard(data) {
-            const container = document.getElementById('attendance-container');
-            if (!container) return;
-
-            // Remove placeholder if present
-            const placeholderRow = document.querySelector('tbody tr td[colspan="4"]');
-            if (placeholderRow) {
-                placeholderRow.closest('tr').remove();
-            }
-
-            // Determine styles
-            let statusClass = 'secondary';
-            let badgeClass = 'secondary';
-            let iconClass = 'question-circle';
-            if (data.status === 'present') {
-                statusClass = 'present';
-                badgeClass = 'success';
-                iconClass = 'check-circle';
-            } else if (data.status === 'absent') {
-                statusClass = 'absent';
-                badgeClass = 'danger';
-                iconClass = 'times-circle';
-            } else if (data.status === 'late') {
-                statusClass = 'late';
-                badgeClass = 'warning';
-                iconClass = 'clock';
-            } else if (data.status === 'excused') {
-                statusClass = 'excused';
-                badgeClass = 'indigo';
-                iconClass = 'info-circle';
-            }
-
-            // Construct Card HTML with smooth fade-in
-            const cardHtml = `
-                <div class="col-md-6 col-lg-4 mb-3 animate-fade-in" style="animation: fadeIn 0.5s ease-out;">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden" style="border-left: 5px solid var(--bs-${badgeClass}) !important; background: white;">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="badge bg-${badgeClass} bg-opacity-10 text-${badgeClass} rounded-pill px-3 py-2 fw-bold text-uppercase" style="font-size: 0.65rem;">
-                                    <i class="fas fa-${iconClass} me-1"></i> ${data.status}
-                                </span>
-                                <small class="text-secondary fw-bold" style="font-size: 0.75rem;">${data.day}</small>
-                            </div>
-                            <h6 class="card-title fw-bold text-dark mb-1">${data.subject}</h6>
-                            <p class="card-text text-secondary small mb-2">
-                                <i class="far fa-calendar-alt me-1"></i> ${new Date(data.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                            </p>
-                            ${data.notes ? `<div class="bg-light p-2 rounded-3 text-secondary small fw-medium mt-2"><i class="far fa-comment-dots me-1"></i> ${data.notes}</div>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.insertAdjacentHTML('afterbegin', cardHtml);
-
-            // Prepend dynamically to history table
-            const tbody = document.querySelector('tbody');
-            if (tbody) {
-                const tableRowHtml = `
-                    <tr class="animate-fade-in" style="animation: fadeIn 0.5s ease-out; background: rgba(var(--bs-${badgeClass}-rgb), 0.02);" data-course-id="${data.courseId || ''}">
-                        <td>
-                            <div class="fw-bold text-secondary">
-                                ${data.day}
-                            </div>
-                        </td>
-                        <td>
-                            <div class="fw-bold" style="color: var(--dark-text);">
-                                ${new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </div>
-                            <small class="text-secondary fw-bold text-uppercase" style="font-size: 0.6rem;">Recorded: Just now</small>
-                        </td>
-                        <td>
-                            <div class="fw-bold" style="color: var(--dark-text);">
-                                ${data.courseName || data.subject}
-                                ${data.courseId ? `<small class="text-secondary fw-medium">(ID: ${data.courseId})</small>` : ''}
-                            </div>
-                            <small class="text-secondary">${data.className || 'General'}</small>
-                        </td>
-                        <td>
-                            <span class="status-badge status-${statusClass}">
-                                <i class="fas fa-circle me-1" style="font-size: 0.4rem; vertical-align: middle;"></i>
-                                ${data.status}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="text-secondary small fw-bold">${data.notes || '--'}</div>
-                        </td>
-                    </tr>
-                `;
-                tbody.insertAdjacentHTML('afterbegin', tableRowHtml);
-            }
+            socket.on('attendanceUpdated', (data) => {
+                if (data && data.studentId === currentStudentId) {
+                    const toast = document.getElementById('realtime-toast');
+                    if (toast) toast.classList.remove('d-none');
+                    setTimeout(() => window.location.reload(), 1200);
+                }
+            });
         }
 
-        function updateStats(newStatus) {
-            stats.total += 1;
-            if (newStatus === 'present') {
-                stats.present += 1;
-            } else if (newStatus === 'absent') {
-                stats.absent += 1;
-            } else if (newStatus === 'late') {
-                stats.late += 1;
-            } else if (newStatus === 'excused') {
-                stats.excused += 1;
+        function applyDatePreset(preset) {
+            const startInput = document.getElementById('startDateInput');
+            const endInput = document.getElementById('endDateInput');
+            const form = document.getElementById('parentFilterForm');
+
+            const now = new Date();
+            const formatDate = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            if (preset === 'today') {
+                const todayStr = formatDate(now);
+                startInput.value = todayStr;
+                endInput.value = todayStr;
+            } else if (preset === 'week') {
+                const dayOfWeek = now.getDay() || 7;
+                const monday = new Date(now);
+                monday.setDate(now.getDate() - dayOfWeek + 1);
+                startInput.value = formatDate(monday);
+                endInput.value = formatDate(now);
+            } else if (preset === 'month') {
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                startInput.value = formatDate(firstDay);
+                endInput.value = formatDate(now);
+            } else if (preset === 'all') {
+                startInput.value = '';
+                endInput.value = '';
             }
 
-            const attended = stats.present + stats.late + stats.excused;
-            const rate = stats.total > 0 ? Math.round((attended / stats.total) * 100) : 100;
-
-            const rateEl = document.getElementById('stat-rate');
-            if (rateEl) rateEl.textContent = rate + '%';
-
-            const presentEl = document.getElementById('stat-present');
-            if (presentEl) presentEl.textContent = stats.present;
-
-            const absentEl = document.getElementById('stat-absent');
-            if (absentEl) absentEl.textContent = stats.absent;
-
-            const lateEl = document.getElementById('stat-late');
-            if (lateEl) lateEl.textContent = stats.late;
+            form.submit();
         }
     </script>
-
-    <style>
-        .fw-900 { font-weight: 900; }
-        .fw-800 { font-weight: 800; }
-        .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
 </body>
-</html>
 
+</html>

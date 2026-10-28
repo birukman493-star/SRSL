@@ -11,7 +11,6 @@ const upload = require('../middleware/upload');
 const {
   getAcademicContext,
   formatSemesterLabel,
-  ATTENDANCE_COURSE_NAME_SQL,
   DEFAULT_ACADEMIC_YEAR,
 } = require('../config/systemSettings');
 
@@ -25,6 +24,25 @@ function getCourseId(courseId) {
 
   const parsed = Number(courseId);
   return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function isValidAttendanceDate(date) {
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return false;
+  }
+  const parsedDate = new Date(`${date}T00:00:00.000Z`);
+  return !Number.isNaN(parsedDate.getTime()) && parsedDate.toISOString().slice(0, 10) === date;
+}
+
+async function getAuthorizedAttendanceClass(executor, teacherId, classId) {
+  const [classes] = await executor.execute(
+    `SELECT id, name, grade, section, academic_year
+     FROM classes
+     WHERE id = ? AND attendance_teacher_id = ?
+     LIMIT 1`,
+    [classId, teacherId]
+  );
+  return classes[0] || null;
 }
 
 async function getOwnedGradingStructure(executor, teacherId, classId, courseId, structureId, semester) {
@@ -191,6 +209,11 @@ async function isTeacher(req, res, next) {
     }
 
     req.teacherId = teacherProfiles[0].id;
+    const [attendanceAssignments] = await pool.execute(
+      'SELECT id FROM classes WHERE attendance_teacher_id = ? LIMIT 1',
+      [req.teacherId]
+    );
+    res.locals.canTakeAttendance = attendanceAssignments.length > 0;
     next();
   } catch (error) {
     log(`Teacher middleware error: ${error.message}`);
@@ -394,7 +417,7 @@ router.get('/classes', async (req, res) => {
     const { grade } = req.query;
 
     let query = `
-      SELECT c.*, 
+      SELECT c.*, c.attendance_teacher_id = ? as can_take_attendance,
              (SELECT COUNT(*) FROM students s WHERE s.grade_level = c.grade AND s.section = c.section AND s.withdrawal_status = 'active') as student_count
       FROM classes c
       WHERE c.id IN (
@@ -403,7 +426,7 @@ router.get('/classes', async (req, res) => {
         SELECT class_id FROM teacher_course_assignments WHERE teacher_id = ? AND status = 'active'
       )
     `;
-    let params = [teacherId, teacherId];
+    let params = [teacherId, teacherId, teacherId];
 
     if (grade) {
       query += ` AND c.grade = ?`;
@@ -469,24 +492,23 @@ router.get('/classes/:id/students', async (req, res) => {
 router.get('/attendance', async (req, res) => {
   try {
     const teacherId = req.teacherId;
-    // Get assigned class-course pairs
     const [assignments] = await pool.execute(`
-      SELECT tca.class_id, tca.course_id, c.name as class_name, c.grade, c.section, co.course_name
-      FROM teacher_course_assignments tca
-      JOIN classes c ON tca.class_id = c.id
-      JOIN courses co ON tca.course_id = co.id
-      WHERE tca.teacher_id = ? AND tca.status = 'active'
-      
-      UNION
-      
-      SELECT ct.class_id, 0 as course_id, c.name as class_name, c.grade, c.section,
-             CONCAT(c.name, ' — Homeroom') as course_name
-      FROM class_teachers ct
-      JOIN classes c ON ct.class_id = c.id
-      WHERE ct.teacher_id = ?
-    `, [teacherId, teacherId]);
+      SELECT c.id as class_id, c.name as class_name, c.grade, c.section,
+             (SELECT COUNT(*) FROM students s
+              WHERE s.grade_level = c.grade AND s.section = c.section
+                AND s.withdrawal_status = 'active') as student_count
+      FROM classes c
+      WHERE c.attendance_teacher_id = ?
+      ORDER BY c.grade, c.section
+    `, [teacherId]);
 
     const academicContext = await getAcademicContext();
+    if (assignments.length === 0) {
+      return res.status(403).render('500-modern', {
+        title: 'Access Denied',
+        message: 'An administrator must assign you to a section before you can take attendance.'
+      });
+    }
 
     res.render('teacher/attendance-index', {
       title: 'Attendance Management',
@@ -499,47 +521,34 @@ router.get('/attendance', async (req, res) => {
   }
 });
 
-// Get attendance data for a class/course
-router.get('/attendance/:classId/:courseId/:date', async (req, res) => {
+// Get class-wide attendance data
+router.get('/attendance/:classId/:date', async (req, res) => {
   try {
     const teacherId = req.teacherId;
-    const { classId, courseId, date } = req.params;
-
-    // Verify teacher is assigned to this class and course
-    const [assignmentCheck] = await pool.execute(`
-      SELECT id FROM teacher_course_assignments WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status = 'active'
-      UNION
-      SELECT id FROM class_teachers WHERE teacher_id = ? AND class_id = ? AND ? = 0
-    `, [teacherId, classId, courseId, teacherId, classId, courseId]);
-
-    if (assignmentCheck.length === 0) {
-      return res.status(403).render('500-modern', { title: 'Access Denied', message: 'You are not assigned to this course/class.' });
-    }
-
-    // Verify designated attendance teacher constraint
-    const [classInfo] = await pool.execute('SELECT attendance_teacher_id, name FROM classes WHERE id = ?', [classId]);
-    const designatedTeacherId = classInfo[0] ? classInfo[0].attendance_teacher_id : null;
-
-    // Use integer comparison to avoid type mismatch
-    if (designatedTeacherId && parseInt(designatedTeacherId) !== parseInt(teacherId)) {
-      const [designatedName] = await pool.execute(`
-        SELECT CONCAT(u.first_name, ' ', u.last_name) as name 
-        FROM teachers t JOIN users u ON t.user_id = u.id WHERE t.id = ?
-      `, [designatedTeacherId]);
-      const nameStr = designatedName[0] ? designatedName[0].name : 'another teacher';
-      
-      // Determine request type: if AJAX/JSON expected, send JSON, else render informative page
-      if (req.xhr || req.headers.accept?.includes('application/json')) {
-        return res.status(403).json({ message: `Designated Attendance Teacher Constraint: Only the designated attendance teacher (${nameStr}) is allowed to take or manage attendance for Class ${classInfo[0]?.name || ''}.` });
-      }
-
-      return res.status(403).render('500-modern', {
-        title: 'Access Denied',
-        message: `Designated Attendance Teacher Constraint: Only the designated attendance teacher (${nameStr}) is allowed to take or manage attendance for Class ${classInfo[0]?.name || ''}.`
+    const { classId, date } = req.params;
+    const parsedClassId = getCourseId(classId);
+    if (parsedClassId === null || parsedClassId === 0 || !isValidAttendanceDate(date)) {
+      return res.status(400).render('500-modern', {
+        title: 'Invalid Attendance Request',
+        message: 'A valid section and attendance date are required.'
       });
     }
 
-    const dbCourseId = (courseId == 0 || !courseId) ? null : courseId;
+    const classInfo = await getAuthorizedAttendanceClass(
+      pool,
+      teacherId,
+      parsedClassId
+    );
+    if (!classInfo) {
+      const message = 'Access denied: you are not assigned to take attendance for this section.';
+      if (req.xhr || (req.headers.accept || '').includes('application/json')) {
+        return res.status(403).json({ message });
+      }
+      return res.status(403).render('500-modern', {
+        title: 'Access Denied',
+        message
+      });
+    }
 
     const [attendance] = await pool.execute(`
       SELECT s.id as student_pk, u.first_name, u.last_name, s.student_id, a.status, a.notes, a.approval_status
@@ -547,27 +556,17 @@ router.get('/attendance/:classId/:courseId/:date', async (req, res) => {
       JOIN students s ON u.id = s.user_id
       JOIN classes c ON s.grade_level = c.grade AND s.section = c.section
       LEFT JOIN attendance a ON s.id = a.student_id AND a.date = ? AND a.class_id = ?
-        AND (a.course_id <=> ?) AND a.teacher_id = ?
       WHERE c.id = ? AND u.role = 'student' AND s.withdrawal_status = 'active'
       ORDER BY u.last_name, u.first_name
-    `, [date, classId, dbCourseId, teacherId, classId]);
-
-    let courseName = null;
-    if (dbCourseId) {
-      const [courseInfo] = await pool.execute('SELECT course_name FROM courses WHERE id = ?', [dbCourseId]);
-      if (courseInfo.length > 0) courseName = courseInfo[0].course_name;
-    }
-    if (!courseName) {
-      const [classInfo] = await pool.execute('SELECT name FROM classes WHERE id = ?', [classId]);
-      courseName = classInfo[0] ? `${classInfo[0].name} — Homeroom` : 'Homeroom';
-    }
+    `, [date, parsedClassId, parsedClassId]);
 
     res.render('teacher/attendance', {
       title: 'Class Attendance',
       user: req.session.user,
-      classId,
-      courseId,
-      courseName,
+      classId: parsedClassId,
+      className: classInfo.name,
+      grade: classInfo.grade,
+      section: classInfo.section,
       date,
       attendance
     });
@@ -581,55 +580,70 @@ router.get('/attendance/:classId/:courseId/:date', async (req, res) => {
 // Record student attendance
 router.post('/attendance/save', async (req, res) => {
   try {
-    const { classId, courseId, date, attendanceType, attendance } = req.body;
+    const { classId, date, attendance } = req.body || {};
     const teacherId = req.teacherId;
-
-    // Verify assignment
-    const [assignmentCheck] = await pool.execute(`
-      SELECT id FROM teacher_course_assignments WHERE teacher_id = ? AND class_id = ? AND course_id = ? AND status = 'active'
-      UNION
-      SELECT id FROM class_teachers WHERE teacher_id = ? AND class_id = ? AND ? = 0
-    `, [teacherId, classId, courseId, teacherId, classId, courseId]);
-
-    if (assignmentCheck.length === 0) {
-      return res.status(403).json({ message: 'Access denied' });
+    const parsedClassId = getCourseId(classId);
+    if (parsedClassId === null || parsedClassId === 0 || !isValidAttendanceDate(date)) {
+      return res.status(400).json({ message: 'A valid section and attendance date are required.' });
     }
 
-    // Verify designated attendance teacher constraint
-    const [classInfo] = await pool.execute('SELECT attendance_teacher_id, name FROM classes WHERE id = ?', [classId]);
-    const designatedTeacherId = classInfo[0] ? classInfo[0].attendance_teacher_id : null;
-
-    if (designatedTeacherId && parseInt(designatedTeacherId) !== parseInt(teacherId)) {
-      return res.status(403).json({ message: 'Access Denied: Only the designated attendance teacher is allowed to record attendance for this class.' });
-    }
-
-    // Get academic year, semester, class name, and subject name
-    const [classDetails] = await pool.execute('SELECT academic_year, name FROM classes WHERE id = ?', [classId]);
-    const academicYear = classDetails[0] ? classDetails[0].academic_year : '';
-    const className = classDetails[0] ? classDetails[0].name : '';
-
-    const dbCourseIdEarly = (courseId == 0 || !courseId) ? null : courseId;
-    let subjectName = null;
-    if (dbCourseIdEarly) {
-      const [courseDetails] = await pool.execute('SELECT course_name FROM courses WHERE id = ?', [dbCourseIdEarly]);
-      if (courseDetails.length > 0) subjectName = courseDetails[0].course_name;
-    }
-    if (!subjectName) {
-      subjectName = className ? `${className} — Homeroom` : 'Homeroom';
-    }
-
-    const ctx = await getAcademicContext();
-    const [struct] = await pool.execute(
-      'SELECT semester FROM grading_structures WHERE (course_id = ? OR (course_id IS NULL AND ? = 0)) AND class_id = ? AND teacher_id = ? AND semester = ? LIMIT 1',
-      [courseId, courseId, classId, teacherId, ctx.semesterLabel]
+    const classDetails = await getAuthorizedAttendanceClass(
+      pool,
+      teacherId,
+      parsedClassId
     );
-    const semester = struct[0] ? struct[0].semester : ctx.semesterLabel;
+    if (!classDetails) {
+      return res.status(403).json({
+        message: 'Access denied: you are not assigned to take attendance for this section.'
+      });
+    }
 
-    const studentIds = attendance ? Object.keys(attendance) : [];
-    const dbCourseId = (courseId == 0 || !courseId) ? null : courseId;
+    if (!attendance || typeof attendance !== 'object' || Array.isArray(attendance)) {
+      return res.status(400).json({ message: 'Attendance entries must be provided as an object.' });
+    }
+    const attendanceEntries = Object.entries(attendance);
+    if (attendanceEntries.length === 0 || attendanceEntries.length > 500) {
+      return res.status(400).json({ message: 'Select attendance for at least one student.' });
+    }
+
+    const allowedStatuses = new Set(['present', 'absent', 'late', 'excused']);
+    const studentIds = [];
+    for (const [rawStudentId, data] of attendanceEntries) {
+      const studentId = getCourseId(rawStudentId);
+      if (
+        studentId === null ||
+        studentId === 0 ||
+        String(studentId) !== rawStudentId ||
+        !data ||
+        typeof data !== 'object' ||
+        Array.isArray(data) ||
+        !allowedStatuses.has(data.status) ||
+        (data.notes !== undefined && typeof data.notes !== 'string')
+      ) {
+        return res.status(400).json({ message: 'One or more attendance entries are invalid.' });
+      }
+      studentIds.push(studentId);
+    }
+    const studentPlaceholders = studentIds.map(() => '?').join(',');
+    const [enrolledStudents] = await pool.execute(
+      `SELECT s.id
+       FROM students s
+       JOIN classes c ON s.grade_level = c.grade AND s.section = c.section
+       WHERE c.id = ? AND s.withdrawal_status = 'active'
+         AND s.id IN (${studentPlaceholders})`,
+      [parsedClassId, ...studentIds]
+    );
+    if (enrolledStudents.length !== studentIds.length) {
+      return res.status(403).json({ message: 'Attendance can only be recorded for active students in this section.' });
+    }
+
+    const academicYear = classDetails.academic_year || '';
+    const className = classDetails.name || '';
+    const ctx = await getAcademicContext();
+    const semester = ctx.semesterLabel;
 
     if (studentIds.length > 0) {
-      // 1. Batch Insert Attendance
+      // One class-wide attendance record per student and date.
       let insertQuery = `INSERT INTO attendance (student_id, class_id, course_id, date, academic_year, semester, status, notes, attendance_type, created_by, approval_status, teacher_id, semester_id) VALUES `;
       let insertValues = [];
       let insertPlaceholders = [];
@@ -637,11 +651,11 @@ router.post('/attendance/save', async (req, res) => {
         const data = attendance[studentId];
         insertPlaceholders.push(`(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`);
         insertValues.push(
-          studentId, classId, dbCourseId, date, academicYear, semester, data.status, data.notes || '', attendanceType || 'daily', teacherId, teacherId, semester
+          studentId, parsedClassId, null, date, academicYear, semester, data.status, data.notes || '', 'daily', teacherId, teacherId, semester
         );
       }
       insertQuery += insertPlaceholders.join(', ');
-      insertQuery += ` ON DUPLICATE KEY UPDATE status = VALUES(status), notes = VALUES(notes), attendance_type = VALUES(attendance_type), approval_status = 'pending', academic_year = VALUES(academic_year), semester = VALUES(semester), teacher_id = VALUES(teacher_id), semester_id = VALUES(semester_id)`;
+      insertQuery += ` ON DUPLICATE KEY UPDATE course_id = NULL, status = VALUES(status), notes = VALUES(notes), attendance_type = VALUES(attendance_type), approval_status = 'pending', academic_year = VALUES(academic_year), semester = VALUES(semester), teacher_id = VALUES(teacher_id), semester_id = VALUES(semester_id)`;
 
       await pool.execute(insertQuery, insertValues);
 
@@ -708,9 +722,6 @@ router.post('/attendance/save', async (req, res) => {
           teacherUserId: req.session.user.id,
           classId: parseInt(classId),
           className: className,
-          courseId: dbCourseId,
-          courseName: subjectName,
-          subject: subjectName,
           status: status,
           date: date,
           totalPresent: studentStats ? studentStats.present : 0,
@@ -757,9 +768,6 @@ router.post('/attendance/save', async (req, res) => {
             day: dayName,
             date: date,
             status: data.status,
-            courseId: dbCourseId,
-            courseName: subjectName,
-            subject: subjectName,
             className: className,
             notes: data.notes || '',
             remarks: data.notes || '',
@@ -771,7 +779,7 @@ router.post('/attendance/save', async (req, res) => {
         // Emit to Teacher Dashboard
         const teacherUserId = req.session.user.id;
         const summaryPayload = {
-          classId: parseInt(classId),
+          classId: parsedClassId,
           className: className,
           date: date,
           studentIds: studentIds.map(id => parseInt(id))
@@ -785,9 +793,9 @@ router.post('/attendance/save', async (req, res) => {
     }
 
     // Log activity
-    await logActivity(teacherId, 'Attendance Submitted', `Recorded ${attendanceType || 'daily'} attendance for ${date}`, classId, courseId);
+    await logActivity(teacherId, 'Attendance Submitted', `Recorded class attendance for ${date}`, parsedClassId);
 
-    res.json({ message: 'Attendance submitted for approval' });
+    res.json({ message: 'Class attendance saved.' });
   } catch (error) {
     console.error('Save attendance error:', error);
     res.status(500).json({ message: 'Server error' });
