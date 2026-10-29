@@ -91,7 +91,41 @@
             analytics_engine: "Analytics Engine",
             secure_platform: "Secure Platform",
             mobile_responsive: "Mobile Responsive",
-            easy_config: "Easy Configuration"
+            easy_config: "Easy Configuration",
+            // Contact Page
+            contact_hero_eyebrow: "We'd love to hear from you",
+            contact_hero_title: "Let's start a conversation.",
+            contact_hero_subtitle: "Questions, ideas, or need a hand? Our school community is here to help you find the right way forward.",
+            contact_hero_btn: "Send us a message",
+            contact_hero_link: "Email the school",
+            contact_hero_loc: "JiT Campus",
+            contact_hero_city: "Jimma, Ethiopia",
+            contact_bento_kicker: "Here when you need us",
+            contact_bento_title: "The details, made simple.",
+            contact_bento_loc_title: "Our Campus Location",
+            contact_bento_hours_title: "Support Hours",
+            contact_bento_comms_title: "JiT Support",
+            contact_bento_comms_desc: "Support specifically for students and staff at Jimma University JiT.",
+            contact_mon_fri: "Mon - Fri",
+            contact_sat: "Saturday",
+            contact_sun: "Sunday",
+            contact_closed: "Closed",
+            contact_email_us: "Email Us",
+            contact_call_us: "Call Us",
+            contact_map_kicker: "Visit our campus",
+            contact_map_title: "Find us in Jimma.",
+            contact_aside_kicker: "A real person will reply",
+            contact_aside_title: "Tell us what’s on your mind.",
+            contact_aside_text: "Share a little about what you need, and the right person on our team will get back to you.",
+            contact_aside_note: "Our support team is available Monday through Saturday.",
+            contact_form_kicker: "Contact form",
+            contact_form_title: "Send us a message",
+            contact_first_name: "First Name",
+            contact_last_name: "Last Name",
+            contact_email: "Email Address",
+            contact_subject: "Subject",
+            contact_message: "Your Message",
+            contact_send_btn: "Send message"
         },
         am: {
             nav_dashboard: "ዳሽቦርድ",
@@ -172,7 +206,41 @@
             analytics_engine: "የትንታኔ ሞተር",
             secure_platform: "ደህንነቱ የተጠበቀ መድረክ",
             mobile_responsive: "በሞባይል የሚሰራ",
-            easy_config: "ቀላል አዋቅር"
+            easy_config: "ቀላል አዋቅር",
+            // Contact Page
+            contact_hero_eyebrow: "ከእርስዎ መስማት እንፈልጋለን",
+            contact_hero_title: "ውይይት እንጀምር።",
+            contact_hero_subtitle: "ጥያቄዎች፣ ሃሳቦች ወይስ እገዛ ይፈልጋሉ? የትምህርት ቤታችን ማህበረሰብ ትክክለኛውን መንገድ እንዲያገኙ ሊረዳዎት ዝግጁ ነው።",
+            contact_hero_btn: "መልእክት ይላኩልን",
+            contact_hero_link: "ለትምህርት ቤቱ ኢሜይል ይላኩ",
+            contact_hero_loc: "ጂአይቲ ካምፓስ",
+            contact_hero_city: "ጅማ፣ ኢትዮጵያ",
+            contact_bento_kicker: "ሲፈልጉን ሁሌም ዝግጁ ነን",
+            contact_bento_title: "መረጃዎች፣ በቀላሉ የቀረቡ።",
+            contact_bento_loc_title: "የትምህርት ቤታችን አድራሻ",
+            contact_bento_hours_title: "የድጋፍ ሰዓታት",
+            contact_bento_comms_title: "የጂአይቲ ድጋፍ",
+            contact_bento_comms_desc: "በተለይ ለጅማ ዩኒቨርሲቲ ጂአይቲ ተማሪዎች እና ሰራተኞች የተዘጋጀ ድጋፍ።",
+            contact_mon_fri: "ከሰኞ - አርብ",
+            contact_sat: "ቅዳሜ",
+            contact_sun: "እሑድ",
+            contact_closed: "ዝግ ነው",
+            contact_email_us: "ኢሜይል ይላኩ",
+            contact_call_us: "ይደውሉልን",
+            contact_map_kicker: "ካምፓሳችንን ይጎብኙ",
+            contact_map_title: "በጅማ ያግኙን።",
+            contact_aside_kicker: "ባለሙያዎቻችን ፈጣን ምላሽ ይሰጣሉ",
+            contact_aside_title: "የሚያሳስብዎትን ያካፍሉን።",
+            contact_aside_text: "የሚፈልጉትን አጭር መረጃ ያጋሩን፣ ከቡድናችን ተገቢው ባለሙያ ያነጋግርዎታል።",
+            contact_aside_note: "የድጋፍ ቡድናችን ከሰኞ እስከ ቅዳሜ ዝግጁ ነው።",
+            contact_form_kicker: "የመገናኛ ቅጽ",
+            contact_form_title: "መልእክት ይላኩልን",
+            contact_first_name: "የመጀመሪያ ስም",
+            contact_last_name: "የአባት ስም",
+            contact_email: "የኢሜይል አድራሻ",
+            contact_subject: "ጉዳዩ",
+            contact_message: "መልእክትዎ",
+            contact_send_btn: "መልእክት ላክ"
         },
         om: {
             nav_dashboard: "Daashboordii",
@@ -253,8 +321,49 @@
             analytics_engine: "Kutaalee Xiinxalaa",
             secure_platform: "Waltajjii Nageenyummaa qabu",
             mobile_responsive: "Moobaayilaaf Mijataa",
-            easy_config: "Qindaa'ina Salphaa"
+            easy_config: "Qindaa'ina Salphaa",
+            // Contact Page
+            contact_hero_eyebrow: "Yaada keessan dhagahuu barbaanna",
+            contact_hero_title: "Marii haa eegallu.",
+            contact_hero_subtitle: "Gaaffii, yaada moo gargaarsa barbaaddu? Hawaasni manneen barnootaa keenya karaa sirrii akka argattuuf si gargaaruuf as jira.",
+            contact_hero_btn: "Ergaa nuuf ergaa",
+            contact_hero_link: "Mana barumsaaf Imeelii ergaa",
+            contact_hero_loc: "Kaampaasii JiT",
+            contact_hero_city: "Jimma, Itoophiyaa",
+            contact_bento_kicker: "Yeroo nu barbaaddan as jirra",
+            contact_bento_title: "Odeeffannoo, salphaatti dhiyaate.",
+            contact_bento_loc_title: "Teessoo Kaampaasii Keenyaa",
+            contact_bento_hours_title: "Sa'aatii Deeggarsaa",
+            contact_bento_comms_title: "Deeggarsa JiT",
+            contact_bento_comms_desc: "Deeggarsa addatti barattootaa fi hojjettoota Yuunivarsiitii Jimmaa JiT tiif qophaa'e.",
+            contact_mon_fri: "Wiixata - Jimaata",
+            contact_sat: "Sanbata",
+            contact_sun: "Dilbata",
+            contact_closed: "Cufaadha",
+            contact_email_us: "Imeelii Ergaa",
+            contact_call_us: "Nuuf Bilbilaa",
+            contact_map_kicker: "Kaampaasii keenya daawwadhaa",
+            contact_map_title: "Jimma keessatti nu argadhaa.",
+            contact_aside_kicker: "Namni sirriin deebii kenna",
+            contact_aside_title: "Wanta yaaddan nuuf qoodaa.",
+            contact_aside_text: "Waan barbaaddan gabaabinaan nuuf himaa, ogeessi sirriin garee keenyaa deebii isiniif kenna.",
+            contact_aside_note: "Gareen gargaarsa keenya Wiixata hanga Sanbataatti qophiidha.",
+            contact_form_kicker: "Foormii Qunnamtii",
+            contact_form_title: "Ergaa nuuf ergaa",
+            contact_first_name: "Maqaa Duraa",
+            contact_last_name: "Maqaa Abbaa",
+            contact_email: "Teessoo Imeelii",
+            contact_subject: "Dhimma",
+            contact_message: "Ergaa Keessan",
+            contact_send_btn: "Ergaa ergi"
         }
+    };
+
+    // Mapping of language codes to display labels for the language button
+    var LANG_LABELS = {
+        en: 'English',
+        am: 'አማርኛ',
+        om: 'Afan Oromo'
     };
 
     // ── Engine ─────────────────────────────────────────────────────────────────
@@ -267,7 +376,8 @@
         // Update all visible lang labels
         var labels = document.querySelectorAll('#currentLangLabel, .current-lang-label');
         for (var i = 0; i < labels.length; i++) {
-            labels[i].textContent = lang.toUpperCase();
+            // Use human‑readable language name if available
+            labels[i].textContent = (LANG_LABELS[lang] || lang.toUpperCase());
         }
 
         // Update dashboard <select>
@@ -280,7 +390,22 @@
             var el = elements[j];
             var key = el.getAttribute('data-key');
             var text = DICT[lang][key];
-            if (text) el.textContent = text;
+            if (text) {
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    el.placeholder = text;
+                } else {
+                    el.textContent = text;
+                }
+            }
+        }
+
+        // Translate every [data-key-placeholder] element
+        var placeholderElements = document.querySelectorAll('[data-key-placeholder]');
+        for (var k = 0; k < placeholderElements.length; k++) {
+            var pEl = placeholderElements[k];
+            var pKey = pEl.getAttribute('data-key-placeholder');
+            var pText = DICT[lang][pKey];
+            if (pText) pEl.placeholder = pText;
         }
     }
 

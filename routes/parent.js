@@ -178,7 +178,7 @@ router.get('/dashboard', async (req, res) => {
     
     // Get recent activities
     const [announcements] = await pool.execute(`
-      SELECT 'announcement' as type, title, COALESCE(message, content, '') as message,
+      SELECT 'announcement' as type, title, COALESCE(message, '') as message,
              DATE_FORMAT(created_at, '%Y-%m-%d') as date
       FROM announcements
       WHERE audience IN ('all', 'parents')

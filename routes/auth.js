@@ -33,10 +33,10 @@ function createTransport() {
   });
 }
 
-// ── Rate limiter: max 5 forgot-password requests per 15 min per IP ──────────
+// ── Rate limiter: max 5 requests in prod, 100 in dev per 15 min per IP ─────
 const forgotPasswordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: process.env.NODE_ENV === 'production' ? 5 : 100,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
@@ -526,109 +526,164 @@ router.get('/forgot-password', (req, res) => {
   res.render('auth/forgot-password', {
     title: 'Forgot Password - Abdigudina',
     error: req.query.error || null,
-    success: req.query.success || null
+    success: req.query.success || null,
+    resetUrl: req.query.token ? `/auth/reset-password/${req.query.token}` : null,
+    emailSent: req.query.emailSent === 'true'
   });
 });
 
 // POST /auth/forgot-password - Handle forgot password request (rate-limited)
 router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
-  // Generic response – same message regardless of whether the email exists
-  const GENERIC_SUCCESS = 'If an account with that email exists, a password reset link has been sent. Check your inbox (and spam folder).';
+  const isDev = process.env.NODE_ENV !== 'production';
 
   try {
-    const { email } = req.body;
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
-      return res.redirect('/auth/forgot-password?error=Please enter a valid email address.');
+    const rawInput = (req.body.email || req.body.identifier || '').trim();
+    if (!rawInput) {
+      return res.render('auth/forgot-password', {
+        title: 'Forgot Password - Abdigudina',
+        error: 'Please enter your email address or username.',
+        success: null,
+        resetUrl: null,
+        emailSent: false
+      });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedInput = rawInput.toLowerCase();
 
-    // Look up user without revealing existence to the caller
+    // Look up user by email OR username
     const [users] = await pool.execute(
-      'SELECT id, username, first_name FROM users WHERE LOWER(email) = ? AND is_active = 1',
-      [normalizedEmail]
+      'SELECT id, username, email, first_name, role FROM users WHERE (LOWER(email) = ? OR LOWER(username) = ?) AND is_active = 1',
+      [normalizedInput, normalizedInput]
     );
 
-    if (users.length > 0) {
-      const user = users[0];
-
-      // Generate cryptographically secure token
-      const rawToken = crypto.randomBytes(48).toString('hex');
-      const tokenHash = hashToken(rawToken);
-      const expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-
-      // Store only the HASH in the database
-      await pool.execute(
-        'UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?',
-        [tokenHash, expiry, user.id]
-      );
-
-      // Build reset URL from env, not from request headers
-      const appBase = (process.env.APP_URL || `http://localhost:${process.env.PORT || 3003}`).replace(/\/$/, '');
-      const resetUrl = `${appBase}/auth/reset-password/${rawToken}`;
-
-      // Try to send email
-      const transporter = createTransport();
-      if (transporter) {
-        try {
-          await transporter.sendMail({
-            from: `"Abdigudina School" <${process.env.EMAIL_USER}>`,
-            to: normalizedEmail,
-            subject: 'Password Reset Request – Abdigudina EMS',
-            text: [
-              `Hello ${user.first_name || user.username},`,
-              '',
-              'We received a request to reset the password for your Abdigudina EMS account.',
-              '',
-              'Click the link below to reset your password (expires in 30 minutes):',
-              resetUrl,
-              '',
-              'If you did not request a password reset, you can safely ignore this email.',
-              'Your password will remain unchanged.',
-              '',
-              '— Abdigudina School System'
-            ].join('\n'),
-            html: `
-              <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;background:#0f172a;color:#e2e8f0;padding:32px;border-radius:16px;">
-                <div style="text-align:center;margin-bottom:28px;">
-                  <span style="font-size:48px;">🔑</span>
-                  <h1 style="color:#38bdf8;font-size:24px;margin:12px 0 4px;">Password Reset</h1>
-                  <p style="color:#94a3b8;font-size:14px;margin:0;">Abdigudina Educational Management System</p>
-                </div>
-                <p style="font-size:15px;">Hello <strong>${user.first_name || user.username}</strong>,</p>
-                <p style="font-size:14px;color:#94a3b8;">We received a request to reset the password for your account. Click the button below to proceed. This link expires in <strong style="color:#f59e0b;">30 minutes</strong>.</p>
-                <div style="text-align:center;margin:28px 0;">
-                  <a href="${resetUrl}" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;">Reset My Password</a>
-                </div>
-                <p style="font-size:13px;color:#64748b;">Or copy this link into your browser:</p>
-                <p style="word-break:break-all;font-size:12px;color:#38bdf8;">${resetUrl}</p>
-                <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:24px 0;">
-                <p style="font-size:12px;color:#64748b;">If you did not request this, please ignore this email. Your password will not change.</p>
-              </div>`
-          });
-          console.log(`[Auth] ✅ Password reset email sent to ${normalizedEmail} for user: ${user.username}`);
-        } catch (emailErr) {
-          // Log the actual error but never expose it to the user
-          console.error('[Auth] ❌ Failed to send reset email:', emailErr.message);
-          if (emailErr.message.includes('535') || emailErr.message.includes('Username and Password')) {
-            console.error('[Auth] ⚠️  Gmail auth failed. Check that EMAIL_USER and EMAIL_PASS are correct App Password credentials in .env');
-          }
-        }
-      } else {
-        // Email not configured – print reset URL to console for dev use only
-        console.warn('\n[Auth] ⚠️  EMAIL NOT CONFIGURED — Printing reset URL to console (dev mode)');
-        console.warn(`[Auth] User: ${user.username} (${normalizedEmail})`);
-        console.warn(`[Auth] 🔗 Reset URL: ${resetUrl}`);
-        console.warn('[Auth] Copy the URL above and open it in your browser to test the reset flow.\n');
+    if (users.length === 0) {
+      // In development, give immediate feedback if the user doesn't exist
+      if (isDev) {
+        return res.render('auth/forgot-password', {
+          title: 'Forgot Password - Abdigudina',
+          error: `No active account found for "${rawInput}". Please check the spelling or create an account.`,
+          success: null,
+          resetUrl: null,
+          emailSent: false
+        });
       }
+      // Production: generic message to prevent user enumeration
+      return res.render('auth/forgot-password', {
+        title: 'Forgot Password - Abdigudina',
+        error: null,
+        success: 'If an account with that information exists, a password reset link has been processed.',
+        resetUrl: null,
+        emailSent: false
+      });
     }
 
-    // Always return the same response to avoid user enumeration
-    return res.redirect('/auth/forgot-password?success=' + encodeURIComponent(GENERIC_SUCCESS));
+    const user = users[0];
+    const targetEmail = user.email || (rawInput.includes('@') ? rawInput : null);
+
+    // Generate cryptographically secure token
+    const rawToken = crypto.randomBytes(48).toString('hex');
+    const tokenHash = hashToken(rawToken);
+    const expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
+    // Store only the HASH in the database
+    await pool.execute(
+      'UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?',
+      [tokenHash, expiry, user.id]
+    );
+
+    // Dynamically resolve base URL using the current request host and protocol
+    const host = req.get('host') || `localhost:${process.env.PORT || 3001}`;
+    const protocol = req.protocol || 'http';
+    const appBase = (process.env.APP_URL && !process.env.APP_URL.includes('localhost'))
+      ? process.env.APP_URL.replace(/\/$/, '')
+      : `${protocol}://${host}`;
+
+    const resetUrl = `${appBase}/auth/reset-password/${rawToken}`;
+
+    // Attempt to send email via nodemailer if configured
+    let emailSent = false;
+    let emailErrMessage = null;
+    const transporter = createTransport();
+
+    if (transporter && targetEmail) {
+      try {
+        await transporter.sendMail({
+          from: `"Abdigudina School" <${process.env.EMAIL_USER}>`,
+          to: targetEmail,
+          subject: 'Password Reset Request – Abdigudina EMS',
+          text: [
+            `Hello ${user.first_name || user.username},`,
+            '',
+            'We received a request to reset the password for your Abdigudina EMS account.',
+            '',
+            'Click the link below to reset your password (expires in 30 minutes):',
+            resetUrl,
+            '',
+            'If you did not request a password reset, you can safely ignore this email.',
+            'Your password will remain unchanged.',
+            '',
+            '— Abdigudina School System'
+          ].join('\n'),
+          html: `
+            <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;background:#0f172a;color:#e2e8f0;padding:32px;border-radius:16px;">
+              <div style="text-align:center;margin-bottom:28px;">
+                <span style="font-size:48px;">🔑</span>
+                <h1 style="color:#38bdf8;font-size:24px;margin:12px 0 4px;">Password Reset</h1>
+                <p style="color:#94a3b8;font-size:14px;margin:0;">Abdigudina Educational Management System</p>
+              </div>
+              <p style="font-size:15px;">Hello <strong>${user.first_name || user.username}</strong>,</p>
+              <p style="font-size:14px;color:#94a3b8;">We received a request to reset the password for your account. Click the button below to proceed. This link expires in <strong style="color:#f59e0b;">30 minutes</strong>.</p>
+              <div style="text-align:center;margin:28px 0;">
+                <a href="${resetUrl}" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:15px;">Reset My Password</a>
+              </div>
+              <p style="font-size:13px;color:#64748b;">Or copy this link into your browser:</p>
+              <p style="word-break:break-all;font-size:12px;color:#38bdf8;">${resetUrl}</p>
+              <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:24px 0;">
+              <p style="font-size:12px;color:#64748b;">If you did not request this, please ignore this email. Your password will not change.</p>
+            </div>`
+        });
+        emailSent = true;
+        console.log(`[Auth] ✅ Password reset email sent to ${targetEmail} for user: ${user.username}`);
+      } catch (emailErr) {
+        emailErrMessage = emailErr.message;
+        console.error('[Auth] ❌ Failed to send reset email:', emailErr.message);
+      }
+    } else {
+      console.warn('\n[Auth] ⚠️ EMAIL NOT CONFIGURED / DEV MODE — Generated reset URL:');
+      console.warn(`[Auth] User: ${user.username} (${targetEmail || 'No email'})`);
+      console.warn(`[Auth] 🔗 Reset URL: ${resetUrl}\n`);
+    }
+
+    // Prepare success message
+    let successMessage;
+    if (emailSent) {
+      successMessage = `A password reset link has been sent to ${targetEmail}. Please check your inbox.`;
+    } else if (isDev) {
+      successMessage = `Password reset link created for ${user.username}. You can reset your password directly below.`;
+    } else {
+      successMessage = 'If an account with that email exists, a password reset link has been sent. Check your inbox (and spam folder).';
+    }
+
+    // In dev mode or if email wasn't dispatched, present the reset link in the UI
+    const exposedResetUrl = (isDev || !emailSent) ? resetUrl : null;
+
+    return res.render('auth/forgot-password', {
+      title: 'Forgot Password - Abdigudina',
+      error: null,
+      success: successMessage,
+      resetUrl: exposedResetUrl,
+      emailSent: emailSent
+    });
 
   } catch (error) {
     console.error('[Auth] Forgot password error:', error.message);
-    return res.redirect('/auth/forgot-password?error=An error occurred. Please try again.');
+    return res.render('auth/forgot-password', {
+      title: 'Forgot Password - Abdigudina',
+      error: 'An error occurred while processing your request. Please try again.',
+      success: null,
+      resetUrl: null,
+      emailSent: false
+    });
   }
 });
 
@@ -642,7 +697,7 @@ router.get('/reset-password/:token', async (req, res) => {
 
     const tokenHash = hashToken(rawToken);
     const [users] = await pool.execute(
-      'SELECT id FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()',
+      'SELECT id, username FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()',
       [tokenHash]
     );
 
@@ -653,6 +708,7 @@ router.get('/reset-password/:token', async (req, res) => {
     res.render('auth/reset-password', {
       title: 'Reset Password - Abdigudina',
       token: rawToken,
+      username: users[0].username,
       error: null,
       success: null
     });
@@ -711,11 +767,14 @@ router.post('/reset-password/:token', async (req, res) => {
       [hashedPassword, user.id]
     );
 
-    // Destroy any existing session then regenerate to log user in with new credentials
-    await new Promise((resolve) => req.session.destroy(resolve));
-    await new Promise((resolve, reject) =>
-      req.session.regenerate((err) => (err ? reject(err) : resolve()))
-    );
+    // Regenerate session to prevent session fixation and log in user
+    await new Promise((resolve, reject) => {
+      if (req.session && typeof req.session.regenerate === 'function') {
+        req.session.regenerate((err) => (err ? reject(err) : resolve()));
+      } else {
+        resolve();
+      }
+    });
 
     req.session.user = {
       id: user.id,
@@ -726,18 +785,25 @@ router.post('/reset-password/:token', async (req, res) => {
       role: user.role
     };
 
-    await new Promise((resolve, reject) =>
-      req.session.save((err) => (err ? reject(err) : resolve()))
-    );
+    await new Promise((resolve, reject) => {
+      if (req.session && typeof req.session.save === 'function') {
+        req.session.save((err) => (err ? reject(err) : resolve()));
+      } else {
+        resolve();
+      }
+    });
 
     console.log(`[Auth] Password reset successful for user: ${user.username}`);
+
+    const targetDashboard = user.role ? `/${user.role}/dashboard` : '/dashboard';
 
     res.render('auth/reset-password', {
       title: 'Reset Password - Abdigudina',
       token: null,
       error: null,
       success: 'Your password has been reset successfully! You are now logged in.',
-      role: user.role
+      role: user.role || '',
+      dashboardUrl: targetDashboard
     });
   } catch (error) {
     console.error('[Auth] Reset password error:', error.message);

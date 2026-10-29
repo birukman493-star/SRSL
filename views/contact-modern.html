@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -217,22 +217,26 @@
 
       .contact-hero {
         min-height: 0;
-        padding: clamp(7rem, 11vw, 9rem) 0 clamp(4rem, 7vw, 6rem);
-        background:
-          radial-gradient(ellipse at 86% 20%, rgba(201, 121, 76, 0.18), transparent 30rem),
-          linear-gradient(125deg, #203b30 0%, #142a23 100%);
+        padding: clamp(7.5rem, 10vw, 9.5rem) 0 clamp(3.5rem, 6vw, 5.5rem);
+        background: var(--bg-main);
         text-align: left;
       }
 
       .contact-hero-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
         align-items: center;
-        gap: clamp(2.5rem, 7vw, 6rem);
+        gap: clamp(2.5rem, 6vw, 5rem);
       }
 
       .contact-hero-copy {
         max-width: 640px;
+        background:
+          radial-gradient(ellipse at 86% 20%, rgba(201, 121, 76, 0.18), transparent 30rem),
+          linear-gradient(125deg, #203b30 0%, #142a23 100%);
+        padding: clamp(2.5rem, 4.5vw, 3.8rem);
+        border-radius: 28px;
+        box-shadow: 0 24px 60px rgba(20, 42, 35, 0.16);
       }
 
       .contact-eyebrow,
@@ -344,11 +348,11 @@
         display: block;
         width: 100%;
         height: clamp(300px, 36vw, 410px);
-        border: 7px solid rgba(255, 255, 255, 0.94);
+        border: 7px solid #ffffff;
         border-radius: 24px;
         object-fit: cover;
         object-position: 58% center;
-        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.24);
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
       }
 
       .contact-photo-detail {
@@ -360,10 +364,10 @@
         height: 112px;
         padding: 6px;
         overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.85);
+        border: 1px solid rgba(15, 23, 42, 0.08);
         border-radius: 16px;
         background: #fff;
-        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.24);
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
         transform: rotate(-4deg);
       }
 
@@ -384,10 +388,10 @@
         gap: 0.8rem;
         max-width: calc(100% - 120px);
         padding: 1rem 1.2rem;
-        border: 1px solid rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(15, 23, 42, 0.08);
         border-radius: 14px;
-        background: rgba(255, 255, 255, 0.94);
-        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+        background: #ffffff;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
         color: #263b2d;
         font-size: 0.85rem;
         font-weight: 600;
@@ -800,10 +804,11 @@
         <div class="container">
           <div class="contact-hero-layout">
             <div class="contact-hero-copy">
-              <span class="contact-eyebrow">We'd love to hear from you</span>
+              <span class="contact-eyebrow" data-key="contact_hero_eyebrow">We'd love to hear from you</span>
               <h1
                 class="hero-title animate-on-scroll"
                 data-reveal="top"
+                data-key="contact_hero_title"
               >
                 Let's start a conversation.
               </h1>
@@ -811,16 +816,17 @@
                 class="hero-subtitle animate-on-scroll"
                 data-reveal="bottom"
                 data-delay="0.2s"
+                data-key="contact_hero_subtitle"
               >
                 Questions, ideas, or need a hand? Our school community is here
                 to help you find the right way forward.
               </p>
               <div class="contact-hero-actions">
                 <a class="contact-hero-button" href="#contactForm">
-                  Send us a message <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                  <span data-key="contact_hero_btn">Send us a message</span> <i class="fas fa-arrow-right" aria-hidden="true"></i>
                 </a>
                 <a class="contact-hero-link" href="mailto:abdigudina@gmail.com">
-                  <i class="far fa-envelope" aria-hidden="true"></i> Email the school
+                  <i class="far fa-envelope" aria-hidden="true"></i> <span data-key="contact_hero_link">Email the school</span>
                 </a>
               </div>
             </div>
@@ -835,7 +841,7 @@
               </div>
               <div class="contact-photo-caption">
                 <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                <span>JiT Campus<br />Jimma, Ethiopia</span>
+                <span><span data-key="contact_hero_loc">JiT Campus</span><br /><span data-key="contact_hero_city">Jimma, Ethiopia</span></span>
               </div>
             </div>
           </div>
@@ -845,14 +851,14 @@
       <!-- Bento Contact Info -->
       <section class="container contact-details-section mb-5 pb-5">
         <div class="contact-section-heading">
-          <span class="contact-section-kicker">Here when you need us</span>
-          <h2 class="contact-section-title">The details, made simple.</h2>
+          <span class="contact-section-kicker" data-key="contact_bento_kicker">Here when you need us</span>
+          <h2 class="contact-section-title" data-key="contact_bento_title">The details, made simple.</h2>
         </div>
         <div class="bento-grid">
           <!-- Main Contact (Large) -->
           <div class="bento-item large animate-on-scroll" data-reveal="left">
             <div class="bento-icon"><i class="fas fa-university"></i></div>
-            <h3 class="bento-title">Our Campus Location</h3>
+            <h3 class="bento-title" data-key="contact_bento_loc_title">Our Campus Location</h3>
             <p class="bento-text">
               Jimma Institute of Technology (JiT)<br />
               Jimma University, JiT Campus<br />
@@ -861,13 +867,13 @@
             <hr class="my-4 opacity-10" />
             <div class="d-flex gap-4">
               <div>
-                <small class="text-uppercase fw-bold opacity-50 d-block mb-1"
+                <small class="text-uppercase fw-bold opacity-50 d-block mb-1" data-key="contact_email_us"
                   >Email Us</small
                 >
                 <span class="fw-bold">abdigudina@gmail.com</span>
               </div>
               <div>
-                <small class="text-uppercase fw-bold opacity-50 d-block mb-1"
+                <small class="text-uppercase fw-bold opacity-50 d-block mb-1" data-key="contact_call_us"
                   >Call Us</small
                 >
                 <span class="fw-bold">+251 954 497 337</span>
@@ -878,19 +884,19 @@
           <!-- Business Hours (Tall) -->
           <div class="bento-item tall animate-on-scroll" data-reveal="right">
             <div class="bento-icon"><i class="fas fa-clock"></i></div>
-            <h3 class="bento-title">Support Hours</h3>
+            <h3 class="bento-title" data-key="contact_bento_hours_title">Support Hours</h3>
             <div class="mt-3">
               <div class="d-flex justify-content-between mb-2">
-                <span>Mon - Fri</span>
+                <span data-key="contact_mon_fri">Mon - Fri</span>
                 <span class="fw-bold">8:00 - 11:00</span>
               </div>
               <div class="d-flex justify-content-between mb-2">
-                <span>Saturday</span>
+                <span data-key="contact_sat">Saturday</span>
                 <span class="fw-bold">9:00 - 12:00</span>
               </div>
               <div class="d-flex justify-content-between text-danger fw-bold">
-                <span>Sunday</span>
-                <span>Closed</span>
+                <span data-key="contact_sun">Sunday</span>
+                <span data-key="contact_closed">Closed</span>
               </div>
             </div>
           </div>
@@ -902,8 +908,8 @@
             data-distance="60px"
           >
             <div class="bento-icon"><i class="fas fa-headset"></i></div>
-            <h3 class="bento-title">JiT Support</h3>
-            <p class="bento-text small">
+            <h3 class="bento-title" data-key="contact_bento_comms_title">JiT Support</h3>
+            <p class="bento-text small" data-key="contact_bento_comms_desc">
               Support specifically for students and staff at Jimma University
               JiT.
             </p>
@@ -916,8 +922,8 @@
         <div class="container">
           <div class="contact-map-heading">
             <div>
-              <span class="contact-section-kicker">Visit our campus</span>
-              <h2 class="contact-section-title">Find us in Jimma.</h2>
+              <span class="contact-section-kicker" data-key="contact_map_kicker">Visit our campus</span>
+              <h2 class="contact-section-title" data-key="contact_map_title">Find us in Jimma.</h2>
               <p>Ethiopia / Jimma / JiT Campus</p>
             </div>
           </div>
@@ -942,22 +948,22 @@
           <div class="contact-form-layout">
             <aside class="contact-form-aside">
               <div>
-                <span class="contact-section-kicker">A real person will reply</span>
-                <h2>Tell us what’s on your mind.</h2>
-                <p>
+                <span class="contact-section-kicker" data-key="contact_aside_kicker">A real person will reply</span>
+                <h2 data-key="contact_aside_title">Tell us what’s on your mind.</h2>
+                <p data-key="contact_aside_text">
                   Share a little about what you need, and the right person on
                   our team will get back to you.
                 </p>
               </div>
               <div class="contact-aside-note">
                 <i class="fas fa-clock" aria-hidden="true"></i>
-                <span>Our support team is available Monday through Saturday.</span>
+                <span data-key="contact_aside_note">Our support team is available Monday through Saturday.</span>
               </div>
             </aside>
               <div class="form-card animate-on-scroll" data-reveal="bottom">
                 <div class="contact-form-heading">
-                  <span class="contact-section-kicker">Contact form</span>
-                  <h2>Send us a message</h2>
+                  <span class="contact-section-kicker" data-key="contact_form_kicker">Contact form</span>
+                  <h2 data-key="contact_form_title">Send us a message</h2>
                 </div>
 
                 <% if (success) { %>
@@ -989,9 +995,10 @@
                         name="firstName"
                         id="fName"
                         placeholder="First Name"
+                        data-key-placeholder="contact_first_name"
                         required
                       />
-                      <label for="fName">First Name</label>
+                      <label for="fName" data-key="contact_first_name">First Name</label>
                     </div>
                   </div>
                   <div class="col-md-6">
@@ -1002,9 +1009,10 @@
                         name="lastName"
                         id="lName"
                         placeholder="Last Name"
+                        data-key-placeholder="contact_last_name"
                         required
                       />
-                      <label for="lName">Last Name</label>
+                      <label for="lName" data-key="contact_last_name">Last Name</label>
                     </div>
                   </div>
                   <div class="col-md-12">
@@ -1015,9 +1023,10 @@
                         name="email"
                         id="email"
                         placeholder="Email"
+                        data-key-placeholder="contact_email"
                         required
                       />
-                      <label for="email">Email Address</label>
+                      <label for="email" data-key="contact_email">Email Address</label>
                     </div>
                   </div>
                   <div class="col-md-12">
@@ -1028,9 +1037,10 @@
                         name="subject"
                         id="subject"
                         placeholder="Subject"
+                        data-key-placeholder="contact_subject"
                         required
                       />
-                      <label for="subject">Subject</label>
+                      <label for="subject" data-key="contact_subject">Subject</label>
                     </div>
                   </div>
                   <div class="col-md-12">
@@ -1041,9 +1051,10 @@
                         id="message"
                         style="height: 150px"
                         placeholder="Message"
+                        data-key-placeholder="contact_message"
                         required
                       ></textarea>
-                      <label for="message">Your Message</label>
+                      <label for="message" data-key="contact_message">Your Message</label>
                     </div>
                   </div>
                   <div class="col-md-12 text-center">
@@ -1051,7 +1062,7 @@
                       type="submit"
                       class="btn contact-submit px-5 fw-bold"
                     >
-                      Send message <i class="fas fa-arrow-right ms-2" aria-hidden="true"></i>
+                      <span data-key="contact_send_btn">Send message</span> <i class="fas fa-arrow-right ms-2" aria-hidden="true"></i>
                     </button>
                   </div>
                 </form>
