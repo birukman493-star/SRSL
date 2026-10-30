@@ -36,3 +36,6 @@ dist/
 build/
 bin/
 obj/
+
+# SSL certificates (local dev only – never commit private keys)
+certs/
